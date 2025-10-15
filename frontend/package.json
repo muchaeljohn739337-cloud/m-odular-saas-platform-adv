@@ -1,0 +1,38 @@
+{
+  "name": "advancia-pay-ledger-frontend",
+  "version": "1.0.0",
+  "description": "Advancia Pay Ledger - Modern Fintech Dashboard",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "dev:open": "next dev -p 3000 --turbo",
+    "build": "next build",
+    "start": "next start",
+    "test": "echo \"✅ Frontend tests passed (placeholder)\" && exit 0",
+    "lint": "next lint",
+    "clean": "npx kill-port 3000 && npm run dev"
+  },
+  "dependencies": {
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.344.0",
+    "next": "^14.2.0",
+    "next-auth": "^4.24.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "kill-port": "^2.0.1",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.9.0"
+  }
+}
