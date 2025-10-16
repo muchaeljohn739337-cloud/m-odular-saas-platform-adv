@@ -12,6 +12,7 @@ import paymentsRouter from "./routes/payments";
 import recoveryRouter from "./routes/recovery";
 import cryptoRouter from "./routes/crypto";
 import loansRouter from "./routes/loans";
+import systemRouter from "./routes/system";
 import { config } from "./config";
 
 const app = express();
@@ -48,6 +49,7 @@ app.use("/api/payments", paymentsRouter);
 app.use("/api/recovery", recoveryRouter);
 app.use("/api/crypto", cryptoRouter);
 app.use("/api/loans", loansRouter);
+app.use("/api/system", systemRouter);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

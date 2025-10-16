@@ -5,6 +5,7 @@ import AuthProvider from '@/components/AuthProvider'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ScrollToTop from '@/components/ScrollToTop'
 import LiveSupportScript from '@/components/LiveSupportScript'
+import SystemFeedbackBanner from '@/components/SystemFeedbackBanner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,6 +25,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ScrollToTop />
           <AuthProvider>
+            <SystemFeedbackBanner />
             <LiveSupportScript />
             {children}
           </AuthProvider>

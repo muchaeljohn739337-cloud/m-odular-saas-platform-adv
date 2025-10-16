@@ -21,6 +21,8 @@ model User {
   role            String          @default("user") // "admin" or "user"
   usdBalance      Decimal         @default(0) // USD balance from Stripe
   lastLogin       DateTime?
+  termsAccepted   Boolean         @default(false) // User agreement acceptance
+  termsAcceptedAt DateTime?       // When terms were accepted
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   transactions    Transaction[]
@@ -355,4 +357,50 @@ model Loan {
   @@index([status])
   @@index([createdAt])
   @@map("loans")
+}
+
+// ============================================
+// SYSTEM MONITORING & HEALTH STATUS
+// ============================================
+
+// System Status - Monitor site health and uptime
+model SystemStatus {
+  id              String   @id @default(uuid())
+  serviceName     String   // "frontend", "backend", "database", "twilio", etc.
+  status          String   // "operational", "degraded", "down", "maintenance"
+  responseTime    Int?     // Response time in ms
+  uptime          Decimal? // Uptime percentage
+  lastChecked     DateTime @default(now())
+  statusMessage   String?  // Custom status message
+  alertLevel      String   @default("none") // "none", "warning", "danger"
+  metadata        String?  // Additional status information
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([serviceName])
+  @@index([status])
+  @@index([alertLevel])
+  @@index([lastChecked])
+  @@map("system_status")
+}
+
+// System Alert - Track system issues and alerts
+model SystemAlert {
+  id              String   @id @default(uuid())
+  alertType       String   // "security", "performance", "error", "warning"
+  severity        String   // "low", "medium", "high", "critical"
+  title           String
+  description     String
+  serviceName     String?  // Related service
+  isResolved      Boolean  @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String?  // Admin ID who resolved
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([alertType])
+  @@index([severity])
+  @@index([isResolved])
+  @@index([createdAt])
+  @@map("system_alerts")
 }

@@ -14,11 +14,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!termsAccepted) {
+      setError("Please accept the Terms of Service and Privacy Policy to continue.");
+      return;
+    }
+
     setLoading(true);
 
     const result = await signIn("credentials", {
@@ -118,9 +125,39 @@ export default function LoginPage() {
               </div>
             )}
 
+            {/* Terms and Conditions Checkbox */}
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <label htmlFor="terms" className="text-sm text-gray-600">
+                I accept the{" "}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  className="text-blue-600 hover:underline"
+                >
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  className="text-blue-600 hover:underline"
+                >
+                  Privacy Policy
+                </a>
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !termsAccepted}
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Signing In..." : "Sign In"}
