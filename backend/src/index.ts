@@ -10,6 +10,8 @@ import healthRouter from "./routes/health";
 import usersRouter from "./routes/users";
 import paymentsRouter from "./routes/payments";
 import recoveryRouter from "./routes/recovery";
+import cryptoRouter from "./routes/crypto";
+import loansRouter from "./routes/loans";
 import { config } from "./config";
 
 const app = express();
@@ -26,6 +28,11 @@ app.use(cors({
   origin: config.frontendUrl,
   credentials: true
 }));
+
+// Stripe webhook needs raw body - must be before express.json()
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
+
+// Parse JSON for all other routes
 app.use(express.json());
 
 // Routes
@@ -39,6 +46,8 @@ app.use("/api/transactions", createTransactionRouter(io));
 app.use("/api/transaction", createTransactionRouter(io));
 app.use("/api/payments", paymentsRouter);
 app.use("/api/recovery", recoveryRouter);
+app.use("/api/crypto", cryptoRouter);
+app.use("/api/loans", loansRouter);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

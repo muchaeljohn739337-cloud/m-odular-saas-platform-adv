@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Advancia Pay Ledger - Fintech Dashboard',
-  description: 'Modern fintech platform for transaction tracking and analytics',
+  description: 'Modern fintech platform for transaction tracking and crypto trading',
 }
 
 export default function RootLayout({

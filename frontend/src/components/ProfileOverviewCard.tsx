@@ -66,7 +66,7 @@ export default function ProfileOverviewCard({
 
   const formattedTime = useMemo(
     () =>
-      now.toLocaleTimeString([], {
+      now.toLocaleTimeString(undefined, {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
@@ -76,7 +76,7 @@ export default function ProfileOverviewCard({
 
   const formattedDate = useMemo(
     () =>
-      new Intl.DateTimeFormat("en-US", {
+      new Intl.DateTimeFormat(undefined, {
         weekday: "long",
         day: "2-digit",
         month: "long",

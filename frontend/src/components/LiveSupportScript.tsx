@@ -4,13 +4,6 @@ import { useEffect } from "react";
 
 const SMARTSUPP_KEY = process.env.NEXT_PUBLIC_SMARTSUPP_KEY;
 
-declare global {
-  interface Window {
-    smartsupp?: ((...args: unknown[]) => void) & { _: unknown[] };
-    _smartsupp?: { key?: string };
-  }
-}
-
 export default function LiveSupportScript() {
   useEffect(() => {
     if (!SMARTSUPP_KEY) {

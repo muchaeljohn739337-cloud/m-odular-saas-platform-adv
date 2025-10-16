@@ -12,7 +12,7 @@ import {
   Wallet,
 } from "lucide-react";
 import SummaryCard from "@/components/SummaryCard";
-import BonusCard from "@/components/BonusCard";
+import LoanCard from "@/components/LoanCard";
 import BalanceDropdown from "@/components/BalanceDropdown";
 import TransactionList from "@/components/TransactionList";
 import BalanceChart from "@/components/BalanceChart";
@@ -161,11 +161,22 @@ export default function Dashboard() {
   }, [transactions]);
 
   const netBalance = balance?.total ?? totals.credits - totals.debits;
-  const bonusPercentage = useMemo(() => {
-    if (!totals.credits) return 15;
-    const calculated = Math.round(((balance?.earnings ?? totals.bonuses) / totals.credits) * 100);
-    return Math.min(Math.max(calculated || 15, 5), 40);
-  }, [balance?.earnings, totals.bonuses, totals.credits]);
+  
+  const loanInterestRate = useMemo(() => {
+    // Calculate loan interest rate based on credit score/activity
+    // Better credit history = lower interest rate
+    const baseRate = 8.5; // Base APR
+    const activityBonus = Math.min(transactions.length / 100, 2); // Max 2% discount
+    return parseFloat(Math.max(baseRate - activityBonus, 4.5).toFixed(1));
+  }, [transactions.length]);
+
+  const availableCredit = useMemo(() => {
+    // Calculate available credit based on balance and activity
+    const baseCredit = 5000;
+    const currentBalance = balance?.total ?? 0;
+    const balanceMultiplier = Math.min(currentBalance / 1000, 10);
+    return Math.min(baseCredit + (balanceMultiplier * 500), 25000);
+  }, [balance?.total]);
 
   const handleShowBreakdown = () => {
     if (!balance) return;
@@ -387,10 +398,10 @@ export default function Dashboard() {
                 : { onClick: undefined })}
             />
           ))}
-          <BonusCard
-            earnings={balance?.earnings ?? totals.bonuses}
-            percentage={bonusPercentage}
-            delay={0.3}
+          <LoanCard
+            availableCredit={availableCredit}
+            interestRate={loanInterestRate}
+            delay={0.6}
           />
         </section>
 

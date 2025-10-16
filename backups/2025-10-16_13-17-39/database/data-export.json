@@ -1,0 +1,105 @@
+{
+  "exportDate": "2025-10-16T17:17:41.075Z",
+  "users": [
+    {
+      "id": "9fd3531c-9b72-4740-9248-206cd9011d13",
+      "email": "test@crypto.demo",
+      "username": "testuser",
+      "passwordHash": "demo-hash",
+      "firstName": "Test",
+      "lastName": "User",
+      "role": "user",
+      "usdBalance": "500",
+      "lastLogin": null,
+      "createdAt": "2025-10-16T16:01:28.189Z",
+      "updatedAt": "2025-10-16T16:01:28.192Z"
+    }
+  ],
+  "adminSettings": [
+    {
+      "id": "797d3c1b-2672-4dea-bb6d-a35b0dd23217",
+      "btcAddress": "bc1q37a9kpzyea5cahpyx8xpx6v7vr5na64f4cxxnt",
+      "ethAddress": "0x2b80613e3569d0ba85BFc9375B20096D72Bad1A8",
+      "usdtAddress": "TPMtG5Ypvsi82gXHpa5YUtFfXLXfgsVZkN ",
+      "ltcAddress": null,
+      "otherAddresses": null,
+      "exchangeRateBtc": "45000",
+      "exchangeRateEth": "2800",
+      "exchangeRateUsdt": "1",
+      "processingFeePercent": "2.5",
+      "minPurchaseAmount": "10",
+      "updatedAt": "2025-10-16T15:51:04.586Z",
+      "createdAt": "2025-10-16T15:51:04.586Z"
+    }
+  ],
+  "cryptoOrders": [
+    {
+      "id": "a8908503-89e8-4d85-91a2-23968352c873",
+      "userId": "9fd3531c-9b72-4740-9248-206cd9011d13",
+      "cryptoType": "BTC",
+      "usdAmount": "100",
+      "cryptoAmount": "0.00222",
+      "exchangeRate": "45000",
+      "processingFee": "2.5",
+      "totalUsd": "102.5",
+      "status": "pending",
+      "adminAddress": "bc1q37a9kpzyea5cahpyx8xpx6v7vr5na64f4cxxnt",
+      "txHash": null,
+      "adminNotes": null,
+      "userWalletAddress": "1A1z7agoat2YLZW51Jno8F2d3K5V7j7fL3",
+      "stripeSessionId": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "createdAt": "2025-10-16T16:01:53.536Z",
+      "updatedAt": "2025-10-16T16:01:53.539Z",
+      "user": {
+        "id": "9fd3531c-9b72-4740-9248-206cd9011d13",
+        "email": "test@crypto.demo",
+        "username": "testuser",
+        "passwordHash": "demo-hash",
+        "firstName": "Test",
+        "lastName": "User",
+        "role": "user",
+        "usdBalance": "500",
+        "lastLogin": null,
+        "createdAt": "2025-10-16T16:01:28.189Z",
+        "updatedAt": "2025-10-16T16:01:28.192Z"
+      }
+    },
+    {
+      "id": "8296a990-f24a-4719-a345-9c69a5196edc",
+      "userId": "9fd3531c-9b72-4740-9248-206cd9011d13",
+      "cryptoType": "ETH",
+      "usdAmount": "250",
+      "cryptoAmount": "0.08929",
+      "exchangeRate": "2800",
+      "processingFee": "6.25",
+      "totalUsd": "256.25",
+      "status": "pending",
+      "adminAddress": "0x2b80613e3569d0ba85BFc9375B20096D72Bad1A8",
+      "txHash": null,
+      "adminNotes": null,
+      "userWalletAddress": "0x742d35Cc6634C0532925a3b844Bc2e7595f6FED3",
+      "stripeSessionId": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "createdAt": "2025-10-16T16:01:53.551Z",
+      "updatedAt": "2025-10-16T16:01:53.553Z",
+      "user": {
+        "id": "9fd3531c-9b72-4740-9248-206cd9011d13",
+        "email": "test@crypto.demo",
+        "username": "testuser",
+        "passwordHash": "demo-hash",
+        "firstName": "Test",
+        "lastName": "User",
+        "role": "user",
+        "usdBalance": "500",
+        "lastLogin": null,
+        "createdAt": "2025-10-16T16:01:28.189Z",
+        "updatedAt": "2025-10-16T16:01:28.192Z"
+      }
+    }
+  ],
+  "cryptoWithdrawals": [],
+  "transactions": []
+}

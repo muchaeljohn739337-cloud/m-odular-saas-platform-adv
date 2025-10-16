@@ -1,8 +1,25 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Home,
+  BarChart3,
+  Wallet,
+  Grid3x3,
+  Settings,
+  User,
+  Shield,
+  Menu,
+  X,
+  ChevronRight,
+  LogOut,
+  LucideIcon,
+  Banknote,
+} from "lucide-react";
 
 type SessionUser = {
   id?: string;
@@ -12,11 +29,19 @@ type SessionUser = {
   image?: string | null;
 };
 
+interface NavLinkProps {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  onClick?: () => void;
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const sessionUser = session?.user as SessionUser | undefined;
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Check if user is admin
   const userRole = sessionUser?.role || sessionUser?.email;
   const isAdmin = userRole === "admin" || 
                   sessionUser?.email === "admin@advancia.com" ||
@@ -40,93 +65,224 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return `${primary}${secondary}`.toUpperCase();
   }, [displayName]);
 
-  const navLinkClasses =
-    "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-200";
+  const navItems = [
+    { href: "/", label: "Dashboard", icon: Home },
+    { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/assets", label: "My Assets", icon: Wallet },
+    { href: "/loans", label: "Loans", icon: Banknote },
+    { href: "/features", label: "Features", icon: Grid3x3 },
+    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/profile", label: "Profile", icon: User },
+  ];
+
+  const NavLink = ({ href, label, icon: Icon, onClick }: NavLinkProps) => {
+    const isActive = pathname === href;
+    return (
+      <Link
+        href={href}
+        onClick={onClick}
+        className={`
+          group relative flex items-center gap-3 px-4 py-3.5 rounded-xl
+          transition-all duration-300 ease-out
+          ${isActive 
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30' 
+            : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-700'
+          }
+          active:scale-95 touch-manipulation
+        `}
+      >
+        <Icon className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : ''}`} />
+        <span className="font-medium truncate">{label}</span>
+        {!isActive && (
+          <ChevronRight className="ml-auto h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+        )}
+      </Link>
+    );
+  };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r flex flex-col p-6 shadow-lg">
-        <h1 className="text-2xl font-bold text-blue-700 mb-8">
-          Advancia<span className="text-gray-600">Pay</span>
-        </h1>
-        <nav className="flex-1 space-y-3">
-          <Link href="/" className={navLinkClasses}>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Dashboard
-          </Link>
-          <Link href="/analytics" className={navLinkClasses}>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Analytics
-          </Link>
-          <Link href="/assets" className={navLinkClasses}>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-            My Assets
-          </Link>
-          <Link href="/features" className={navLinkClasses}>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            Features
-          </Link>
-          <Link href="/settings" className={navLinkClasses}>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Settings
-          </Link>
-          <Link href="/profile" className={navLinkClasses}>
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118 8m0 0v5m0-5h-5" />
-            </svg>
-            Profile
-          </Link>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
+        <div className="flex items-center justify-between p-4">
+          <h1 className="text-xl font-bold">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Advancia
+            </span>
+            <span className="text-purple-400">Pay</span>
+          </h1>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2.5 rounded-xl hover:bg-gray-100 active:scale-95 transition-all touch-manipulation"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-0 bg-black/50 z-40"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="lg:hidden fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 shadow-2xl flex flex-col"
+            >
+              <div className="p-6 border-b">
+                <h1 className="text-2xl font-bold">
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Advancia
+                  </span>
+                  <span className="text-purple-400">Pay</span> Ledger
+                </h1>
+              </div>
+              
+              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    {...item}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  />
+                ))}
+                
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`
+                      group flex items-center gap-3 px-4 py-3.5 rounded-xl
+                      border-2 border-red-200 mt-4
+                      ${pathname === '/admin'
+                        ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white shadow-lg'
+                        : 'text-red-600 hover:bg-red-50'
+                      }
+                      transition-all active:scale-95 touch-manipulation
+                    `}
+                  >
+                    <Shield className="h-5 w-5 shrink-0" />
+                    <span className="font-bold">Admin Panel</span>
+                  </Link>
+                )}
+              </nav>
+
+              <div className="p-4 border-t bg-gradient-to-br from-gray-50 to-blue-50">
+                <div className="flex items-center gap-3 mb-3">
+                  {sessionUser?.image ? (
+                    <Image
+                      src={sessionUser.image}
+                      alt={displayName}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-full object-cover ring-2 ring-blue-500 shrink-0"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                      {initials || "U"}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                    {sessionUser?.email && (
+                      <p className="text-xs text-gray-500 truncate">{sessionUser.email}</p>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  href="/api/auth/signout"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-all active:scale-95 touch-manipulation shadow-md"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Link>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-72 bg-white border-r flex-col shadow-xl">
+        <div className="p-6 border-b bg-gradient-to-br from-white to-blue-50">
+          <h1 className="text-2xl font-bold">
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Advancia
+            </span>
+            <span className="text-purple-400">Pay</span> Ledger
+          </h1>
+        </div>
+        
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
           
-          {/* Admin Panel - Only visible to admins */}
           {isAdmin && (
             <Link
               href="/admin"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 border-t-2 border-red-200 mt-3 pt-3 text-gray-700 hover:text-red-600 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+              className={`
+                group flex items-center gap-3 px-4 py-3.5 rounded-xl
+                border-2 border-red-200 mt-4
+                ${pathname === '/admin'
+                  ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white shadow-lg'
+                  : 'text-red-600 hover:bg-red-50'
+                }
+                transition-all active:scale-95
+              `}
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <span className="font-bold text-red-600">Admin Panel</span>
+              <Shield className="h-5 w-5 shrink-0" />
+              <span className="font-bold">Admin Panel</span>
             </Link>
           )}
         </nav>
-        <div className="flex items-center gap-3 mt-auto pt-4 border-t border-gray-200">
-          {sessionUser?.image ? (
-            <Image
-              src={sessionUser.image}
-              alt={`${displayName}'s profile photo`}
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-              {initials || "U"}
-            </div>
-          )}
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-gray-700">{displayName}</span>
-            {sessionUser?.email && (
-              <span className="text-xs text-gray-500">{sessionUser.email}</span>
+
+        <div className="p-4 border-t bg-gradient-to-br from-gray-50 to-blue-50">
+          <div className="flex items-center gap-3 mb-3">
+            {sessionUser?.image ? (
+              <Image
+                src={sessionUser.image}
+                alt={displayName}
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-full object-cover ring-2 ring-blue-500 shrink-0"
+              />
+            ) : (
+              <div className="h-12 w-12 shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                {initials || "U"}
+              </div>
             )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+              {sessionUser?.email && (
+                <p className="text-xs text-gray-500 truncate">{sessionUser.email}</p>
+              )}
+            </div>
           </div>
+          <Link
+            href="/api/auth/signout"
+            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-all active:scale-95 shadow-md"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Link>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 bg-gray-50">{children}</div>
+      <div className="flex-1 bg-gray-50 pt-16 lg:pt-0">
+        {children}
+      </div>
     </div>
   );
 }

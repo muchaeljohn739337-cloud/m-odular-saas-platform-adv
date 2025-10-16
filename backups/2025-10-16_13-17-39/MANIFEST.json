@@ -1,0 +1,24 @@
+{
+  "backupDate": "2025-10-16 13:17:41",
+  "timestamp": "2025-10-16_13-17-39",
+  "instructions": {
+    "viewBackup": "Browse the backup folder to see all backed up files",
+    "restore": "To restore: Copy dev.db to backend/ folder, then run 'npx prisma migrate deploy'",
+    "importData": "To import JSON: Use backend/scripts/import-data.js"
+  },
+  "system": {
+    "hostname": "DESKTOP-H7T9NPM",
+    "platform": "Win32NT",
+    "psVersion": "7.5.3"
+  },
+  "version": "1.0",
+  "contents": {
+    "schema": true,
+    "database": false,
+    "dataExport": true,
+    "scripts": 8,
+    "config": 9,
+    "documentation": 7,
+    "migrations": true
+  }
+}

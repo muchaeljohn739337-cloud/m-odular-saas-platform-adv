@@ -1,0 +1,358 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and user management
+model User {
+  id              String          @id @default(uuid())
+  email           String          @unique
+  username        String          @unique
+  passwordHash    String
+  firstName       String?
+  lastName        String?
+  role            String          @default("user") // "admin" or "user"
+  usdBalance      Decimal         @default(0) // USD balance from Stripe
+  lastLogin       DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  transactions    Transaction[]
+  debitCards      DebitCard[]
+  tokenWallet     TokenWallet?
+  userTier        UserTier?
+  rewards         Reward[]
+  healthReadings  HealthReading[]
+  cryptoOrders    CryptoOrder[]
+  cryptoWithdrawals CryptoWithdrawal[]
+  loans           Loan[]
+  
+  @@map("users")
+}
+
+// Transaction model for financial transactions
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Decimal
+  type        String   // "credit" or "debit"
+  description String?
+  category    String?
+  status      String   @default("completed") // "pending", "completed", "failed"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+// Debit Card model
+model DebitCard {
+  id              String   @id @default(uuid())
+  userId          String
+  cardNumber      String   @unique
+  cardHolderName  String
+  expiryMonth     Int
+  expiryYear      Int
+  cvv             String
+  cardType        String   @default("virtual") // "virtual" or "physical"
+  status          String   @default("active") // "active", "blocked", "expired"
+  balance         Decimal  @default(0)
+  dailyLimit      Decimal  @default(1000)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([cardNumber])
+  @@map("debit_cards")
+}
+
+// Session model for user sessions
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// Audit Log model for tracking important actions
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  resource  String
+  details   String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// TOKEN WALLET & DIGITAL CURRENCY SYSTEM
+// ============================================
+
+// Token Wallet - Manages user's digital token balance
+model TokenWallet {
+  id              String            @id @default(uuid())
+  userId          String            @unique
+  balance         Decimal           @default(0)
+  tokenType       String            @default("ADVANCIA")
+  lockedBalance   Decimal           @default(0)
+  lifetimeEarned  Decimal           @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    TokenTransaction[]
+  
+  @@index([userId])
+  @@map("token_wallets")
+}
+
+// Token Transaction - Records all token movements
+model TokenTransaction {
+  id          String      @id @default(uuid())
+  walletId    String
+  amount      Decimal
+  type        String      // "earn", "withdraw", "cashout", "transfer", "bonus", "reward"
+  status      String      @default("completed") // "pending", "completed", "failed", "cancelled"
+  description String?
+  toAddress   String?     // For transfers
+  fromAddress String?     // For incoming transfers
+  txHash      String?     // Blockchain transaction hash (if applicable)
+  metadata    String?       // Additional data (exchange rates, fees, etc.)
+  createdAt   DateTime    @default(now())
+  
+  wallet      TokenWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  @@index([walletId])
+  @@index([createdAt])
+  @@index([type])
+  @@index([status])
+  @@map("token_transactions")
+}
+
+// ============================================
+// REWARDS & GAMIFICATION SYSTEM
+// ============================================
+
+// Reward - Individual rewards earned by users
+model Reward {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // "bonus", "referral", "milestone", "achievement", "daily", "special"
+  amount      Decimal
+  status      String   @default("pending") // "pending", "claimed", "expired"
+  title       String
+  description String
+  metadata    String?    // Additional reward data
+  expiresAt   DateTime?
+  claimedAt   DateTime?
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("rewards")
+}
+
+// User Tier - Gamification level and progress
+model UserTier {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  currentTier         String   @default("bronze") // bronze, silver, gold, platinum, diamond
+  points              Int      @default(0)
+  lifetimePoints      Int      @default(0)
+  lifetimeRewards     Decimal  @default(0)
+  streak              Int      @default(0) // Daily login streak
+  longestStreak       Int      @default(0)
+  lastActiveDate      DateTime @default(now())
+  achievements        String?    // Array of achievement IDs
+  badges              String?    // Array of badge IDs
+  referralCode        String?  @unique
+  referredBy          String?
+  totalReferrals      Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([currentTier])
+  @@index([points])
+  @@index([referralCode])
+  @@map("user_tiers")
+}
+
+// ============================================
+// HEALTH & WELLNESS (MEDBED INTEGRATION)
+// ============================================
+
+// Health Reading - Stores health metrics from connected devices
+model HealthReading {
+  id                String   @id @default(uuid())
+  userId            String
+  heartRate         Int?     // BPM
+  bloodPressureSys  Int?     // Systolic
+  bloodPressureDia  Int?     // Diastolic
+  steps             Int?     // Daily steps
+  sleepHours        Decimal? // Hours of sleep
+  sleepQuality      String?  // "poor", "fair", "good", "excellent"
+  weight            Decimal? // in kg
+  temperature       Decimal? // in Celsius
+  oxygenLevel       Int?     // SpO2 percentage
+  stressLevel       String?  // "low", "medium", "high"
+  mood              String?  // "happy", "neutral", "sad", "anxious"
+  deviceId          String?  // ID of device used
+  deviceType        String?  // "smartwatch", "fitness_tracker", "manual"
+  metadata          String?    // Additional health data
+  notes             String?  // User notes
+  recordedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([recordedAt])
+  @@index([createdAt])
+  @@map("health_readings")
+}
+
+// ============================================
+// CRYPTO PURCHASE & WITHDRAWAL SYSTEM
+// ============================================
+
+// Admin Settings - Store admin wallet addresses
+model AdminSettings {
+  id                    String   @id @default(uuid())
+  btcAddress            String?  // Bitcoin receiving address
+  ethAddress            String?  // Ethereum receiving address
+  usdtAddress           String?  // USDT receiving address
+  ltcAddress            String?  // Litecoin receiving address
+  otherAddresses        String?    // Additional crypto addresses
+  exchangeRateBtc       Decimal? // BTC to USD rate
+  exchangeRateEth       Decimal? // ETH to USD rate
+  exchangeRateUsdt      Decimal? // USDT to USD rate
+  processingFeePercent  Decimal  @default(2.5) // 2.5% fee
+  minPurchaseAmount     Decimal  @default(10) // Minimum $10
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime @default(now())
+  
+  @@map("admin_settings")
+}
+
+// Crypto Order - User purchases crypto with USD
+model CryptoOrder {
+  id                String   @id @default(uuid())
+  userId            String
+  cryptoType        String   // "BTC", "ETH", "USDT", "LTC", etc.
+  usdAmount         Decimal  // Amount paid in USD
+  cryptoAmount      Decimal  // Amount of crypto to receive
+  exchangeRate      Decimal  // Exchange rate at time of order
+  processingFee     Decimal  // Fee charged
+  totalUsd          Decimal  // Total USD deducted
+  status            String   @default("pending") // "pending", "processing", "completed", "cancelled"
+  adminAddress      String   // Admin wallet address for this crypto
+  txHash            String?  // Blockchain transaction hash when admin sends
+  adminNotes        String?  // Admin notes/comments
+  userWalletAddress String?  // User's wallet address for receiving
+  stripeSessionId   String?  // Reference to Stripe payment
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([cryptoType])
+  @@index([createdAt])
+  @@map("crypto_orders")
+}
+
+// Crypto Withdrawal - User requests to withdraw crypto
+model CryptoWithdrawal {
+  id                String   @id @default(uuid())
+  userId            String
+  cryptoType        String   // "BTC", "ETH", "USDT", "LTC", etc.
+  cryptoAmount      Decimal  // Amount to withdraw
+  usdEquivalent     Decimal  // USD value at time of request
+  withdrawalAddress String   // User's wallet address
+  status            String   @default("pending") // "pending", "approved", "rejected", "completed", "cancelled"
+  adminApprovedBy   String?  // Admin ID who approved/rejected
+  adminNotes        String?  // Admin reason for approval/rejection
+  txHash            String?  // Blockchain transaction hash
+  networkFee        Decimal? // Network fee paid
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([cryptoType])
+  @@index([createdAt])
+  @@map("crypto_withdrawals")
+}
+
+// ============================================
+// LOAN SYSTEM
+// ============================================
+
+// Loan - User loan applications and active loans
+model Loan {
+  id                String   @id @default(uuid())
+  userId            String
+  amount            Decimal  // Principal loan amount
+  interestRate      Decimal  // Annual interest rate (APR)
+  termMonths        Int      // Loan term in months
+  monthlyPayment    Decimal  // Calculated monthly payment
+  remainingBalance  Decimal  // Outstanding balance
+  status            String   @default("pending") // "pending", "active", "paid", "defaulted", "cancelled"
+  purpose           String   // Loan purpose (business, personal, etc.)
+  startDate         DateTime @default(now())
+  dueDate           DateTime // Final due date
+  approvedBy        String?  // Admin ID who approved
+  approvedAt        DateTime?
+  paidOffAt         DateTime?
+  defaultedAt       DateTime?
+  cancelledAt       DateTime?
+  adminNotes        String?  // Admin comments
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("loans")
+}
