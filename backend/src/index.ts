@@ -14,6 +14,7 @@ import cryptoRouter from "./routes/crypto";
 import loansRouter from "./routes/loans";
 import systemRouter from "./routes/system";
 import { config } from "./config";
+import { rateLimit, validateInput, securityHeaders } from "./middleware/security";
 
 const app = express();
 const server = createServer(app);
@@ -29,6 +30,29 @@ app.use(cors({
   origin: config.frontendUrl,
   credentials: true
 }));
+
+// Security middlewares
+app.use(securityHeaders);
+app.use(validateInput);
+
+// Rate limiting for authentication endpoints
+app.use(
+  "/api/auth",
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 5, // 5 requests per 15 minutes
+    message: "Too many authentication attempts, please try again later.",
+  })
+);
+
+// General rate limiting for all API endpoints
+app.use(
+  "/api",
+  rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    maxRequests: 100, // 100 requests per minute
+  })
+);
 
 // Stripe webhook needs raw body - must be before express.json()
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
