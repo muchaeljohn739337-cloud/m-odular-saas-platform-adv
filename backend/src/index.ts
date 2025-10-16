@@ -2,31 +2,43 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import dotenv from "dotenv";
 import createTransactionRouter from "./routes/transaction";
-
-dotenv.config();
+import authRouter from "./routes/auth";
+import tokenRouter from "./routes/tokens";
+import rewardsRouter from "./routes/rewards";
+import healthRouter from "./routes/health";
+import usersRouter from "./routes/users";
+import paymentsRouter from "./routes/payments";
+import recoveryRouter from "./routes/recovery";
+import { config } from "./config";
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: config.frontendUrl,
     methods: ["GET", "POST"]
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: config.frontendUrl,
   credentials: true
 }));
 app.use(express.json());
 
 // Routes
+app.use("/api/auth", authRouter);
+app.use("/api/tokens", tokenRouter);
+app.use("/api/rewards", rewardsRouter);
+app.use("/api/health", healthRouter);
+app.use("/api/users", usersRouter);
 app.use("/api/transactions", createTransactionRouter(io));
 // Compatibility mount for singular form used by clients/tests
 app.use("/api/transaction", createTransactionRouter(io));
+app.use("/api/payments", paymentsRouter);
+app.use("/api/recovery", recoveryRouter);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -47,10 +59,8 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+server.listen(config.port, () => {
+  console.log(`🚀 Server running on port ${config.port}`);
   console.log(`📡 Socket.IO server ready`);
 });
 

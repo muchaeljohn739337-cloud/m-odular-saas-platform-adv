@@ -117,21 +117,41 @@ export default function createTransactionRouter(io: Server) {
     }
   });
 
-  // Calculate balance for a user
+  // Calculate balance for a user with detailed breakdown
   router.get("/balance/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
       const userTransactions = transactions.filter(t => t.userId === userId);
       
-      const balance = userTransactions.reduce((acc, transaction) => {
+      // Calculate main balance (credits - debits)
+      const balance_main = userTransactions.reduce((acc, transaction) => {
         return transaction.type === "credit" 
           ? acc + transaction.amount 
           : acc - transaction.amount;
       }, 0);
 
+      // Calculate bonus/earnings (15% of all credits)
+      const totalCredits = userTransactions
+        .filter(t => t.type === "credit")
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const bonus_amount = totalCredits * 0.15; // 15% bonus on credits
+
+      // Referral rewards (placeholder - can be customized)
+      const referral_amount = 0;
+
+      // Total available balance
+      const total = balance_main + bonus_amount + referral_amount;
+
       res.json({
         success: true,
-        balance: parseFloat(balance.toFixed(2))
+        userId,
+        balance_main: parseFloat(balance_main.toFixed(2)),
+        earnings: parseFloat(bonus_amount.toFixed(2)), // Maps to bonus_amount
+        referral: parseFloat(referral_amount.toFixed(2)), // Maps to referral_amount
+        total: parseFloat(total.toFixed(2)),
+        // Legacy compatibility
+        balance: parseFloat(total.toFixed(2))
       });
     } catch (error) {
       console.error("Error calculating balance:", error);

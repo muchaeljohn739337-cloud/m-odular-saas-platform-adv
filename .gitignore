@@ -3,6 +3,7 @@ dist/
 build/
 .env
 .env.local
+encrypted_secrets_*.env
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -26,3 +27,11 @@ dev.db
 dev.db-journal
 *.sqlite
 *.sqlite3
+
+# Local helper scripts & tooling
+quick-fix.ps1
+setup-github.bat
+test-sms-simple.ps1
+test-twilio-sms.ps1
+test-twilio-verify-direct.ps1
+tools/
