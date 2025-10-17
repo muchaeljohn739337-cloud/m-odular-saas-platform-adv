@@ -1,8 +1,6 @@
 # 🔄 AUTO-CHECK DEPLOYMENT STATUS
+# Run this PowerShell script to automatically check when deployment is ready
 
-## Run this PowerShell script to automatically check when deployment is ready:
-
-```powershell
 Write-Host "`n🚀 Checking deployment status every 30 seconds..." -ForegroundColor Cyan
 Write-Host "Press Ctrl+C to stop`n" -ForegroundColor Gray
 
@@ -51,36 +49,14 @@ while ($true) {
 
 Write-Host "`n✅ DEPLOYMENT COMPLETE!`n" -ForegroundColor Green
 Write-Host "Test registration now:" -ForegroundColor Cyan
-Write-Host @"
-`$body = @{
-    email = 'yourtest@example.com'
-    password = 'YourPassword123'
-    firstName = 'Your'
-    lastName = 'Name'
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri 'https://advancia-backend.onrender.com/api/auth/register' ``
-    -Method Post ``
-    -Body `$body ``
-    -ContentType 'application/json'
-"@ -ForegroundColor White
-```
-
----
-
-## Or just wait 5 minutes and run this test:
-
-```powershell
-# Test registration
-$body = @{
-    email = 'testuser@example.com'
-    password = 'Test123456'
-    firstName = 'Test'
-    lastName = 'User'
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri 'https://advancia-backend.onrender.com/api/auth/register' `
-    -Method Post `
-    -Body $body `
-    -ContentType 'application/json'
-```
+Write-Host ""
+Write-Host "Example test command:" -ForegroundColor Gray
+Write-Host '$body = @{' -ForegroundColor White
+Write-Host '    email = "testuser@example.com"' -ForegroundColor White
+Write-Host '    password = "Test123456"' -ForegroundColor White
+Write-Host '    firstName = "Test"' -ForegroundColor White
+Write-Host '    lastName = "User"' -ForegroundColor White
+Write-Host '} | ConvertTo-Json' -ForegroundColor White
+Write-Host ""
+Write-Host 'Invoke-RestMethod -Uri "https://advancia-backend.onrender.com/api/auth/register" -Method Post -Body $body -ContentType "application/json"' -ForegroundColor White
+Write-Host ""
