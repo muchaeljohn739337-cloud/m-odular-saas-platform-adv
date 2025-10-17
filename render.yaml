@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: advancia-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm ci && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: advancia-db
+          property: connectionString
+      - key: FRONTEND_URL
+        value: https://advancia-frontend.onrender.com
+      - key: JWT_SECRET_ENCRYPTED
+        sync: false
+      - key: JWT_ENCRYPTION_KEY
+        sync: false
+      - key: JWT_ENCRYPTION_IV
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+    healthCheckPath: /health
+    routes:
+      - path: /api
+        destination: http://localhost:4000/api
+
+  - type: web
+    name: advancia-frontend
+    env: node
+    plan: free
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://advancia-backend.onrender.com/api
+    healthCheckPath: /
+    routes:
+      - path: /
+        destination: http://localhost:3000
+
+databases:
+  - name: advancia-db
+    databaseName: advancia_prod
+    user: advancia_user
+    plan: free
