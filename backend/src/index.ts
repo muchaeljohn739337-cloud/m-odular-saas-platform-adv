@@ -93,6 +93,29 @@ app.get("/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });
 });
 
+// Database test endpoint
+app.get("/api/db-test", async (req, res) => {
+  try {
+    const prisma = require('./prismaClient').default;
+    
+    // Try to query the database
+    const userCount = await prisma.user.count();
+    
+    res.json({
+      status: "connected",
+      message: "Database connection successful",
+      userCount
+    });
+  } catch (error) {
+    console.error("Database test error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Database connection failed",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);

@@ -94,7 +94,11 @@ router.post("/register", validateApiKey, async (req, res) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
-    res.status(500).json({ error: "Failed to register user" });
+    // Log full error for debugging
+    res.status(500).json({ 
+      error: "Failed to register user",
+      details: error instanceof Error ? error.message : "Unknown error"
+    });
   }
 });
 
