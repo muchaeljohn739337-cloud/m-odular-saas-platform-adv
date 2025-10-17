@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config";
 
@@ -17,7 +17,7 @@ export interface AuthRequest extends Request {
  * Middleware to verify JWT token
  */
 export const authenticateToken = (
-  req: AuthRequest,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {
@@ -41,7 +41,7 @@ export const authenticateToken = (
  * Middleware to check if user is admin
  */
 export const requireAdmin = (
-  req: AuthRequest,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {
@@ -68,13 +68,13 @@ export const requireAdmin = (
  * Middleware to restrict regular users from backend access
  */
 export const restrictBackendAccess = (
-  req: AuthRequest,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {
   // Allow public routes
   const publicRoutes = ["/health", "/auth/send-otp", "/auth/verify-otp"];
-  if (publicRoutes.some((route) => (req as any).path.startsWith(route))) {
+  if (publicRoutes.some((route) => req.path.startsWith(route))) {
     return next();
   }
 
@@ -94,7 +94,7 @@ export const restrictBackendAccess = (
     req.user = payload;
 
     // Admin routes require admin role
-    if ((req as any).path.startsWith("/admin")) {
+    if (req.path.startsWith("/admin")) {
       return requireAdmin(req, res, next);
     }
 
@@ -112,15 +112,15 @@ export const restrictBackendAccess = (
  * Middleware to log admin actions
  */
 export const logAdminAction = (
-  req: AuthRequest,
+  req: any,
   res: Response,
   next: NextFunction
 ) => {
   if (req.user) {
-    console.log(`[ADMIN ACTION] ${req.method} ${(req as any).path}`, {
+    console.log(`[ADMIN ACTION] ${req.method} ${req.path}`, {
       admin: req.user.email,
       timestamp: new Date().toISOString(),
-      ip: (req as any).ip,
+      ip: req.ip,
       userAgent: req.headers["user-agent"],
     });
   }
