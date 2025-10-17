@@ -8,11 +8,30 @@ import { config } from "../config";
 const router = express.Router();
 
 /**
+ * Middleware: Validate API Key
+ */
+const validateApiKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const apiKey = req.headers["x-api-key"];
+  const expectedKey = process.env.API_KEY;
+  
+  // Allow requests without API key in development
+  if (process.env.NODE_ENV === "development" && !expectedKey) {
+    return next();
+  }
+  
+  if (!apiKey || apiKey !== expectedKey) {
+    return res.status(401).json({ error: "Invalid or missing API key" });
+  }
+  
+  next();
+};
+
+/**
  * Register new user with email/password
  * POST /api/auth/register
  * Body: { email: string, password: string, username?: string, firstName?: string, lastName?: string }
  */
-router.post("/register", async (req, res) => {
+router.post("/register", validateApiKey, async (req, res) => {
   try {
     const { email, password, username, firstName, lastName } = req.body;
 
@@ -80,11 +99,11 @@ router.post("/register", async (req, res) => {
 });
 
 /**
- * Login with email/password
+ * Login user with email/password
  * POST /api/auth/login
  * Body: { email: string, password: string }
  */
-router.post("/login", async (req, res) => {
+router.post("/login", validateApiKey, async (req, res) => {
   try {
     const { email, password } = req.body;
 
