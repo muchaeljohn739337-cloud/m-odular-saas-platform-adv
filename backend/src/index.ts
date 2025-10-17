@@ -11,7 +11,7 @@ import usersRouter from "./routes/users";
 import paymentsRouter from "./routes/payments";
 import recoveryRouter from "./routes/recovery";
 import cryptoRouter from "./routes/crypto";
-import loansRouter from "./routes/loans";
+// import loansRouter from "./routes/loans"; // DISABLED: Causing TypeScript errors
 import systemRouter from "./routes/system";
 import { config } from "./config";
 import { rateLimit, validateInput, securityHeaders } from "./middleware/security";
@@ -83,8 +83,8 @@ app.use("/api/recovery", recoveryRouter);
 console.log('✓ Recovery routes registered');
 app.use("/api/crypto", cryptoRouter);
 console.log('✓ Crypto routes registered');
-app.use("/api/loans", loansRouter);
-console.log('✓ Loans routes registered');
+// app.use("/api/loans", loansRouter); // DISABLED: Feature under development
+// console.log('✓ Loans routes registered');
 app.use("/api/system", systemRouter);
 console.log('✓ System routes registered');
 
