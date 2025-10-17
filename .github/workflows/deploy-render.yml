@@ -1,4 +1,15 @@
-name: Deploy to Render
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+  ▲ Next.js 14.2.33
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+src/app/api/auth/[...nextauth]/route.ts
+Type error: Route "src/app/api/auth/[...nextauth]/route.ts" does not match the required types of a Next.js Route.
+  "authOptions" is not a valid Route export field.
+Next.js build worker exited with code: 1 and signal: null
+==> Build failed 😞
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploysname: Deploy to Render
 
 on:
   push:
