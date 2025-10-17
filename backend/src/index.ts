@@ -11,6 +11,7 @@ import usersRouter from "./routes/users";
 import paymentsRouter from "./routes/payments";
 import recoveryRouter from "./routes/recovery";
 import cryptoRouter from "./routes/crypto";
+import rpaRouter from "./rpa/routes";
 // import loansRouter from "./routes/loans"; // DISABLED: Causing TypeScript errors
 import systemRouter from "./routes/system";
 import { config } from "./config";
@@ -87,6 +88,8 @@ console.log('✓ Crypto routes registered');
 // console.log('✓ Loans routes registered');
 app.use("/api/system", systemRouter);
 console.log('✓ System routes registered');
+app.use("/api/rpa", rpaRouter);
+console.log('✓ RPA automation routes registered');
 
 // Health check endpoint
 app.get("/health", (req, res) => {
