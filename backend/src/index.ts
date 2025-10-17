@@ -60,20 +60,33 @@ app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 // Parse JSON for all other routes
 app.use(express.json());
 
+console.log('📋 Registering routes...');
+
 // Routes
 app.use("/api/auth", authRouter);
+console.log('✓ Auth routes registered');
 app.use("/api/tokens", tokenRouter);
+console.log('✓ Token routes registered');
 app.use("/api/rewards", rewardsRouter);
+console.log('✓ Rewards routes registered');
 app.use("/api/health", healthRouter);
+console.log('✓ Health routes registered');
 app.use("/api/users", usersRouter);
+console.log('✓ User routes registered');
 app.use("/api/transactions", createTransactionRouter(io));
+console.log('✓ Transaction routes registered');
 // Compatibility mount for singular form used by clients/tests
 app.use("/api/transaction", createTransactionRouter(io));
 app.use("/api/payments", paymentsRouter);
+console.log('✓ Payment routes registered');
 app.use("/api/recovery", recoveryRouter);
+console.log('✓ Recovery routes registered');
 app.use("/api/crypto", cryptoRouter);
+console.log('✓ Crypto routes registered');
 app.use("/api/loans", loansRouter);
+console.log('✓ Loans routes registered');
 app.use("/api/system", systemRouter);
+console.log('✓ System routes registered');
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -94,10 +107,47 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(config.port, () => {
+const PORT = config.port || 4000;
+
+console.log(`\n📍 About to listen on port ${PORT}...`);
+
+server.listen(PORT, () => {
+  console.log(`✅ Server successfully bound to port ${PORT}`);
   console.log(`🚀 Server running on port ${config.port}`);
   console.log(`📡 Socket.IO server ready`);
+  console.log(`✅ All systems go! Ready to accept connections.`);
 });
 
-// Export io (if needed elsewhere)
-export { io };
+// Error handling
+server.on('error', (error: any) => {
+  console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use`);
+  }
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+console.log('✅ Backend server ready and listening...');
+
+// Keep the Node process alive
+let heartbeat = setInterval(() => {
+  // Silent heartbeat to keep process alive
+}, 30000);
+
+// Prevent heartbeat from keeping the process alive indefinitely
+heartbeat.unref();
+
+// Debug: Verify server is really listening
+setTimeout(() => {
+  const addr = server.address();
+  console.log(`\n🔍 Debug: Server address info:`, addr);
+}, 100);
