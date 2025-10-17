@@ -194,11 +194,11 @@ router.post("/claim", async (req, res) => {
           amount: bonusAmount,
           type: "reward",
           description: `Claimed: ${reward.title}`,
-          metadata: {
+          metadata: JSON.stringify({
             rewardId: reward.id,
             rewardType: reward.type,
             tierMultiplier,
-          },
+          }),
           status: "completed",
         },
       }),

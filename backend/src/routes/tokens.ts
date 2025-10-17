@@ -128,11 +128,11 @@ router.post("/withdraw", async (req, res) => {
           description: `Withdrawal to ${toAddress}`,
           toAddress,
           status: "completed",
-          metadata: {
+          metadata: JSON.stringify({
             fee: fee.toString(),
             netAmount: netAmount.toString(),
             timestamp: new Date().toISOString(),
-          },
+          }),
         },
       }),
     ]);
@@ -202,13 +202,13 @@ router.post("/cashout", async (req, res) => {
           amount: cashoutAmount,
           type: "cashout",
           description: `Cash out: $${netFiat.toFixed(2)} USD`,
-          metadata: {
+          metadata: JSON.stringify({
             fiatAmount: netFiat.toString(),
             rate: exchangeRate,
             fee: fee.toString(),
             currency: "USD",
             timestamp: new Date().toISOString(),
-          },
+          }),
           status: "completed",
         },
       }),
@@ -358,11 +358,11 @@ router.post("/award-bonus", async (req, res) => {
           amount: bonusAmount,
           type: "bonus",
           description: `${percentage}% bonus on transaction`,
-          metadata: {
+          metadata: JSON.stringify({
             baseAmount: transactionAmount,
             percentage,
             calculatedAt: new Date().toISOString(),
-          },
+          }),
           status: "completed",
         },
       }),
