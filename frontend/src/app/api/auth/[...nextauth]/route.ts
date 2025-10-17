@@ -22,17 +22,45 @@ const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // TODO: Replace with actual authentication logic
-        // This is a placeholder implementation
-        if (credentials?.email && credentials?.password) {
-          const user: User = {
-            id: "1",
-            email: credentials.email,
-            name: "Test User"
-          }
-          return user
+        if (!credentials?.email || !credentials?.password) {
+          return null;
         }
-        return null
+
+        try {
+          // Call backend API
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+          const response = await fetch(`${apiUrl}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password
+            })
+          });
+
+          if (!response.ok) {
+            console.error('Login failed:', response.status);
+            return null;
+          }
+
+          const data = await response.json();
+
+          if (data.user && data.token) {
+            return {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.firstName && data.user.lastName 
+                ? `${data.user.firstName} ${data.user.lastName}`.trim()
+                : data.user.username || data.user.email,
+              accessToken: data.token
+            };
+          }
+
+          return null;
+        } catch (error) {
+          console.error('Auth error:', error);
+          return null;
+        }
       }
     })
   ],
@@ -46,13 +74,22 @@ const authOptions: NextAuthOptions = {
     async jwt({ token, user }: { token: JWT; user?: User | null }) {
       if (user) {
         token.id = user.id
+        // Store access token from backend
+        const userWithToken = user as User & { accessToken?: string }
+        if (userWithToken.accessToken) {
+          token.accessToken = userWithToken.accessToken
+        }
       }
       return token
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
-        const userWithId = session.user as typeof session.user & { id?: string }
+        const userWithId = session.user as typeof session.user & { id?: string; accessToken?: string }
         userWithId.id = typeof token.id === "string" ? token.id : undefined
+        // Include access token in session for API calls
+        if (token.accessToken) {
+          userWithId.accessToken = token.accessToken as string
+        }
       }
       return session
     }

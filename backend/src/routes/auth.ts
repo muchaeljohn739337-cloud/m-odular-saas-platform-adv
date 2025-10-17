@@ -1,10 +1,148 @@
 import express from "express";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import twilio from "twilio";
 import prisma from "../prismaClient";
 import { config } from "../config";
 
 const router = express.Router();
+
+/**
+ * Register new user with email/password
+ * POST /api/auth/register
+ * Body: { email: string, password: string, username?: string, firstName?: string, lastName?: string }
+ */
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password, username, firstName, lastName } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          ...(username ? [{ username }] : [])
+        ]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        username: username || email.split('@')[0],
+        passwordHash,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        termsAccepted: true,
+        termsAcceptedAt: new Date(),
+      }
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      message: "User registered successfully",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ error: "Failed to register user" });
+  }
+});
+
+/**
+ * Login with email/password
+ * POST /api/auth/login
+ * Body: { email: string, password: string }
+ */
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    // Find user by email or username
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { username: email } // Allow login with username
+        ]
+      }
+    });
+
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Verify password
+    const validPassword = await bcrypt.compare(password, user.passwordHash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        usdBalance: user.usdBalance.toString()
+      }
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Failed to login" });
+  }
+});
 
 // Initialize Twilio client
 const twilioClient = twilio(
