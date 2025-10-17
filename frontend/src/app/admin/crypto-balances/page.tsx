@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import {
   Coins,
   TrendingUp,
-  DollarSign,
   Plus,
   Minus,
   RefreshCw,
@@ -104,7 +103,7 @@ export default function CryptoBalanceAdmin() {
       } else {
         setMessage({ type: "error", text: data.message || "Failed to add balance" });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Network error" });
     } finally {
       setLoading(false);
@@ -138,7 +137,7 @@ export default function CryptoBalanceAdmin() {
       } else {
         setMessage({ type: "error", text: data.message || "Failed to deduct balance" });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Network error" });
     } finally {
       setLoading(false);

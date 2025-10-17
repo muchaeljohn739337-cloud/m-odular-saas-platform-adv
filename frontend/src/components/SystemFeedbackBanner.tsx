@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, AlertTriangle, XCircle, CheckCircle, X } from "lucide-react";
+import { AlertTriangle, XCircle, CheckCircle, X } from "lucide-react";
 
 interface SystemStatus {
   overall: {
@@ -40,7 +40,7 @@ export default function SystemFeedbackBanner() {
             setIsDismissed(false); // Reset dismissed state when new issue appears
           }
         }
-      } catch (error) {
+      } catch {
         // If can't connect to backend, show error banner
         setSystemStatus({
           overall: {

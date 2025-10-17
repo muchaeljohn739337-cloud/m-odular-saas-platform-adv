@@ -11,8 +11,6 @@ import {
   AlertTriangle,
   XCircle,
   Activity,
-  Database,
-  Globe,
   RefreshCw,
 } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
@@ -40,6 +38,17 @@ interface SystemStatus {
   }>;
 }
 
+interface Alert {
+  id: string;
+  severity: string;
+  alertType: string;
+  title: string;
+  description: string;
+  serviceName?: string;
+  createdAt: string;
+  [key: string]: unknown;
+}
+
 interface MonitoringData {
   summary: {
     totalAlerts: number;
@@ -48,9 +57,9 @@ interface MonitoringData {
     servicesDown: number;
     servicesDegraded: number;
   };
-  statuses: any[];
-  unresolvedAlerts: any[];
-  recentResolved: any[];
+  statuses: Alert[];
+  unresolvedAlerts: Alert[];
+  recentResolved: Alert[];
   timestamp: string;
 }
 
