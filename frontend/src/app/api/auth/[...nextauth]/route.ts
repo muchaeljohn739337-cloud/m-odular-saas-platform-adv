@@ -12,7 +12,7 @@ function getNextAuthSecret(): string {
   return process.env.NEXTAUTH_SECRET || '';
 }
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   secret: getNextAuthSecret(),
   providers: [
     CredentialsProvider({
