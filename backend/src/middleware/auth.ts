@@ -9,7 +9,7 @@ export interface JWTPayload {
   type: string;
 }
 
-export interface AuthRequest extends express.Request {
+export interface AuthRequest extends Request {
   user?: JWTPayload;
 }
 
@@ -22,7 +22,7 @@ export const authenticateToken = (
   next: NextFunction
 ) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = authHeader && typeof authHeader === "string" ? authHeader.split(" ")[1] : undefined;
 
   if (!token) {
     return res.status(401).json({ error: "Access token required" });
@@ -74,13 +74,13 @@ export const restrictBackendAccess = (
 ) => {
   // Allow public routes
   const publicRoutes = ["/health", "/auth/send-otp", "/auth/verify-otp"];
-  if (publicRoutes.some((route) => req.path.startsWith(route))) {
+  if (publicRoutes.some((route) => (req as any).path.startsWith(route))) {
     return next();
   }
 
   // Require authentication for all other routes
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = authHeader && typeof authHeader === "string" ? authHeader.split(" ")[1] : undefined;
 
   if (!token) {
     return res.status(401).json({
@@ -94,7 +94,7 @@ export const restrictBackendAccess = (
     req.user = payload;
 
     // Admin routes require admin role
-    if (req.path.startsWith("/admin")) {
+    if ((req as any).path.startsWith("/admin")) {
       return requireAdmin(req, res, next);
     }
 
@@ -117,10 +117,10 @@ export const logAdminAction = (
   next: NextFunction
 ) => {
   if (req.user) {
-    console.log(`[ADMIN ACTION] ${req.method} ${req.path}`, {
+    console.log(`[ADMIN ACTION] ${req.method} ${(req as any).path}`, {
       admin: req.user.email,
       timestamp: new Date().toISOString(),
-      ip: req.ip,
+      ip: (req as any).ip,
       userAgent: req.headers["user-agent"],
     });
   }
