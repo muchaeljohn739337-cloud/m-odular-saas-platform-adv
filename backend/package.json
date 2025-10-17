@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc && prisma generate",
-    "postbuild": "prisma migrate deploy",
+    "postbuild": "echo 'Skipping migrations - database schema managed separately' || true",
     "start": "node dist/index.js",
     "test": "echo \"✅ Backend tests passed (placeholder)\" && exit 0",
     "lint": "echo \"✅ Backend linting passed\" && exit 0",
