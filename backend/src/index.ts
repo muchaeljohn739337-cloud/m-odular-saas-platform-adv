@@ -12,6 +12,7 @@ import paymentsRouter from "./routes/payments";
 import recoveryRouter from "./routes/recovery";
 import cryptoRouter from "./routes/crypto";
 import rpaRouter from "./rpa/routes";
+import chatbotRouter from "./routes/chatbot";
 // import loansRouter from "./routes/loans"; // DISABLED: Causing TypeScript errors
 import systemRouter from "./routes/system";
 import { config } from "./config";
@@ -90,6 +91,8 @@ app.use("/api/system", systemRouter);
 console.log('✓ System routes registered');
 app.use("/api/rpa", rpaRouter);
 console.log('✓ RPA automation routes registered');
+app.use("/api/chatbot", chatbotRouter);
+console.log('✓ Chatbot routes registered');
 
 // Health check endpoint
 app.get("/health", (req, res) => {

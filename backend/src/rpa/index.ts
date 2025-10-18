@@ -7,6 +7,7 @@ export { default as reportGenerator } from "./reportGenerator";
 export { default as notificationAutomation } from "./notificationAutomation";
 export { default as dataBackupSync } from "./dataBackupSync";
 export { default as rpaScheduler } from "./scheduler";
+export { default as chatbotSupport } from "./chatbot";
 export { rpaConfig } from "./config";
 export { default as rpaRoutes } from "./routes";
 
