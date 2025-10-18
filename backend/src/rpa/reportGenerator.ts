@@ -210,7 +210,7 @@ export class ReportGenerator {
 
     // Get admin users
     const adminUsers = await prisma.user.findMany({
-      where: { role: "admin" },
+      where: { role: "ADMIN" },
       select: { id: true, email: true, username: true },
     });
 
@@ -234,7 +234,7 @@ export class ReportGenerator {
       data: adminLogs.map((log) => ({
         admin: adminUsers.find((u) => u.id === log.userId)?.email || "Unknown",
         action: log.action,
-        resource: log.resource,
+        resource: log.resourceType,
         timestamp: log.createdAt,
         ipAddress: log.ipAddress,
       })),

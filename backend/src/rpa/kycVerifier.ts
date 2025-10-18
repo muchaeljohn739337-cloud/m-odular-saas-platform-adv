@@ -196,14 +196,17 @@ export class KYCVerifier {
           data: {
             userId,
             action: "KYC_APPROVED",
-            resource: "User",
-            details: JSON.stringify({
+            resourceType: "User",
+            resourceId: userId,
+            metadata: JSON.stringify({
               documentType,
               confidence: result.confidence,
               autoApproved: true,
               extractedData: result.extractedData,
             }),
             ipAddress: "SYSTEM-RPA",
+            userAgent: "RPA-KYCVerifier",
+            timestamp: new Date(),
           },
         });
 
@@ -217,14 +220,17 @@ export class KYCVerifier {
           data: {
             userId,
             action: "KYC_PENDING_REVIEW",
-            resource: "User",
-            details: JSON.stringify({
+            resourceType: "User",
+            resourceId: userId,
+            metadata: JSON.stringify({
               documentType,
               confidence: result.confidence,
               errors: result.errors,
               warnings: result.warnings,
             }),
             ipAddress: "SYSTEM-RPA",
+            userAgent: "RPA-KYCVerifier",
+            timestamp: new Date(),
           },
         });
 

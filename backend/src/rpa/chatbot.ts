@@ -85,7 +85,7 @@ export class ChatbotSupport {
       }
 
       // Check if user has admin role (simplified KYC check)
-      const isVerified = user.role === "admin";
+      const isVerified = user.role === "ADMIN";
 
       return {
         verified: isVerified,
@@ -193,9 +193,12 @@ export class ChatbotSupport {
         data: {
           userId,
           action: "chatbot_support_ticket",
-          resource: "Support",
-          details: JSON.stringify({ message }),
+          resourceType: "Support",
+          resourceId: "system",
+          metadata: JSON.stringify({ message }),
           ipAddress: "Chatbot-System",
+          userAgent: "Chatbot-RPA",
+          timestamp: new Date(),
         },
       });
 

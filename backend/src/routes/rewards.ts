@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../prismaClient";
 import { Decimal } from "@prisma/client/runtime/library";
+import { createNotification } from "../services/notificationService";
 
 const router = express.Router();
 
@@ -205,6 +206,26 @@ router.post("/claim", async (req, res) => {
     ]);
     
     console.log(`🎁 User ${userId} claimed reward: ${reward.title} (+${bonusAmount} tokens)`);
+
+    // Send notification
+    try {
+      await createNotification({
+        userId,
+        type: "all",
+        priority: "normal",
+        category: "reward",
+        title: "Reward Claimed!",
+        message: `You claimed ${bonusAmount.toFixed(2)} tokens for "${reward.title}"`,
+        data: {
+          rewardId: reward.id,
+          amount: bonusAmount.toString(),
+          type: reward.type,
+          tierMultiplier,
+        },
+      });
+    } catch (notifyErr) {
+      console.warn("Reward notification failed (non-fatal):", notifyErr);
+    }
     
     res.json({
       success: true,

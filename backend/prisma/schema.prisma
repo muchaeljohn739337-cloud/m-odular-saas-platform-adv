@@ -10,6 +10,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Role enum for type-safe RBAC
+enum Role {
+  USER
+  STAFF
+  ADMIN
+}
+
 // User model for authentication and user management
 model User {
   id              String          @id @default(uuid())
@@ -18,11 +25,19 @@ model User {
   passwordHash    String
   firstName       String?
   lastName        String?
-  role            String          @default("user") // "admin" or "user"
+  role            Role            @default(USER) // Enum-based role
   usdBalance      Decimal         @default(0) // USD balance from Stripe
+  active          Boolean         @default(true) // Account active status
   lastLogin       DateTime?
   termsAccepted   Boolean         @default(false) // User agreement acceptance
   termsAcceptedAt DateTime?       // When terms were accepted
+  
+  // 2FA TOTP fields
+  totpSecret      String?         // Base32 encoded TOTP secret
+  totpEnabled     Boolean         @default(false) // Whether 2FA is enabled
+  totpVerified    Boolean         @default(false) // Whether TOTP was verified at least once
+  backupCodes     String[]        @default([]) // Array of backup codes
+  
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   transactions    Transaction[]
@@ -34,6 +49,9 @@ model User {
   cryptoOrders    CryptoOrder[]
   cryptoWithdrawals CryptoWithdrawal[]
   loans           Loan[]
+  notifications           Notification[]
+  pushSubscriptions       PushSubscription[]
+  notificationPreference  NotificationPreference?
   
   @@map("users")
 }
@@ -411,4 +429,116 @@ model SystemAlert {
   @@index([isResolved])
   @@index([createdAt])
   @@map("system_alerts")
+}
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+// Notification model for in-app, email, and push notifications
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        String   // "email", "sms", "in-app", "push"
+  priority    String   @default("normal") // "low", "normal", "high", "urgent"
+  category    String   // "transaction", "security", "system", "reward", "admin"
+  
+  title       String
+  message     String   @db.Text
+  data        Json?    // Additional context/metadata
+  
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  
+  emailSent   Boolean  @default(false)
+  emailSentAt DateTime?
+  smsSent     Boolean  @default(false)
+  smsSentAt   DateTime?
+  pushSent    Boolean  @default(false)
+  pushSentAt  DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([category])
+  @@index([priority])
+  @@map("notifications")
+}
+
+// Push subscription for browser push notifications
+model PushSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  endpoint    String   @db.Text
+  p256dh      String   @db.Text
+  auth        String   @db.Text
+  
+  deviceInfo  Json?    // Browser, OS, device name
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@index([isActive])
+  @@map("push_subscriptions")
+}
+
+// Notification preferences per user
+model NotificationPreference {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Channel preferences
+  emailEnabled    Boolean @default(true)
+  smsEnabled      Boolean @default(false)
+  inAppEnabled    Boolean @default(true)
+  pushEnabled     Boolean @default(true)
+  
+  // Category preferences
+  transactionAlerts   Boolean @default(true)
+  securityAlerts      Boolean @default(true)
+  systemAlerts        Boolean @default(true)
+  rewardAlerts        Boolean @default(true)
+  adminAlerts         Boolean @default(true)
+  promotionalEmails   Boolean @default(false)
+  
+  // Digest mode
+  enableDigest        Boolean @default(false)
+  digestFrequency     String  @default("daily") // "hourly", "daily", "weekly"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("notification_preferences")
+}
+
+// Notification delivery log for analytics
+model NotificationLog {
+  id              String   @id @default(cuid())
+  notificationId  String
+  
+  channel         String   // "email", "sms", "push", "in-app"
+  status          String   // "sent", "delivered", "failed", "bounced"
+  errorMessage    String?  @db.Text
+  
+  sentAt          DateTime @default(now())
+  deliveredAt     DateTime?
+  
+  metadata        Json?    // Provider response, tracking info
+  
+  @@index([notificationId])
+  @@index([status])
+  @@index([sentAt])
+  @@index([channel])
+  @@map("notification_logs")
 }

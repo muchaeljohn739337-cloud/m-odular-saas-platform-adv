@@ -1,8 +1,18 @@
 import express from "express";
 import prisma from "../prismaClient";
 import { Decimal } from "@prisma/client/runtime/library";
+import { Server as SocketServer } from "socket.io";
+import { createNotification } from "../services/notificationService";
 
 const router = express.Router();
+
+// Socket.io instance (will be injected from index.ts)
+let io: SocketServer | null = null;
+
+export function setTokenSocketIO(socketServer: SocketServer) {
+  io = socketServer;
+  console.log("✅ Socket.IO injected into token routes");
+}
 
 // ============================================
 // TOKEN WALLET ENDPOINTS
@@ -136,6 +146,36 @@ router.post("/withdraw", async (req, res) => {
         },
       }),
     ]);
+    
+    // Emit real-time balance update
+    if (io) {
+      io.to(`user-${userId}`).emit("token-balance-update", {
+        balance: result[0].balance.toString(),
+        availableBalance: result[0].balance.minus(result[0].lockedBalance).toString(),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Send notification
+    try {
+      await createNotification({
+        userId,
+        type: "all",
+        priority: "normal",
+        category: "transaction",
+        title: "Token Withdrawal",
+        message: `Successfully withdrew ${withdrawAmount.toString()} tokens to ${toAddress}`,
+        data: {
+          amount: withdrawAmount.toString(),
+          toAddress,
+          fee: fee.toString(),
+          netAmount: netAmount.toString(),
+          transactionId: result[1].id,
+        },
+      });
+    } catch (notifyErr) {
+      console.warn("Token withdrawal notification failed (non-fatal):", notifyErr);
+    }
     
     res.json({
       success: true,
@@ -308,6 +348,58 @@ router.post("/transfer", async (req, res) => {
       }),
     ]);
     
+    // Emit real-time balance updates
+    if (io) {
+      // Update sender
+      io.to(`user-${fromUserId}`).emit("token-balance-update", {
+        balance: result[0].balance.toString(),
+        availableBalance: result[0].balance.minus(result[0].lockedBalance).toString(),
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Update recipient
+      io.to(`user-${toUserId}`).emit("token-balance-update", {
+        balance: result[1].balance.toString(),
+        availableBalance: result[1].balance.minus(result[1].lockedBalance).toString(),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Send notifications
+    try {
+      // Notify sender
+      await createNotification({
+        userId: fromUserId,
+        type: "all",
+        priority: "normal",
+        category: "transaction",
+        title: "Tokens Sent",
+        message: `You sent ${transferAmount.toString()} tokens to user ${toUserId}`,
+        data: {
+          amount: transferAmount.toString(),
+          toUserId,
+          type: "sent",
+        },
+      });
+
+      // Notify recipient
+      await createNotification({
+        userId: toUserId,
+        type: "all",
+        priority: "normal",
+        category: "transaction",
+        title: "Tokens Received",
+        message: `You received ${transferAmount.toString()} tokens from user ${fromUserId}`,
+        data: {
+          amount: transferAmount.toString(),
+          fromUserId,
+          type: "received",
+        },
+      });
+    } catch (notifyErr) {
+      console.warn("Token transfer notifications failed (non-fatal):", notifyErr);
+    }
+    
     res.json({
       success: true,
       senderNewBalance: result[0].balance.toString(),
@@ -369,6 +461,35 @@ router.post("/award-bonus", async (req, res) => {
     ]);
     
     console.log(`💰 Awarded ${bonusAmount} tokens (${percentage}%) to user ${userId}`);
+
+    // Emit real-time balance update
+    if (io) {
+      io.to(`user-${userId}`).emit("token-balance-update", {
+        balance: result[0].balance.toString(),
+        availableBalance: result[0].balance.minus(result[0].lockedBalance).toString(),
+        lifetimeEarned: result[0].lifetimeEarned.toString(),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Send notification
+    try {
+      await createNotification({
+        userId,
+        type: "all",
+        priority: "normal",
+        category: "reward",
+        title: "Bonus Tokens Earned!",
+        message: `You earned ${bonusAmount.toString()} bonus tokens (${percentage}% on your transaction)`,
+        data: {
+          bonusAmount: bonusAmount.toString(),
+          percentage,
+          baseAmount: transactionAmount,
+        },
+      });
+    } catch (notifyErr) {
+      console.warn("Bonus notification failed (non-fatal):", notifyErr);
+    }
     
     res.json({
       success: true,

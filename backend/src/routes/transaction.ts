@@ -1,5 +1,6 @@
 import express from "express";
 import { Server } from "socket.io";
+import { createNotification } from "../services/notificationService";
 
 // Temporary in-memory storage (will be replaced with Prisma once DB is set up)
 interface Transaction {
@@ -45,6 +46,25 @@ export default function createTransactionRouter(io: Server) {
         io.emit("global-transaction", transaction);
       } catch (emitErr) {
         console.warn("Socket emit failed (non-fatal):", emitErr);
+      }
+
+      // Send notification
+      try {
+        await createNotification({
+          userId,
+          type: "all",
+          priority: transaction.amount > 1000 ? "high" : "normal",
+          category: "transaction",
+          title: transaction.type === "credit" ? "Funds Received" : "Funds Sent",
+          message: `${transaction.type === "credit" ? "Received" : "Sent"} $${transaction.amount.toFixed(2)}`,
+          data: {
+            transactionId: transaction.id,
+            amount: transaction.amount,
+            type: transaction.type,
+          },
+        });
+      } catch (notifyErr) {
+        console.warn("Notification creation failed (non-fatal):", notifyErr);
       }
 
       res.status(201).json({

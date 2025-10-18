@@ -14,10 +14,17 @@ import cryptoRouter from "./routes/crypto";
 import rpaRouter from "./rpa/routes";
 import chatbotRouter from "./routes/chatbot";
 import auditLogsRouter from "./routes/auditLogs";
+import twoFactorRouter from "./routes/twoFactor";
+import analyticsRouter from "./routes/analytics";
 // import loansRouter from "./routes/loans"; // DISABLED: Causing TypeScript errors
 import systemRouter from "./routes/system";
+import notifyStatsRouter from "./routes/notifyStats";
+import notificationRouter from "./routes/notifications";
 import { config } from "./config";
 import { rateLimit, validateInput, securityHeaders } from "./middleware/security";
+import { setSocketIO, sendFallbackEmails } from "./services/notificationService";
+import { setTokenSocketIO } from "./routes/tokens";
+import cron from "node-cron";
 
 const app = express();
 const server = createServer(app);
@@ -28,6 +35,12 @@ const io = new Server(server, {
     credentials: true
   }
 });
+
+// Inject Socket.IO into notification service
+setSocketIO(io);
+
+// Inject Socket.IO into token routes
+setTokenSocketIO(io);
 
 // Middleware - Enhanced CORS with multiple origins support
 app.use(cors({
@@ -83,6 +96,8 @@ console.log('📋 Registering routes...');
 // Routes
 app.use("/api/auth", authRouter);
 console.log('✓ Auth routes registered');
+app.use("/api/2fa", twoFactorRouter);
+console.log('✓ 2FA routes registered');
 app.use("/api/tokens", tokenRouter);
 console.log('✓ Token routes registered');
 app.use("/api/rewards", rewardsRouter);
@@ -103,6 +118,8 @@ app.use("/api/crypto", cryptoRouter);
 console.log('✓ Crypto routes registered');
 app.use("/api/audit-logs", auditLogsRouter);
 console.log('✓ Audit log routes registered');
+app.use("/api/analytics", analyticsRouter);
+console.log('✓ Analytics routes registered');
 // app.use("/api/loans", loansRouter); // DISABLED: Feature under development
 // console.log('✓ Loans routes registered');
 app.use("/api/system", systemRouter);
@@ -111,6 +128,10 @@ app.use("/api/rpa", rpaRouter);
 console.log('✓ RPA automation routes registered');
 app.use("/api/chatbot", chatbotRouter);
 console.log('✓ Chatbot routes registered');
+app.use("/api/notify", notifyStatsRouter);
+console.log('✓ Notification stats routes registered');
+app.use("/api/notifications", notificationRouter);
+console.log('✓ Notification routes registered');
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -152,6 +173,16 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
+});
+
+// Schedule email fallback cron job (every 15 minutes)
+cron.schedule("*/15 * * * *", async () => {
+  console.log("⏰ Running scheduled email fallback for unread notifications...");
+  try {
+    await sendFallbackEmails();
+  } catch (error) {
+    console.error("❌ Email fallback cron job error:", error);
+  }
 });
 
 const PORT = config.port || 4000;

@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
+import { authenticateToken, requireAdmin, logAdminAction } from "../middleware/auth";
 
 const router = Router();
 const prisma = new PrismaClient();
 
-// Get all users with their token wallet balances
-router.get("/users", async (req, res) => {
+// Get all users with their token wallet balances (ADMIN ONLY)
+router.get("/users", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       select: { 
@@ -51,8 +52,8 @@ router.get("/users", async (req, res) => {
   }
 });
 
-// Update user wallet balance
-router.post("/fund/:id", async (req, res) => {
+// Update user wallet balance (ADMIN ONLY)
+router.post("/fund/:id", authenticateToken, requireAdmin, logAdminAction, async (req, res) => {
   try {
     const { id } = req.params;
     const { amount } = req.body;
@@ -122,8 +123,8 @@ router.post("/fund/:id", async (req, res) => {
   }
 });
 
-// Update user role/tier
-router.post("/update-role/:id", async (req, res) => {
+// Update user role/tier (ADMIN ONLY)
+router.post("/update-role/:id", authenticateToken, requireAdmin, logAdminAction, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;

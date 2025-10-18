@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import twilio from "twilio";
 import prisma from "../prismaClient";
 import { config } from "../config";
+import { createNotification } from "../services/notificationService";
+import { authenticateToken } from "../middleware/auth";
 
 const router = express.Router();
 
@@ -141,6 +143,25 @@ router.post("/login", validateApiKey, async (req, res) => {
       where: { id: user.id },
       data: { lastLogin: new Date() }
     });
+
+    // Send security notification
+    try {
+      await createNotification({
+        userId: user.id,
+        type: "all",
+        priority: "normal",
+        category: "security",
+        title: "New Login Detected",
+        message: `You logged in from ${req.ip || "an unknown location"}`,
+        data: {
+          loginTime: new Date().toISOString(),
+          ipAddress: req.get("X-Forwarded-For") || req.ip,
+          userAgent: req.get("User-Agent"),
+        },
+      });
+    } catch (notifyErr) {
+      console.warn("Login notification failed (non-fatal):", notifyErr);
+    }
 
     // Generate JWT token
     const token = jwt.sign(
@@ -478,6 +499,40 @@ router.post("/resend-otp", async (req, res) => {
   } catch (error) {
     console.error("Error resending OTP:", error);
     res.status(500).json({ error: "Failed to resend OTP" });
+  }
+});
+
+/**
+ * Get current authenticated user info
+ * GET /api/auth/me
+ * Headers: Authorization: Bearer <token>
+ */
+router.get("/me", authenticateToken, async (req: any, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        usdBalance: true,
+        lastLogin: true,
+        totpEnabled: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ error: "Failed to fetch user data" });
   }
 });
 

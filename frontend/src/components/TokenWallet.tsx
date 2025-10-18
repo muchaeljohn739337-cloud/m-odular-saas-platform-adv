@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { io } from "socket.io-client";
 
 interface TokenWalletProps {
   userId: string;
@@ -40,6 +41,8 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
   const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
   const fetchBalance = useCallback(async () => {
     try {
       const res = await fetch(`http://localhost:4000/api/tokens/balance/${userId}`);
@@ -66,6 +69,41 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
     void fetchBalance();
     void fetchTransactions();
   }, [fetchBalance, fetchTransactions]);
+
+  // Socket.io connection for real-time updates
+  useEffect(() => {
+    const socketInstance = io(API_URL, {
+      transports: ["websocket", "polling"],
+    });
+
+    socketInstance.on("connect", () => {
+      console.log("✅ Connected to token wallet socket");
+      socketInstance.emit("join-room", userId);
+    });
+
+    socketInstance.on("token-balance-update", (data) => {
+      console.log("💰 Real-time balance update:", data);
+      setBalance((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          balance: data.balance,
+          availableBalance: data.availableBalance,
+          lifetimeEarned: data.lifetimeEarned || prev.lifetimeEarned,
+        };
+      });
+      // Refresh transactions to show new entries
+      void fetchTransactions();
+    });
+
+    socketInstance.on("disconnect", () => {
+      console.log("❌ Disconnected from token wallet socket");
+    });
+
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, [userId, API_URL, fetchTransactions]);
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || !withdrawAddress) return;

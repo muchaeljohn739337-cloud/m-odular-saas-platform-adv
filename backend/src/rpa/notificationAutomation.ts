@@ -280,14 +280,17 @@ export class NotificationAutomation {
         data: {
           userId: payload.userId,
           action: "NOTIFICATION_SENT",
-          resource: "Notification",
-          details: JSON.stringify({
+          resourceType: "Notification",
+          resourceId: "rpa-notification",
+          metadata: JSON.stringify({
             template: payload.template,
             type: payload.type,
             emailSent: result.emailSent,
             smsSent: result.smsSent,
           }),
           ipAddress: "SYSTEM-RPA",
+          userAgent: "RPA-NotificationAutomation",
+          timestamp: new Date(),
         },
       });
     } catch (error) {

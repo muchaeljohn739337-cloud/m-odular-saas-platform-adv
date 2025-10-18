@@ -6,6 +6,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import ScrollToTop from '@/components/ScrollToTop'
 import LiveSupportScript from '@/components/LiveSupportScript'
 import SystemFeedbackBanner from '@/components/SystemFeedbackBanner'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import ChatbotWidget from '@/components/ChatbotWidget'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -28,6 +29,7 @@ export default function RootLayout({
           <AuthProvider>
             <SystemFeedbackBanner />
             <LiveSupportScript />
+            <ServiceWorkerRegistration />
             {children}
             <ChatbotWidget />
           </AuthProvider>

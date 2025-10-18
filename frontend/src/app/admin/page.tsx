@@ -24,6 +24,7 @@ import {
   UserX,
 } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
+import AdminNotifyLite from "@/components/AdminNotifyLite";
 
 type SessionUser = {
   id?: string;
@@ -300,6 +301,17 @@ export default function AdminPanel() {
                 Healthy
               </p>
               <p className="text-sm mt-2 opacity-90">All systems operational</p>
+            </motion.div>
+          </div>
+
+          {/* Notification System Widget */}
+          <div className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <AdminNotifyLite />
             </motion.div>
           </div>
 

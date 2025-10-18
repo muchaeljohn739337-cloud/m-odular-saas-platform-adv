@@ -73,13 +73,16 @@ export class DataBackupSync {
         data: {
           userId: "SYSTEM",
           action: "DATABASE_BACKUP",
-          resource: "Database",
-          details: JSON.stringify({
+          resourceType: "Database",
+          resourceId: "backup",
+          metadata: JSON.stringify({
             filename,
             size: stats.size,
             duration: result.duration,
           }),
           ipAddress: "SYSTEM-RPA",
+          userAgent: "RPA-BackupSync",
+          timestamp: new Date(),
         },
       });
     } catch (error) {

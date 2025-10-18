@@ -300,14 +300,17 @@ class TransactionProcessor {
       await prisma.auditLog.create({
         data: {
           action: `transaction_${action}`,
-          resource: "Transaction",
+          resourceType: "Transaction",
+          resourceId: transactionId,
           userId: transactionId,
-          details: JSON.stringify({
+          metadata: JSON.stringify({
             confidence: validation.confidence,
             fraudScore: validation.fraudScore,
             warnings: validation.warnings,
           }),
           ipAddress: "RPA-System",
+          userAgent: "RPA-TransactionProcessor",
+          timestamp: new Date(),
         },
       });
     } catch (error) {

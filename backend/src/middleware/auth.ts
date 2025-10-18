@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "../config";
+import prisma from "../prismaClient";
 
 export interface JWTPayload {
   userId: string;
   email?: string;
   role?: string;
   type: string;
+  active?: boolean;
 }
 
 export interface AuthRequest extends Request {
@@ -14,9 +16,9 @@ export interface AuthRequest extends Request {
 }
 
 /**
- * Middleware to verify JWT token
+ * Middleware to verify JWT token and check account status
  */
-export const authenticateToken = (
+export const authenticateToken = async (
   req: any,
   res: Response,
   next: NextFunction
@@ -30,6 +32,25 @@ export const authenticateToken = (
 
   try {
     const payload = jwt.verify(token, config.jwtSecret) as JWTPayload;
+    
+    // Check if account is active in database
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { active: true, role: true }
+    });
+    
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+    
+    if (user.active === false) {
+      return res.status(403).json({ error: "Account disabled" });
+    }
+    
+    // Update payload with fresh role from database
+    payload.role = user.role;
+    payload.active = user.active;
+    
     req.user = payload;
     next();
   } catch (error) {
@@ -49,10 +70,7 @@ export const requireAdmin = (
     return res.status(401).json({ error: "Authentication required" });
   }
 
-  const isAdmin =
-    req.user.role === "admin" ||
-    req.user.email === "admin@advancia.com" ||
-    req.user.email?.includes("admin");
+  const isAdmin = req.user.role === "ADMIN";
 
   if (!isAdmin) {
     return res.status(403).json({
@@ -62,6 +80,27 @@ export const requireAdmin = (
   }
 
   next();
+};
+
+/**
+ * Flexible role-based access middleware
+ * Usage: allowRoles("ADMIN", "STAFF")
+ */
+export const allowRoles = (...roles: string[]) => {
+  return (req: any, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: "Access denied",
+        message: `This resource requires one of the following roles: ${roles.join(", ")}`,
+      });
+    }
+
+    next();
+  };
 };
 
 /**
