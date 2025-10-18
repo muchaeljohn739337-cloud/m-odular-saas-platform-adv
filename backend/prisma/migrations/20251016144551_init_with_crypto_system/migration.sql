@@ -8,9 +8,9 @@ CREATE TABLE "users" (
     "lastName" TEXT,
     "role" TEXT NOT NULL DEFAULT 'user',
     "usdBalance" DECIMAL NOT NULL DEFAULT 0,
-    "lastLogin" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "lastLogin" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -22,8 +22,8 @@ CREATE TABLE "transactions" (
     "description" TEXT,
     "category" TEXT,
     "status" TEXT NOT NULL DEFAULT 'completed',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "transactions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -40,8 +40,8 @@ CREATE TABLE "debit_cards" (
     "status" TEXT NOT NULL DEFAULT 'active',
     "balance" DECIMAL NOT NULL DEFAULT 0,
     "dailyLimit" DECIMAL NOT NULL DEFAULT 1000,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "debit_cards_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -50,8 +50,8 @@ CREATE TABLE "sessions" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "expiresAt" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "expiresAt" TIMESTAMP NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -63,7 +63,7 @@ CREATE TABLE "audit_logs" (
     "details" TEXT,
     "ipAddress" TEXT,
     "userAgent" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -74,8 +74,8 @@ CREATE TABLE "token_wallets" (
     "tokenType" TEXT NOT NULL DEFAULT 'ADVANCIA',
     "lockedBalance" DECIMAL NOT NULL DEFAULT 0,
     "lifetimeEarned" DECIMAL NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "token_wallets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -91,7 +91,7 @@ CREATE TABLE "token_transactions" (
     "fromAddress" TEXT,
     "txHash" TEXT,
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "token_transactions_walletId_fkey" FOREIGN KEY ("walletId") REFERENCES "token_wallets" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -105,9 +105,9 @@ CREATE TABLE "rewards" (
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "metadata" TEXT,
-    "expiresAt" DATETIME,
-    "claimedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP,
+    "claimedAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "rewards_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -121,14 +121,14 @@ CREATE TABLE "user_tiers" (
     "lifetimeRewards" DECIMAL NOT NULL DEFAULT 0,
     "streak" INTEGER NOT NULL DEFAULT 0,
     "longestStreak" INTEGER NOT NULL DEFAULT 0,
-    "lastActiveDate" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastActiveDate" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "achievements" TEXT,
     "badges" TEXT,
     "referralCode" TEXT,
     "referredBy" TEXT,
     "totalReferrals" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "user_tiers_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -151,8 +151,8 @@ CREATE TABLE "health_readings" (
     "deviceType" TEXT,
     "metadata" TEXT,
     "notes" TEXT,
-    "recordedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "recordedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "health_readings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -169,8 +169,8 @@ CREATE TABLE "admin_settings" (
     "exchangeRateUsdt" DECIMAL,
     "processingFeePercent" DECIMAL NOT NULL DEFAULT 2.5,
     "minPurchaseAmount" DECIMAL NOT NULL DEFAULT 10,
-    "updatedAt" DATETIME NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "updatedAt" TIMESTAMP NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
@@ -189,10 +189,10 @@ CREATE TABLE "crypto_orders" (
     "adminNotes" TEXT,
     "userWalletAddress" TEXT,
     "stripeSessionId" TEXT,
-    "completedAt" DATETIME,
-    "cancelledAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "completedAt" TIMESTAMP,
+    "cancelledAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "crypto_orders_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -209,12 +209,12 @@ CREATE TABLE "crypto_withdrawals" (
     "adminNotes" TEXT,
     "txHash" TEXT,
     "networkFee" DECIMAL,
-    "approvedAt" DATETIME,
-    "rejectedAt" DATETIME,
-    "completedAt" DATETIME,
-    "cancelledAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "approvedAt" TIMESTAMP,
+    "rejectedAt" TIMESTAMP,
+    "completedAt" TIMESTAMP,
+    "cancelledAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "crypto_withdrawals_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 

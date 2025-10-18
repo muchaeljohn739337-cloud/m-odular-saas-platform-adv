@@ -5,12 +5,12 @@ CREATE TABLE "system_status" (
     "status" TEXT NOT NULL,
     "responseTime" INTEGER,
     "uptime" DECIMAL,
-    "lastChecked" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastChecked" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "statusMessage" TEXT,
     "alertLevel" TEXT NOT NULL DEFAULT 'none',
     "metadata" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -22,10 +22,10 @@ CREATE TABLE "system_alerts" (
     "description" TEXT NOT NULL,
     "serviceName" TEXT,
     "isResolved" BOOLEAN NOT NULL DEFAULT false,
-    "resolvedAt" DATETIME,
+    "resolvedAt" TIMESTAMP,
     "resolvedBy" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- RedefineTables
@@ -40,11 +40,11 @@ CREATE TABLE "new_users" (
     "lastName" TEXT,
     "role" TEXT NOT NULL DEFAULT 'user',
     "usdBalance" DECIMAL NOT NULL DEFAULT 0,
-    "lastLogin" DATETIME,
+    "lastLogin" TIMESTAMP,
     "termsAccepted" BOOLEAN NOT NULL DEFAULT false,
-    "termsAcceptedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "termsAcceptedAt" TIMESTAMP,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 INSERT INTO "new_users" ("createdAt", "email", "firstName", "id", "lastLogin", "lastName", "passwordHash", "role", "updatedAt", "usdBalance", "username") SELECT "createdAt", "email", "firstName", "id", "lastLogin", "lastName", "passwordHash", "role", "updatedAt", "usdBalance", "username" FROM "users";
 DROP TABLE "users";
