@@ -19,6 +19,9 @@ import {
   LogOut,
   LucideIcon,
   Banknote,
+  Info,
+  DollarSign,
+  Book,
 } from "lucide-react";
 
 type SessionUser = {
@@ -71,6 +74,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/assets", label: "My Assets", icon: Wallet },
     { href: "/loans", label: "Loans", icon: Banknote },
     { href: "/features", label: "Features", icon: Grid3x3 },
+    { href: "/about", label: "About", icon: Info },
+    { href: "/pricing", label: "Pricing", icon: DollarSign },
+    { href: "/docs", label: "Docs", icon: Book },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/profile", label: "Profile", icon: User },
   ];
