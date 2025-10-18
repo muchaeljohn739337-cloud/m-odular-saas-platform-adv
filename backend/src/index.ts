@@ -23,15 +23,30 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: config.frontendUrl,
-    methods: ["GET", "POST"]
+    origin: config.allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-// Middleware
+// Middleware - Enhanced CORS with multiple origins support
 app.use(cors({
-  origin: config.frontendUrl,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (config.allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`🚫 CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Content-Length", "X-Request-Id"],
+  maxAge: 86400 // 24 hours
 }));
 
 // Security middlewares

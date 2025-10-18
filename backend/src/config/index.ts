@@ -70,9 +70,40 @@ export function getJwtSecret(): string {
   throw new Error("No JWT secret found in environment variables");
 }
 
+/**
+ * Get allowed CORS origins
+ * Supports multiple origins for production domain and development
+ */
+function getAllowedOrigins(): string[] {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const allowedOrigins = [frontendUrl];
+
+  // Add production domain and its www variant
+  if (process.env.NODE_ENV === "production") {
+    allowedOrigins.push(
+      "https://advanciapayledger.com",
+      "https://www.advanciapayledger.com"
+    );
+  }
+
+  // Add localhost variants for development
+  if (process.env.NODE_ENV !== "production") {
+    allowedOrigins.push(
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001"
+    );
+  }
+
+  // Remove duplicates
+  return [...new Set(allowedOrigins)];
+}
+
 export const config = {
   port: parseInt(process.env.PORT || "4000", 10),
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+  allowedOrigins: getAllowedOrigins(),
   databaseUrl: process.env.DATABASE_URL,
   redisUrl: process.env.REDIS_URL,
   jwtSecret: getJwtSecret(),
@@ -92,6 +123,7 @@ console.log("🔧 Configuration loaded successfully");
 console.log(`   Port: ${config.port}`);
 console.log(`   Environment: ${config.nodeEnv}`);
 console.log(`   Frontend URL: ${config.frontendUrl}`);
+console.log(`   Allowed CORS Origins: ${config.allowedOrigins.join(", ")}`);
 if (!config.stripeSecretKey) {
   console.warn("⚠️  STRIPE_SECRET_KEY not set. Payment endpoints will be disabled.");
 }
