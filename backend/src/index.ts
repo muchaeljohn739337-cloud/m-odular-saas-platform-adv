@@ -13,6 +13,7 @@ import recoveryRouter from "./routes/recovery";
 import cryptoRouter from "./routes/crypto";
 import rpaRouter from "./rpa/routes";
 import chatbotRouter from "./routes/chatbot";
+import auditLogsRouter from "./routes/auditLogs";
 // import loansRouter from "./routes/loans"; // DISABLED: Causing TypeScript errors
 import systemRouter from "./routes/system";
 import { config } from "./config";
@@ -85,6 +86,8 @@ app.use("/api/recovery", recoveryRouter);
 console.log('✓ Recovery routes registered');
 app.use("/api/crypto", cryptoRouter);
 console.log('✓ Crypto routes registered');
+app.use("/api/audit-logs", auditLogsRouter);
+console.log('✓ Audit log routes registered');
 // app.use("/api/loans", loansRouter); // DISABLED: Feature under development
 // console.log('✓ Loans routes registered');
 app.use("/api/system", systemRouter);

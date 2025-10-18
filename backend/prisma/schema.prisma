@@ -93,18 +93,26 @@ model Session {
   @@map("sessions")
 }
 
-// Audit Log model for tracking important actions
+// Audit Log model for tracking important actions and admin operations
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  action    String
-  resource  String
-  details   String?
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
+  id             String   @id @default(uuid())
+  userId         String?  // User who performed the action
+  action         String   // Action type (e.g., "CREATE_USER", "UPDATE_BALANCE")
+  resourceType   String   // Type of resource (e.g., "user", "transaction", "crypto")
+  resourceId     String   // ID of the affected resource
+  changes        Json?    // JSON object containing all changes
+  previousValues Json?    // JSON object with previous values
+  newValues      Json?    // JSON object with new values
+  metadata       Json?    // Additional metadata (method, path, query, etc.)
+  ipAddress      String?  // IP address of the requester
+  userAgent      String?  // User agent string
+  timestamp      DateTime @default(now()) // When the action occurred
+  createdAt      DateTime @default(now())
   
   @@index([userId])
+  @@index([resourceType])
+  @@index([resourceId])
+  @@index([timestamp])
   @@index([createdAt])
   @@map("audit_logs")
 }

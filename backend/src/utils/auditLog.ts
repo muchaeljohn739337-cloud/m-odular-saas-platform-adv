@@ -17,35 +17,28 @@ export interface AuditLogEntry {
  */
 export const createAuditLog = async (entry: AuditLogEntry) => {
   try {
-    // This requires an AuditLog model in your Prisma schema
-    // Uncomment when schema is updated
-    /*
     return await prisma.auditLog.create({
       data: {
         userId: entry.userId,
         action: entry.action,
         resourceType: entry.resourceType,
         resourceId: entry.resourceId,
-        changes: entry.changes,
-        previousValues: entry.previousValues,
-        newValues: entry.newValues,
-        metadata: entry.metadata,
+        changes: entry.changes as any,
+        previousValues: entry.previousValues as any,
+        newValues: entry.newValues as any,
+        metadata: entry.metadata as any,
         timestamp: new Date(),
         ipAddress: entry.metadata?.ipAddress,
         userAgent: entry.metadata?.userAgent,
       },
     })
-    */
-
-    // For now, log to console
+  } catch (error) {
+    console.error('Error creating audit log:', error)
+    // Fallback to console logging if database fails
     console.log('[AUDIT LOG]', {
       timestamp: new Date().toISOString(),
       ...entry,
     })
-
-    return { id: Date.now().toString(), ...entry }
-  } catch (error) {
-    console.error('Error creating audit log:', error)
     return null
   }
 }
@@ -103,8 +96,6 @@ export const getAuditLogs = async (filters: {
   skip?: number
 }) => {
   try {
-    // This requires an AuditLog model in your Prisma schema
-    /*
     const logs = await prisma.auditLog.findMany({
       where: {
         ...(filters.userId && { userId: filters.userId }),
@@ -119,9 +110,6 @@ export const getAuditLogs = async (filters: {
     })
 
     return logs
-    */
-
-    return []
   } catch (error) {
     console.error('Error fetching audit logs:', error)
     return []
