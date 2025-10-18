@@ -8,6 +8,7 @@ build/
 encrypted_secrets_*.env
 backup-tokens.txt
 tokens.backup
+AUTH_BACKUP_KEYS.md
 *.log
 npm-debug.log*
 yarn-debug.log*
