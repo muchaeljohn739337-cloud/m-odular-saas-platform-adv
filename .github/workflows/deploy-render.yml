@@ -67,7 +67,10 @@ jobs:
           RENDER_DEPLOY_HOOK_BACKEND: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
         run: |
           echo "Deploying backend to Render..."
-          curl --request POST --url "$RENDER_DEPLOY_HOOK_BACKEND" --header 'content-type: application/json'
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --request POST --url "$RENDER_DEPLOY_HOOK_BACKEND" --header 'content-type: application/json')
+          if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 201 ]; then
+            echo "::warning::Backend Render hook responded with HTTP $STATUS"
+          fi
 
       - name: Trigger frontend Render deployment
         if: ${{ steps.check_secrets.outputs.frontend == 'true' }}
@@ -75,7 +78,10 @@ jobs:
           RENDER_DEPLOY_HOOK_FRONTEND: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
         run: |
           echo "Deploying frontend to Render..."
-          curl --request POST --url "$RENDER_DEPLOY_HOOK_FRONTEND" --header 'content-type: application/json'
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --request POST --url "$RENDER_DEPLOY_HOOK_FRONTEND" --header 'content-type: application/json')
+          if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 201 ]; then
+            echo "::warning::Frontend Render hook responded with HTTP $STATUS"
+          fi
 
       - name: ⚠️ Skip deploy (missing secrets)
         if: ${{ steps.check_secrets.outputs.backend != 'true' && steps.check_secrets.outputs.frontend != 'true' }}

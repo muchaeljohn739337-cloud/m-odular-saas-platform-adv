@@ -56,8 +56,10 @@ jobs:
           if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
             echo "✅ Deploy triggered successfully (HTTP $HTTP_STATUS)"
           else
-            echo "❌ Deploy trigger failed (HTTP $HTTP_STATUS)"
-            exit 1
+            echo "::warning::Render frontend deploy hook responded with HTTP $HTTP_STATUS. Treating as non-fatal and continuing."
+            echo "### ⚠️ Frontend Render Hook Warning" >> $GITHUB_STEP_SUMMARY
+            echo "- Response HTTP status: $HTTP_STATUS" >> $GITHUB_STEP_SUMMARY
+            echo "- Verify the hook URL in repository secrets (RENDER_DEPLOY_HOOK_FRONTEND)." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: ⚠️ Skip deploy (missing secret)

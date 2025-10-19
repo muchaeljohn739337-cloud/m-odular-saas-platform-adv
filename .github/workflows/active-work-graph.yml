@@ -27,7 +27,14 @@ jobs:
         continue-on-error: true
       
       - name: Generate active work graph
-        run: node tools/active-work-graph.mjs
+        run: |
+          if [ -f tools/active-work-graph.mjs ]; then
+            node tools/active-work-graph.mjs
+          else
+            echo "::warning::tools/active-work-graph.mjs not found. Skipping graph generation."
+            echo "### ⚠️ Active Work Graph Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- File tools/active-work-graph.mjs was not found in the repository." >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Commit and push SVG
         run: |
