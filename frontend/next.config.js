@@ -2,8 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   trailingSlash: true,
-  output: 'export',
-  distDir: '.next',
   images: {
     unoptimized: true
   },
