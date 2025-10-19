@@ -28,6 +28,20 @@ coverage/
 .cache/
 temp/
 tmp/
+.prisma/
+*.db
+*.db-journal
+
+# Test and debug files (not needed in production)
+test-*.json
+test-*.ps1
+debug-*.ps1
+quick-*.ps1
+
+# Backup and temporary scripts
+fix-*.ps1
+check-*.ps1
+*-backup.ps1
 dev.db
 dev.db-journal
 *.sqlite
