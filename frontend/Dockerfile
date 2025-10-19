@@ -1,18 +1,35 @@
 # Build stage
 FROM node:18-alpine AS builder
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+
+# Copy the entire project (need root package.json for dependencies)
 COPY . .
+
+# Install all dependencies from root
+RUN npm ci
+
+# Change to frontend and install frontend dependencies
+WORKDIR /app/frontend
+RUN npm ci
+
+# Build the frontend
 RUN npm run build
 
 # Production stage
 FROM node:18-alpine
+
 WORKDIR /app
-COPY package*.json ./
+
+# Copy only necessary files from builder
+COPY --from=builder /app/frontend/package*.json ./
+COPY --from=builder /app/frontend/.next ./.next
+COPY --from=builder /app/frontend/public ./public
+COPY --from=builder /app/frontend/next.config.js ./
+
+# Install production dependencies only
 RUN npm ci --omit=dev
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY next.config.js ./
+
 EXPOSE 3000
+
 CMD ["npm", "start"]
