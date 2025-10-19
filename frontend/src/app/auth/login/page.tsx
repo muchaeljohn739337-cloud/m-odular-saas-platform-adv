@@ -193,10 +193,6 @@ export default function LoginPage() {
               </svg>
               Login with One-Time Code
             </button>
-
-            <p className="text-sm text-gray-500 mt-4">
-              Demo credentials: any email + any password
-            </p>
           </div>
         </motion.div>
       )}
