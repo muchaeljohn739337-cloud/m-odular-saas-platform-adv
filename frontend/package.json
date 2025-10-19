@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "dev:open": "next dev -p 3000 --turbo",
-    "build": "next build && cp -r .next/static .next/standalone/.next/",
+    "build": "next build",
+    "postbuild": "cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "next start",
     "test": "echo \"✅ Frontend tests passed (placeholder)\" && exit 0",
     "lint": "next lint",
