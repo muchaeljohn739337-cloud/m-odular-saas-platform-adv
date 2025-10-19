@@ -13,6 +13,7 @@ APP_SERVICE="${APP_SERVICE:-app}"
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
 POSTGRES_DB="${POSTGRES_DB:-saasdb}"
 MODE="${MODE:-prod}"
+RUN_LOCALLY=false
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -76,31 +77,63 @@ log_info "PostgreSQL is ready!"
 
 # Build the application
 log_info "Building application..."
-$DOCKER_COMPOSE build "$APP_SERVICE" || {
-    log_warn "Build failed or no app service defined, continuing..."
-}
+if $DOCKER_COMPOSE ps --services | grep -q "^${APP_SERVICE}$"; then
+    $DOCKER_COMPOSE build "$APP_SERVICE" || {
+        log_warn "Build failed, continuing..."
+    }
+else
+    log_warn "No '$APP_SERVICE' service found in docker-compose.yml, skipping build"
+    log_info "Will run Prisma commands locally instead"
+    RUN_LOCALLY=true
+fi
 
 # Run Prisma migrations
 log_info "Running Prisma migrations..."
-if [ "$MODE" = "dev" ]; then
-    log_info "Running Prisma migrate dev (development mode)..."
-    $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma migrate dev --name init || {
-        log_warn "Prisma migrate dev failed, trying db push instead..."
-        $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma db push --accept-data-loss
+if [ "$RUN_LOCALLY" = true ]; then
+    # Run Prisma commands locally (when no app service in docker-compose)
+    cd backend
+    if [ "$MODE" = "dev" ]; then
+        log_info "Running Prisma migrate dev (development mode)..."
+        npx prisma migrate dev --name init || {
+            log_warn "Prisma migrate dev failed, trying db push instead..."
+            npx prisma db push --accept-data-loss
+        }
+    else
+        log_info "Running Prisma migrate deploy (production mode)..."
+        npx prisma migrate deploy || {
+            log_warn "Prisma migrate deploy failed, trying db push instead..."
+            npx prisma db push --accept-data-loss
+        }
+    fi
+    
+    # Generate Prisma client
+    log_info "Generating Prisma client..."
+    npx prisma generate || {
+        log_warn "Prisma generate failed, continuing..."
     }
+    cd ..
 else
-    log_info "Running Prisma migrate deploy (production mode)..."
-    $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma migrate deploy || {
-        log_warn "Prisma migrate deploy failed, trying db push instead..."
-        $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma db push --accept-data-loss
+    # Run Prisma commands in Docker container
+    if [ "$MODE" = "dev" ]; then
+        log_info "Running Prisma migrate dev (development mode)..."
+        $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma migrate dev --name init || {
+            log_warn "Prisma migrate dev failed, trying db push instead..."
+            $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma db push --accept-data-loss
+        }
+    else
+        log_info "Running Prisma migrate deploy (production mode)..."
+        $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma migrate deploy || {
+            log_warn "Prisma migrate deploy failed, trying db push instead..."
+            $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma db push --accept-data-loss
+        }
+    fi
+    
+    # Generate Prisma client
+    log_info "Generating Prisma client..."
+    $DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma generate || {
+        log_warn "Prisma generate failed, continuing..."
     }
 fi
-
-# Generate Prisma client
-log_info "Generating Prisma client..."
-$DOCKER_COMPOSE run --rm "$APP_SERVICE" npx prisma generate || {
-    log_warn "Prisma generate failed, continuing..."
-}
 
 # Start all services
 log_info "Starting all services..."
