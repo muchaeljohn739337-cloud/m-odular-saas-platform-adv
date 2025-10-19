@@ -58,8 +58,16 @@ jobs:
           RENDER_DEPLOY_HOOK_BACKEND: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
           RENDER_DEPLOY_HOOK_FRONTEND: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
         run: |
-          echo "backend=$( [ -n \"$RENDER_DEPLOY_HOOK_BACKEND\" ] && echo true || echo false )" >> $GITHUB_OUTPUT
-          echo "frontend=$( [ -n \"$RENDER_DEPLOY_HOOK_FRONTEND\" ] && echo true || echo false )" >> $GITHUB_OUTPUT
+          if [ -n "$RENDER_DEPLOY_HOOK_BACKEND" ]; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+          if [ -n "$RENDER_DEPLOY_HOOK_FRONTEND" ]; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Trigger backend Render deployment
         if: ${{ steps.check_secrets.outputs.backend == 'true' }}

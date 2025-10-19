@@ -42,9 +42,9 @@ jobs:
 
       - name: ✅ Build check (Next.js)
         working-directory: ./frontend
-        run: npm run build
         env:
           NEXT_PUBLIC_API_URL: https://advancia-backend.onrender.com
+        run: npm run build
 
       - name: 🚀 Trigger Render Deploy
         if: ${{ steps.check_secret.outputs.has_secret == 'true' }}
