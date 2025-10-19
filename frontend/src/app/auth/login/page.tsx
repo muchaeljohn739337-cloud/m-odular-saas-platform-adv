@@ -193,6 +193,19 @@ export default function LoginPage() {
               </svg>
               Login with One-Time Code
             </button>
+
+            {/* Link to Register Page */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Don&apos;t have an account?{" "}
+                <a
+                  href="/auth/register"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Create Account
+                </a>
+              </p>
+            </div>
           </div>
         </motion.div>
       )}
