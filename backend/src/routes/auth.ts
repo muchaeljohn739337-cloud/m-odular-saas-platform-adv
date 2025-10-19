@@ -188,6 +188,117 @@ router.post("/login", validateApiKey, async (req, res) => {
   }
 });
 
+/**
+ * Forgot Password - Send Reset Link
+ * POST /api/auth/forgot-password
+ * Body: { email: string }
+ */
+router.post("/forgot-password", validateApiKey, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return res.json({ 
+        message: "If an account with that email exists, we've sent a password reset link." 
+      });
+    }
+
+    // Generate reset token (valid for 1 hour)
+    const resetToken = jwt.sign(
+      { userId: user.id, email: user.email, type: 'password-reset' },
+      config.jwtSecret,
+      { expiresIn: '1h' }
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
+
+    // TODO: Send actual email with reset link
+    // For now, log to console (DEVELOPMENT ONLY)
+    console.log(`🔐 Password reset link for ${email}:`);
+    console.log(`${resetLink}`);
+
+    // In development, return the link
+    const response: any = {
+      message: "If an account with that email exists, we've sent a password reset link."
+    };
+
+    if (process.env.NODE_ENV === "development") {
+      response.resetLink = resetLink;
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ error: "Failed to process password reset request" });
+  }
+});
+
+/**
+ * Reset Password
+ * POST /api/auth/reset-password  
+ * Body: { token: string, newPassword: string }
+ */
+router.post("/reset-password", validateApiKey, async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: "Token and new password are required" });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    // Verify token
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, config.jwtSecret);
+    } catch (jwtError) {
+      return res.status(400).json({ error: "Invalid or expired reset token" });
+    }
+
+    // Check token type
+    if (decoded.type !== 'password-reset') {
+      return res.status(400).json({ error: "Invalid token type" });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash }
+    });
+
+    res.json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
 // Initialize Twilio client
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,

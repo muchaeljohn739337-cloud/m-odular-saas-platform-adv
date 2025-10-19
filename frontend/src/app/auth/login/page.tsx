@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import OtpLogin from "@/components/OtpLogin";
 import { motion } from "framer-motion";
 
@@ -162,6 +163,15 @@ export default function LoginPage() {
             >
               {loading ? "Signing In..." : "Sign In"}
             </button>
+
+            <div className="text-center mt-4">
+              <Link 
+                href="/auth/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Forgot your password?
+              </Link>
+            </div>
           </form>
 
           <div className="mt-6 text-center">
