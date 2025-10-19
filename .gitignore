@@ -54,3 +54,6 @@ test-sms-simple.ps1
 test-twilio-sms.ps1
 test-twilio-verify-direct.ps1
 tools/
+
+# Database backups
+db_backups/
