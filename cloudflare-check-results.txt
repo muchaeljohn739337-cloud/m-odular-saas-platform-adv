@@ -1,0 +1,18 @@
+Cloudflare Domain & Email Check Report
+Generated: 2025-10-18 21:44:52
+Domain: advancia.com
+
+Main Domain: ✅ Configured
+MX Records: ✅ Configured
+
+Subdomains:
+  - api.advancia.com: ❌
+  - www.advancia.com: ✅
+  - eth-gateway.advancia.com: ❌
+  - mail.advancia.com: ❌
+
+Next Steps:
+1. Domain OK
+2. Email OK
+3. Verify SSL/TLS settings in Cloudflare
+4. Set up custom email addresses
