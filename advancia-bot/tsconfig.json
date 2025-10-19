@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "lib": ["es2022"],
-    "module": "commonjs",
+    "module": "Node16",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node16",
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "noFallthroughCasesInSwitch": true,
@@ -15,7 +15,6 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedParameters": true,
     "target": "es2017",
-    "baseUrl": ".",
     "outDir": "dist",
     "checkJs": false,
     "incremental": true,

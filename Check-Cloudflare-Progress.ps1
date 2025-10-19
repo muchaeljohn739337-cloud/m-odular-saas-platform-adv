@@ -67,7 +67,7 @@ Write-Host "──────────────────────�
 
 Test-Step -description "api.$domain subdomain" -test {
     try {
-        $result = Resolve-DnsName -Name "api.$domain" -ErrorAction Stop
+        $null = Resolve-DnsName -Name "api.$domain" -ErrorAction Stop
         return $true
     } catch {
         return $false
@@ -76,7 +76,7 @@ Test-Step -description "api.$domain subdomain" -test {
 
 Test-Step -description "eth-gateway.$domain subdomain" -test {
     try {
-        $result = Resolve-DnsName -Name "eth-gateway.$domain" -ErrorAction Stop
+        $null = Resolve-DnsName -Name "eth-gateway.$domain" -ErrorAction Stop
         return $true
     } catch {
         return $false

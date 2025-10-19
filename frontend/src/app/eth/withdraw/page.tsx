@@ -95,7 +95,7 @@ export default function EthWithdrawPage() {
       return false;
     }
 
-    if (!ethers.utils.isAddress(address)) {
+    if (!ethers.isAddress(address)) {
       setAddressError("Invalid Ethereum address");
       return false;
     }

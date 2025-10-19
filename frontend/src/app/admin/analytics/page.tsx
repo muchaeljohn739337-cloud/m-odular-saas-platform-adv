@@ -327,7 +327,7 @@ export default function AnalyticsDashboard() {
                       legend: { display: false },
                       tooltip: {
                         callbacks: {
-                          label: (context) => `$${context.parsed.y.toLocaleString()}`,
+                          label: (context) => `$${(context.parsed.y ?? 0).toLocaleString()}`,
                         },
                       },
                     },
