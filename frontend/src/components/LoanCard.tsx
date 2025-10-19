@@ -76,19 +76,24 @@ export default function LoanCard({ availableCredit, interestRate, delay = 0 }: L
         </motion.div>
       </div>
 
+      {/* Demo Badge */}
+      <div className="absolute top-3 right-3 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+        COMING SOON
+      </div>
+
       {/* Tooltip */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: showTooltip ? 1 : 0, y: showTooltip ? 0 : -10 }}
         className="absolute left-0 right-0 -bottom-24 mx-4 p-3 bg-slate-800 text-white text-xs rounded-lg shadow-xl z-10"
       >
-        <p className="font-semibold mb-1">How loans work:</p>
+        <p className="font-semibold mb-1">Feature Coming Soon:</p>
         <p className="text-slate-300">
-          Borrow up to ${availableCredit.toFixed(2)} at {interestRate}% APR. Flexible repayment terms with no hidden fees. Build your credit score with on-time payments.
+          We&apos;re building a loan platform with rates starting at {interestRate}% APR, flexible terms, and instant approvals. Click to see what&apos;s planned!
         </p>
       </motion.div>
 
-      {/* Apply Button */}
+      {/* Preview Button */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -100,7 +105,7 @@ export default function LoanCard({ availableCredit, interestRate, delay = 0 }: L
             : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg active:scale-95'
         }`}
       >
-        {processing ? 'Loading...' : 'Apply for Loan'}
+        {processing ? 'Loading...' : 'View Feature Preview'}
       </motion.button>
     </motion.div>
   )

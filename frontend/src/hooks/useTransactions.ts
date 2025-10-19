@@ -29,37 +29,26 @@ export function useTransactions(userId: string) {
         const data = await response.json()
         setTransactions(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-        // Set mock data on error for demo purposes
-        setTransactions([
-          {
-            id: '1',
+        // Silent error logging for admin monitoring
+        console.error('[ADMIN] Transactions fetch error:', err, { userId, timestamp: new Date().toISOString() })
+        
+        // Report to admin endpoint (RPA monitoring)
+        fetch(`${API_URL}/api/admin/error-report`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             userId,
-            amount: 500,
-            type: 'credit',
-            status: 'completed',
-            description: 'Salary deposit',
+            type: 'transactions_fetch_error',
+            message: err instanceof Error ? err.message : 'Unknown error',
             timestamp: new Date().toISOString()
-          },
-          {
-            id: '2',
-            userId,
-            amount: 150,
-            type: 'debit',
-            status: 'completed',
-            description: 'Online purchase',
-            timestamp: new Date(Date.now() - 3600000).toISOString()
-          },
-          {
-            id: '3',
-            userId,
-            amount: 75,
-            type: 'bonus',
-            status: 'completed',
-            description: 'Monthly bonus',
-            timestamp: new Date(Date.now() - 7200000).toISOString()
-          }
-        ])
+          })
+        }).catch(() => {/* Silent fail */})
+        
+        // Set generic message (shown as loading, not error to user)
+        setError('Syncing transactions...')
+        
+        // Set empty array for new users (show empty state)
+        setTransactions([])
       } finally {
         setLoading(false)
       }

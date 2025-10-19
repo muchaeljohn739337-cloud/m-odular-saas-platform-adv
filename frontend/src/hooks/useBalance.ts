@@ -49,13 +49,30 @@ export function useBalance(userId: string) {
         
         setBalance(balance)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-        // Set mock data on error for demo purposes
+        // Silent error logging for admin monitoring
+        console.error('[ADMIN] Balance fetch error:', err, { userId, timestamp: new Date().toISOString() })
+        
+        // Report to admin endpoint (RPA monitoring)
+        fetch(`${API_URL}/api/admin/error-report`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            type: 'balance_fetch_error',
+            message: err instanceof Error ? err.message : 'Unknown error',
+            timestamp: new Date().toISOString()
+          })
+        }).catch(() => {/* Silent fail */})
+        
+        // Set generic message (shown as loading, not error to user)
+        setError('Syncing data...')
+        
+        // Set default balance for new users (empty state)
         setBalance({
-          balance_main: 4000,
-          earnings: 1250,
+          balance_main: 0,
+          earnings: 0,
           referral: 0,
-          total: 5250,
+          total: 0,
           portfolio: {
             USD: 0,
             ETH: 0,

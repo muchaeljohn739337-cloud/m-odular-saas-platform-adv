@@ -22,6 +22,7 @@ import notifyStatsRouter from "./routes/notifyStats";
 import notificationRouter from "./routes/notifications";
 import ethereumRouter from "./routes/ethereum";
 import adminPortfolioRouter from "./routes/adminPortfolio";
+import monitoringRouter from "./routes/monitoring";
 import { config } from "./config";
 import { rateLimit, validateInput, securityHeaders } from "./middleware/security";
 import { setSocketIO, sendFallbackEmails } from "./services/notificationService";
@@ -138,6 +139,8 @@ app.use("/api/eth", ethereumRouter);
 console.log('✓ Ethereum gateway routes registered');
 app.use("/api/admin", adminPortfolioRouter);
 console.log('✓ Admin portfolio routes registered');
+app.use("/api/admin", monitoringRouter);
+console.log('✓ Admin monitoring routes registered');
 
 // Health check endpoint
 app.get("/health", (req, res) => {

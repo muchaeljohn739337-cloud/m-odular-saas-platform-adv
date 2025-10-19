@@ -12,7 +12,6 @@ import {
   Wallet,
 } from "lucide-react";
 import SummaryCard from "@/components/SummaryCard";
-import LoanCard from "@/components/LoanCard";
 import BalanceDropdown from "@/components/BalanceDropdown";
 import TransactionList from "@/components/TransactionList";
 import BalanceChart from "@/components/BalanceChart";
@@ -161,22 +160,6 @@ export default function Dashboard() {
   }, [transactions]);
 
   const netBalance = balance?.total ?? totals.credits - totals.debits;
-  
-  const loanInterestRate = useMemo(() => {
-    // Calculate loan interest rate based on credit score/activity
-    // Better credit history = lower interest rate
-    const baseRate = 8.5; // Base APR
-    const activityBonus = Math.min(transactions.length / 100, 2); // Max 2% discount
-    return parseFloat(Math.max(baseRate - activityBonus, 4.5).toFixed(1));
-  }, [transactions.length]);
-
-  const availableCredit = useMemo(() => {
-    // Calculate available credit based on balance and activity
-    const baseCredit = 5000;
-    const currentBalance = balance?.total ?? 0;
-    const balanceMultiplier = Math.min(currentBalance / 1000, 10);
-    return Math.min(baseCredit + (balanceMultiplier * 500), 25000);
-  }, [balance?.total]);
 
   const handleShowBreakdown = () => {
     if (!balance) return;
@@ -186,9 +169,28 @@ export default function Dashboard() {
     setHasRecentActivity(false);
   };
 
-  const notifyTopUpError = (message: string) => {
+  const notifyTopUpError = async (message: string) => {
+    // Log error silently for debugging
     console.error("Top up error:", message);
-    alert(message);
+    
+    // Send error to admin endpoint (RPA monitoring)
+    try {
+      await fetch(`${API_URL}/api/admin/error-report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          type: 'checkout_error',
+          message,
+          timestamp: new Date().toISOString()
+        })
+      }).catch(() => {/* Silent fail */});
+    } catch {
+      // Silent fail - don't notify user about monitoring errors
+    }
+    
+    // Show generic friendly message to user (not technical details)
+    alert("We're processing your request. Please try again in a moment.");
   };
 
   const handleTopUp = async () => {
@@ -364,8 +366,40 @@ export default function Dashboard() {
         </header>
 
         {errorMessage && (
-          <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
-            {errorMessage}
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              <span>Loading your latest data...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Empty state for new users */}
+        {!errorMessage && txArray.length === 0 && balance?.total === 0 && (
+          <div className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-center">
+            <div className="mx-auto max-w-md space-y-4">
+              <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <Award className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-800">Welcome to Advancia!</h3>
+              <p className="text-slate-600">
+                Your dashboard is ready. Get started by adding funds to unlock all platform features including crypto trading, token management, and rewards.
+              </p>
+              <button
+                onClick={() => {
+                  if (!topUpLoading) {
+                    playClick();
+                    hapticFeedback();
+                    handleTopUp();
+                  }
+                }}
+                disabled={topUpLoading}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-3 font-semibold text-white shadow-lg transition hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
+              >
+                <ArrowUpRight className="w-5 h-5" />
+                {topUpLoading ? 'Processing...' : 'Add Your First Funds'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -398,11 +432,6 @@ export default function Dashboard() {
                 : { onClick: undefined })}
             />
           ))}
-          <LoanCard
-            availableCredit={availableCredit}
-            interestRate={loanInterestRate}
-            delay={0.6}
-          />
         </section>
 
         {balance?.portfolio && (
