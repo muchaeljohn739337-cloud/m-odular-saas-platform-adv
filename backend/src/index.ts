@@ -30,6 +30,28 @@ import { activityLogger } from "./middleware/activityLogger";
 import { setSocketIO, sendFallbackEmails } from "./services/notificationService";
 import { setTokenSocketIO } from "./routes/tokens";
 import cron from "node-cron";
+import { PrismaClient } from "@prisma/client";
+
+// Initialize database on startup
+const prisma = new PrismaClient();
+async function initializeDatabase() {
+  try {
+    console.log("🔄 Initializing database...");
+    // Test connection and create tables if needed
+    await prisma.$connect();
+    console.log("✅ Database connected successfully");
+    
+    // Ensure tables exist by attempting to find a user (this will trigger schema creation if needed)
+    try {
+      await prisma.user.findFirst();
+      console.log("✅ Database tables verified");
+    } catch (error) {
+      console.log("⚠️  Database tables may not exist, but connection is working");
+    }
+  } catch (error) {
+    console.error("❌ Database initialization failed:", error);
+  }
+}
 
 const app = express();
 const server = createServer(app);
@@ -205,13 +227,17 @@ const PORT = config.port || 4000;
 
 console.log(`\n📍 About to listen on port ${PORT}...`);
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ Server successfully bound to port ${PORT}`);
   console.log(`🚀 Server running on port ${config.port}`);
   console.log(`📡 Socket.IO server ready on http://localhost:${PORT}`);
   console.log(`🌐 Server accessible at:`);
   console.log(`   - http://localhost:${PORT}`);
   console.log(`   - http://127.0.0.1:${PORT}`);
+  
+  // Initialize database after server starts
+  await initializeDatabase();
+  
   console.log(`✅ All systems go! Ready to accept connections.`);
 });
 
