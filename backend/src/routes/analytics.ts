@@ -1,16 +1,8 @@
-import express, { Request, Response } from "express";
+import express, { Response } from "express";
 import prisma from "../prismaClient";
-import { authenticateToken, requireAdmin } from "../middleware/auth";
+import { authenticateToken, requireAdmin, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
-
-interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    email?: string;
-    role?: string;
-  };
-}
 
 /**
  * GET /api/analytics/transactions

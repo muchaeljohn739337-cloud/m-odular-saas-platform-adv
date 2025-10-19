@@ -10,6 +10,11 @@ interface Balance {
   earnings: number
   referral: number
   total: number
+  portfolio?: {
+    USD: number
+    ETH: number
+    BTC: number
+  }
 }
 
 export function useBalance(userId: string) {
@@ -20,17 +25,26 @@ export function useBalance(userId: string) {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/transactions/balance/${userId}`)
-        if (!response.ok) throw new Error('Failed to fetch balance')
-        
-        const data = await response.json()
-        
-        // Transform data to match our Balance interface
+        const [balanceResponse, portfolioResponse] = await Promise.all([
+          fetch(`${API_URL}/api/transactions/balance/${userId}`),
+          fetch(`${API_URL}/api/admin/portfolio/user/${userId}`)
+        ])
+
+        if (!balanceResponse.ok) throw new Error('Failed to fetch balance')
+
+        const data = await balanceResponse.json()
+        const portfolioData = portfolioResponse.ok ? await portfolioResponse.json() : null
+
         const balance: Balance = {
           balance_main: data.balance || 4000,
           earnings: data.earnings || 1250,
           referral: data.referral || 0,
-          total: data.balance || 5250
+          total: data.balance || 5250,
+          portfolio: {
+            USD: portfolioData?.totals?.USD ?? 0,
+            ETH: portfolioData?.totals?.ETH ?? 0,
+            BTC: portfolioData?.totals?.BTC ?? 0
+          }
         }
         
         setBalance(balance)
@@ -41,7 +55,12 @@ export function useBalance(userId: string) {
           balance_main: 4000,
           earnings: 1250,
           referral: 0,
-          total: 5250
+          total: 5250,
+          portfolio: {
+            USD: 0,
+            ETH: 0,
+            BTC: 0
+          }
         })
       } finally {
         setLoading(false)

@@ -1,18 +1,11 @@
 import { Router, Request, Response } from "express";
 import prisma from "../prismaClient";
-import { authenticateToken, requireAdmin } from "../middleware/auth";
+import { authenticateToken, requireAdmin, AuthRequest } from "../middleware/auth";
 import { createNotification } from "../services/notificationService";
+import { validateCryptoAddress } from "../utils/walletValidation";
 import axios from "axios";
 
 const router = Router();
-
-interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    email?: string;
-    role?: string;
-  };
-}
 
 // ============================================
 // LIVE CRYPTO PRICES (BINANCE API)
@@ -579,6 +572,12 @@ router.post("/withdrawal", authenticateToken, async (req: AuthRequest, res: Resp
     
     if (Number(cryptoAmount) <= 0) {
       return res.status(400).json({ error: "Amount must be greater than 0" });
+    }
+
+    // Validate wallet address
+    const validation = validateCryptoAddress(withdrawalAddress, cryptoType);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error || "Invalid wallet address" });
     }
     
     // Get user's wallet

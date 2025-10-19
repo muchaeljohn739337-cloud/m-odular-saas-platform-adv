@@ -20,6 +20,8 @@ import analyticsRouter from "./routes/analytics";
 import systemRouter from "./routes/system";
 import notifyStatsRouter from "./routes/notifyStats";
 import notificationRouter from "./routes/notifications";
+import ethereumRouter from "./routes/ethereum";
+import adminPortfolioRouter from "./routes/adminPortfolio";
 import { config } from "./config";
 import { rateLimit, validateInput, securityHeaders } from "./middleware/security";
 import { setSocketIO, sendFallbackEmails } from "./services/notificationService";
@@ -132,6 +134,10 @@ app.use("/api/notify", notifyStatsRouter);
 console.log('✓ Notification stats routes registered');
 app.use("/api/notifications", notificationRouter);
 console.log('✓ Notification routes registered');
+app.use("/api/eth", ethereumRouter);
+console.log('✓ Ethereum gateway routes registered');
+app.use("/api/admin", adminPortfolioRouter);
+console.log('✓ Admin portfolio routes registered');
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -189,43 +195,52 @@ const PORT = config.port || 4000;
 
 console.log(`\n📍 About to listen on port ${PORT}...`);
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server successfully bound to port ${PORT}`);
   console.log(`🚀 Server running on port ${config.port}`);
-  console.log(`📡 Socket.IO server ready`);
+  console.log(`📡 Socket.IO server ready on http://localhost:${PORT}`);
+  console.log(`🌐 Server accessible at:`);
+  console.log(`   - http://localhost:${PORT}`);
+  console.log(`   - http://127.0.0.1:${PORT}`);
   console.log(`✅ All systems go! Ready to accept connections.`);
 });
 
-// Error handling
+// Error handling - Keep server running
 server.on('error', (error: any) => {
   console.error('❌ Server error:', error);
   if (error.code === 'EADDRINUSE') {
     console.error(`❌ Port ${PORT} is already in use`);
+    process.exit(1);
   }
-  process.exit(1);
+  // Don't exit for other errors
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('⚠️ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't crash - just log
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  process.exit(1);
+  console.error('⚠️ Uncaught Exception:', error);
+  // Don't crash - just log
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n👋 Shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
 
 console.log('✅ Backend server ready and listening...');
-
-// Keep the Node process alive
-let heartbeat = setInterval(() => {
-  // Silent heartbeat to keep process alive
-}, 30000);
-
-// Prevent heartbeat from keeping the process alive indefinitely
-heartbeat.unref();
 
 // Debug: Verify server is really listening
 setTimeout(() => {
   const addr = server.address();
   console.log(`\n🔍 Debug: Server address info:`, addr);
 }, 100);
+
+// Keep process alive
+process.stdin.resume();

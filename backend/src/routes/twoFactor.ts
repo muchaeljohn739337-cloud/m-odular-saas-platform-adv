@@ -1,19 +1,11 @@
-import express, { Request, Response } from "express";
+import express, { Response } from "express";
 import { TOTP, Secret } from "otpauth";
 import QRCode from "qrcode";
 import crypto from "crypto";
 import prisma from "../prismaClient";
-import { authenticateToken } from "../middleware/auth";
+import { authenticateToken, AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
-
-interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    email?: string;
-    role?: string;
-  };
-}
 
 /**
  * POST /api/2fa/setup
@@ -72,7 +64,7 @@ router.post("/setup", authenticateToken, async (req: AuthRequest, res: Response)
         totpSecret: secret.base32,
         totpEnabled: false, // Not enabled until verified
         totpVerified: false,
-        backupCodes: backupCodes,
+        backupCodes: JSON.stringify(backupCodes),
       },
     });
 
@@ -165,7 +157,7 @@ router.post("/verify", authenticateToken, async (req: AuthRequest, res: Response
  * POST /api/2fa/validate
  * Validate TOTP code during login
  */
-router.post("/validate", async (req: Request, res: Response) => {
+router.post("/validate", async (req: AuthRequest, res: Response) => {
   try {
     const { email, code } = req.body;
 
@@ -189,13 +181,16 @@ router.post("/validate", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "2FA not enabled for this user" });
     }
 
+    // Parse backup codes from JSON string
+    const backupCodesArray: string[] = user.backupCodes ? JSON.parse(user.backupCodes) : [];
+
     // Check if it's a backup code first
-    if (user.backupCodes.includes(code.toUpperCase())) {
+    if (backupCodesArray.includes(code.toUpperCase())) {
       // Remove used backup code
-      const updatedCodes = user.backupCodes.filter((c) => c !== code.toUpperCase());
+      const updatedCodes = backupCodesArray.filter((c) => c !== code.toUpperCase());
       await prisma.user.update({
         where: { id: user.id },
-        data: { backupCodes: updatedCodes },
+        data: { backupCodes: JSON.stringify(updatedCodes) },
       });
 
       return res.json({
@@ -293,7 +288,7 @@ router.post("/disable", authenticateToken, async (req: AuthRequest, res: Respons
         totpEnabled: false,
         totpSecret: null,
         totpVerified: false,
-        backupCodes: [],
+        backupCodes: JSON.stringify([]),
       },
     });
 
@@ -332,10 +327,13 @@ router.get("/status", authenticateToken, async (req: AuthRequest, res: Response)
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Parse backup codes from JSON string
+    const backupCodesArray: string[] = user.backupCodes ? JSON.parse(user.backupCodes) : [];
+
     res.json({
       enabled: user.totpEnabled,
       verified: user.totpVerified,
-      backupCodesRemaining: user.backupCodes.length,
+      backupCodesRemaining: backupCodesArray.length,
     });
   } catch (error) {
     console.error("Error checking 2FA status:", error);
@@ -397,7 +395,7 @@ router.post(
 
       await prisma.user.update({
         where: { id: userId },
-        data: { backupCodes: backupCodes },
+        data: { backupCodes: JSON.stringify(backupCodes) },
       });
 
       res.json({

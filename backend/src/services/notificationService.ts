@@ -1,6 +1,6 @@
 import prisma from "../prismaClient";
 import webpush from "web-push";
-import nodemailer from "nodemailer";
+import * as nodemailer from "nodemailer";
 import { Server as SocketServer } from "socket.io";
 
 // Configure VAPID (will be set from env)
@@ -13,7 +13,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 }
 
 // Email transporter
-const emailTransporter = nodemailer.createTransporter({
+const emailTransporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,

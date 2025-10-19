@@ -42,7 +42,7 @@ export class NotificationAutomation {
     // Initialize Email
     if (rpaConfig.notifications.email.enabled) {
       try {
-        this.emailTransporter = nodemailer.createTransporter({
+        this.emailTransporter = nodemailer.createTransport({
           service: "gmail",
           auth: {
             user: process.env.EMAIL_USER,

@@ -33,7 +33,7 @@ export class ReportGenerator {
   private async initializeEmailTransporter(): Promise<void> {
     try {
       if (rpaConfig.notifications.email.enabled) {
-        this.transporter = nodemailer.createTransporter({
+        this.transporter = nodemailer.createTransport({
           service: "gmail",
           auth: {
             user: process.env.EMAIL_USER,

@@ -25,6 +25,7 @@ export default function CryptoWithdrawForm({ onSuccess }: CryptoWithdrawFormProp
   const [cryptoType, setCryptoType] = useState("BTC");
   const [amount, setAmount] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [addressError, setAddressError] = useState("");
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -94,6 +95,41 @@ export default function CryptoWithdrawForm({ onSuccess }: CryptoWithdrawFormProp
       default:
         return "Enter wallet address";
     }
+  };
+
+  const validateAddress = (address: string) => {
+    setAddressError("");
+    
+    if (!address || address.trim().length === 0) {
+      return;
+    }
+
+    const trimmed = address.trim();
+
+    // Basic format validation
+    switch (cryptoType) {
+      case "BTC":
+        if (!/(^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$)|(^bc1[a-z0-9]{39,87}$)/.test(trimmed)) {
+          setAddressError("Invalid Bitcoin address format");
+        }
+        break;
+      case "ETH":
+      case "USDT":
+        if (!/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
+          setAddressError("Invalid Ethereum address format");
+        }
+        break;
+      case "LTC":
+        if (!/(^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$)|(^ltc1[a-z0-9]{39,87}$)/.test(trimmed)) {
+          setAddressError("Invalid Litecoin address format");
+        }
+        break;
+    }
+  };
+
+  const handleAddressChange = (newAddress: string) => {
+    setWalletAddress(newAddress);
+    validateAddress(newAddress);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -290,17 +326,30 @@ export default function CryptoWithdrawForm({ onSuccess }: CryptoWithdrawFormProp
             type="text"
             id="walletAddress"
             value={walletAddress}
-            onChange={(e) => setWalletAddress(e.target.value)}
+            onChange={(e) => handleAddressChange(e.target.value)}
             placeholder={getAddressPlaceholder()}
-            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+              addressError
+                ? "border-red-500 dark:border-red-500"
+                : "border-gray-300 dark:border-gray-600"
+            }`}
             required
           />
-          <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400 flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            Double-check the address! Withdrawals cannot be reversed.
-          </p>
+          {addressError ? (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400 flex items-center">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {addressError}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400 flex items-center">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Double-check the address! Withdrawals cannot be reversed.
+            </p>
+          )}
         </div>
 
         {/* Calculation Summary */}
@@ -340,7 +389,7 @@ export default function CryptoWithdrawForm({ onSuccess }: CryptoWithdrawFormProp
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={loading || !amount || !walletAddress || parseFloat(amount) < minWithdrawal || hasInsufficientBalance}
+          disabled={loading || !amount || !walletAddress || parseFloat(amount) < minWithdrawal || hasInsufficientBalance || !!addressError}
           className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center"
         >
           {loading ? (

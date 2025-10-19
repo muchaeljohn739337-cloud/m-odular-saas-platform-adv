@@ -1,20 +1,103 @@
 import express from "express";
 import { Server } from "socket.io";
 import { createNotification } from "../services/notificationService";
+import { parseAmount, serializePrismaObject } from "../utils/serializers";
 
-// Temporary in-memory storage (will be replaced with Prisma once DB is set up)
-interface Transaction {
+export interface Transaction {
   id: string;
   userId: string;
   amount: number;
   type: "credit" | "debit";
   createdAt: Date;
+  currency?: string;
+  source?: string;
+  metadata?: Record<string, unknown>;
 }
 
 const transactions: Transaction[] = [];
+let ioRef: Server | null = null;
+
+export const setTransactionSocketIO = (io: Server) => {
+  ioRef = io;
+};
+
+interface RecordTransactionOptions {
+  userId: string;
+  amount: number | string;
+  type: "credit" | "debit";
+  currency?: string;
+  source?: string;
+  metadata?: Record<string, unknown>;
+  notificationTitle?: string;
+  notificationMessage?: string;
+}
+
+export const recordTransaction = async ({
+  userId,
+  amount,
+  type,
+  currency,
+  source,
+  metadata,
+  notificationTitle,
+  notificationMessage,
+}: RecordTransactionOptions): Promise<Transaction> => {
+  const numericAmount = parseAmount(amount);
+  if (numericAmount === null || numericAmount <= 0) {
+    throw new Error("INVALID_TRANSACTION_AMOUNT");
+  }
+  const transaction: Transaction = {
+    id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    userId,
+    amount: numericAmount,
+    type,
+    createdAt: new Date(),
+    currency,
+    source,
+    metadata,
+  };
+
+  transactions.push(transaction);
+
+  if (ioRef) {
+    try {
+      ioRef.to(`user-${userId}`).emit("transaction-created", transaction);
+      ioRef.emit("global-transaction", transaction);
+    } catch (emitErr) {
+      console.warn("Socket emit failed (non-fatal):", emitErr);
+    }
+  }
+
+  try {
+    await createNotification({
+      userId,
+      type: "all",
+      priority: numericAmount > 1000 ? "high" : "normal",
+      category: "transaction",
+      title:
+        notificationTitle || (type === "credit" ? "Funds Received" : "Funds Sent"),
+      message:
+        notificationMessage ||
+        `${type === "credit" ? "Received" : "Sent"} $${numericAmount.toFixed(2)}`,
+      data: {
+        transactionId: transaction.id,
+        amount: numericAmount,
+        type,
+        currency,
+        source,
+        ...(metadata || {}),
+      },
+    });
+  } catch (notifyErr) {
+    console.warn("Notification creation failed (non-fatal):", notifyErr);
+  }
+
+  return transaction;
+};
 
 export default function createTransactionRouter(io: Server) {
   const router = express.Router();
+  setTransactionSocketIO(io);
 
   // Create new transaction
   router.post("/", async (req, res) => {
@@ -29,43 +112,7 @@ export default function createTransactionRouter(io: Server) {
         });
       }
 
-      // Create transaction
-      const transaction: Transaction = {
-        id: Date.now().toString(),
-        userId,
-        amount: typeof amount === "string" ? parseFloat(amount) : Number(amount),
-        type,
-        createdAt: new Date()
-      };
-
-      transactions.push(transaction);
-
-      // Emit real-time update
-      try {
-        io.to(`user-${userId}`).emit("transaction-created", transaction);
-        io.emit("global-transaction", transaction);
-      } catch (emitErr) {
-        console.warn("Socket emit failed (non-fatal):", emitErr);
-      }
-
-      // Send notification
-      try {
-        await createNotification({
-          userId,
-          type: "all",
-          priority: transaction.amount > 1000 ? "high" : "normal",
-          category: "transaction",
-          title: transaction.type === "credit" ? "Funds Received" : "Funds Sent",
-          message: `${transaction.type === "credit" ? "Received" : "Sent"} $${transaction.amount.toFixed(2)}`,
-          data: {
-            transactionId: transaction.id,
-            amount: transaction.amount,
-            type: transaction.type,
-          },
-        });
-      } catch (notifyErr) {
-        console.warn("Notification creation failed (non-fatal):", notifyErr);
-      }
+      const transaction = await recordTransaction({ userId, amount, type });
 
       res.status(201).json({
         success: true,
@@ -73,6 +120,12 @@ export default function createTransactionRouter(io: Server) {
       });
 
     } catch (error) {
+      if (error instanceof Error && error.message === "INVALID_TRANSACTION_AMOUNT") {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid transaction amount"
+        });
+      }
       console.error("Error creating transaction:", error);
       res.status(500).json({
         success: false,

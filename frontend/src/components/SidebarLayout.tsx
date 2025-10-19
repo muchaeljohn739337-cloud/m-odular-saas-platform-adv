@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  Activity,
   Home,
   BarChart3,
   Wallet,
@@ -72,6 +73,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/assets", label: "My Assets", icon: Wallet },
+    { href: "/eth/transactions", label: "ETH Activity", icon: Activity },
     { href: "/loans", label: "Loans", icon: Banknote },
     { href: "/features", label: "Features", icon: Grid3x3 },
     { href: "/about", label: "About", icon: Info },

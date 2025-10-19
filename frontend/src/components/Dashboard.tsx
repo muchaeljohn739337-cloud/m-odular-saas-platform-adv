@@ -405,6 +405,46 @@ export default function Dashboard() {
           />
         </section>
 
+        {balance?.portfolio && (
+          <section className="grid gap-4 sm:grid-cols-3">
+            {([
+              {
+                label: "Admin USD Credits",
+                value: balance.portfolio.USD,
+                suffix: "USD",
+              },
+              {
+                label: "Admin ETH Drops",
+                value: balance.portfolio.ETH,
+                suffix: "ETH",
+              },
+              {
+                label: "Admin BTC Drops",
+                value: balance.portfolio.BTC,
+                suffix: "BTC",
+              },
+            ] as const).map((entry) => (
+              <div
+                key={entry.label}
+                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <p className="text-sm font-medium text-slate-500">{entry.label}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-800">
+                  {entry.value.toLocaleString(undefined, {
+                    maximumFractionDigits: entry.suffix === "USD" ? 2 : 6,
+                  })}{" "}
+                  <span className="text-base font-semibold text-slate-400">
+                    {entry.suffix}
+                  </span>
+                </p>
+                <p className="mt-3 text-xs text-slate-500">
+                  Latest totals credited from admin treasury transfers.
+                </p>
+              </div>
+            ))}
+          </section>
+        )}
+
         <section className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <TransactionList transactions={txArray} loading={transactionsLoading} />
