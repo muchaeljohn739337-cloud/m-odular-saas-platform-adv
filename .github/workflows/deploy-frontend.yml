@@ -36,10 +36,10 @@ jobs:
 
       - name: 🚀 Trigger Render Deploy
         env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
         run: |
           if [ -z "$RENDER_DEPLOY_HOOK" ]; then
-            echo "⚠️ RENDER_FRONTEND_DEPLOY_HOOK secret not set"
+            echo "⚠️ RENDER_DEPLOY_HOOK_FRONTEND secret not set"
             echo "Add it in: Repository Settings > Secrets > Actions"
             exit 1
           fi
