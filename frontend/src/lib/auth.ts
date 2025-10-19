@@ -47,7 +47,7 @@ export const auth = {
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch {
       localStorage.removeItem('token');
       return null;
     }
