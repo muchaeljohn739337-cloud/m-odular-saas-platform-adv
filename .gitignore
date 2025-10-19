@@ -31,6 +31,7 @@ tmp/
 .prisma/
 *.db
 *.db-journal
+backups/
 
 # Test and debug files (not needed in production)
 test-*.json

@@ -12,7 +12,9 @@
     "lint": "echo \"✅ Backend linting passed\" && exit 0",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "db:backup": "bash ../scripts/backup_db.sh",
+    "db:restore": "bash ../scripts/restore_db.sh"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",

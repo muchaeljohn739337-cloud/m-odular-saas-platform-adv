@@ -142,3 +142,62 @@ jobs:
         run: |
           npm ci
           npm run lint --if-present
+
+  health-check:
+    name: Health Check Test
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'copilot-swe-agent[bot]' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Deploy services using deploy.sh
+        run: |
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh dev
+      
+      - name: Wait for services to be ready
+        run: sleep 15
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Build and start backend app
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saasdb
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET_ENCRYPTED: test-secret
+          JWT_ENCRYPTION_KEY: test-key
+          JWT_ENCRYPTION_IV: test-iv
+          SESSION_SECRET: test-session
+          NODE_ENV: development
+          PORT: 3000
+        run: |
+          npm run build
+          nohup npm start > /tmp/app.log 2>&1 &
+          sleep 10
+      
+      - name: Run health check
+        run: |
+          curl -f http://localhost:3000/health || (echo "Health check failed" && cat /tmp/app.log && exit 1)
+      
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          echo "=== Application Logs ==="
+          cat /tmp/app.log || echo "No app logs found"
+          echo "=== Docker Compose Logs ==="
+          docker compose logs || echo "No docker logs found"
