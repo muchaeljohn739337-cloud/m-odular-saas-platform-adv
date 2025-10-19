@@ -536,4 +536,225 @@ router.get("/me", authenticateToken, async (req: any, res) => {
   }
 });
 
+/**
+ * Generate backup codes for a user
+ * POST /api/auth/generate-backup-codes
+ * Headers: { Authorization: "Bearer <token>" }
+ * Returns: Array of 8 backup codes (shown only once)
+ */
+router.post("/generate-backup-codes", validateApiKey, async (req, res) => {
+  try {
+    // Extract JWT token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Authorization token required" });
+    }
+
+    const token = authHeader.substring(7);
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, config.jwtSecret) as { userId: string };
+    } catch (error) {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+
+    const userId = decoded.userId;
+
+    // Delete any existing backup codes for this user
+    await prisma.backupCode.deleteMany({
+      where: { userId }
+    });
+
+    // Generate 8 new backup codes
+    const codes: string[] = [];
+    const hashedCodes = [];
+
+    for (let i = 0; i < 8; i++) {
+      // Generate 9-digit backup code
+      const code = Math.floor(100000000 + Math.random() * 900000000).toString();
+      codes.push(code);
+      
+      // Hash the code before storing
+      const hashedCode = await bcrypt.hash(code, 10);
+      hashedCodes.push(hashedCode);
+    }
+
+    // Store hashed codes in database
+    await prisma.backupCode.createMany({
+      data: hashedCodes.map((hashedCode) => ({
+        userId,
+        code: hashedCode,
+      })),
+    });
+
+    console.log(`✅ Generated 8 backup codes for user ${userId}`);
+
+    res.json({
+      success: true,
+      message: "Backup codes generated successfully",
+      codes, // Return plain codes ONLY on generation
+      warning: "Save these codes securely. They will not be shown again."
+    });
+  } catch (error) {
+    console.error("Error generating backup codes:", error);
+    res.status(500).json({ error: "Failed to generate backup codes" });
+  }
+});
+
+/**
+ * Verify backup code and authenticate user
+ * POST /api/auth/verify-backup-code
+ * Body: { email: string, code: string }
+ * Returns: JWT token if code is valid
+ */
+router.post("/verify-backup-code", validateApiKey, async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ error: "Email and code are required" });
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Get all unused backup codes for this user
+    const backupCodes = await prisma.backupCode.findMany({
+      where: {
+        userId: user.id,
+        isUsed: false
+      }
+    });
+
+    if (backupCodes.length === 0) {
+      return res.status(400).json({ 
+        error: "No backup codes available. Please use another authentication method or contact support." 
+      });
+    }
+
+    // Check if any of the backup codes match
+    let matchedCode = null;
+    for (const backupCode of backupCodes) {
+      const isMatch = await bcrypt.compare(code, backupCode.code);
+      if (isMatch) {
+        matchedCode = backupCode;
+        break;
+      }
+    }
+
+    if (!matchedCode) {
+      return res.status(401).json({ error: "Invalid backup code" });
+    }
+
+    // Mark the code as used
+    await prisma.backupCode.update({
+      where: { id: matchedCode.id },
+      data: {
+        isUsed: true,
+        usedAt: new Date()
+      }
+    });
+
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
+
+    // Count remaining codes
+    const remainingCodes = await prisma.backupCode.count({
+      where: {
+        userId: user.id,
+        isUsed: false
+      }
+    });
+
+    console.log(`✅ Backup code used successfully for user ${user.id}. Remaining: ${remainingCodes}`);
+
+    res.json({
+      success: true,
+      message: "Authentication successful via backup code",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      remainingBackupCodes: remainingCodes,
+      warning: remainingCodes <= 3 ? "You have 3 or fewer backup codes remaining. Consider generating new ones." : undefined
+    });
+  } catch (error) {
+    console.error("Error verifying backup code:", error);
+    res.status(500).json({ error: "Failed to verify backup code" });
+  }
+});
+
+/**
+ * Get backup codes status for authenticated user
+ * GET /api/auth/backup-codes-status
+ * Headers: { Authorization: "Bearer <token>" }
+ */
+router.get("/backup-codes-status", validateApiKey, async (req, res) => {
+  try {
+    // Extract JWT token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Authorization token required" });
+    }
+
+    const token = authHeader.substring(7);
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, config.jwtSecret) as { userId: string };
+    } catch (error) {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+
+    const userId = decoded.userId;
+
+    // Count total and unused codes
+    const totalCodes = await prisma.backupCode.count({
+      where: { userId }
+    });
+
+    const unusedCodes = await prisma.backupCode.count({
+      where: {
+        userId,
+        isUsed: false
+      }
+    });
+
+    const usedCodes = totalCodes - unusedCodes;
+
+    res.json({
+      success: true,
+      totalCodes,
+      unusedCodes,
+      usedCodes,
+      hasBackupCodes: totalCodes > 0,
+      needsRegeneration: unusedCodes <= 3
+    });
+  } catch (error) {
+    console.error("Error getting backup codes status:", error);
+    res.status(500).json({ error: "Failed to get backup codes status" });
+  }
+});
+
 export default router;

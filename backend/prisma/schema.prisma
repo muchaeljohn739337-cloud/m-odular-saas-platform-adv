@@ -128,6 +128,21 @@ model Session {
   @@map("sessions")
 }
 
+// Backup Code model for emergency authentication
+model BackupCode {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String   @unique // Hashed backup code
+  isUsed    Boolean  @default(false)
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([code])
+  @@index([isUsed])
+  @@map("backup_codes")
+}
+
 // Audit Log model for tracking important actions and admin operations
 model AuditLog {
   id             String   @id @default(uuid())
