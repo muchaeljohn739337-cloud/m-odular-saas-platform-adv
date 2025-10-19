@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc && prisma generate && prisma db push --accept-data-loss --skip-generate || echo 'DB push skipped'",
+    "build": "tsc && prisma generate && npm run db:init",
+    "db:init": "prisma db push --accept-data-loss --skip-generate && echo '✅ Database tables created'",
     "postbuild": "echo '✅ Build and database sync complete' || true",
     "start": "node dist/index.js",
     "test": "echo \"✅ Backend tests passed (placeholder)\" && exit 0",
