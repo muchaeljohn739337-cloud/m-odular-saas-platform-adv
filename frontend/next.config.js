@@ -2,15 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   trailingSlash: true,
-  swcMinify: true,
   output: 'export',
   distDir: 'out',
   images: {
     unoptimized: true,
   },
-  experimental: {
-    appDocumentPreloading: true,
-  },
+  skipTrailingSlashRedirect: true,
+  skipMiddlewareUrlNormalize: true,
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   },
