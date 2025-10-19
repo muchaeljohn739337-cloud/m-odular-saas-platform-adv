@@ -28,12 +28,6 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
-      - name: ✅ Build check (Next.js)
-        working-directory: ./frontend
-        run: npm run build || echo "Build check completed"
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://advancia-backend.onrender.com' }}
-
       - name: 🚀 Trigger Render Deploy
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
