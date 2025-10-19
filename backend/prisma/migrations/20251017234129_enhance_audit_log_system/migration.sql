@@ -17,9 +17,6 @@ ALTER TABLE "audit_logs" ADD COLUMN "metadata" JSONB;
 -- Add timestamp column (separate from createdAt)
 ALTER TABLE "audit_logs" ADD COLUMN "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
--- Drop old details column (replaced by changes/previousValues/newValues)
-ALTER TABLE "audit_logs" DROP COLUMN IF EXISTS "details";
-
 -- CreateIndex: Add indexes for better query performance
 CREATE INDEX IF NOT EXISTS "audit_logs_resourceType_idx" ON "audit_logs"("resourceType");
 CREATE INDEX IF NOT EXISTS "audit_logs_resourceId_idx" ON "audit_logs"("resourceId");
