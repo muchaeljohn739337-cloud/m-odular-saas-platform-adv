@@ -1,0 +1,70 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Check TypeScript compilation
+        working-directory: ./backend
+        run: npm run build
+      
+      - name: Run linting
+        working-directory: ./backend
+        run: npm run lint
+      
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+      
+      - name: Frontend lint
+        working-directory: ./frontend
+        continue-on-error: true
+        run: npm run lint || true
+
+  deploy:
+    needs: test-build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Trigger Render deployment
+        env:
+          RENDER_DEPLOY_HOOK_BACKEND: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+          RENDER_DEPLOY_HOOK_FRONTEND: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK_BACKEND" ]; then
+            echo "Deploying backend to Render..."
+            curl --request POST --url "$RENDER_DEPLOY_HOOK_BACKEND" --header 'content-type: application/json'
+          fi
+          
+          if [ -n "$RENDER_DEPLOY_HOOK_FRONTEND" ]; then
+            echo "Deploying frontend to Render..."
+            curl --request POST --url "$RENDER_DEPLOY_HOOK_FRONTEND" --header 'content-type: application/json'
+          fi
+      
+      - name: Deployment notification
+        run: echo "✅ Deployment triggered! Check Render dashboard for status."
