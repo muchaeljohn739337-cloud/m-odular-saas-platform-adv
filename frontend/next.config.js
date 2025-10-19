@@ -3,19 +3,11 @@ const nextConfig = {
   reactStrictMode: true,
   trailingSlash: true,
   swcMinify: true,
-  output: 'standalone',
-  experimental: {
-    outputFileTracingRoot: process.env.NEXT_PUBLIC_ROOT_DIR || process.cwd(),
-  },
+  output: 'export',
   images: {
     unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.pages.dev',
-      },
-    ],
   },
+  distDir: '.next',
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   },
