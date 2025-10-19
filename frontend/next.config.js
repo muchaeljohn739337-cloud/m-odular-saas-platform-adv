@@ -4,10 +4,10 @@ const nextConfig = {
   trailingSlash: true,
   swcMinify: true,
   output: 'export',
+  distDir: 'out',
   images: {
     unoptimized: true,
   },
-  distDir: '.next',
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   },
