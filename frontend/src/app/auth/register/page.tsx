@@ -37,14 +37,32 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // TODO: Implement actual registration API call
-      // For now, simulate registration
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call backend API to register user
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
       
+      const response = await fetch(`${apiUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          username
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Registration failed');
+      }
+
       // Redirect to login after successful registration
       router.push("/auth/login?registered=true");
-    } catch {
-      setError("Registration failed. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
