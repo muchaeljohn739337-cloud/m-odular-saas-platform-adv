@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { z } from 'zod';
 
 let ioRef: import('socket.io').Server | null = null;
@@ -91,3 +91,27 @@ router.post('/user/message', authenticateToken as any, async (req: any, res: Res
 });
 
 export default router;
+
+// Admin reply endpoint: post a reply to a session (user or guest)
+router.post('/admin/reply', authenticateToken as any, requireAdmin as any, async (req: any, res: Response) => {
+  const Schema = z.object({
+    sessionId: z.string().min(6),
+    message: z.string().min(1).max(5000),
+    userId: z.string().optional(),
+  });
+  const parsed = Schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Invalid payload', issues: parsed.error.flatten() });
+  const { sessionId, message, userId } = parsed.data;
+
+  const payload = { sessionId, message, from: 'admin' as const, at: new Date().toISOString() };
+  try {
+    if (ioRef) {
+      if (userId) {
+        ioRef.to(`user-${userId}`).emit('chat:reply', payload);
+      }
+      ioRef.to(`chat-session-${sessionId}`).emit('chat:reply', payload);
+      ioRef.to('admins').emit('admin:chat:message', { ...payload, mirror: true });
+    }
+  } catch {}
+  return res.json({ ok: true });
+});

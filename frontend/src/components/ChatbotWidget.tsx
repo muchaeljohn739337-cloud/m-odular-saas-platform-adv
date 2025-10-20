@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { io, Socket } from "socket.io-client";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const BOTPRESS_ID = process.env.NEXT_PUBLIC_BOTPRESS_BOT_ID;
@@ -24,6 +25,7 @@ export default function ChatbotWidget() {
     return s;
   }, []);
   const listRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -38,6 +40,17 @@ export default function ChatbotWidget() {
     document.body.appendChild(script);
     return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, []);
+
+  // Connect as guest to receive admin replies in real time
+  useEffect(() => {
+    if (BOTPRESS_ID) return; // Botpress handles its own socket
+    const s = io(API, { transports: ["websocket"], auth: { guestSessionId: sessionId } });
+    socketRef.current = s;
+    s.on('chat:reply', (payload: { message: string }) => {
+      setMessages((m) => [...m, { role: 'bot', text: payload.message, at: new Date().toISOString() }]);
+    });
+    return () => { s.disconnect(); };
+  }, [sessionId]);
 
   const send = async () => {
     const text = input.trim();
@@ -100,6 +113,44 @@ export default function ChatbotWidget() {
             <Quick label="Debit Card" text="How to order a debit card?" />
             <Quick label="Med Beds" text="How to book Med Beds?" />
             <Quick label="OTP" text="Help with 2FA/OTP" />
+            {(() => {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+              if (!token) {
+                return (
+                  <button
+                    onClick={() => setMessages((m) => [...m, { role: 'bot', text: 'Please sign in to create a support ticket. Go to /login, then return here.', at: new Date().toISOString() }])}
+                    className="px-3 py-1 text-sm border rounded-full bg-gray-50 text-gray-600"
+                    title="Sign in to create a ticket"
+                  >Create Ticket</button>
+                );
+              }
+              return (
+                <button
+                  onClick={async () => {
+                    try {
+                      const r = await fetch(`${API}/api/support/contact`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({
+                          subject: 'Crypto Recovery Assistance',
+                          message: 'Please assist me with recovering my crypto or transaction.',
+                          category: 'TECHNICAL',
+                          priority: 'HIGH',
+                        }),
+                      });
+                      if (r.ok) {
+                        setMessages((m) => [...m, { role: 'bot', text: 'Support ticket created. Our team will reach out shortly.', at: new Date().toISOString() }]);
+                      } else {
+                        setMessages((m) => [...m, { role: 'bot', text: 'Could not create ticket. Please ensure you are logged in.', at: new Date().toISOString() }]);
+                      }
+                    } catch {
+                      setMessages((m) => [...m, { role: 'bot', text: 'Network error creating ticket.', at: new Date().toISOString() }]);
+                    }
+                  }}
+                  className="px-3 py-1 text-sm border rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >Create Ticket</button>
+              );
+            })()}
           </div>
           <div className="p-3 border-t flex items-center gap-2">
             <input

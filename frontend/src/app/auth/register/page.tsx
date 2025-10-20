@@ -57,12 +57,18 @@ export default function RegisterPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Registration failed');
+        let msg = 'Registration failed';
+        try {
+          const data = await response.json();
+          msg = data?.error || msg;
+        } catch {}
+        throw new Error(msg);
       }
 
       // Redirect to login after successful registration
-      router.push("/auth/login?registered=true");
+      const url = new URL(window.location.href);
+      const callbackUrl = url.searchParams.get('callbackUrl');
+      router.push(`/auth/login?registered=true${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {

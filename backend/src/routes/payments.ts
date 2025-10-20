@@ -2,9 +2,15 @@ import { Router } from "express";
 import Stripe from "stripe";
 import { config } from "../config";
 import prisma from "../prismaClient";
-import { authenticateToken } from "../middleware/auth";
+import { authenticateToken, requireAdmin } from "../middleware/auth";
+import { Server } from 'socket.io';
 
 const router = Router();
+
+let io: Server | null = null;
+export const setPaymentsSocketIO = (ioServer: Server) => {
+  io = ioServer;
+};
 
 const stripeClient = config.stripeSecretKey
   ? new Stripe(config.stripeSecretKey, {
@@ -67,7 +73,7 @@ router.get("/session/:id", authenticateToken as any, async (req: any, res) => {
   try {
     const session = await stripeClient.checkout.sessions.retrieve(sessionId);
     const metaUserId = (session.metadata?.userId as string) || undefined;
-    if (metaUserId && metaUserId !== req.user?.userId) {
+       eb init if (metaUserId && metaUserId !== req.user?.userId) {
       return res.status(403).json({ error: "Forbidden" });
     }
     return res.json({
@@ -84,5 +90,152 @@ router.get("/session/:id", authenticateToken as any, async (req: any, res) => {
   }
 });
 
-// Note: webhook will be registered in index.ts with raw body
+// Admin: List payments
+router.get('/admin/payments', 
+  authenticateToken as any,
+  requireAdmin as any,
+  async (req: any, res) => {
+    if (!stripeClient) return res.status(503).json({ error: 'Stripe not configured' });
+
+    try {
+      const { limit = 10, starting_after } = req.query;
+      
+      const payments = await stripeClient.paymentIntents.list({
+        limit: Number(limit),
+        starting_after: starting_after as string
+      });
+
+      return res.json(payments);
+    } catch (error) {
+      console.error('Admin payments list error', error);
+      return res.status(500).json({ error: 'Failed to list payments' });
+    }
+});
+
+// Admin: Refund payment
+router.post('/admin/refund/:paymentId',
+  authenticateToken as any,
+  requireAdmin as any,
+  async (req: any, res) => {
+    if (!stripeClient) return res.status(503).json({ error: 'Stripe not configured' });
+
+    try {
+      const refund = await stripeClient.refunds.create({
+        payment_intent: req.params.paymentId
+      });
+
+      // Update user balance and create refund transaction
+      const payment = await stripeClient.paymentIntents.retrieve(req.params.paymentId);
+      const userId = payment.metadata?.userId;
+
+      if (userId) {
+        await prisma.$transaction(async (tx) => {
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              usdBalance: {
+                decrement: Number(payment.amount) / 100
+              }
+            }
+          });
+
+          await tx.transaction.create({
+            data: {
+              userId,
+              type: 'debit',
+              amount: (Number(payment.amount) / 100).toString(),
+              description: `Refund - Payment ${payment.id}`,
+              status: 'completed'
+            }
+          });
+        });
+
+        if (io) {
+          io.to(`user-${userId}`).emit('transaction-created', {
+            type: 'DEBIT',
+            amount: payment.amount / 100
+          });
+        }
+      }
+
+      return res.json(refund);
+    } catch (error) {
+      console.error('Admin refund error', error);
+      return res.status(500).json({ error: 'Failed to process refund' });
+    }
+});
+
+// Webhook handler (to be mounted before express.json in index.ts)
+export const handleStripeWebhook = async (req: any, res: any) => {
+  const sig = req.headers['stripe-signature'];
+  
+  if (!stripeClient || !config.stripeWebhookSecret) {
+    console.warn('Stripe webhook received but Stripe is not fully configured');
+    return res.status(400).send('Webhook Error');
+  }
+
+  try {
+    const rawBody: Buffer = Buffer.isBuffer(req.body)
+      ? (req.body as Buffer)
+      : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+
+    const event = stripeClient.webhooks.constructEvent(
+      rawBody,
+      sig as string,
+      config.stripeWebhookSecret
+    );
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        
+        if (!userId) {
+          console.error('No userId in session metadata', session.id);
+          return res.status(400).send('Missing userId in metadata');
+        }
+
+        // Begin transaction
+        await prisma.$transaction(async (tx) => {
+          // Credit user's balance
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              usdBalance: {
+                increment: Number(session.amount_total) / 100
+              }
+            }
+          });
+
+          // Record the transaction
+          await tx.transaction.create({
+            data: {
+              userId,
+              type: 'credit',
+              amount: (Number(session.amount_total) / 100).toString(),
+              description: `Stripe payment - Session ${session.id}`,
+              status: 'completed'
+            }
+          });
+        });
+
+        // Emit socket events
+        if (io) {
+          io.to(`user-${userId}`).emit('transaction-created', {
+            type: 'CREDIT',
+            amount: Number(session.amount_total || 0) / 100
+          });
+        }
+
+        break;
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook error:', err);
+    res.status(400).send('Webhook Error');
+  }
+};
+
 export default router;

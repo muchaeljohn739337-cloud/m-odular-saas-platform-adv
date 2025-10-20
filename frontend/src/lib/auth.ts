@@ -2,7 +2,8 @@
 export const auth = {
   async signIn(credentials: { email: string; password: string }) {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+  const response = await fetch(`${base}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,7 +35,8 @@ export const auth = {
     if (!token) return null;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/session`, {
+  const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+  const response = await fetch(`${base}/api/auth/session`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '',

@@ -8,6 +8,7 @@
     "build": "tsc",
     "postbuild": "echo '✅ Build complete' || true",
     "start": "node dist/index.js",
+    "postinstall": "prisma generate && npm run build",
     "test": "echo \"✅ Backend tests passed (placeholder)\" && exit 0",
     "lint": "echo \"✅ Backend linting passed\" && exit 0",
     "prisma:generate": "prisma generate",

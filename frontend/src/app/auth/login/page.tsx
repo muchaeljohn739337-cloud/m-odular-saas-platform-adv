@@ -1,7 +1,7 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import OtpLogin from "@/components/OtpLogin";
@@ -10,11 +10,13 @@ import { motion } from "framer-motion";
 type LoginMode = "password" | "otp";
 
 export default function LoginPage() {
+  const { data: session } = useSession();
   const [mode, setMode] = useState<LoginMode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const router = useRouter();
@@ -39,11 +41,33 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid credentials. Please try again.");
-    } else {
-      router.push("/");
+      setError(result.error || "Invalid credentials. Please try again.");
+      return;
     }
+
+    // If NextAuth session has access token, persist for API/widget usage
+    setTimeout(() => {
+      try {
+        const token = typeof session === 'object' && session && 'user' in session && (session.user as { accessToken?: string }).accessToken;
+        if (token) localStorage.setItem('token', token);
+      } catch {}
+    }, 50);
+
+    // Support callback URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const callbackUrl = urlParams.get('callbackUrl');
+    router.push(callbackUrl || "/dashboard");
   };
+
+  // Show info if redirected from register
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('registered') === 'true') {
+        setInfo('Account created successfully. Please sign in.');
+      }
+    } catch {}
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden">
@@ -139,9 +163,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {error && (
+            {(error || info) && (
               <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm">
-                {error}
+                {error || info}
               </div>
             )}
 
