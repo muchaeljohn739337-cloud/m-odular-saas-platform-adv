@@ -5,6 +5,7 @@ services:
     plan: free
     buildCommand: cd backend && npm ci && npm run build
     startCommand: cd backend && npx prisma migrate deploy && npm start
+    maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
         value: production
@@ -34,7 +35,7 @@ services:
         sync: false
       - key: VAPID_SUBJECT
         value: mailto:support@advanciapayledger.com
-    healthCheckPath: /api/payments/health
+    healthCheckPath: /health
 
   - type: web
     name: advancia-frontend
@@ -42,6 +43,7 @@ services:
     plan: free
     buildCommand: cd frontend && npm ci && npm run build
     startCommand: cd frontend && node .next/standalone/server.js
+    maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
         value: production
