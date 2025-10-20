@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: cd backend && npm ci && npm run build
-    startCommand: cd backend && npx prisma generate && npx prisma db push --accept-data-loss && npm start
+    startCommand: cd backend && npx prisma migrate deploy && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -12,24 +12,23 @@ services:
         value: 4000
       - key: DATABASE_URL
         sync: false
-      - key: API_KEY
-        sync: false
       - key: JWT_SECRET
         sync: false
+      - key: SESSION_SECRET
+        sync: false
       - key: FRONTEND_URL
-        value: https://advanciapayledger.com
+        value: https://advancia-frontend.onrender.com
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       - key: JWT_SECRET_ENCRYPTED
         sync: false
       - key: JWT_ENCRYPTION_KEY
         sync: false
       - key: JWT_ENCRYPTION_IV
         sync: false
-      - key: SESSION_SECRET
-        sync: false
-    healthCheckPath: /health
-    routes:
-      - path: /api
-        destination: http://localhost:4000/api
+    healthCheckPath: /api/payments/health
 
   - type: web
     name: advancia-frontend
@@ -38,12 +37,17 @@ services:
     buildCommand: cd frontend && npm ci && npm run build
     startCommand: cd frontend && npm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: NEXT_PUBLIC_API_URL
-        value: https://api.advanciapayledger.com
+        value: https://advancia-backend.onrender.com
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Advancia PayLedger
+      - key: NEXT_PUBLIC_CURRENCY_LIST
+        value: USD,EUR,BTC,ETH,USDT,TRUMP,MEDBED
+      - key: NEXT_PUBLIC_FEATURE_FLAGS
+        value: notifications,bonus_tokens,debit_card,crypto_recovery
     healthCheckPath: /
-    routes:
-      - path: /
-        destination: http://localhost:3000
 
 databases:
   - name: advancia-db
