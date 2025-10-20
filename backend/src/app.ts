@@ -16,4 +16,13 @@ app.use(securityHeaders);
 // Health check route
 app.get("/", (req: Request, res: Response) => res.send("Backend running ✅"));
 
+app.get("/health", (req: Request, res: Response) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    service: "advancia-backend",
+    version: "1.0.0"
+  });
+});
+
 export default app;
