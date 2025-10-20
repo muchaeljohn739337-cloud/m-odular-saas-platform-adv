@@ -155,8 +155,8 @@ async function sendInApp(notificationId: string, userId: string, notification: a
       return;
     }
 
-    // Emit to user's room
-    io.to(`user:${userId}`).emit("notification", {
+    // Emit to user's room (convention: user-${userId})
+    io.to(`user-${userId}`).emit("notification", {
       id: notification.id,
       title: notification.title,
       message: notification.message,
@@ -341,17 +341,36 @@ export async function getUserNotifications(
 }
 
 export async function markAsRead(notificationId: string, userId: string) {
-  return await prisma.notification.update({
+  const updated = await prisma.notification.update({
     where: { id: notificationId, userId },
     data: { isRead: true, readAt: new Date() },
   });
+  try {
+    if (io) {
+      const unread = await getUnreadCount(userId);
+      io.to(`user-${userId}`).emit("notifications:read", { id: notificationId });
+      io.to(`user-${userId}`).emit("notifications:unread-count", { count: unread });
+    }
+  } catch (e) {
+    console.warn("Socket emit failed for markAsRead:", e);
+  }
+  return updated;
 }
 
 export async function markAllAsRead(userId: string) {
-  return await prisma.notification.updateMany({
+  const res = await prisma.notification.updateMany({
     where: { userId, isRead: false },
     data: { isRead: true, readAt: new Date() },
   });
+  try {
+    if (io) {
+      io.to(`user-${userId}`).emit("notifications:all-read");
+      io.to(`user-${userId}`).emit("notifications:unread-count", { count: 0 });
+    }
+  } catch (e) {
+    console.warn("Socket emit failed for markAllAsRead:", e);
+  }
+  return res;
 }
 
 export async function getUnreadCount(userId: string) {

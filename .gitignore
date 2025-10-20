@@ -6,6 +6,9 @@ build/
 .env.backup
 .env.*.backup
 encrypted_secrets_*.env
+backend/.env.enc.json
+*.env.enc.json
+*.env.backup
 backup-tokens.txt
 tokens.backup
 AUTH_BACKUP_KEYS.md

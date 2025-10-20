@@ -1,15 +1,19 @@
-import express from 'express';
-import supportRouter from './routes/support';
-import analyticsRouter from './routes/analytics';
-import { activityLogger } from './middleware/activityLogger';
+import express, { Request, Response } from "express";
+import { securityHeaders } from "./middleware/security";
+import cors from "cors";
 
+// Initialize express app
 const app = express();
 
-// Add global activity logging
-app.use(activityLogger);
+// Global security headers first
+app.use(securityHeaders);
+
+// CORS is configured in index.ts where config is available (deferred)
 
 // Register routes
-app.use('/api/support', supportRouter);
-app.use('/api/admin/analytics', analyticsRouter);
+// Route registration deferred to index.ts to ensure correct middleware order
+
+// Health check route
+app.get("/", (req: Request, res: Response) => res.send("Backend running ✅"));
 
 export default app;

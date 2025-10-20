@@ -69,6 +69,7 @@ model User {
   pushSubscriptions       PushSubscription[]
   notificationPreference  NotificationPreference?
   supportTickets          SupportTicket[]
+  chatSessions            ChatSession[]
   
   @@map("users")
 }
@@ -318,6 +319,7 @@ model AdminSettings {
   exchangeRateUsdt      Decimal? // USDT to USD rate
   processingFeePercent  Decimal  @default(2.5) // 2.5% fee
   minPurchaseAmount     Decimal  @default(10) // Minimum $10
+  debitCardPriceUSD     Decimal  @default(1000)
   updatedAt             DateTime @updatedAt
   createdAt             DateTime @default(now())
   
@@ -669,4 +671,41 @@ model ActivityLog {
   @@index([createdAt])
   @@index([action])
   @@map("activity_logs")
+}
+
+// ============================================
+// LIVE CHAT (ADVANCIA HELP / AI)
+// ============================================
+
+model ChatSession {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  status     String   @default("open") // open, closed
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  messages   ChatMessage[]
+
+  assignedAdminId String?
+
+  @@index([userId])
+  @@index([status])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  sessionId  String
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  senderType String   // "user" | "admin" | "bot"
+  senderId   String?  // userId or adminId
+  content    String
+  metadata   Json?
+
+  createdAt  DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("chat_messages")
 }

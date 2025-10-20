@@ -21,6 +21,11 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [fundAmount, setFundAmount] = useState("");
   const [showFundModal, setShowFundModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkAmount, setBulkAmount] = useState("");
+  const [bulkDescription, setBulkDescription] = useState("");
+  const [bulkBatchSize, setBulkBatchSize] = useState<string>("1000");
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchUsers = useCallback(async () => {
@@ -28,7 +33,7 @@ export default function AdminUsersPage() {
     setError("");
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
       const response = await fetch(`${apiUrl}/api/users`, {
         headers: {
@@ -61,7 +66,7 @@ export default function AdminUsersPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
       const response = await fetch(`${apiUrl}/api/users/update-role/${userId}`, {
         method: "POST",
@@ -91,7 +96,7 @@ export default function AdminUsersPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
       const response = await fetch(`${apiUrl}/api/users/fund/${selectedUser.id}`, {
         method: "POST",
@@ -114,6 +119,38 @@ export default function AdminUsersPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fund user";
       alert(message);
+    }
+  };
+
+  const handleBulkCredit = async () => {
+    if (!bulkAmount) return;
+    setBulkLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const response = await fetch(`${apiUrl}/api/admin/fund-all`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount: parseFloat(bulkAmount), description: bulkDescription || undefined, batchSize: parseInt(bulkBatchSize || "1000", 10) }),
+      });
+      if (!response.ok) {
+        const j: { error?: string } = await response.json().catch(() => ({}));
+        throw new Error(j.error || `Failed: ${response.status}`);
+      }
+      const data = await response.json();
+      alert(`✅ Bulk credit queued\nUsers: ${data.creditedUsers}\nAmount per user: $${data.amountPerUser}\nTotal: $${data.totalAmount}`);
+      setShowBulkModal(false);
+      setBulkAmount("");
+      setBulkDescription("");
+      fetchUsers();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed bulk credit";
+      alert(message);
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -183,6 +220,16 @@ export default function AdminUsersPage() {
               <p className="text-red-800 dark:text-red-200">{error}</p>
             </div>
           )}
+
+          {/* Bulk Credit Button */}
+          <div className="mb-6 flex justify-end">
+            <button
+              onClick={() => setShowBulkModal(true)}
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            >
+              Bulk credit all users
+            </button>
+          </div>
 
           {/* Users Table */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
@@ -325,6 +372,63 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {/* Bulk Credit Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Bulk credit all users</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Amount (USD)</label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={bulkAmount}
+                  onChange={(e) => setBulkAmount(e.target.value)}
+                  className="w-full px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                  placeholder="e.g. 25.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Batch size</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10000"
+                  step="1"
+                  value={bulkBatchSize}
+                  onChange={(e) => setBulkBatchSize(e.target.value)}
+                  className="w-full px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                  placeholder="e.g. 1000"
+                />
+                <p className="text-xs text-gray-500 mt-1">Processed in batches per transaction for performance and safety.</p>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
+                <input
+                  type="text"
+                  value={bulkDescription}
+                  onChange={(e) => setBulkDescription(e.target.value)}
+                  className="w-full px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-700 dark:text-white"
+                  placeholder="Promo Airdrop, Compensation, etc."
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 border rounded dark:border-gray-700 dark:text-white">Cancel</button>
+              <button
+                onClick={handleBulkCredit}
+                disabled={bulkLoading || !bulkAmount}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {bulkLoading ? "Processing..." : "Confirm credit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </RequireRole>
   );
 }

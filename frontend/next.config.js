@@ -1,14 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  trailingSlash: true,
-  output: 'export',
-  distDir: 'out',
+  // Use default server output to support dynamic routes (e.g., NextAuth)
   images: {
     unoptimized: true,
   },
-  skipTrailingSlashRedirect: true,
-  skipMiddlewareUrlNormalize: true,
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   },

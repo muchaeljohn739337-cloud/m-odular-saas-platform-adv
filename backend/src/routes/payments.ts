@@ -2,6 +2,7 @@ import { Router } from "express";
 import Stripe from "stripe";
 import { config } from "../config";
 import prisma from "../prismaClient";
+import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 
@@ -11,20 +12,25 @@ const stripeClient = config.stripeSecretKey
     })
   : null;
 
-router.post("/checkout-session", async (req, res) => {
+// Quick health endpoint to verify Stripe wiring
+router.get("/health", (req, res) => {
+  return res.json({ stripeConfigured: Boolean(stripeClient) });
+});
+
+// Create a Checkout Session, requiring auth; attach userId to metadata server-side
+router.post("/checkout-session", authenticateToken as any, async (req: any, res) => {
   if (!stripeClient) {
-    return res.status(503).json({
-      error: "Stripe is not configured. Please provide STRIPE_SECRET_KEY.",
-    });
+    return res.status(503).json({ error: "Stripe is not configured. Please provide STRIPE_SECRET_KEY." });
   }
 
   const { amount, currency = "usd", metadata } = req.body || {};
-
   if (!amount || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
     return res.status(400).json({ error: "A positive amount is required." });
   }
 
   try {
+    const userId = req.user?.userId;
+    const mergedMetadata = { ...(metadata ?? {}), ...(userId ? { userId } : {}) } as Record<string, string>;
     const session = await stripeClient.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -33,14 +39,12 @@ router.post("/checkout-session", async (req, res) => {
           price_data: {
             currency,
             unit_amount: Math.round(Number(amount) * 100),
-            product_data: {
-              name: "Account Top-Up",
-            },
+            product_data: { name: "Account Top-Up" },
           },
           quantity: 1,
         },
       ],
-      metadata: metadata ?? {},
+      metadata: mergedMetadata,
       success_url: `${config.frontendUrl}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${config.frontendUrl}/payments/cancel`,
     });
@@ -52,81 +56,33 @@ router.post("/checkout-session", async (req, res) => {
   }
 });
 
-// Stripe Webhook Handler
-router.post("/webhook", async (req, res) => {
+// Retrieve a Checkout Session by id for the authenticated user
+router.get("/session/:id", authenticateToken as any, async (req: any, res) => {
   if (!stripeClient) {
-    return res.status(503).json({ error: "Stripe not configured" });
+    return res.status(503).json({ error: "Stripe is not configured." });
   }
-
-  const sig = req.headers["stripe-signature"];
-
-  if (!sig) {
-    return res.status(400).json({ error: "Missing stripe-signature header" });
-  }
+  const sessionId = req.params.id;
+  if (!sessionId) return res.status(400).json({ error: "session id required" });
 
   try {
-    // Verify webhook signature
-    const event = config.stripeWebhookSecret
-      ? stripeClient.webhooks.constructEvent(
-          req.body,
-          sig,
-          config.stripeWebhookSecret
-        )
-      : JSON.parse(req.body.toString());
-
-    console.log(`🔔 Webhook received: ${event.type}`);
-
-    // Handle successful payment
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId;
-      const amount = (session.amount_total || 0) / 100; // Convert cents to dollars
-
-      console.log(`✅ Payment successful!`);
-      console.log(`   User: ${userId}`);
-      console.log(`   Amount: $${amount}`);
-      console.log(`   Session: ${session.id}`);
-
-      // Update user USD balance in database
-      if (userId) {
-        try {
-          // Add USD to user balance
-          await prisma.user.update({
-            where: { id: userId },
-            data: { usdBalance: { increment: amount } }
-          });
-          
-          // Create transaction record
-          await prisma.transaction.create({
-            data: {
-              userId,
-              amount,
-              type: "credit",
-              description: `Stripe deposit - Session ${session.id}`,
-              status: "completed"
-            }
-          });
-
-          console.log(`✅ USD balance updated: +$${amount}`);
-        } catch (dbError) {
-          console.error(`❌ Database update failed:`, dbError);
-        }
-      } else {
-        console.log(`⚠️  No userId in metadata - balance not updated`);
-      }
+    const session = await stripeClient.checkout.sessions.retrieve(sessionId);
+    const metaUserId = (session.metadata?.userId as string) || undefined;
+    if (metaUserId && metaUserId !== req.user?.userId) {
+      return res.status(403).json({ error: "Forbidden" });
     }
-
-    // Handle failed payment
-    if (event.type === "checkout.session.expired") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      console.log(`❌ Payment expired: ${session.id}`);
-    }
-
-    res.json({ received: true });
-  } catch (error: any) {
-    console.error("❌ Webhook error:", error.message);
-    return res.status(400).send(`Webhook Error: ${error.message}`);
+    return res.json({
+      id: session.id,
+      amount_total: session.amount_total,
+      currency: session.currency,
+      status: session.status,
+      payment_status: session.payment_status,
+      metadata: session.metadata || {},
+    });
+  } catch (err: any) {
+    console.error("Error retrieving session", err?.message || err);
+    return res.status(404).json({ error: "Session not found" });
   }
 });
 
+// Note: webhook will be registered in index.ts with raw body
 export default router;
