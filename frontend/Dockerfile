@@ -28,6 +28,9 @@ RUN npm ci
 # Copy frontend sources
 COPY frontend/ ./
 
+# Log API URL to verify and bust cache
+RUN echo "Building with API URL: $NEXT_PUBLIC_API_URL"
+
 # Build Next.js (produces .next/standalone)
 RUN npm run build
 
