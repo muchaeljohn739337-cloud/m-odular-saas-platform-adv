@@ -1,8 +1,8 @@
 #!/bin/bash
-# Codespace Setup Script
+# Codespace/Devcontainer Setup Script for Advancia PayLedger
 set -e
 
-echo "🚀 Setting up Modular SaaS Platform development environment..."
+echo "🚀 Setting up Advancia PayLedger development environment..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -11,33 +11,55 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Print colored output
-print_status() {
-    echo -e "${BLUE}[SETUP]${NC} $1"
-}
+print_status() { echo -e "${BLUE}[SETUP]${NC} $1"; }
+print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Check if running in Codespace
+# Check environment
 if [ "$CODESPACES" = "true" ]; then
-    print_status "Running in GitHub Codespace environment"
+    print_status "Running in GitHub Codespace"
+    ENV_TYPE="codespace"
+elif [ "$DEVCONTAINER" = "true" ] || [ -n "$REMOTE_CONTAINERS" ]; then
+    print_status "Running in Dev Container"
+    ENV_TYPE="devcontainer" 
 else
     print_status "Running in local development environment"
+    ENV_TYPE="local"
 fi
 
-# Install dependencies
+# System dependencies
+print_status "Installing system dependencies..."
+if command -v apt-get &> /dev/null; then
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq curl wget git build-essential
+fi
+
+# Install Node.js dependencies
 print_status "Installing npm dependencies..."
-npm install
+
+if [ -d "backend" ]; then
+    print_status "Installing backend dependencies..."
+    cd backend 
+    npm ci --silent
+    print_success "Backend dependencies installed"
+    cd ..
+fi
+
+if [ -d "frontend" ]; then
+    print_status "Installing frontend dependencies..."
+    cd frontend 
+    npm ci --silent
+    print_success "Frontend dependencies installed"
+    cd ..
+fi
+
+# Setup environment files
+print_status "Setting up environment configuration..."
+if [ -f "package.json" ]; then
+    print_status "Installing root dependencies..."
+    npm install
+fi
 
 # Install Playwright browsers
 print_status "Setting up Playwright browsers..."
@@ -71,7 +93,7 @@ print_success "Database is ready!"
 print_status "Waiting for Redis to be ready..."
 timeout=30
 counter=0
-until redis-cli -h redis -p 6379 ping > /dev/null 2>&1; do
+until redis-cli -h redis -p 6379 -a devpassword ping > /dev/null 2>&1; do
     sleep 1
     counter=$((counter + 1))
     if [ $counter -gt $timeout ]; then
@@ -83,34 +105,63 @@ done
 print_success "Redis is ready!"
 
 # Set up environment variables
-if [ ! -f .env.local ]; then
-    print_status "Creating .env.local file..."
-    cp .env.example .env.local
-    print_success "Environment file created. Please update with your specific values."
+if [ ! -f backend/.env ]; then
+    print_status "Creating backend .env file..."
+    if [ -f backend/.env.example ]; then
+        cp backend/.env.example backend/.env
+        print_success "Backend environment file created. Please update with your specific values."
+    else
+        print_warning "No backend/.env.example found"
+    fi
+fi
+
+if [ ! -f frontend/.env.local ]; then
+    print_status "Creating frontend .env.local file..."
+    if [ -f frontend/.env.example ]; then
+        cp frontend/.env.example frontend/.env.local
+        print_success "Frontend environment file created. Please update with your specific values."
+    else
+        print_warning "No frontend/.env.example found"
+    fi
 fi
 
 # Run database migrations (if Prisma schema exists)
-if [ -f prisma/schema.prisma ]; then
+if [ -f backend/prisma/schema.prisma ]; then
     print_status "Running database migrations..."
+    cd backend
     npx prisma migrate deploy || print_warning "Database migrations failed - this might be expected for a new setup"
     
     print_status "Generating Prisma client..."
     npx prisma generate
+    cd ..
 fi
 
 # Seed database (if seed script exists)
-if [ -f prisma/seed.ts ] || [ -f prisma/seed.js ]; then
+if [ -f backend/prisma/seed.ts ] || [ -f backend/prisma/seed.js ]; then
     print_status "Seeding database..."
+    cd backend
     npm run db:seed || print_warning "Database seeding failed - this might be expected"
+    cd ..
 fi
 
 # Build the application
-print_status "Building application..."
-npm run build || print_warning "Build failed - this might be expected for initial setup"
+print_status "Building backend..."
+if [ -f backend/package.json ]; then
+    cd backend && npm run build && cd .. || print_warning "Backend build failed - this might be expected for initial setup"
+fi
+
+print_status "Building frontend..."
+if [ -f frontend/package.json ]; then
+    cd frontend && npm run build && cd .. || print_warning "Frontend build failed - this might be expected for initial setup"
+fi
 
 # Run tests to verify setup
 print_status "Running test suite to verify setup..."
-npm run test:simple || print_warning "Some tests failed - this might be expected during initial setup"
+if [ -f frontend/package.json ]; then
+    cd frontend
+    npm run test:simple || print_warning "Some tests failed - this might be expected during initial setup"
+    cd ..
+fi
 
 # Create development shortcuts
 print_status "Creating development shortcuts..."
@@ -119,19 +170,21 @@ mkdir -p ~/.local/bin
 cat > ~/.local/bin/saas-dev << 'EOF'
 #!/bin/bash
 echo "🚀 Starting SaaS Platform development servers..."
-npm run dev
+cd /workspaces/modular-saas-platform/backend && npm run dev &
+cd /workspaces/modular-saas-platform/frontend && npm run dev &
+wait
 EOF
 
 cat > ~/.local/bin/saas-test << 'EOF'
 #!/bin/bash
 echo "🧪 Running comprehensive test suite..."
-npm run test:working
+cd /workspaces/modular-saas-platform/frontend && npm run test:working
 EOF
 
 cat > ~/.local/bin/saas-e2e << 'EOF'
 #!/bin/bash
 echo "🎭 Running E2E tests..."
-npm run test:e2e
+cd /workspaces/modular-saas-platform/frontend && npm run test:e2e
 EOF
 
 chmod +x ~/.local/bin/saas-*
@@ -173,15 +226,21 @@ echo "  6379 - Redis"
 echo "  9090 - Prometheus"
 echo ""
 
-# Start development services in the background if in Codespace
+# Setup complete notification
 if [ "$CODESPACES" = "true" ]; then
-    print_status "Starting development services..."
+    print_status "Codespace ready! Services will start automatically."
+    echo "Visit the forwarded ports to access:"
+    echo "- Frontend: https://${CODESPACE_NAME}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+    echo "- Backend API: https://${CODESPACE_NAME}-4000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+fi
+
+print_success "🎯 Setup completed successfully!"
+echo "Happy coding! 🚀"
+    nohup npm run dev > /tmp/frontend-dev.log 2>&1 &
     
-    # Start the main development server
-    nohup npm run dev > /tmp/dev.log 2>&1 &
-    
-    print_success "Development server started in background. Check /tmp/dev.log for logs."
-    print_status "You can now start coding! The application will be available on the forwarded ports."
+    print_success "Development servers started in background."
+    print_status "Backend logs: /tmp/backend-dev.log"
+    print_status "Frontend logs: /tmp/frontend-dev.log"
 fi
 
 print_success "Setup completed successfully! 🎊"

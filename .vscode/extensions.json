@@ -1,0 +1,56 @@
+{
+  "recommendations": [
+    // Database & Backend (Prisma, PostgreSQL)
+    "prisma.prisma",
+    "ckolkman.vscode-postgres",
+    "redis.redis-for-vscode",
+
+    // Frontend Development
+    "Vue.volar",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+
+    // Code Quality & Linting
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+
+    // API Testing & Development
+    "humao.rest-client",
+    "rangav.vscode-thunder-client",
+
+    // AI & GitHub Integration
+    "GitHub.copilot",
+    "github.copilot-chat",
+    "github.vscode-pull-request-github",
+    "github.vscode-github-actions",
+
+    // Git & Version Control
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+
+    // Docker & DevOps
+    "ms-azuretools.vscode-docker",
+    "ms-azuretools.vscode-containers",
+    "ms-vscode-remote.remote-containers",
+
+    // Testing
+    "ms-playwright.playwright",
+    "orta.vscode-jest",
+    "firsttris.vscode-jest-runner",
+
+    // Language Support
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-vscode.powershell",
+
+    // Productivity (Wayou Liu & Chris Kolkman recommendations)
+    "formulahendry.auto-rename-tag",
+    "aaron-bond.better-comments",
+    "oderwat.indent-rainbow",
+    "christian-kohler.path-intellisense",
+    "wayou.vscode-todo-highlight"
+  ],
+  "unwantedRecommendations": ["ms-vscode.vscode-typescript"]
+}

@@ -37,8 +37,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+RUN groupadd --gid $USER_GID $USERNAME || true \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME || usermod -l $USERNAME -d /home/$USERNAME $(getent passwd $USER_UID | cut -d: -f1) \
     && apt-get update \
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
@@ -63,10 +63,6 @@ RUN npm install -g \
 RUN npx playwright install-deps \
     && npx playwright install
 
-# Copy package files for better caching
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
-
 # Switch to non-root user
 USER $USERNAME
 
@@ -76,7 +72,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Expose ports
-EXPOSE 3000 3001 3003 3005 8080
+EXPOSE 3000 4000 3001 3003 3005 8080
 
 # Default command
 CMD ["sleep", "infinity"]
