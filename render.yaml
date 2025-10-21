@@ -46,6 +46,8 @@ services:
     region: virginia
     dockerfilePath: frontend/Dockerfile
     dockerContext: .
+    # Force the start command so Render doesn't use any stale UI override
+    startCommand: node server.js
     maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
