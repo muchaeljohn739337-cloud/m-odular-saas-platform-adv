@@ -3,21 +3,21 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copy only package manifests and install
-COPY package*.json ./
-RUN npm ci || true
+# Copy only frontend package manifests for better cache usage
+COPY frontend/package*.json ./
+RUN npm ci
 
-# Copy frontend app sources
-COPY . ./
+# Copy frontend sources
+COPY frontend/ ./
 
-# Install frontend deps and build
-RUN npm ci && npm run build
+# Build Next.js (produces .next/standalone)
+RUN npm run build
 
 FROM node:18-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy public and standalone output
+# Copy public assets and server
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
