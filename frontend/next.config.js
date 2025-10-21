@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Use default server output to support dynamic routes (e.g., NextAuth)
+  output: 'standalone',
   images: {
     unoptimized: true,
   },
