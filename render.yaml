@@ -3,6 +3,7 @@ services:
     name: advancia-backend
     env: node
     plan: free
+    region: oregon
     buildCommand: cd backend && npm ci && npm run build
     startCommand: cd backend && npx prisma migrate deploy && npm start
     maxRequestBodySize: 10MB
@@ -18,7 +19,7 @@ services:
       - key: SESSION_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: https://advancia-frontend.onrender.com
+        value: https://advanciapayledger.com
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -41,6 +42,7 @@ services:
     name: advancia-frontend
     env: node
     plan: free
+    region: virginia
     buildCommand: cd frontend && npm ci && npm run build
     startCommand: cd frontend && node .next/standalone/server.js
     maxRequestBodySize: 10MB
@@ -48,7 +50,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        value: https://advancia-backend.onrender.com
+        value: https://api.advanciapayledger.com
       - key: NEXT_PUBLIC_APP_NAME
         value: Advancia PayLedger
       - key: NEXT_PUBLIC_CURRENCY_LIST
@@ -74,3 +76,4 @@ databases:
     databaseName: advancia_prod
     user: advancia_user
     plan: free
+    region: virginia
