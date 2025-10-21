@@ -41,12 +41,10 @@ services:
 
   - type: web
     name: advancia-frontend
-    env: node
+    env: docker
     plan: free
     region: virginia
-    rootDir: frontend
-    buildCommand: npm ci && npm run build && (cp -r .next/static .next/standalone/.next/static || true) && (cp -r public .next/standalone/public || true)
-    startCommand: node .next/standalone/server.js
+    dockerfilePath: frontend/Dockerfile
     maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
