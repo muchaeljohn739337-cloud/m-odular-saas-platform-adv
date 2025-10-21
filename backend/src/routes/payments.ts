@@ -73,7 +73,7 @@ router.get("/session/:id", authenticateToken as any, async (req: any, res) => {
   try {
     const session = await stripeClient.checkout.sessions.retrieve(sessionId);
     const metaUserId = (session.metadata?.userId as string) || undefined;
-       eb init if (metaUserId && metaUserId !== req.user?.userId) {
+    if (metaUserId && metaUserId !== req.user?.userId) {
       return res.status(403).json({ error: "Forbidden" });
     }
     return res.json({
