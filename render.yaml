@@ -5,8 +5,8 @@ services:
     plan: free
     region: oregon
     rootDir: backend
-  buildCommand: npm ci && npm run build
-  startCommand: npm run start:render
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:render
     maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
