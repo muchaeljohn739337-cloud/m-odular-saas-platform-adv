@@ -1,39 +1,34 @@
+## Multi-stage Dockerfile to serve Next.js (standalone)
+
 # Build stage
 FROM node:18-alpine AS builder
 
-WORKDIR /app/frontend
+WORKDIR /app
 
-# Copy only frontend files
+# Copy only package manifests to leverage Docker cache
 COPY frontend/package*.json ./
 
-# Install frontend dependencies
-RUN npm install
+# Install dependencies
+RUN npm ci
 
-# Copy frontend source
-COPY frontend/src ./src
-COPY frontend/public ./public
-COPY frontend/next.config.js ./
-COPY frontend/tsconfig.json ./
-COPY frontend/tailwind.config.js ./
-COPY frontend/postcss.config.js ./
+# Copy app sources
+COPY frontend/ ./
 
-# Build the frontend
+# Build (produces .next/standalone when output: 'standalone' is set)
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine
+# Production runner
+FROM node:18-alpine AS runner
+ENV NODE_ENV=production
+WORKDIR /app
 
-WORKDIR /app/frontend
+# Copy public assets and standalone server
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# Copy only necessary files from builder
-COPY --from=builder /app/frontend/package*.json ./
-COPY --from=builder /app/frontend/.next ./.next
-COPY --from=builder /app/frontend/public ./public
-COPY --from=builder /app/frontend/next.config.js ./
-
-# Install production dependencies only
-RUN npm install --omit=dev
-
+# Expose default Next.js port (Render will map $PORT)
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Start the standalone server directly (no shell, no cd)
+CMD ["node", "server.js"]
