@@ -4,8 +4,9 @@ services:
     env: node
     plan: free
     region: oregon
-    buildCommand: cd backend && npm ci && npm run build
-    startCommand: cd backend && npx prisma migrate deploy && npm start
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npx prisma migrate deploy && npm start
     maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
@@ -43,8 +44,9 @@ services:
     env: node
     plan: free
     region: virginia
-    buildCommand: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && node .next/standalone/server.js
+    rootDir: frontend
+    buildCommand: npm ci && npm run build && (cp -r .next/static .next/standalone/.next/static || true) && (cp -r public .next/standalone/public || true)
+    startCommand: node .next/standalone/server.js
     maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
