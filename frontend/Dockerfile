@@ -3,11 +3,11 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Accept build-time environment variables for Next.js
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_APP_NAME
-ARG NEXT_PUBLIC_CURRENCY_LIST
-ARG NEXT_PUBLIC_FEATURE_FLAGS
+# Accept build-time environment variables for Next.js (with safe defaults)
+ARG NEXT_PUBLIC_API_URL=https://api.advanciapayledger.com
+ARG NEXT_PUBLIC_APP_NAME="Advancia PayLedger"
+ARG NEXT_PUBLIC_CURRENCY_LIST="USD,EUR,BTC,ETH,USDT,TRUMP,MEDBED"
+ARG NEXT_PUBLIC_FEATURE_FLAGS="notifications,bonus_tokens,debit_card,crypto_recovery"
 ARG NEXT_PUBLIC_VAPID_KEY
 ARG NEXT_PUBLIC_API_KEY
 ARG NEXT_PUBLIC_BOTPRESS_BOT_ID
