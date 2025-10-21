@@ -45,6 +45,7 @@ services:
     plan: free
     region: virginia
     dockerfilePath: frontend/Dockerfile
+    dockerContext: .
     maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
