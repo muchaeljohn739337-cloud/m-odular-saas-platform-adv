@@ -494,7 +494,7 @@ export async function notifyAllAdmins(
     // Find all admin users
     const adminUsers = await prisma.user.findMany({
       where: { role: "ADMIN" },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, firstName: true, lastName: true },
     });
 
     if (adminUsers.length === 0) {
@@ -533,3 +533,4 @@ export async function notifyAllAdmins(
     throw error;
   }
 }
+
