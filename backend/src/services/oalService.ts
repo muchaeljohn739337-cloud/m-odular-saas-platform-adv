@@ -27,6 +27,39 @@ interface UpdateOALStatusParams {
 /**
  * Create a new OAL audit log entry
  */
+/**
+ * Simple OAL logging helper - fire and forget
+ * Use this for quick inline logging without error handling
+ */
+export async function logOAL(params: {
+  object: string;
+  action: string;
+  location: string;
+  userId: string;
+  subjectId?: string;
+  metadata?: any;
+}) {
+  try {
+    await prisma.oAL.create({
+      data: {
+        object: params.object,
+        action: params.action,
+        location: params.location,
+        createdById: params.userId,
+        subjectId: params.subjectId,
+        metadata: params.metadata,
+        status: "APPROVED", // Auto-approve for simple logs
+      },
+    });
+  } catch (err) {
+    console.error("[OAL] Log failed:", err);
+    // Silent fail - don't break the main operation
+  }
+}
+
+/**
+ * Create a new OAL audit log entry (with full control)
+ */
 export async function createOALLog(params: CreateOALLogParams) {
   return await prisma.oAL.create({
     data: {
