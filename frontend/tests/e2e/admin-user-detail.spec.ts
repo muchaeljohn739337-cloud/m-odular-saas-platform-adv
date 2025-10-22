@@ -11,26 +11,28 @@ test.describe("Admin User Detail", () => {
   }) => {
     // 1. Login as admin via OTP (dev mode)
     await page.goto("http://localhost:3000/admin/login");
-    await page.fill('input[type="email"]', "admin@advancia.test");
-    await page.click('button:has-text("Send Code")');
+    await page.fill('input[type="email"]', "admin@advancia.com");
+    await page.fill('input[type="password"]', "Admin@123");
+    await page.fill('input[type="tel"]', "+15551234567");
+    await page.click('button:has-text("Send OTP")');
 
-    // Wait for success message
-    await expect(page.locator("text=/code sent|otp sent/i")).toBeVisible({
+    // Wait until OTP input is visible
+    await page.waitForSelector('input[placeholder*="code" i]', {
       timeout: 10000,
     });
 
-    // In dev mode, fetch the OTP code from backend
+    // Fetch OTP via dev helper endpoint
     const codeResp = await page.request.get(
-      "http://localhost:4000/api/auth/admin/dev/get-otp?email=admin@advancia.test"
+      "http://localhost:4000/api/auth/admin/dev/get-otp?email=admin@advancia.com"
     );
     expect(codeResp.ok()).toBeTruthy();
     const codeData = await codeResp.json();
-    const otpCode = codeData.code;
+    const otpCode = (codeData as any).code as string;
     expect(otpCode).toBeTruthy();
 
-    // Enter OTP code
+    // Enter OTP code and verify
     await page.fill('input[placeholder*="code" i]', otpCode);
-    await page.click('button:has-text("Verify")');
+    await page.click('button:has-text("Verify OTP")');
 
     // Wait for redirect to admin dashboard
     await expect(page).toHaveURL(/\/admin/, { timeout: 15000 });
@@ -41,11 +43,10 @@ test.describe("Admin User Detail", () => {
       timeout: 10000,
     });
 
-    // 3. Wait for users table to load
-    await expect(page.locator("table tbody tr")).toHaveCount(
-      { timeout: 10000 },
-      (count) => count > 0
-    
+    // 3. Wait for users table to load (ensure at least one row is visible)
+    await expect(page.locator("table tbody tr").first()).toBeVisible({
+      timeout: 10000,
+    });
 
     // 4. Click the first "Details" button
     const firstDetailsButton = page

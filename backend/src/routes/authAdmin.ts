@@ -202,6 +202,25 @@ router.post("/verify-otp", async (req, res) => {
   res.json({ accessToken, refreshToken });
 });
 
+// DEV ONLY: Peek current OTP for a given email to facilitate automated tests
+router.get("/dev/get-otp", (req, res) => {
+  try {
+    if (process.env.NODE_ENV !== "development") {
+      return res
+        .status(403)
+        .json({ error: "Forbidden in non-development env" });
+    }
+    const email = (req.query.email as string) || "";
+    if (!email) return res.status(400).json({ error: "email required" });
+    const entry = otpStore[email];
+    if (!entry) return res.status(404).json({ error: "No OTP for email" });
+    return res.json({ code: entry.code, expires: entry.expires });
+  } catch (e) {
+    console.error("/dev/get-otp failed", e);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
 // GET /api/auth/admin/logs - Get admin login history
 router.get("/logs", async (req, res) => {
   try {
