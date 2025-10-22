@@ -70,6 +70,7 @@ model User {
   notificationPreference  NotificationPreference?
   supportTickets          SupportTicket[]
   chatSessions            ChatSession[]
+  consultations           Consultation[]
   
   @@map("users")
 }
@@ -708,4 +709,99 @@ model ChatMessage {
   @@index([sessionId])
   @@index([createdAt])
   @@map("chat_messages")
+}
+
+// ============================================
+// MEDBED DOCTOR / CONSULTATION SYSTEM
+// ============================================
+
+enum DoctorStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+}
+
+enum ConsultationStatus {
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Doctor {
+  id                String          @id @default(uuid())
+  email             String          @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  specialization    String          // e.g., "General Practice", "Cardiology"
+  licenseNumber     String          @unique
+  phoneNumber       String?
+  
+  status            DoctorStatus    @default(PENDING)
+  verifiedAt        DateTime?
+  verifiedBy        String?         // Admin ID who verified
+  
+  inviteCode        String          // The code used during registration
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  consultations     Consultation[]
+  
+  @@index([email])
+  @@index([status])
+  @@map("doctors")
+}
+
+model Consultation {
+  id                String              @id @default(uuid())
+  
+  patientId         String
+  patient           User                @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  
+  doctorId          String
+  doctor            Doctor              @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  
+  status            ConsultationStatus  @default(SCHEDULED)
+  scheduledAt       DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  
+  symptoms          String?             // Initial patient symptoms
+  diagnosis         String?             // Doctor's diagnosis
+  prescription      String?             // Prescribed treatment
+  notes             String?             // Additional notes
+  
+  videoRoomId       String?             // Jitsi room identifier
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  messages          ConsultationMessage[]
+  
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("consultations")
+}
+
+model ConsultationMessage {
+  id              String        @id @default(uuid())
+  
+  consultationId  String
+  consultation    Consultation  @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  
+  senderType      String        // "patient" | "doctor"
+  senderId        String        // userId or doctorId
+  
+  content         String
+  attachmentUrl   String?       // Optional file attachment
+  
+  createdAt       DateTime      @default(now())
+  
+  @@index([consultationId])
+  @@index([createdAt])
+  @@map("consultation_messages")
 }

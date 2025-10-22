@@ -35,7 +35,9 @@
   "git.confirmSync": false,
 
   // Testing Settings
-  "jest.autoEnable": true,
+  "jest.autoEnable": false,
+  "jest.disabledWorkspaceFolders": ["Advancia Pay Ledger (Root)", "Frontend"],
+  "jest.rootPath": "backend",
   "playwright.showTrace": true,
 
   // ESLint Settings
@@ -53,5 +55,16 @@
   },
 
   // Security
-  "security.workspace.trust.untrustedFiles": "open"
+  "security.workspace.trust.untrustedFiles": "open",
+
+  // YAML: map GitHub Actions schema to workflows and reduce false positives
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*"
+  },
+  "[dockercompose]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  }
 }

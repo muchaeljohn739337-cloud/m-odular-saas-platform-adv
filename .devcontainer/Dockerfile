@@ -1,21 +1,16 @@
-# Codespace Development Dockerfile
-FROM node:18-bullseye-slim
+# Development container for Advancia Pay Ledger
+ARG VARIANT="18-bullseye"
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install essential development tools
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get -y install --no-install-recommends \
+    postgresql-client \
+    redis-tools \
     git \
     curl \
     wget \
-    unzip \
-    gnupg \
-    lsb-release \
-    ca-certificates \
-    software-properties-common \
+    gnupg2 \
     build-essential \
-    python3 \
-    python3-pip \
-    postgresql-client \
-    redis-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Docker CLI

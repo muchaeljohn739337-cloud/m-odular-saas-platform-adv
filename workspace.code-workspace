@@ -56,7 +56,8 @@
     },
     "git.enabled": true,
     "git.autofetch": true,
-    "git.confirmSync": false
+    "git.confirmSync": false,
+    "editor.codeActions.triggerOnFocusChange": true
   },
   "extensions": {
     "recommendations": [

@@ -3,9 +3,11 @@
   "dockerComposeFile": ["./docker-compose.yml"],
   "service": "app",
   "workspaceFolder": "/workspaces/modular-saas-platform",
-
+  
+  "initializeCommand": "pwsh -Command \"if (-not (Test-Path .env)) { Copy-Item .env.example .env -ErrorAction SilentlyContinue }\"",
+  
   // Forward ports for development services
-  "forwardPorts": [3000, 4000, 3003, 3005, 5432, 6379, 9090, 3001],
+  "forwardPorts": [3000, 4000, 5432, 6379],
   "portsAttributes": {
     "3000": {
       "label": "Next.js App",

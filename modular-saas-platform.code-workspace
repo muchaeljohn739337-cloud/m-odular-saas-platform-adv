@@ -63,7 +63,9 @@
     ],
 
     // Testing Settings
-    "jest.autoEnable": true,
+    "jest.autoEnable": false,
+    "jest.disabledWorkspaceFolders": ["🏠 Root", "🎨 Frontend"],
+    "jest.rootPath": "backend",
     "playwright.showTrace": true,
 
     // Database Settings

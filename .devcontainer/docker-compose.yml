@@ -3,20 +3,21 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-    container_name: saas-app-dev
+      args:
+        VARIANT: "18-bullseye"
+    container_name: advancia-dev
     ports:
       - "3000:3000"
       - "4000:4000"
-      - "3003:3003"
-      - "3005:3005"
-      - "3001:3001" # Storybook
-      - "8080:8080" # Debug port
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:password@db:5432/saas_platform_dev
+      DATABASE_URL: postgresql://postgres:devpassword@db:5432/advancia_dev
       REDIS_URL: redis://:devpassword@redis:6379
       NEXT_TELEMETRY_DISABLED: 1
-      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      # Development settings
+      PORT: 4000
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_API_URL: "http://localhost:4000"
     volumes:
       - ..:/workspaces/modular-saas-platform:cached
       - /workspaces/modular-saas-platform/backend/node_modules

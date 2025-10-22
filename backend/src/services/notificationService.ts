@@ -6,18 +6,26 @@ import { Server as SocketServer } from "socket.io";
 // Configure VAPID (will be set from env)
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
-const vapidSubject = process.env.VAPID_SUBJECT || "mailto:support@advanciapayledger.com";
+const vapidSubject =
+  process.env.VAPID_SUBJECT || "mailto:support@advanciapayledger.com";
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 }
 
-// Email transporter
+// Email configuration
+const EMAIL_USER = process.env.EMAIL_USER || ""; // Gmail account used for SMTP auth
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || ""; // Gmail App Password recommended
+// Custom From/Reply-To to present your domain (e.g., support@yourdomain)
+const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
+const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || EMAIL_USER;
+
+// Email transporter (Gmail SMTP)
 const emailTransporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
+    user: EMAIL_USER,
+    pass: EMAIL_PASSWORD,
   },
 });
 
@@ -40,7 +48,15 @@ interface NotificationPayload {
 }
 
 export async function createNotification(payload: NotificationPayload) {
-  const { userId, type = "all", priority = "normal", category, title, message, data } = payload;
+  const {
+    userId,
+    type = "all",
+    priority = "normal",
+    category,
+    title,
+    message,
+    data,
+  } = payload;
 
   try {
     // Get user preferences
@@ -58,7 +74,9 @@ export async function createNotification(payload: NotificationPayload) {
     // Check if category is enabled
     const categoryKey = `${category}Alerts` as keyof typeof userPrefs;
     if (categoryKey in userPrefs && !userPrefs[categoryKey]) {
-      console.log(`⏭️  Skipping notification - ${category} alerts disabled for user ${userId}`);
+      console.log(
+        `⏭️  Skipping notification - ${category} alerts disabled for user ${userId}`
+      );
       return null;
     }
 
@@ -75,7 +93,9 @@ export async function createNotification(payload: NotificationPayload) {
       },
     });
 
-    console.log(`✅ Notification created: ${notification.id} for user ${userId}`);
+    console.log(
+      `✅ Notification created: ${notification.id} for user ${userId}`
+    );
 
     // Determine which channels to use
     const channels: string[] = [];
@@ -89,18 +109,32 @@ export async function createNotification(payload: NotificationPayload) {
 
     // Send via each channel (non-blocking)
     Promise.allSettled([
-      channels.includes("email") ? sendEmail(notification.id, userId, title, message) : Promise.resolve(),
-      channels.includes("in-app") ? sendInApp(notification.id, userId, notification) : Promise.resolve(),
-      channels.includes("push") ? sendPush(notification.id, userId, title, message, data) : Promise.resolve(),
+      channels.includes("email")
+        ? sendEmail(notification.id, userId, title, message)
+        : Promise.resolve(),
+      channels.includes("in-app")
+        ? sendInApp(notification.id, userId, notification)
+        : Promise.resolve(),
+      channels.includes("push")
+        ? sendPush(notification.id, userId, title, message, data)
+        : Promise.resolve(),
     ]).then(async (results) => {
       // Update notification with delivery status
       await prisma.notification.update({
         where: { id: notification.id },
         data: {
-          emailSent: channels.includes("email") && results[0]?.status === "fulfilled",
-          emailSentAt: channels.includes("email") && results[0]?.status === "fulfilled" ? new Date() : undefined,
-          pushSent: channels.includes("push") && results[2]?.status === "fulfilled",
-          pushSentAt: channels.includes("push") && results[2]?.status === "fulfilled" ? new Date() : undefined,
+          emailSent:
+            channels.includes("email") && results[0]?.status === "fulfilled",
+          emailSentAt:
+            channels.includes("email") && results[0]?.status === "fulfilled"
+              ? new Date()
+              : undefined,
+          pushSent:
+            channels.includes("push") && results[2]?.status === "fulfilled",
+          pushSentAt:
+            channels.includes("push") && results[2]?.status === "fulfilled"
+              ? new Date()
+              : undefined,
         },
       });
     });
@@ -112,7 +146,12 @@ export async function createNotification(payload: NotificationPayload) {
   }
 }
 
-async function sendEmail(notificationId: string, userId: string, subject: string, message: string) {
+async function sendEmail(
+  notificationId: string,
+  userId: string,
+  subject: string,
+  message: string
+) {
   try {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.email) {
@@ -121,7 +160,8 @@ async function sendEmail(notificationId: string, userId: string, subject: string
     }
 
     await emailTransporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: EMAIL_FROM,
+      replyTo: EMAIL_REPLY_TO,
       to: user.email,
       subject,
       html: `
@@ -132,7 +172,9 @@ async function sendEmail(notificationId: string, userId: string, subject: string
             <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;" />
             <p style="font-size: 12px; color: #6B7280;">
               This is an automated notification from Advancia Pay Ledger.
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/settings/notifications" style="color: #3B82F6; text-decoration: none;">Manage preferences</a>
+              <a href="${
+                process.env.FRONTEND_URL || "http://localhost:3000"
+              }/settings/notifications" style="color: #3B82F6; text-decoration: none;">Manage preferences</a>
             </p>
           </div>
         </div>
@@ -148,7 +190,11 @@ async function sendEmail(notificationId: string, userId: string, subject: string
   }
 }
 
-async function sendInApp(notificationId: string, userId: string, notification: any) {
+async function sendInApp(
+  notificationId: string,
+  userId: string,
+  notification: any
+) {
   try {
     if (!io) {
       console.warn("⚠️  Socket.IO not initialized");
@@ -171,7 +217,13 @@ async function sendInApp(notificationId: string, userId: string, notification: a
   }
 }
 
-async function sendPush(notificationId: string, userId: string, title: string, message: string, data?: Record<string, any>) {
+async function sendPush(
+  notificationId: string,
+  userId: string,
+  title: string,
+  message: string,
+  data?: Record<string, any>
+) {
   try {
     if (!vapidPublicKey || !vapidPrivateKey) {
       console.warn("⚠️  VAPID keys not configured, skipping push notification");
@@ -213,14 +265,18 @@ async function sendPush(notificationId: string, userId: string, title: string, m
             where: { id: sub.id },
             data: { isActive: false },
           });
-          console.log(`🗑️  Removed expired push subscription for user ${userId}`);
+          console.log(
+            `🗑️  Removed expired push subscription for user ${userId}`
+          );
         }
         throw error;
       }
     });
 
     await Promise.allSettled(pushPromises);
-    console.log(`✅ Push notifications sent to ${subscriptions.length} device(s)`);
+    console.log(
+      `✅ Push notifications sent to ${subscriptions.length} device(s)`
+    );
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
     await logDelivery(notificationId, "push", "failed", errorMsg);
@@ -228,7 +284,12 @@ async function sendPush(notificationId: string, userId: string, title: string, m
   }
 }
 
-async function logDelivery(notificationId: string, channel: string, status: string, errorMessage?: string) {
+async function logDelivery(
+  notificationId: string,
+  channel: string,
+  status: string,
+  errorMessage?: string
+) {
   try {
     await prisma.notificationLog.create({
       data: {
@@ -271,7 +332,8 @@ export async function sendFallbackEmails() {
 
       try {
         await emailTransporter.sendMail({
-          from: process.env.EMAIL_USER,
+          from: EMAIL_FROM,
+          replyTo: EMAIL_REPLY_TO,
           to: notification.user.email,
           subject: `⚠️ Unread Notification: ${notification.title}`,
           html: `
@@ -279,8 +341,12 @@ export async function sendFallbackEmails() {
               <div style="background-color: white; border-radius: 8px; padding: 30px; border-left: 4px solid #F59E0B;">
                 <h2 style="color: #F59E0B; margin-top: 0;">📬 You have an unread notification</h2>
                 <p><strong>${notification.title}</strong></p>
-                <p style="color: #374151; line-height: 1.6;">${notification.message}</p>
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/notifications" 
+                <p style="color: #374151; line-height: 1.6;">${
+                  notification.message
+                }</p>
+                <a href="${
+                  process.env.FRONTEND_URL || "http://localhost:3000"
+                }/notifications" 
                    style="display: inline-block; padding: 12px 24px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px;">
                   View Notification
                 </a>
@@ -296,7 +362,10 @@ export async function sendFallbackEmails() {
 
         console.log(`📧 Fallback email sent to ${notification.user.email}`);
       } catch (error) {
-        console.error(`❌ Fallback email failed for notification ${notification.id}:`, error);
+        console.error(
+          `❌ Fallback email failed for notification ${notification.id}:`,
+          error
+        );
       }
     }
   } catch (error) {
@@ -348,8 +417,12 @@ export async function markAsRead(notificationId: string, userId: string) {
   try {
     if (io) {
       const unread = await getUnreadCount(userId);
-      io.to(`user-${userId}`).emit("notifications:read", { id: notificationId });
-      io.to(`user-${userId}`).emit("notifications:unread-count", { count: unread });
+      io.to(`user-${userId}`).emit("notifications:read", {
+        id: notificationId,
+      });
+      io.to(`user-${userId}`).emit("notifications:unread-count", {
+        count: unread,
+      });
     }
   } catch (e) {
     console.warn("Socket emit failed for markAsRead:", e);
@@ -379,7 +452,10 @@ export async function getUnreadCount(userId: string) {
   });
 }
 
-export async function deleteNotification(notificationId: string, userId: string) {
+export async function deleteNotification(
+  notificationId: string,
+  userId: string
+) {
   return await prisma.notification.delete({
     where: { id: notificationId, userId },
   });
@@ -405,4 +481,55 @@ export async function updateUserPreferences(userId: string, updates: any) {
     update: updates,
     create: { userId, ...updates },
   });
+}
+
+/**
+ * Notify all admin users
+ * @param payload - Notification payload (userId will be ignored, all admins will be notified)
+ */
+export async function notifyAllAdmins(
+  payload: Omit<NotificationPayload, "userId">
+) {
+  try {
+    // Find all admin users
+    const adminUsers = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true, email: true, name: true },
+    });
+
+    if (adminUsers.length === 0) {
+      console.log("⚠️  No admin users found to notify");
+      return [];
+    }
+
+    console.log(`📢 Notifying ${adminUsers.length} admin users`);
+
+    // Send notification to each admin
+    const notifications = await Promise.allSettled(
+      adminUsers.map((admin) =>
+        createNotification({
+          ...payload,
+          userId: admin.id,
+        })
+      )
+    );
+
+    // Also send to admins room via Socket.IO
+    if (io) {
+      io.to("admins").emit("admin-notification", {
+        title: payload.title,
+        message: payload.message,
+        priority: payload.priority,
+        category: payload.category,
+        data: payload.data,
+        timestamp: new Date().toISOString(),
+      });
+      console.log("✅ Socket notification sent to admins room");
+    }
+
+    return notifications;
+  } catch (error) {
+    console.error("❌ Error notifying admins:", error);
+    throw error;
+  }
 }

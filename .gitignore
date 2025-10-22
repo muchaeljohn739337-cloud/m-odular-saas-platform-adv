@@ -26,6 +26,14 @@ backup-tokens.txt
 tokens.backup
 AUTH_BACKUP_KEYS.md
 
+# Cloudflare credentials and secrets
+CLOUDFLARE_CREDENTIALS.md
+*_CREDENTIALS.md
+cloudflare-secrets.txt
+.dev.vars
+frontend/.dev.vars
+**/wrangler-*.toml
+
 # Logs
 *.log
 npm-debug.log*
