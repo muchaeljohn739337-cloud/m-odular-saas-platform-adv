@@ -685,3 +685,37 @@ model MedBedsBooking {
   @@index([paymentStatus])
   @@map("medbeds_bookings")
 }
+
+// OAL: Object-Action-Location audit model for tracking sensitive operations
+model OAL {
+  id         String    @id @default(cuid())
+  object     String    // e.g., "ledger.balance", "user.role", "system.config"
+  action     String    // e.g., "adjust", "create", "delete", "update"
+  location   String    // e.g., "admin.panel", "api.endpoint", "cron.job"
+  
+  // Optional context
+  subjectId  String?   // e.g., user id the action concerns
+  metadata   Json?     // Additional context (delta, reason, old/new values, etc)
+  status     OALStatus @default(PENDING)
+
+  // Auditing
+  createdById String   // Admin/user who initiated the action
+  updatedById String?  // Admin who approved/rejected (if applicable)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([object])
+  @@index([action])
+  @@index([location])
+  @@index([status])
+  @@index([createdById])
+  @@index([subjectId])
+  @@index([createdAt])
+  @@map("oal_audit_log")
+}
+
+enum OALStatus {
+  PENDING   // Awaiting approval
+  APPROVED  // Action approved and executed
+  REJECTED  // Action rejected
+}
