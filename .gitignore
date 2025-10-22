@@ -161,6 +161,9 @@ Check-*.ps1
 tools/
 .devcontainer/secrets/
 
+# Database backups
+db_backups/
+
 # Status and completion documentation (generated files)
 *COMPLETE*.md
 *SUCCESS*.md
