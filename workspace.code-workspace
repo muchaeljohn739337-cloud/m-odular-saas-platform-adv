@@ -56,7 +56,9 @@
     },
     "git.enabled": true,
     "git.autofetch": true,
-    "git.confirmSync": false
+    "git.confirmSync": false,
+    "editor.codeActions.triggerOnFocusChange": true,
+    "powershell.cwd": "Advancia Pay Ledger (Root)"
   },
   "extensions": {
     "recommendations": [

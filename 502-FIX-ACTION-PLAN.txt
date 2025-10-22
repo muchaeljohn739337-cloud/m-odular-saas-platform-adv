@@ -1,0 +1,96 @@
+🚀 IMMEDIATE ACTION PLAN - Fix 502 Bad Gateway Error
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+Your domain shows 502 Bad Gateway from Cloudflare
+This means the Render backend service crashed or didn't start
+
+ROOT CAUSE (likely):
+1. Database migration P3009 failed during Render deployment
+2. Backend crashed trying to connect to database
+3. Environment variables not set on Render
+
+SOLUTION:
+Test locally first, then redeploy to Render with our fixes
+
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: PULL LATEST CODE (1 minute)
+───────────────────────────────────
+
+cd C:\Users\mucha.DESKTOP-H7T9NPM\-modular-saas-platform
+git pull origin main
+git log --oneline -1  # Should show: d5cc24e Fix: Make crypto balance migration...
+
+
+STEP 2: SET UP .env FILE (2 minutes)
+────────────────────────────────────
+
+cd backend
+Copy-Item .env.example .env
+code .env  # Edit and fill in:
+  - DATABASE_URL=postgresql://postgres:PASSWORD@localhost:5432/saas_platform
+  - POSTGRES_PASSWORD=YourPassword
+  - JWT_SECRET=YourSecret32CharsMinimum
+
+
+STEP 3: START DATABASE (2 minutes)
+──────────────────────────────────
+
+cd ..
+docker compose up -d db redis
+docker compose ps  # Verify both running
+
+
+STEP 4: APPLY MIGRATIONS & START BACKEND (3 minutes)
+─────────────────────────────────────────────────────
+
+cd backend
+npm install
+npx prisma migrate deploy
+npx prisma generate
+npm run dev  # Or: npm start
+
+
+STEP 5: VERIFY HEALTH (1 minute)
+─────────────────────────────────
+
+# In new PowerShell tab:
+Invoke-RestMethod http://localhost:4000/api/health
+
+Expected response:
+{
+  "status": "healthy",
+  "timestamp": "2025-10-22T...",
+  "service": "advancia-backend",
+  "version": "1.0.0"
+}
+
+
+STEP 6: IF LOCAL TEST PASSES, COMMIT & PUSH
+─────────────────────────────────────────────
+
+git add .
+git commit -m "Deploy: All tests passing locally, fixes applied"
+git push origin main
+
+# Then check Render dashboard for redeployment
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TOTAL TIME: ~12 minutes
+
+If any step fails, stop and report the error. We'll debug from there.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TIPS:
+• Keep backend terminal open to see logs
+• Open separate PowerShell tabs for each service
+• Check docker compose ps if services don't start
+• Review .env file - most issues are missing/wrong secrets
+
+Ready? Start with: git pull origin main
+

@@ -1,256 +1,195 @@
+import dotenv from "dotenv";
+import http from "http";
 import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
 import cors from "cors";
-import createTransactionRouter from "./routes/transaction";
-import authRouter from "./routes/auth";
-import tokenRouter from "./routes/tokens";
-import rewardsRouter from "./routes/rewards";
-import healthRouter from "./routes/health";
-import usersRouter from "./routes/users";
-import paymentsRouter from "./routes/payments";
-import recoveryRouter from "./routes/recovery";
-import cryptoRouter from "./routes/crypto";
-import rpaRouter from "./rpa/routes";
-import chatbotRouter from "./routes/chatbot";
-import auditLogsRouter from "./routes/auditLogs";
-import twoFactorRouter from "./routes/twoFactor";
-import analyticsRouter from "./routes/analytics";
-// import loansRouter from "./routes/loans"; // DISABLED: Causing TypeScript errors
-import systemRouter from "./routes/system";
-import notifyStatsRouter from "./routes/notifyStats";
-import notificationRouter from "./routes/notifications";
-import ethereumRouter from "./routes/ethereum";
-import adminPortfolioRouter from "./routes/adminPortfolio";
-import monitoringRouter from "./routes/monitoring";
-import supportRouter from "./routes/support";
+import { Server as SocketIOServer } from "socket.io";
+import jwt from "jsonwebtoken";
+import app from "./app";
 import { config } from "./config";
-import { rateLimit, validateInput, securityHeaders } from "./middleware/security";
+import { setSocketIO as setNotificationSocket } from "./services/notificationService";
+import { setTransactionSocketIO } from "./routes/transactions";
+import prisma from "./prismaClient";
+import paymentsRouter from "./routes/payments";
+import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
+import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
+import supportRouter, { setSupportSocketIO } from "./routes/support";
+import analyticsRouter from "./routes/analytics";
+import aiAnalyticsRouter from "./routes/aiAnalytics";
+import authRouter from "./routes/auth";
+import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
+import transactionsRouter from "./routes/transactions";
+import chatRouter, { setChatSocketIO } from "./routes/chat";
+import adminRouter from "./routes/admin";
+import consultationRouter from "./routes/consultation";
+import systemRouter from "./routes/system";
+import marketingRouter from "./routes/marketing";
+import subscribersRouter from "./routes/subscribers";
+import securityLevelRouter from "./routes/securityLevel";
+import ipBlocksRouter from "./routes/ipBlocks";
+import authAdminRouter, {
+  setBroadcastSessions as setAuthBroadcast,
+} from "./routes/authAdmin";
+import sessionsRouter, {
+  setBroadcastSessions as setSessionsBroadcast,
+} from "./routes/sessions";
+import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import { activityLogger } from "./middleware/activityLogger";
-import { setSocketIO, sendFallbackEmails } from "./services/notificationService";
-import { setTokenSocketIO } from "./routes/tokens";
-import cron from "node-cron";
+import { rateLimit, validateInput } from "./middleware/security";
+import { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
+import { activeSessions } from "./routes/authAdmin";
 
-const app = express();
-const server = createServer(app);
-const io = new Server(server, {
+// Load environment variables
+dotenv.config();
+
+// Create HTTP server and attach Socket.IO
+// Create server
+const server = http.createServer(app);
+
+// Trust proxy (needed when behind Cloudflare/NGINX for correct IPs and HTTPS)
+app.set("trust proxy", 1);
+
+// Configure CORS with allowed origins
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (config.allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+  })
+);
+
+// Stripe webhook MUST use raw body, so register it BEFORE express.json()
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhook
+);
+
+// JSON parser and common middlewares AFTER webhook
+app.use(express.json());
+app.use(validateInput);
+app.use(activityLogger);
+app.use("/api", rateLimit({ windowMs: 60_000, maxRequests: 300 }));
+
+// Health check endpoint (critical for production monitoring)
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    environment: config.nodeEnv,
+    version: "1.0.0",
+  });
+});
+
+// Regular routes
+app.use("/api/payments", paymentsRouter);
+app.use("/api/debit-card", debitCardRouter);
+app.use("/api/medbeds", medbedsRouter);
+app.use("/api/support", supportRouter);
+app.use("/api/admin/analytics", analyticsRouter);
+app.use("/api/ai-analytics", aiAnalyticsRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/admin", adminUsersRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/transactions", transactionsRouter);
+app.use("/api/chat", chatRouter);
+app.use("/api/consultation", consultationRouter);
+app.use("/api/system", systemRouter);
+app.use("/api/marketing", marketingRouter);
+app.use("/api/subscribers", subscribersRouter);
+app.use("/api/admin/security", securityLevelRouter);
+app.use("/api/admin/ip-blocks", ipBlocksRouter);
+app.use("/api/auth/admin", authAdminRouter);
+app.use("/api/sessions", sessionsRouter);
+app.use("/api/withdrawals", withdrawalsRouter);
+
+const io = new SocketIOServer(server, {
   cors: {
     origin: config.allowedOrigins,
     methods: ["GET", "POST"],
-    credentials: true
-  }
-});
-
-// Inject Socket.IO into notification service
-setSocketIO(io);
-
-// Inject Socket.IO into token routes
-setTokenSocketIO(io);
-
-// Middleware - Enhanced CORS with multiple origins support
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    
-    if (config.allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.warn(`🚫 CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
+    credentials: true,
   },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Content-Length", "X-Request-Id"],
-  maxAge: 86400 // 24 hours
-}));
-
-// Security middlewares
-app.use(securityHeaders);
-app.use(validateInput);
-
-// Activity logging middleware (must be after security middlewares)
-app.use(activityLogger);
-
-// Rate limiting for authentication endpoints
-app.use(
-  "/api/auth",
-  rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 5, // 5 requests per 15 minutes
-    message: "Too many authentication attempts, please try again later.",
-  })
-);
-
-// General rate limiting for all API endpoints
-app.use(
-  "/api",
-  rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    maxRequests: 100, // 100 requests per minute
-  })
-);
-
-// Stripe webhook needs raw body - must be before express.json()
-app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
-
-// Parse JSON for all other routes
-app.use(express.json());
-
-console.log('📋 Registering routes...');
-
-// Routes
-app.use("/api/auth", authRouter);
-console.log('✓ Auth routes registered');
-app.use("/api/2fa", twoFactorRouter);
-console.log('✓ 2FA routes registered');
-app.use("/api/tokens", tokenRouter);
-console.log('✓ Token routes registered');
-app.use("/api/rewards", rewardsRouter);
-console.log('✓ Rewards routes registered');
-app.use("/api/health", healthRouter);
-console.log('✓ Health routes registered');
-app.use("/api/users", usersRouter);
-console.log('✓ User routes registered');
-app.use("/api/transactions", createTransactionRouter(io));
-console.log('✓ Transaction routes registered');
-// Compatibility mount for singular form used by clients/tests
-app.use("/api/transaction", createTransactionRouter(io));
-app.use("/api/payments", paymentsRouter);
-console.log('✓ Payment routes registered');
-app.use("/api/recovery", recoveryRouter);
-console.log('✓ Recovery routes registered');
-app.use("/api/crypto", cryptoRouter);
-console.log('✓ Crypto routes registered');
-app.use("/api/audit-logs", auditLogsRouter);
-console.log('✓ Audit log routes registered');
-app.use("/api/analytics", analyticsRouter);
-console.log('✓ Analytics routes registered');
-// app.use("/api/loans", loansRouter); // DISABLED: Feature under development
-// console.log('✓ Loans routes registered');
-app.use("/api/system", systemRouter);
-console.log('✓ System routes registered');
-app.use("/api/rpa", rpaRouter);
-console.log('✓ RPA automation routes registered');
-app.use("/api/chatbot", chatbotRouter);
-console.log('✓ Chatbot routes registered');
-app.use("/api/notify", notifyStatsRouter);
-console.log('✓ Notification stats routes registered');
-app.use("/api/notifications", notificationRouter);
-console.log('✓ Notification routes registered');
-app.use("/api/eth", ethereumRouter);
-console.log('✓ Ethereum gateway routes registered');
-app.use("/api/admin", adminPortfolioRouter);
-console.log('✓ Admin portfolio routes registered');
-app.use("/api/admin", monitoringRouter);
-console.log('✓ Admin monitoring routes registered');
-app.use("/api/support", supportRouter);
-console.log('✓ Support routes registered');
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({ status: "healthy", timestamp: new Date().toISOString() });
-});
-
-// Database test endpoint
-app.get("/api/db-test", async (req, res) => {
-  try {
-    const prisma = require('./prismaClient').default;
-    
-    // Try to query the database
-    const userCount = await prisma.user.count();
-    
-    res.json({
-      status: "connected",
-      message: "Database connection successful",
-      userCount
-    });
-  } catch (error) {
-    console.error("Database test error:", error);
-    res.status(500).json({
-      status: "error",
-      message: "Database connection failed",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
 });
 
 // Socket.IO connection handling
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  socket.on("join-room", (userId) => {
-    socket.join(`user-${userId}`);
-    console.log(`User ${userId} joined room`);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
-});
-
-// Schedule email fallback cron job (every 15 minutes)
-cron.schedule("*/15 * * * *", async () => {
-  console.log("⏰ Running scheduled email fallback for unread notifications...");
+// JWT auth for Socket.IO handshake
+io.use(async (socket, next) => {
   try {
-    await sendFallbackEmails();
-  } catch (error) {
-    console.error("❌ Email fallback cron job error:", error);
+    const token =
+      (socket.handshake.auth?.token as string) ||
+      (socket.handshake.query?.token as string);
+    const guestSessionId =
+      (socket.handshake.auth?.guestSessionId as string) ||
+      (socket.handshake.query?.guestSessionId as string);
+    if (!token) {
+      // Allow unauthenticated chat listeners for guest chat sessions
+      if (
+        guestSessionId &&
+        typeof guestSessionId === "string" &&
+        guestSessionId.length >= 6
+      ) {
+        (socket as any).data = { guestSessionId };
+        return next();
+      }
+      return next(new Error("Auth token or guestSessionId required"));
+    }
+    const cleaned = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
+    const payload = jwt.verify(cleaned, config.jwtSecret) as {
+      userId: string;
+      email?: string;
+    };
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, role: true, active: true },
+    });
+    if (!user || user.active === false)
+      return next(new Error("Account disabled"));
+    (socket as any).data = { userId: user.id, role: user.role };
+    next();
+  } catch (e) {
+    next(new Error("Invalid token"));
   }
 });
 
-const PORT = config.port || 4000;
+io.on("connection", (socket) => {
+  const { userId, role, guestSessionId } = (socket as any).data || {};
+  if (userId) socket.join(`user-${userId}`);
+  if (role === "ADMIN") socket.join("admins");
+  if (guestSessionId) socket.join(`chat-session-${guestSessionId}`);
 
-console.log(`\n📍 About to listen on port ${PORT}...`);
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server successfully bound to port ${PORT}`);
-  console.log(`🚀 Server running on port ${config.port}`);
-  console.log(`📡 Socket.IO server ready on http://localhost:${PORT}`);
-  console.log(`🌐 Server accessible at:`);
-  console.log(`   - http://localhost:${PORT}`);
-  console.log(`   - http://127.0.0.1:${PORT}`);
-  console.log(`✅ All systems go! Ready to accept connections.`);
-});
-
-// Error handling - Keep server running
-server.on('error', (error: any) => {
-  console.error('❌ Server error:', error);
-  if (error.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use`);
-    process.exit(1);
-  }
-  // Don't exit for other errors
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('⚠️ Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't crash - just log
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('⚠️ Uncaught Exception:', error);
-  // Don't crash - just log
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n👋 Shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
+  // Optional: clients may request to join again with validation
+  socket.on("join-room", (reqUserId: string) => {
+    if (reqUserId && reqUserId === userId) socket.join(`user-${userId}`);
   });
+
+  // Broadcast session updates to admins
+  socket.emit("sessions:update", activeSessions);
 });
 
-console.log('✅ Backend server ready and listening...');
+// Broadcast sessions update helper
+export function broadcastSessions() {
+  io.to("admins").emit("sessions:update", activeSessions);
+}
 
-// Debug: Verify server is really listening
-setTimeout(() => {
-  const addr = server.address();
-  console.log(`\n🔍 Debug: Server address info:`, addr);
-}, 100);
+// Inject Socket.IO into services/routers that need it
+setNotificationSocket(io);
+setTransactionSocketIO(io);
+setAdminUsersSocketIO(io);
+setDebitCardSocketIO(io);
+setMedbedsSocketIO(io);
+setChatSocketIO(io);
+setSupportSocketIO(io);
+setPaymentsSocketIO(io);
+setWithdrawalSocketIO(io);
 
-// Keep process alive
-process.stdin.resume();
+// Wire up session broadcasting
+setAuthBroadcast(broadcastSessions);
+setSessionsBroadcast(broadcastSessions);
+
+// Start server
+const PORT = config.port || process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

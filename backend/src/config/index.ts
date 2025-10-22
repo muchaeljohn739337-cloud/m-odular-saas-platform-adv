@@ -6,15 +6,19 @@ dotenv.config();
 /**
  * Decrypt an encrypted JWT secret
  */
-function decryptSecret(encrypted: string, keyHex: string, ivHex: string): string {
+function decryptSecret(
+  encrypted: string,
+  keyHex: string,
+  ivHex: string
+): string {
   const algorithm = "aes-256-cbc";
   const key = Buffer.from(keyHex, "hex");
   const iv = Buffer.from(ivHex, "hex");
-  
+
   const decipher = crypto.createDecipheriv(algorithm, key, iv);
   let decrypted = decipher.update(encrypted, "hex", "utf8");
   decrypted += decipher.final("utf8");
-  
+
   return decrypted;
 }
 
@@ -76,28 +80,36 @@ export function getJwtSecret(): string {
  */
 function getAllowedOrigins(): string[] {
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const allowedOrigins = [frontendUrl];
+  const set = new Set<string>();
+  if (frontendUrl) set.add(frontendUrl);
 
-  // Add production domain and its www variant
+  // Add production domain defaults (legacy)
   if (process.env.NODE_ENV === "production") {
-    allowedOrigins.push(
-      "https://advanciapayledger.com",
-      "https://www.advanciapayledger.com"
-    );
+    set.add("https://advanciapayledger.com");
+    set.add("https://www.advanciapayledger.com");
   }
 
   // Add localhost variants for development
   if (process.env.NODE_ENV !== "production") {
-    allowedOrigins.push(
+    [
       "http://localhost:3000",
       "http://localhost:3001",
       "http://127.0.0.1:3000",
-      "http://127.0.0.1:3001"
-    );
+      "http://127.0.0.1:3001",
+    ].forEach((o) => set.add(o));
   }
 
-  // Remove duplicates
-  return [...new Set(allowedOrigins)];
+  // Merge explicit ALLOWED_ORIGINS env (comma-separated)
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (envOrigins) {
+    envOrigins
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((o) => set.add(o));
+  }
+
+  return [...set];
 }
 
 export const config = {
@@ -125,5 +137,7 @@ console.log(`   Environment: ${config.nodeEnv}`);
 console.log(`   Frontend URL: ${config.frontendUrl}`);
 console.log(`   Allowed CORS Origins: ${config.allowedOrigins.join(", ")}`);
 if (!config.stripeSecretKey) {
-  console.warn("⚠️  STRIPE_SECRET_KEY not set. Payment endpoints will be disabled.");
+  console.warn(
+    "⚠️  STRIPE_SECRET_KEY not set. Payment endpoints will be disabled."
+  );
 }

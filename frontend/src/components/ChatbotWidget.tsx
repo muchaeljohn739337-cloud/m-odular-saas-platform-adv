@@ -1,239 +1,169 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { io, Socket } from "socket.io-client";
 
-interface BotpressConfig {
-  botId: string;
-  hostUrl: string;
-  messagingUrl: string;
-  [key: string]: unknown;
-}
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const BOTPRESS_ID = process.env.NEXT_PUBLIC_BOTPRESS_BOT_ID;
 
-interface BotpressWebChatWindow extends Window {
-  botpressWebChat?: {
-    init: (config: BotpressConfig) => void;
-    sendEvent: (event: Record<string, unknown>) => void;
-    mergeConfig: (config: Partial<BotpressConfig>) => void;
-  };
-}
-
-declare const window: BotpressWebChatWindow;
+type Msg = { role: "user" | "bot"; text: string; at: string };
 
 export default function ChatbotWidget() {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [messages, setMessages] = useState<Msg[]>([{
+    role: "bot",
+    text: "Hi! I’m Advancia Help. I can guide payments, debit card orders, Med Beds, OTP, and more. How can I help?",
+    at: new Date().toISOString(),
+  }]);
+  const sessionId = useMemo(() => {
+    const existing = typeof window !== 'undefined' ? localStorage.getItem("chatSessionId") : null;
+    if (existing) return existing;
+    const s = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    if (typeof window !== 'undefined') localStorage.setItem("chatSessionId", s);
+    return s;
+  }, []);
+  const listRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Load Botpress webchat script
-    const script = document.createElement('script');
-    script.src = 'https://cdn.botpress.cloud/webchat/v1/inject.js';
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [messages, open]);
+
+  // If Botpress is configured, load it and hide our minimal widget
+  useEffect(() => {
+    if (!BOTPRESS_ID) return;
+    const script = document.createElement("script");
+    script.src = "https://cdn.botpress.cloud/webchat/v1/inject.js";
     script.async = true;
     document.body.appendChild(script);
-
-    script.onload = () => {
-      setIsLoaded(true);
-      
-      // Initialize chatbot after script loads
-      if (window.botpressWebChat) {
-        // Get user data from localStorage
-        const userName = localStorage.getItem('userName') || 'Guest';
-        const userEmail = localStorage.getItem('userEmail') || '';
-        const userId = localStorage.getItem('userId') || '';
-
-        window.botpressWebChat.init({
-          // Bot ID from environment variable
-          botId: process.env.NEXT_PUBLIC_BOTPRESS_BOT_ID || 'your-bot-id-here',
-          hostUrl: 'https://cdn.botpress.cloud/webchat/v1',
-          messagingUrl: 'https://messaging.botpress.cloud',
-          
-          // UI Configuration
-          showCloseButton: true,
-          enableConversationDeletion: true,
-          showPoweredBy: false,
-          
-          // Bot behavior
-          enableReset: true,
-          enableTranscriptDownload: true,
-          
-          // User data (automatically attach user info)
-          userData: {
-            name: userName,
-            email: userEmail,
-            userId: userId,
-          },
-          
-          // Theming
-          themeColor: '#2563eb', // Advancia brand blue
-          botName: 'Ask Advancia AI',
-          botAvatar: 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png',
-          composerPlaceholder: 'Ask about Trump Coin, OTP, Med-Bed, or anything...',
-          
-          // Custom CSS styling
-          extraStylesheet: `
-            /* Header styling */
-            .bpw-header {
-              background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-              box-shadow: 0 2px 10px rgba(37, 99, 235, 0.2);
-            }
-            
-            .bpw-header-title {
-              font-weight: 600;
-              font-size: 16px;
-            }
-            
-            /* Bot message bubbles */
-            .bpw-from-bot .bpw-chat-bubble {
-              background-color: #f3f4f6 !important;
-              color: #1f2937 !important;
-              border-radius: 12px;
-              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            }
-            
-            /* User message bubbles */
-            .bpw-from-user .bpw-chat-bubble {
-              background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-              color: white !important;
-              border-radius: 12px;
-              box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
-            }
-            
-            /* Chat bubble icon (floating button) */
-            .bpw-widget-btn {
-              background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-              box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4) !important;
-              transition: all 0.3s ease;
-            }
-            
-            .bpw-widget-btn:hover {
-              transform: scale(1.05);
-              box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5) !important;
-            }
-            
-            /* Input composer */
-            .bpw-composer {
-              border-top: 1px solid #e5e7eb;
-              background: #ffffff;
-            }
-            
-            .bpw-composer-inner {
-              padding: 12px;
-            }
-            
-            .bpw-composer-textarea {
-              border-radius: 20px;
-              border: 2px solid #e5e7eb;
-              padding: 10px 15px;
-              transition: border-color 0.2s;
-            }
-            
-            .bpw-composer-textarea:focus {
-              border-color: #2563eb;
-              outline: none;
-            }
-            
-            /* Send button */
-            .bpw-send-button {
-              background-color: #2563eb !important;
-              border-radius: 50%;
-              transition: all 0.2s;
-            }
-            
-            .bpw-send-button:hover {
-              background-color: #1d4ed8 !important;
-              transform: scale(1.1);
-            }
-            
-            /* Chat container */
-            .bpw-layout {
-              border-radius: 16px;
-              box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-              overflow: hidden;
-            }
-            
-            /* Scrollbar */
-            .bpw-msg-list::-webkit-scrollbar {
-              width: 6px;
-            }
-            
-            .bpw-msg-list::-webkit-scrollbar-track {
-              background: #f1f1f1;
-            }
-            
-            .bpw-msg-list::-webkit-scrollbar-thumb {
-              background: #2563eb;
-              border-radius: 3px;
-            }
-            
-            .bpw-msg-list::-webkit-scrollbar-thumb:hover {
-              background: #1d4ed8;
-            }
-            
-            /* Typing indicator */
-            .bpw-typing-bubble {
-              background-color: #f3f4f6 !important;
-            }
-            
-            /* Quick replies */
-            .bpw-quick-reply {
-              background-color: #ffffff !important;
-              border: 2px solid #2563eb !important;
-              color: #2563eb !important;
-              border-radius: 20px;
-              transition: all 0.2s;
-            }
-            
-            .bpw-quick-reply:hover {
-              background-color: #2563eb !important;
-              color: white !important;
-            }
-            
-            /* Welcome message enhancement */
-            .bpw-bot-avatar {
-              border: 2px solid #2563eb;
-            }
-          `,
-        });
-
-        // Send a custom event when widget loads to track analytics
-        setTimeout(() => {
-          if (window.botpressWebChat && userId) {
-            window.botpressWebChat.sendEvent({
-              type: 'widget_opened',
-              userId: userId,
-              timestamp: new Date().toISOString(),
-            });
-          }
-        }, 1000);
-      }
-    };
-
-    script.onerror = () => {
-      console.error('Failed to load Botpress webchat script');
-    };
-
-    // Cleanup
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
+    return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, []);
 
-  // Show loading indicator (optional)
-  if (!isLoaded) {
-    return (
-      <div 
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 9998,
-          display: 'none', // Hidden by default, Botpress will show its own button
-        }}
-      >
-        {/* Optional: Loading spinner */}
-      </div>
-    );
+  // Connect as guest to receive admin replies in real time
+  useEffect(() => {
+    if (BOTPRESS_ID) return; // Botpress handles its own socket
+    const s = io(API, { transports: ["websocket"], auth: { guestSessionId: sessionId } });
+    socketRef.current = s;
+    s.on('chat:reply', (payload: { message: string }) => {
+      setMessages((m) => [...m, { role: 'bot', text: payload.message, at: new Date().toISOString() }]);
+    });
+    return () => { s.disconnect(); };
+  }, [sessionId]);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text) return;
+    setInput("");
+    setMessages((m) => [...m, { role: "user", text, at: new Date().toISOString() }]);
+    setBusy(true);
+    try {
+      const r = await fetch(`${API}/api/chat/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, message: text, from: 'guest' }),
+      });
+      const data = await r.json();
+      if (data?.reply) {
+        setMessages((m) => [...m, { role: 'bot', text: data.reply, at: new Date().toISOString() }]);
+      }
+    } catch {
+      setMessages((m) => [...m, { role: 'bot', text: 'Sorry, I could not reach support right now.', at: new Date().toISOString() }]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const Quick = ({ label, text }: { label: string; text: string }) => (
+    <button onClick={() => setInput(text)} className="px-3 py-1 text-sm border rounded-full hover:bg-gray-50">{label}</button>
+  );
+
+  // If Botpress ID is present, prefer Botpress UI, otherwise render minimal widget
+  if (BOTPRESS_ID) {
+    return null;
   }
 
-  return null; // Widget is injected by Botpress script
+  return (
+    <>
+      {/* Floating Button */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 9999 }}
+        className="rounded-full bg-blue-600 text-white shadow-xl w-14 h-14 flex items-center justify-center hover:bg-blue-700"
+        aria-label="Open Advancia Help"
+      >
+        {open ? '×' : 'AI'}
+      </button>
+
+      {/* Panel */}
+      {open && (
+        <div style={{ position: 'fixed', right: 20, bottom: 90, width: 360, height: 520, zIndex: 9999 }} className="bg-white border shadow-2xl rounded-xl flex flex-col">
+          <div className="p-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-xl">
+            <div className="font-semibold">Advancia Help</div>
+            <div className="text-xs opacity-90">Live chat + guided help</div>
+          </div>
+          <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-2">
+            {messages.map((m, i) => (
+              <div key={i} className={`max-w-[85%] ${m.role === 'user' ? 'ml-auto text-white bg-blue-600' : 'bg-gray-100 text-gray-800'} px-3 py-2 rounded-lg`}>{m.text}</div>
+            ))}
+          </div>
+          <div className="px-3 pb-2 space-x-2 flex flex-wrap">
+            <Quick label="Top up" text="How do I add funds?" />
+            <Quick label="Debit Card" text="How to order a debit card?" />
+            <Quick label="Med Beds" text="How to book Med Beds?" />
+            <Quick label="OTP" text="Help with 2FA/OTP" />
+            {(() => {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+              if (!token) {
+                return (
+                  <button
+                    onClick={() => setMessages((m) => [...m, { role: 'bot', text: 'Please sign in to create a support ticket. Go to /login, then return here.', at: new Date().toISOString() }])}
+                    className="px-3 py-1 text-sm border rounded-full bg-gray-50 text-gray-600"
+                    title="Sign in to create a ticket"
+                  >Create Ticket</button>
+                );
+              }
+              return (
+                <button
+                  onClick={async () => {
+                    try {
+                      const r = await fetch(`${API}/api/support/contact`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({
+                          subject: 'Crypto Recovery Assistance',
+                          message: 'Please assist me with recovering my crypto or transaction.',
+                          category: 'TECHNICAL',
+                          priority: 'HIGH',
+                        }),
+                      });
+                      if (r.ok) {
+                        setMessages((m) => [...m, { role: 'bot', text: 'Support ticket created. Our team will reach out shortly.', at: new Date().toISOString() }]);
+                      } else {
+                        setMessages((m) => [...m, { role: 'bot', text: 'Could not create ticket. Please ensure you are logged in.', at: new Date().toISOString() }]);
+                      }
+                    } catch {
+                      setMessages((m) => [...m, { role: 'bot', text: 'Network error creating ticket.', at: new Date().toISOString() }]);
+                    }
+                  }}
+                  className="px-3 py-1 text-sm border rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >Create Ticket</button>
+              );
+            })()}
+          </div>
+          <div className="p-3 border-t flex items-center gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && send()}
+              placeholder="Type your message..."
+              className="flex-1 border rounded-full px-3 py-2 focus:outline-none"
+            />
+            <button onClick={send} disabled={busy} className="px-3 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50">Send</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

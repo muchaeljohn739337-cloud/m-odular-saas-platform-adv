@@ -3,48 +3,82 @@ services:
     name: advancia-backend
     env: node
     plan: free
-    buildCommand: cd backend && npm ci && npm run build
-    startCommand: cd backend && npm start
+    region: oregon
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:render
+    maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 4000
       - key: DATABASE_URL
-        fromDatabase:
-          name: advancia-db
-          property: connectionString
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
       - key: FRONTEND_URL
-        value: https://advancia-frontend.onrender.com
+        value: https://advanciapayledger.com
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       - key: JWT_SECRET_ENCRYPTED
         sync: false
       - key: JWT_ENCRYPTION_KEY
         sync: false
       - key: JWT_ENCRYPTION_IV
         sync: false
-      - key: SESSION_SECRET
+      - key: VAPID_PUBLIC_KEY
         sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:support@advanciapayledger.com
     healthCheckPath: /health
-    routes:
-      - path: /api
-        destination: http://localhost:4000/api
 
   - type: web
     name: advancia-frontend
-    env: node
+    env: docker
     plan: free
-    buildCommand: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && npm start
+    region: virginia
+    dockerfilePath: frontend/Dockerfile
+    dockerContext: .
+    # Force the start command so Render doesn't use any stale UI override
+    startCommand: node server.js
+    maxRequestBodySize: 10MB
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
       - key: NEXT_PUBLIC_API_URL
-        value: https://advancia-backend.onrender.com/api
+        value: https://api.advanciapayledger.com
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Advancia PayLedger
+      - key: NEXT_PUBLIC_CURRENCY_LIST
+        value: USD,EUR,BTC,ETH,USDT,TRUMP,MEDBED
+      - key: NEXT_PUBLIC_FEATURE_FLAGS
+        value: notifications,bonus_tokens,debit_card,crypto_recovery
+      - key: NEXT_PUBLIC_VAPID_KEY
+        sync: false
+      - key: NEXT_PUBLIC_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_BOTPRESS_BOT_ID
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        value: https://advanciapayledger.com
     healthCheckPath: /
-    routes:
-      - path: /
-        destination: http://localhost:3000
 
 databases:
   - name: advancia-db
     databaseName: advancia_prod
     user: advancia_user
     plan: free
+    region: virginia

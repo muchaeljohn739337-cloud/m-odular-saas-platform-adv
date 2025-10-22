@@ -50,8 +50,13 @@ export class ReportGenerator {
   /**
    * Generate Balance Report
    */
-  async generateBalanceReport(startDate: Date, endDate: Date): Promise<ReportData> {
-    console.log(`📊 Generating balance report from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
+  async generateBalanceReport(
+    startDate: Date,
+    endDate: Date
+  ): Promise<ReportData> {
+    console.log(
+      `📊 Generating balance report from ${startDate.toISOString()} to ${endDate.toISOString()}...`
+    );
 
     const sections: ReportSection[] = [];
 
@@ -69,7 +74,9 @@ export class ReportGenerator {
         totalUsdBalance: totalBalances._sum.usdBalance?.toString() || "0",
         averageBalance: totalBalances._avg.usdBalance?.toString() || "0",
       },
-      summary: `Total users: ${totalBalances._count.id}, Total USD: $${totalBalances._sum.usdBalance?.toString() || "0"}`,
+      summary: `Total users: ${totalBalances._count.id}, Total USD: $${
+        totalBalances._sum.usdBalance?.toString() || "0"
+      }`,
     });
 
     // Section 2: Token wallet balances
@@ -88,9 +95,12 @@ export class ReportGenerator {
         totalWallets: tokenBalances._count.id,
         totalBalance: tokenBalances._sum.balance?.toString() || "0",
         totalLocked: tokenBalances._sum.lockedBalance?.toString() || "0",
-        totalLifetimeEarned: tokenBalances._sum.lifetimeEarned?.toString() || "0",
+        totalLifetimeEarned:
+          tokenBalances._sum.lifetimeEarned?.toString() || "0",
       },
-      summary: `Total tokens in circulation: ${tokenBalances._sum.balance?.toString() || "0"}`,
+      summary: `Total tokens in circulation: ${
+        tokenBalances._sum.balance?.toString() || "0"
+      }`,
     });
 
     // Section 3: Transaction summary
@@ -113,7 +123,10 @@ export class ReportGenerator {
         count: t._count.id,
         totalAmount: t._sum.amount?.toString() || "0",
       })),
-      summary: `Total transactions in period: ${transactions.reduce((sum, t) => sum + t._count.id, 0)}`,
+      summary: `Total transactions in period: ${transactions.reduce(
+        (sum, t) => sum + t._count.id,
+        0
+      )}`,
     });
 
     const report: ReportData = {
@@ -129,7 +142,10 @@ export class ReportGenerator {
   /**
    * Generate Crypto Orders Report
    */
-  async generateCryptoRecoveryReport(startDate: Date, endDate: Date): Promise<ReportData> {
+  async generateCryptoRecoveryReport(
+    startDate: Date,
+    endDate: Date
+  ): Promise<ReportData> {
     console.log(`🔐 Generating crypto orders report...`);
 
     const sections: ReportSection[] = [];
@@ -142,14 +158,14 @@ export class ReportGenerator {
           lte: endDate,
         },
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            username: true,
-          },
-        },
+      select: {
+        id: true,
+        userId: true,
+        cryptoType: true,
+        cryptoAmount: true,
+        usdAmount: true,
+        status: true,
+        createdAt: true,
       },
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -159,7 +175,7 @@ export class ReportGenerator {
       title: "Crypto Orders",
       data: cryptoOrders.map((order) => ({
         id: order.id,
-        user: order.user.email,
+        userId: order.userId,
         cryptoType: order.cryptoType,
         cryptoAmount: order.cryptoAmount.toString(),
         usdAmount: order.usdAmount.toString(),
@@ -199,11 +215,13 @@ export class ReportGenerator {
     return report;
   }
 
-
   /**
    * Generate Admin Actions Report
    */
-  async generateAdminActionsReport(startDate: Date, endDate: Date): Promise<ReportData> {
+  async generateAdminActionsReport(
+    startDate: Date,
+    endDate: Date
+  ): Promise<ReportData> {
     console.log(`👤 Generating admin actions report...`);
 
     const sections: ReportSection[] = [];
@@ -302,14 +320,14 @@ export class ReportGenerator {
 
     for (const section of report.sections) {
       html += `<h2>${section.title}</h2>`;
-      
+
       if (section.summary) {
         html += `<div class="summary">${section.summary}</div>`;
       }
 
       if (Array.isArray(section.data)) {
         html += `<table><thead><tr>`;
-        
+
         // Table headers
         if (section.data.length > 0) {
           const keys = Object.keys(section.data[0]);
@@ -327,7 +345,7 @@ export class ReportGenerator {
             html += `</tr>`;
           }
         }
-        
+
         html += `</tbody></table>`;
       } else {
         html += `<pre>${JSON.stringify(section.data, null, 2)}</pre>`;
@@ -345,18 +363,24 @@ export class ReportGenerator {
   /**
    * Save report to file
    */
-  private async saveReport(report: ReportData, format: string = "html"): Promise<string> {
+  private async saveReport(
+    report: ReportData,
+    format: string = "html"
+  ): Promise<string> {
     const storageDir = rpaConfig.reportGeneration.storageLocation;
-    
+
     // Ensure directory exists
     await fs.mkdir(storageDir, { recursive: true });
 
     const timestamp = new Date().toISOString().replace(/:/g, "-").split(".")[0];
-    const filename = `${report.title.replace(/\s+/g, "_")}_${timestamp}.${format}`;
+    const filename = `${report.title.replace(
+      /\s+/g,
+      "_"
+    )}_${timestamp}.${format}`;
     const filepath = path.join(storageDir, filename);
 
     let content: string;
-    
+
     if (format === "html") {
       content = this.formatReportHTML(report);
     } else if (format === "json") {
@@ -374,7 +398,10 @@ export class ReportGenerator {
   /**
    * Email report to recipients
    */
-  private async emailReport(report: ReportData, filepath: string): Promise<void> {
+  private async emailReport(
+    report: ReportData,
+    filepath: string
+  ): Promise<void> {
     if (!this.transporter) {
       console.warn("⚠️  Email transporter not initialized, skipping email...");
       return;
@@ -411,7 +438,11 @@ export class ReportGenerator {
   /**
    * Generate and distribute a report
    */
-  async generateAndDistribute(reportType: string, startDate?: Date, endDate?: Date): Promise<void> {
+  async generateAndDistribute(
+    reportType: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<void> {
     try {
       const end = endDate || new Date();
       const start = startDate || new Date(end.getTime() - 24 * 60 * 60 * 1000); // Default: last 24 hours
@@ -433,7 +464,10 @@ export class ReportGenerator {
       }
 
       // Save report
-      const filepath = await this.saveReport(report, rpaConfig.reportGeneration.outputFormat);
+      const filepath = await this.saveReport(
+        report,
+        rpaConfig.reportGeneration.outputFormat
+      );
 
       // Email report
       await this.emailReport(report, filepath);

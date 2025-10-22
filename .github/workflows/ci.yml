@@ -2,16 +2,16 @@ name: CI - Test & Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   test-backend:
     name: Test Backend
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'copilot-swe-agent[bot]' }}
-    
+
     services:
       postgres:
         image: postgres:15
@@ -26,7 +26,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
       redis:
         image: redis:7
         options: >-
@@ -36,29 +36,29 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
           cache-dependency-path: backend/package-lock.json
-      
+
       - name: Install dependencies
         working-directory: ./backend
         run: npm ci
-      
+
       - name: Run Prisma migrations
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saasdb_test
         continue-on-error: true
         run: npx prisma migrate deploy
-      
+
       - name: Run tests
         working-directory: ./backend
         continue-on-error: true
@@ -71,7 +71,7 @@ jobs:
           SESSION_SECRET: test-session
           NODE_ENV: test
         run: npm test
-      
+
       - name: Build backend
         working-directory: ./backend
         env:
@@ -83,32 +83,32 @@ jobs:
     name: Test Frontend
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'copilot-swe-agent[bot]' }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
-      
+
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci
-      
+
       - name: Run linter
         working-directory: ./frontend
         continue-on-error: true
         run: npm run lint --if-present
-      
+
       - name: Run tests
         working-directory: ./frontend
         continue-on-error: true
         run: npm test --if-present
-      
+
       - name: Build frontend
         working-directory: ./frontend
         env:
@@ -119,23 +119,23 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-      
+          node-version: "18"
+
       - name: Lint Backend
         working-directory: ./backend
         continue-on-error: true
         run: |
           npm ci
           npm run lint --if-present
-      
+
       - name: Lint Frontend
         working-directory: ./frontend
         continue-on-error: true
