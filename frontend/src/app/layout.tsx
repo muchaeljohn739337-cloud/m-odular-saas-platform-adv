@@ -1,29 +1,27 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import AuthProvider from '@/components/AuthProvider'
-import ErrorBoundary from '@/components/ErrorBoundary'
-import ScrollToTop from '@/components/ScrollToTop'
-import LiveSupportScript from '@/components/LiveSupportScript'
-import SystemFeedbackBanner from '@/components/SystemFeedbackBanner'
-import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
-import ChatbotWidget from '@/components/ChatbotWidget'
-
-const inter = Inter({ subsets: ['latin'] })
+import type { Metadata } from "next";
+import "./globals.css";
+import AuthProvider from "@/components/AuthProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import ScrollToTop from "@/components/ScrollToTop";
+import LiveSupportScript from "@/components/LiveSupportScript";
+import SystemFeedbackBanner from "@/components/SystemFeedbackBanner";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import ChatbotWidget from "@/components/ChatbotWidget";
 
 export const metadata: Metadata = {
-  title: 'Advancia Pay Ledger - Fintech Dashboard',
-  description: 'Modern fintech platform for transaction tracking and crypto trading',
-}
+  title: "Advancia Pay Ledger - Fintech Dashboard",
+  description:
+    "Modern fintech platform for transaction tracking and crypto trading",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <ErrorBoundary>
           <ScrollToTop />
           <AuthProvider>
@@ -36,5 +34,5 @@ export default function RootLayout({
         </ErrorBoundary>
       </body>
     </html>
-  )
+  );
 }
