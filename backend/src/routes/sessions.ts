@@ -34,7 +34,9 @@ router.post("/revoke", requireAdmin, async (req, res) => {
     const info: any = jwt.decode(token);
     await sendAlert(
       "⚠ Advancia: Admin Session Revoked",
-      `Revoked session for: ${info?.email || "unknown"}\nTime: ${new Date().toISOString()}`
+      `Revoked session for: ${
+        info?.email || "unknown"
+      }\nTime: ${new Date().toISOString()}`
     );
   } catch {}
 

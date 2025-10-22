@@ -4,11 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { ensureToken, logout } from "@/utils/auth";
+import adminApi from "@/lib/adminApi";
+
+interface SessionInfo {
+  email: string;
+  role: string;
+  createdAt: string;
+}
 
 let socket: Socket | null = null;
 
 export default function SessionManager() {
-  const [sessions, setSessions] = useState<any>({});
+  const [sessions, setSessions] = useState<Record<string, SessionInfo>>({});
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -20,14 +27,7 @@ export default function SessionManager() {
     }
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/sessions/revoke`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
-        },
-        body: JSON.stringify({ token }),
-      });
+      await adminApi.post("/api/sessions/revoke", { token });
     } catch (err) {
       console.error("Failed to revoke session:", err);
     }
@@ -82,7 +82,9 @@ export default function SessionManager() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">🧠 Active Admin Sessions</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            🧠 Active Admin Sessions
+          </h1>
           <button
             onClick={() => logout(router)}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
@@ -98,17 +100,19 @@ export default function SessionManager() {
             </div>
           ) : (
             <div className="space-y-4">
-              {Object.entries(sessions).map(([token, info]: any) => (
+              {Object.entries(sessions).map(([token, info]) => (
                 <div
                   key={token}
                   className="border border-gray-200 rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 transition"
                 >
                   <div>
                     <p className="text-sm text-gray-600">
-                      <strong className="text-gray-800">Email:</strong> {info.email}
+                      <strong className="text-gray-800">Email:</strong>{" "}
+                      {info.email}
                     </p>
                     <p className="text-sm text-gray-600">
-                      <strong className="text-gray-800">Role:</strong> {info.role}
+                      <strong className="text-gray-800">Role:</strong>{" "}
+                      {info.role}
                     </p>
                     <p className="text-sm text-gray-600">
                       <strong className="text-gray-800">Created:</strong>{" "}

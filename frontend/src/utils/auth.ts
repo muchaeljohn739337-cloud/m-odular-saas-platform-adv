@@ -1,3 +1,9 @@
+/**
+ * Socket.IO auth utilities
+ * Note: These use "token" / "refreshToken" keys for regular user sessions,
+ * distinct from admin pages which use "adminToken" / "adminRefreshToken" via adminApi.
+ */
+
 export async function ensureToken() {
   let token = localStorage.getItem("token");
   const refresh = localStorage.getItem("refreshToken");
@@ -19,13 +25,15 @@ export async function ensureToken() {
   return token;
 }
 
-export function logout(router: any) {
+export function logout(router: { push: (path: string) => void }) {
   localStorage.removeItem("token");
   localStorage.removeItem("refreshToken");
   router.push("/admin/login");
 }
 
-export async function checkAdminAuth(router: any): Promise<boolean> {
+export async function checkAdminAuth(router: {
+  push: (path: string) => void;
+}): Promise<boolean> {
   const token = localStorage.getItem("token");
   if (!token) {
     router.push("/admin/login");

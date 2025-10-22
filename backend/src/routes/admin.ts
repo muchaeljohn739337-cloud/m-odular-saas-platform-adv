@@ -1,6 +1,11 @@
 import express from "express";
 import prisma from "../prismaClient";
 import { adminAuth } from "../middleware/adminAuth";
+import {
+  authenticateToken,
+  requireAdmin,
+  logAdminAction,
+} from "../middleware/auth";
 
 const router = express.Router();
 
@@ -53,33 +58,32 @@ router.get("/doctor/:id", adminAuth, async (req, res) => {
 
     const doctor = await prisma.doctor.findUnique({
       where: { id },
-      include: {
-        consultations: {
-          select: {
-            id: true,
-            status: true,
-            scheduledAt: true,
-            patient: {
-              select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
-      },
     });
 
     if (!doctor) {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
+    // Fetch consultations separately since relation is not defined in schema
+    const consultations = await prisma.consultation.findMany({
+      where: { doctorId: id },
+      select: {
+        id: true,
+        status: true,
+        scheduledAt: true,
+        patientId: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+
+    const doctorWithConsultations = {
+      ...doctor,
+      consultations,
+    };
+
     // Don't return password hash
-    const { passwordHash, ...doctorData } = doctor;
+    const { passwordHash, ...doctorData } = doctorWithConsultations;
 
     return res.json({ doctor: doctorData });
   } catch (err) {
@@ -195,6 +199,407 @@ router.delete("/doctor/:id", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("Delete doctor error:", err);
     return res.status(500).json({ error: "Failed to delete doctor" });
+  }
+});
+
+// GET /api/admin/settings - Get current admin settings
+router.get(
+  "/settings",
+  authenticateToken as any,
+  requireAdmin as any,
+  async (req, res) => {
+    try {
+      // Get or create settings (there should only be one row)
+      let settings = await prisma.adminSettings.findFirst();
+
+      if (!settings) {
+        // Create default settings if none exist
+        settings = await prisma.adminSettings.create({
+          data: {
+            processingFeePercent: 2.5,
+            minPurchaseAmount: 10,
+            debitCardPriceUSD: 1000,
+          },
+        });
+      }
+
+      return res.json({
+        id: settings.id,
+        crypto: {
+          btcAddress: settings.btcAddress || "",
+          ethAddress: settings.ethAddress || "",
+          usdtAddress: settings.usdtAddress || "",
+          ltcAddress: settings.ltcAddress || "",
+          otherAddresses: settings.otherAddresses || "",
+        },
+        exchangeRates: {
+          btc: settings.exchangeRateBtc?.toString() || "0",
+          eth: settings.exchangeRateEth?.toString() || "0",
+          usdt: settings.exchangeRateUsdt?.toString() || "0",
+        },
+        fees: {
+          processingFeePercent:
+            settings.processingFeePercent?.toString() || "2.5",
+          minPurchaseAmount: settings.minPurchaseAmount?.toString() || "10",
+          debitCardPriceUSD: settings.debitCardPriceUSD?.toString() || "1000",
+        },
+        system: {
+          maintenanceMode: false,
+          rateLimitPerMinute: 100,
+          maxFileUploadMB: 10,
+        },
+        updatedAt: settings.updatedAt,
+        createdAt: settings.createdAt,
+      });
+    } catch (err) {
+      console.error("Error fetching admin settings:", err);
+      return res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  }
+);
+
+// PATCH /api/admin/settings - Update admin settings
+router.patch(
+  "/settings",
+  authenticateToken as any,
+  requireAdmin as any,
+  logAdminAction as any,
+  async (req, res) => {
+    try {
+      const { crypto, exchangeRates, fees } = req.body;
+
+      // Get existing settings or create new
+      let settings = await prisma.adminSettings.findFirst();
+
+      if (!settings) {
+        settings = await prisma.adminSettings.create({
+          data: {
+            processingFeePercent: 2.5,
+            minPurchaseAmount: 10,
+            debitCardPriceUSD: 1000,
+          },
+        });
+      }
+
+      // Build update data
+      const updateData: any = {};
+
+      if (crypto) {
+        if (crypto.btcAddress !== undefined)
+          updateData.btcAddress = crypto.btcAddress;
+        if (crypto.ethAddress !== undefined)
+          updateData.ethAddress = crypto.ethAddress;
+        if (crypto.usdtAddress !== undefined)
+          updateData.usdtAddress = crypto.usdtAddress;
+        if (crypto.ltcAddress !== undefined)
+          updateData.ltcAddress = crypto.ltcAddress;
+        if (crypto.otherAddresses !== undefined)
+          updateData.otherAddresses = crypto.otherAddresses;
+      }
+
+      if (exchangeRates) {
+        if (exchangeRates.btc !== undefined)
+          updateData.exchangeRateBtc = parseFloat(exchangeRates.btc);
+        if (exchangeRates.eth !== undefined)
+          updateData.exchangeRateEth = parseFloat(exchangeRates.eth);
+        if (exchangeRates.usdt !== undefined)
+          updateData.exchangeRateUsdt = parseFloat(exchangeRates.usdt);
+      }
+
+      if (fees) {
+        if (fees.processingFeePercent !== undefined) {
+          updateData.processingFeePercent = parseFloat(
+            fees.processingFeePercent
+          );
+        }
+        if (fees.minPurchaseAmount !== undefined) {
+          updateData.minPurchaseAmount = parseFloat(fees.minPurchaseAmount);
+        }
+        if (fees.debitCardPriceUSD !== undefined) {
+          updateData.debitCardPriceUSD = parseFloat(fees.debitCardPriceUSD);
+        }
+      }
+
+      // Update settings
+      const updated = await prisma.adminSettings.update({
+        where: { id: settings.id },
+        data: updateData,
+      });
+
+      return res.json({
+        message: "Settings updated successfully",
+        settings: {
+          id: updated.id,
+          crypto: {
+            btcAddress: updated.btcAddress || "",
+            ethAddress: updated.ethAddress || "",
+            usdtAddress: updated.usdtAddress || "",
+            ltcAddress: updated.ltcAddress || "",
+            otherAddresses: updated.otherAddresses || "",
+          },
+          exchangeRates: {
+            btc: updated.exchangeRateBtc?.toString() || "0",
+            eth: updated.exchangeRateEth?.toString() || "0",
+            usdt: updated.exchangeRateUsdt?.toString() || "0",
+          },
+          fees: {
+            processingFeePercent:
+              updated.processingFeePercent?.toString() || "2.5",
+            minPurchaseAmount: updated.minPurchaseAmount?.toString() || "10",
+            debitCardPriceUSD: updated.debitCardPriceUSD?.toString() || "1000",
+          },
+          updatedAt: updated.updatedAt,
+        },
+      });
+    } catch (err) {
+      console.error("Error updating admin settings:", err);
+      return res.status(500).json({ error: "Failed to update settings" });
+    }
+  }
+);
+
+// GET /api/admin/analytics/overview - Get high-level analytics
+router.get(
+  "/analytics/overview",
+  authenticateToken as any,
+  requireAdmin as any,
+  async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+
+      const dateFilter: any = {};
+      if (startDate) dateFilter.gte = new Date(String(startDate));
+      if (endDate) dateFilter.lte = new Date(String(endDate));
+
+      const whereDate =
+        Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
+
+      // User statistics
+      const [totalUsers, activeUsers, newUsersThisMonth] = await Promise.all([
+        prisma.user.count(),
+        prisma.user.count({ where: { active: true } }),
+        prisma.user.count({
+          where: {
+            createdAt: {
+              gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            },
+          },
+        }),
+      ]);
+
+      // Transaction statistics
+      const transactions = await prisma.transaction.aggregate({
+        where: whereDate,
+        _count: true,
+        _sum: { amount: true },
+      });
+
+      // Token wallet statistics
+      const tokenStats = await prisma.tokenWallet.aggregate({
+        _sum: { balance: true, lifetimeEarned: true },
+      });
+
+      return res.json({
+        users: {
+          total: totalUsers,
+          active: activeUsers,
+          newThisMonth: newUsersThisMonth,
+          suspendedCount: totalUsers - activeUsers,
+        },
+        transactions: {
+          total: transactions._count || 0,
+          volume: transactions._sum?.amount?.toString() || "0",
+        },
+        tokens: {
+          totalBalance: tokenStats._sum?.balance?.toString() || "0",
+          totalEarned: tokenStats._sum?.lifetimeEarned?.toString() || "0",
+        },
+      });
+    } catch (err) {
+      console.error("Error fetching analytics overview:", err);
+      return res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  }
+);
+
+// GET /api/admin/analytics/user-growth - Get user growth over time
+router.get(
+  "/analytics/user-growth",
+  authenticateToken as any,
+  requireAdmin as any,
+  async (req, res) => {
+    try {
+      const { days = "30" } = req.query;
+      const daysNum = Math.min(365, Math.max(1, Number(days)));
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysNum);
+
+      // Group users by day
+      const users = await prisma.user.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      });
+
+      // Aggregate by day
+      const dailyCounts: Record<string, number> = {};
+      users.forEach((user) => {
+        const day = user.createdAt.toISOString().split("T")[0];
+        dailyCounts[day] = (dailyCounts[day] || 0) + 1;
+      });
+
+      const data = Object.entries(dailyCounts).map(([date, count]) => ({
+        date,
+        count,
+      }));
+
+      return res.json({ data });
+    } catch (err) {
+      console.error("Error fetching user growth:", err);
+      return res.status(500).json({ error: "Failed to fetch user growth" });
+    }
+  }
+);
+
+// GET /api/admin/analytics/transaction-volume - Get transaction volume over time
+router.get(
+  "/analytics/transaction-volume",
+  authenticateToken as any,
+  requireAdmin as any,
+  async (req, res) => {
+    try {
+      const { days = "30" } = req.query;
+      const daysNum = Math.min(365, Math.max(1, Number(days)));
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysNum);
+
+      const transactions = await prisma.transaction.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { createdAt: true, amount: true },
+        orderBy: { createdAt: "asc" },
+      });
+
+      // Aggregate by day
+      const dailyVolume: Record<string, number> = {};
+      transactions.forEach((tx) => {
+        const day = tx.createdAt.toISOString().split("T")[0];
+        dailyVolume[day] = (dailyVolume[day] || 0) + Number(tx.amount || 0);
+      });
+
+      const data = Object.entries(dailyVolume).map(([date, volume]) => ({
+        date,
+        volume,
+      }));
+
+      return res.json({ data });
+    } catch (err) {
+      console.error("Error fetching transaction volume:", err);
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch transaction volume" });
+    }
+  }
+);
+
+// GET /api/admin/stats - Get admin dashboard statistics
+router.get("/stats", adminAuth, async (req, res) => {
+  try {
+    // Total users count
+    const totalUsers = await prisma.user.count();
+
+    // Active users (logged in within last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const activeUsers = await prisma.user.count({
+      where: {
+        updatedAt: {
+          gte: thirtyDaysAgo,
+        },
+      },
+    });
+
+    // Total transactions
+    const totalTransactions = await prisma.transaction.count();
+
+    // Pending withdrawals count
+    const pendingWithdrawals = await prisma.cryptoWithdrawal.count({
+      where: {
+        status: "PENDING",
+      },
+    });
+
+    // Total revenue (sum of completed transactions)
+    const revenueData = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        status: "COMPLETED",
+      },
+    });
+
+    const totalRevenue = revenueData._sum.amount?.toString() || "0";
+
+    // Recent activity (last 5 transactions)
+    const recentActivity = await prisma.transaction.findMany({
+      take: 5,
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        userId: true,
+        type: true,
+        amount: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    // Fetch user details for recent activity
+    const userIds = [...new Set(recentActivity.map((a) => a.userId))];
+    const users = await prisma.user.findMany({
+      where: {
+        id: {
+          in: userIds,
+        },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+    });
+
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    return res.json({
+      stats: {
+        totalUsers,
+        activeUsers,
+        totalTransactions,
+        pendingWithdrawals,
+        totalRevenue,
+        recentActivity: recentActivity.map((activity) => {
+          const user = userMap.get(activity.userId);
+          return {
+            id: activity.id,
+            type: activity.type,
+            amount: activity.amount.toString(),
+            status: activity.status,
+            createdAt: activity.createdAt,
+            user: user
+              ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                user.email
+              : "Unknown",
+          };
+        }),
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching admin stats:", err);
+    return res.status(500).json({ error: "Failed to fetch admin statistics" });
   }
 });
 

@@ -188,7 +188,7 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
     }
 
     // Check if doctor already exists
-    const existing = await prisma.doctor.findUnique({
+    const existing = await prisma.doctor.findFirst({
       where: { email: data.email },
       select: { id: true },
     });
@@ -199,7 +199,7 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
     }
 
     // Check license number uniqueness
-    const existingLicense = await prisma.doctor.findUnique({
+    const existingLicense = await prisma.doctor.findFirst({
       where: { licenseNumber: data.licenseNumber },
       select: { id: true },
     });
@@ -279,7 +279,7 @@ router.post("/login-doctor", validateApiKey, async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const doctor = await prisma.doctor.findUnique({
+    const doctor = await prisma.doctor.findFirst({
       where: { email },
       select: {
         id: true,
@@ -324,8 +324,6 @@ router.post("/login-doctor", validateApiKey, async (req, res) => {
     return res.status(500).json({ error: "Failed to login doctor" });
   }
 });
-
-export default router;
 
 // ------- OTP (Email/SMS) Flows (Redis-backed) ------- //
 const otpLimiter = rateLimit({ windowMs: 60_000, maxRequests: 5 });
@@ -597,3 +595,39 @@ router.post(
     }
   }
 );
+
+// GET /api/auth/me - Get current user data from token
+router.get("/me", authenticateToken, async (req: any, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        active: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.json({ user });
+  } catch (err) {
+    console.error("auth/me error:", err);
+    return res.status(500).json({ error: "Failed to fetch user data" });
+  }
+});
+
+export default router;

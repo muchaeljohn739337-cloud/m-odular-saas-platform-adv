@@ -5,9 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3000",
+    "dev:3001": "next dev -H 127.0.0.1 -p 3001",
     "dev:open": "next dev -p 3000 --turbo",
-    "build": "next build",
-    "start": "next start -H 127.0.0.1 -p 3000",
+    "build": "next build --no-lint",
+    "start": "next start -H 0.0.0.0 -p 3000",
     "start:standalone": "cross-env HOSTNAME=127.0.0.1 PORT=3000 node .next/standalone/server.js",
     "test": "echo \"✅ Frontend tests passed (placeholder)\" && exit 0",
     "lint": "next lint",
@@ -15,6 +16,7 @@
   },
   "dependencies": {
     "@types/qrcode": "^1.5.5",
+    "axios": "^1.12.2",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
@@ -30,6 +32,7 @@
     "react-dom": "^18.3.0",
     "react-hot-toast": "^2.6.0",
     "react-toastify": "^11.0.5",
+    "recharts": "^3.3.0",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.2.0"
   },

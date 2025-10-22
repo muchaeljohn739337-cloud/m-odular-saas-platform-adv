@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import nodemailer from "nodemailer";
-import { prisma } from "../prismaClient";
+// import prisma from "../prismaClient";
 
 const router = express.Router();
 
@@ -10,13 +10,14 @@ const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 /**
  * POST /api/marketing/subscribe
  * Subscribe a user to the newsletter
+ * TODO: Add NewsletterSubscriber model to schema.prisma
  */
 router.post("/subscribe", async (req: Request, res: Response) => {
   try {
@@ -26,9 +27,16 @@ router.post("/subscribe", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Valid email required" });
     }
 
+    // TODO: Implement when NewsletterSubscriber model is added
+    res.status(501).json({
+      error:
+        "Newsletter subscription not yet implemented. Add NewsletterSubscriber model to schema.prisma",
+    });
+
+    /* Commented until model exists
     // Check if already subscribed
     const existing = await prisma.newsletterSubscriber.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (existing) {
@@ -40,8 +48,8 @@ router.post("/subscribe", async (req: Request, res: Response) => {
       data: {
         email,
         subscribed: true,
-        subscribedAt: new Date()
-      }
+        subscribedAt: new Date(),
+      },
     });
 
     // Send confirmation email (optional)
@@ -63,9 +71,11 @@ router.post("/subscribe", async (req: Request, res: Response) => {
             </ul>
             <p>Thank you for joining our community!</p>
             <p style="color: #666; font-size: 12px;">
-              <a href="${process.env.FRONTEND_URL}/unsubscribe?email=${encodeURIComponent(email)}">Unsubscribe</a>
+              <a href="${
+                process.env.FRONTEND_URL
+              }/unsubscribe?email=${encodeURIComponent(email)}">Unsubscribe</a>
             </p>
-          `
+          `,
         });
       } catch (emailErr) {
         console.error("Email sending failed:", emailErr);
@@ -76,8 +86,9 @@ router.post("/subscribe", async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: "Subscription confirmed!",
-      subscriber
+      subscriber,
     });
+    */
   } catch (error) {
     console.error("Subscribe error:", error);
     res.status(500).json({ error: "Subscription failed" });
@@ -87,15 +98,27 @@ router.post("/subscribe", async (req: Request, res: Response) => {
 /**
  * POST /api/marketing/contact
  * Send a contact form message
+ * TODO: Add ContactMessage model to schema.prisma
  */
 router.post("/contact", async (req: Request, res: Response) => {
   try {
     const { name, email, message, subject } = req.body;
 
     if (!name || !email || !message) {
-      return res.status(400).json({ error: "Name, email, and message required" });
+      return res
+        .status(400)
+        .json({ error: "Name, email, and message required" });
     }
 
+    // TODO: Implement when ContactMessage model is added
+    res
+      .status(501)
+      .json({
+        error:
+          "Contact form not yet implemented. Add ContactMessage model to schema.prisma",
+      });
+
+    /* Commented until model exists
     // Store in database for admin review
     const contact = await prisma.contactMessage.create({
       data: {
@@ -104,8 +127,8 @@ router.post("/contact", async (req: Request, res: Response) => {
         subject: subject || "Contact Form Inquiry",
         message,
         read: false,
-        createdAt: new Date()
-      }
+        createdAt: new Date(),
+      },
     });
 
     // Send notification to admin
@@ -121,7 +144,7 @@ router.post("/contact", async (req: Request, res: Response) => {
             <p><strong>Subject:</strong> ${subject}</p>
             <p><strong>Message:</strong></p>
             <p>${message.replace(/\n/g, "<br>")}</p>
-          `
+          `,
         });
       } catch (emailErr) {
         console.error("Admin notification failed:", emailErr);
@@ -130,8 +153,9 @@ router.post("/contact", async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: "Thank you for contacting us. We'll be in touch soon!"
+      message: "Thank you for contacting us. We'll be in touch soon!",
     });
+    */
   } catch (error) {
     console.error("Contact error:", error);
     res.status(500).json({ error: "Message failed to send" });
@@ -141,11 +165,21 @@ router.post("/contact", async (req: Request, res: Response) => {
 /**
  * GET /api/marketing/analytics
  * Get marketing analytics (public stats)
+ * TODO: Implement when models are added
  */
 router.get("/analytics", async (req: Request, res: Response) => {
   try {
+    // TODO: Implement when models exist
+    res.json({
+      subscribers: 0,
+      contacts: 0,
+      timestamp: new Date().toISOString(),
+      message: "Marketing models not yet implemented",
+    });
+
+    /* Commented until models exist
     const subscriberCount = await prisma.newsletterSubscriber.count({
-      where: { subscribed: true }
+      where: { subscribed: true },
     });
 
     const contactCount = await prisma.contactMessage.count();
@@ -153,8 +187,9 @@ router.get("/analytics", async (req: Request, res: Response) => {
     res.json({
       subscribers: subscriberCount,
       contacts: contactCount,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
+    */
   } catch (error) {
     console.error("Analytics error:", error);
     res.status(500).json({ error: "Failed to fetch analytics" });

@@ -37,34 +37,21 @@ router.get("/", authenticateToken, async (req, res) => {
 
     const consultations = await prisma.consultation.findMany({
       where,
-      include: {
-        patient: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        doctor: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            specialization: true,
-          },
-        },
-        messages: {
-          select: {
-            id: true,
-            senderType: true,
-            content: true,
-            createdAt: true,
-          },
-          orderBy: { createdAt: "desc" },
-          take: 1, // Last message preview
-        },
+      select: {
+        id: true,
+        patientId: true,
+        doctorId: true,
+        status: true,
+        scheduledAt: true,
+        startedAt: true,
+        completedAt: true,
+        symptoms: true,
+        diagnosis: true,
+        prescription: true,
+        notes: true,
+        videoRoomId: true,
+        createdAt: true,
+        updatedAt: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -85,29 +72,6 @@ router.get("/:id", authenticateToken, async (req, res) => {
 
     const consultation = await prisma.consultation.findUnique({
       where: { id },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        doctor: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            specialization: true,
-            status: true,
-          },
-        },
-        messages: {
-          orderBy: { createdAt: "asc" },
-        },
-      },
     });
 
     if (!consultation) {
@@ -168,17 +132,6 @@ router.post("/", authenticateToken, async (req, res) => {
         symptoms: data.symptoms || null,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
         status: "SCHEDULED",
-      },
-      include: {
-        doctor: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            specialization: true,
-          },
-        },
       },
     });
 

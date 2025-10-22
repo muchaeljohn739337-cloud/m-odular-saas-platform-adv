@@ -9,6 +9,7 @@
 ## 🎯 QUICK DIAGNOSIS
 
 ### What We Know:
+
 ```
 ❌ Frontend: advanciapayledger.com → 502 Bad Gateway
 ✅ Backend: api.advanciapayledger.com → Responding (200 OK)
@@ -17,7 +18,9 @@
 ```
 
 ### Root Cause Analysis:
+
 502 error typically means:
+
 1. Frontend service crashed or not running
 2. Frontend build failed or corrupted
 3. Frontend can't connect to backend API
@@ -29,6 +32,7 @@
 ## 🚨 IMMEDIATE ACTION PLAN (Do This First)
 
 ### Step 1: Check Render Dashboard
+
 ```
 1. Go to https://dashboard.render.com
 2. Find your frontend service
@@ -40,6 +44,7 @@
 ```
 
 ### Step 2: Check Frontend Service Logs
+
 ```
 Look for common errors:
 - Port already in use
@@ -50,6 +55,7 @@ Look for common errors:
 ```
 
 ### Step 3: Check Environment Variables
+
 ```
 Frontend needs:
 ✅ NEXT_PUBLIC_API_URL=https://api.advanciapayledger.com
@@ -63,9 +69,11 @@ DON'T hardcode localhost!
 ## 🔍 DETAILED TROUBLESHOOTING
 
 ### Issue #1: Frontend Service Crashed
+
 **Symptoms:** Service shows "Crashed" or "Down" in Render dashboard
 
 **Fix:**
+
 ```powershell
 # Option A: Restart via Dashboard
 # Click service → More → Restart service
@@ -82,9 +90,11 @@ git push origin main
 ---
 
 ### Issue #2: Environment Variables Wrong
+
 **Symptoms:** Build succeeds but app crashes on startup
 
 **Fix - Update Environment Variables:**
+
 ```
 1. Go to Render Dashboard
 2. Frontend service → Environment
@@ -103,9 +113,11 @@ NEXT_PUBLIC_APP_URL=https://advanciapayledger.com
 ---
 
 ### Issue #3: Build Failed
+
 **Symptoms:** Deployment logs show build errors
 
 **Fix:**
+
 ```powershell
 # 1. Test build locally
 cd frontend
@@ -129,9 +141,11 @@ git push origin main
 ---
 
 ### Issue #4: API Connection Failed
+
 **Symptoms:** Frontend loads but API calls fail
 
 **Check:**
+
 ```
 1. Verify NEXT_PUBLIC_API_URL in .env.local (development)
 2. Verify Environment Variables in Render (production)
@@ -143,33 +157,38 @@ Backend should have CORS enabled for:
 ```
 
 **Fix in backend `src/index.ts`:**
+
 ```typescript
 // Ensure CORS includes your domain
 const allowedOrigins = [
-  'https://advanciapayledger.com',
-  'https://www.advanciapayledger.com',
-  process.env.FRONTEND_URL || 'http://localhost:3000',
+  "https://advanciapayledger.com",
+  "https://www.advanciapayledger.com",
+  process.env.FRONTEND_URL || "http://localhost:3000",
 ];
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 ```
 
 ---
 
 ### Issue #5: Port Configuration Wrong
+
 **Symptoms:** App starts but won't bind to port
 
 **Check Render.yaml:**
+
 ```yaml
 services:
   - type: web
     name: advancia-frontend
     runtime: docker
     dockerfilePath: frontend/Dockerfile
-    port: 10000  # Make sure this matches
+    port: 10000 # Make sure this matches
     startCommand: node server.js
     envVars:
       - key: NEXT_PUBLIC_API_URL
@@ -183,6 +202,7 @@ services:
 ## 🛠️ STEP-BY-STEP FIX SEQUENCE
 
 ### Step 1: Verify Backend Health (5 min)
+
 ```powershell
 # Test backend
 $response = curl -s https://api.advanciapayledger.com/health
@@ -195,6 +215,7 @@ Write-Host $response
 ```
 
 ### Step 2: Check Frontend Logs (5 min)
+
 ```
 Render Dashboard → Frontend service → Logs
 
@@ -206,6 +227,7 @@ Look for:
 ```
 
 ### Step 3: Verify Environment Variables (5 min)
+
 ```
 Render Dashboard → Frontend → Environment
 
@@ -217,6 +239,7 @@ Check:
 ```
 
 ### Step 4: Restart Service (3 min)
+
 ```
 Render Dashboard → Frontend → More → Restart service
 
@@ -225,6 +248,7 @@ Check status changes from "Updating" to "Live"
 ```
 
 ### Step 5: Test in Browser (2 min)
+
 ```
 Visit: https://advanciapayledger.com
 Should load (no 502 error)
@@ -235,6 +259,7 @@ Check if API calls go to https://api.advanciapayledger.com
 ```
 
 ### Step 6: If Still Broken - Force Redeploy (5 min)
+
 ```powershell
 cd c:\Users\mucha.DESKTOP-H7T9NPM\-modular-saas-platform
 
@@ -254,13 +279,13 @@ git push origin main
 
 ## 📋 COMMON 502 ERRORS & FIXES
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| "Service Unavailable" | Service crashed | Restart via Render |
-| "Bad Gateway" | API unreachable | Check CORS + API URL |
-| "502 Timeout" | Service taking too long to start | Increase timeout or restart |
-| "Connection refused" | Port not listening | Check PORT env var |
-| "Cannot find module" | Dependency missing | Run npm install, rebuild |
+| Error                 | Cause                            | Fix                         |
+| --------------------- | -------------------------------- | --------------------------- |
+| "Service Unavailable" | Service crashed                  | Restart via Render          |
+| "Bad Gateway"         | API unreachable                  | Check CORS + API URL        |
+| "502 Timeout"         | Service taking too long to start | Increase timeout or restart |
+| "Connection refused"  | Port not listening               | Check PORT env var          |
+| "Cannot find module"  | Dependency missing               | Run npm install, rebuild    |
 
 ---
 
@@ -269,6 +294,7 @@ git push origin main
 If nothing works:
 
 ### Option 1: Delete & Recreate Frontend Service
+
 ```
 1. Render Dashboard → Frontend service
 2. Settings → Delete service
@@ -280,6 +306,7 @@ If nothing works:
 ```
 
 ### Option 2: Manual Docker Rebuild
+
 ```powershell
 # Push to trigger rebuild
 git add .
@@ -313,11 +340,13 @@ After applying fixes, verify:
 ### Set Up Alerts (Optional but Recommended)
 
 **Render Built-in:**
+
 1. Dashboard → Frontend service → Settings
 2. Enable "Notification on deployment failure"
 3. Add email address
 
 **Better Option - Uptime Monitor:**
+
 ```
 Services:
 1. https://advanciapayledger.com/health → Should return 200
@@ -358,16 +387,19 @@ Alert if down: Immediately
 To debug faster, check:
 
 1. **When did it break?**
+
    - Right after deployment?
    - Suddenly during operation?
    - After code changes?
 
 2. **What changed recently?**
+
    - Any environment variable updates?
    - Any code commits?
    - Any Render configuration changes?
 
 3. **What do the logs say?**
+
    - Render Dashboard → Logs
    - Look for ERROR, FATAL, or CRASHED messages
 
@@ -390,6 +422,7 @@ To debug faster, check:
 ## ❓ STILL STUCK?
 
 If this guide doesn't fix it, provide:
+
 1. Frontend service status from Render
 2. Last 50 lines of frontend logs
 3. Environment variables (hide secrets)

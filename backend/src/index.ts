@@ -14,6 +14,7 @@ import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
 import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
 import supportRouter, { setSupportSocketIO } from "./routes/support";
 import analyticsRouter from "./routes/analytics";
+import aiAnalyticsRouter from "./routes/aiAnalytics";
 import authRouter from "./routes/auth";
 import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
 import transactionsRouter from "./routes/transactions";
@@ -23,8 +24,15 @@ import consultationRouter from "./routes/consultation";
 import systemRouter from "./routes/system";
 import marketingRouter from "./routes/marketing";
 import subscribersRouter from "./routes/subscribers";
-import authAdminRouter, { setBroadcastSessions as setAuthBroadcast } from "./routes/authAdmin";
-import sessionsRouter, { setBroadcastSessions as setSessionsBroadcast } from "./routes/sessions";
+import securityLevelRouter from "./routes/securityLevel";
+import ipBlocksRouter from "./routes/ipBlocks";
+import authAdminRouter, {
+  setBroadcastSessions as setAuthBroadcast,
+} from "./routes/authAdmin";
+import sessionsRouter, {
+  setBroadcastSessions as setSessionsBroadcast,
+} from "./routes/sessions";
+import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import { activityLogger } from "./middleware/activityLogger";
 import { rateLimit, validateInput } from "./middleware/security";
 import { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
@@ -65,12 +73,23 @@ app.use(validateInput);
 app.use(activityLogger);
 app.use("/api", rateLimit({ windowMs: 60_000, maxRequests: 300 }));
 
+// Health check endpoint (critical for production monitoring)
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    environment: config.nodeEnv,
+    version: "1.0.0",
+  });
+});
+
 // Regular routes
 app.use("/api/payments", paymentsRouter);
 app.use("/api/debit-card", debitCardRouter);
 app.use("/api/medbeds", medbedsRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/admin/analytics", analyticsRouter);
+app.use("/api/ai-analytics", aiAnalyticsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminUsersRouter);
 app.use("/api/admin", adminRouter);
@@ -80,8 +99,11 @@ app.use("/api/consultation", consultationRouter);
 app.use("/api/system", systemRouter);
 app.use("/api/marketing", marketingRouter);
 app.use("/api/subscribers", subscribersRouter);
+app.use("/api/admin/security", securityLevelRouter);
+app.use("/api/admin/ip-blocks", ipBlocksRouter);
 app.use("/api/auth/admin", authAdminRouter);
 app.use("/api/sessions", sessionsRouter);
+app.use("/api/withdrawals", withdrawalsRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -160,6 +182,7 @@ setMedbedsSocketIO(io);
 setChatSocketIO(io);
 setSupportSocketIO(io);
 setPaymentsSocketIO(io);
+setWithdrawalSocketIO(io);
 
 // Wire up session broadcasting
 setAuthBroadcast(broadcastSessions);

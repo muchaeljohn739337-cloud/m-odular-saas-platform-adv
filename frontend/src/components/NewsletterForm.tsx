@@ -17,18 +17,20 @@ export default function NewsletterForm() {
       const res = await fetch("/api/marketing/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
       });
 
       if (res.ok) {
         setStatus("ok");
-        setMessage("✅ Thanks for subscribing! Check your email for confirmation.");
+        setMessage(
+          "✅ Thanks for subscribing! Check your email for confirmation."
+        );
         setEmail("");
-        
+
         // Track conversion
         trackEvent("newsletter_signup", {
           email_domain: email.split("@")[1],
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       } else {
         const data = await res.json();
@@ -76,7 +78,8 @@ export default function NewsletterForm() {
         )}
 
         <p className="text-xs text-gray-500">
-          Get updates on new features, crypto recovery tips, and exclusive rewards.
+          Get updates on new features, crypto recovery tips, and exclusive
+          rewards.
         </p>
       </div>
     </form>
@@ -100,7 +103,7 @@ export function FooterNewsletter() {
       const res = await fetch("/api/marketing/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
       });
 
       if (res.ok) {

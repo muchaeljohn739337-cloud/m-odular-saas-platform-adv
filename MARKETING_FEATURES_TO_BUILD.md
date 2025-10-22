@@ -16,9 +16,11 @@
 ## 🚀 MARKETING & PROMOTION FEATURES TO BUILD
 
 ### 1️⃣ **REFERRAL SYSTEM** 💰
+
 **What it does:** Users earn rewards when they refer friends
 
 #### Features to build:
+
 ```
 ✅ Unique referral link per user
    - myplatform.com/ref/USER_ID
@@ -65,16 +67,16 @@ model Referral {
   id              String  @id @default(uuid())
   referrerId      String
   referrer        User    @relation("Referrer", fields: [referrerId], references: [id])
-  
+
   refereeId       String?
   referee         User?   @relation("Referee", fields: [refereeId], references: [id])
-  
+
   referralCode    String  @unique
   referralLink    String
-  
+
   bonusTokens     Decimal @default(100)
   status          String  @default("pending") // pending, active, inactive
-  
+
   createdAt       DateTime @default(now())
   activatedAt     DateTime?
 }
@@ -83,9 +85,11 @@ model Referral {
 ---
 
 ### 2️⃣ **AFFILIATE PROGRAM** 🤝
+
 **What it does:** Structured program where users earn commissions
 
 #### Features to build:
+
 ```
 ✅ Affiliate tiers
    - Bronze: 5% commission
@@ -138,17 +142,17 @@ model Affiliate {
   id              String  @id @default(uuid())
   userId          String
   user            User    @relation(fields: [userId], references: [id])
-  
+
   tier            String  @default("bronze") // bronze, silver, gold, platinum
   commissionRate  Decimal // 0.05, 0.10, 0.15, 0.20
-  
+
   totalEarnings   Decimal @default(0)
   monthlyEarnings Decimal @default(0)
   pendingPayout   Decimal @default(0)
-  
+
   payoutMethod    String? // bank, crypto, credit
   payoutAddress   String?
-  
+
   lastPayout      DateTime?
   createdAt       DateTime @default(now())
 }
@@ -157,9 +161,11 @@ model Affiliate {
 ---
 
 ### 3️⃣ **SOCIAL SHARING** 📱
+
 **What it does:** Easy sharing buttons to spread awareness
 
 #### Features to build:
+
 ```
 ✅ One-click sharing
    - Tweet with preset message
@@ -185,13 +191,13 @@ model ShareEvent {
   id              String  @id @default(uuid())
   userId          String
   user            User    @relation(fields: [userId], references: [id])
-  
+
   platform        String // twitter, linkedin, email, link_copy
   customMessage   String?
-  
+
   clickCount      Int     @default(0)
   impressions     Int     @default(0)
-  
+
   createdAt       DateTime @default(now())
 }
 ```
@@ -199,9 +205,11 @@ model ShareEvent {
 ---
 
 ### 4️⃣ **USER AMBASSADOR PROGRAM** 👑
+
 **What it does:** Top users get exclusive benefits for promoting platform
 
 #### Features to build:
+
 ```
 ✅ Ambassador eligibility
    - Automatic qualification criteria:
@@ -247,22 +255,22 @@ model Ambassador {
   id                String  @id @default(uuid())
   userId            String  @unique
   user              User    @relation(fields: [userId], references: [id])
-  
+
   status            String  @default("active") // active, inactive, pending
   rejectionReason   String?
-  
+
   qualifiedSince    DateTime
   totalReferrals    Int     @default(0)
   totalTokens       Decimal @default(0)
-  
+
   monthlyStipend    Decimal @default(1000)
   lastStipendDate   DateTime?
-  
+
   marketingBudget   Decimal @default(500)
   usedBudget        Decimal @default(0)
-  
+
   ambassadorRank    Int? // 1-10 ranking
-  
+
   createdAt         DateTime @default(now())
 }
 ```
@@ -270,9 +278,11 @@ model Ambassador {
 ---
 
 ### 5️⃣ **CONTENT CREATOR PROGRAM** 🎥
+
 **What it does:** Paid program for users who create marketing content
 
 #### Features to build:
+
 ```
 ✅ Content types
    - YouTube videos
@@ -336,24 +346,24 @@ model ContentSubmission {
   id              String  @id @default(uuid())
   creatorId       String
   creator         User    @relation(fields: [creatorId], references: [id])
-  
+
   contentType     String // youtube, blog, twitter, podcast, case_study
   title           String
   description     String
   url             String
   thumbnailUrl    String?
-  
+
   status          String  @default("pending") // pending, approved, rejected
   rejectionReason String?
-  
+
   views           Int     @default(0)
   clicks          Int     @default(0)
   engagement      Decimal @default(0) // percentage
-  
+
   reward          Decimal @default(0)
   paymentStatus   String  @default("pending") // pending, paid
   paidAt          DateTime?
-  
+
   submittedAt     DateTime @default(now())
   approvedAt      DateTime?
 }
@@ -362,9 +372,11 @@ model ContentSubmission {
 ---
 
 ### 6️⃣ **LEADERBOARD & GAMIFICATION** 🏆
+
 **What it does:** Show top sharers & referrers to motivate others
 
 #### Features to build:
+
 ```
 ✅ Referral leaderboard
    - Weekly: Top 10 referrers
@@ -422,9 +434,11 @@ LEADERBOARD:
 ---
 
 ### 7️⃣ **VIRAL LOOP / INVITE MECHANICS** 🔄
+
 **What it does:** Create self-propagating growth through invites
 
 #### Features to build:
+
 ```
 ✅ On-boarding referral request
    - Week 1: "Invite friends to earn bonuses"
@@ -456,15 +470,15 @@ model ReferralViral {
   id              String  @id @default(uuid())
   userId          String
   user            User    @relation(fields: [userId], references: [id])
-  
+
   referralCode    String  @unique
   linkClicks      Int     @default(0)
   invitedCount    Int     @default(0)
   activatedCount  Int     @default(0) // signed up
-  
+
   chainDepth      Int     @default(0) // how many levels of referrals
   viralScore      Decimal @default(0) // calculated metric
-  
+
   invitesSentAt   DateTime[]
   lastClickAt     DateTime?
   createdAt       DateTime @default(now())
@@ -474,9 +488,11 @@ model ReferralViral {
 ---
 
 ### 8️⃣ **NEWSLETTER & EMAIL MARKETING** 📧
+
 **What it does:** Email lists you can reach users at
 
 #### Features to build:
+
 ```
 ✅ Newsletter signup widget
    - Homepage popup
@@ -514,14 +530,14 @@ model NewsletterSubscriber {
   email           String  @unique
   userId          String?
   user            User?   @relation(fields: [userId], references: [id])
-  
+
   subscribed      Boolean @default(true)
   frequency       String  @default("weekly") // daily, weekly, monthly
   topics          String[] // ["crypto", "health", "rewards"]
-  
+
   openCount       Int     @default(0)
   clickCount      Int     @default(0)
-  
+
   subscribedAt    DateTime @default(now())
   lastEmailAt     DateTime?
   unsubscribedAt  DateTime?
@@ -533,14 +549,14 @@ model NewsletterCampaign {
   subject         String
   content         String
   htmlContent     String
-  
+
   segmentFilter   String? // target: active, inactive, high_value, new_users
-  
+
   sentCount       Int     @default(0)
   openCount       Int     @default(0)
   clickCount      Int     @default(0)
   unsubscribeCount Int    @default(0)
-  
+
   sendAt          DateTime?
   sentAt          DateTime?
   createdAt       DateTime @default(now())
@@ -550,9 +566,11 @@ model NewsletterCampaign {
 ---
 
 ### 9️⃣ **REFERRAL LINK TRACKING** 📊
+
 **What it does:** Track where referrals come from, what converts best
 
 #### Features to build:
+
 ```
 ✅ Custom referral links
    - /ref/username (personalized)
@@ -599,18 +617,18 @@ model ReferralClick {
   id              String  @id @default(uuid())
   referralId      String
   referral        Referral @relation(fields: [referralId], references: [id])
-  
+
   source          String // twitter, linkedin, email, facebook, direct
   medium          String? // organic, email, paid, referral
   campaign        String?
-  
+
   ipAddress       String?
   userAgent       String?
   referer         String?
-  
+
   convertedTo     Boolean @default(false)
   conversionTime  Int? // minutes to conversion
-  
+
   createdAt       DateTime @default(now())
 }
 ```
@@ -618,9 +636,11 @@ model ReferralClick {
 ---
 
 ### 🔟 **COMMUNITY SPOTLIGHT** 🌟
+
 **What it does:** Feature and celebrate your top users
 
 #### Features to build:
+
 ```
 ✅ User of the month
    - Admin selects top contributor
@@ -672,22 +692,24 @@ SPOTLIGHT:
 ## 📋 IMPLEMENTATION PRIORITY
 
 ### **Phase 1: QUICK WINS (Week 1-2)**
+
 ```
 1. Referral System
    - Referral links ✅
    - Tracking ✅
    - Bonus rewards ✅
    - Dashboard ✅
-   
+
    Expected ROI: 10-20% user growth/month
 ```
 
 ### **Phase 2: ENGAGEMENT (Week 3-4)**
+
 ```
 2. Social Sharing
    - Share buttons ✅
    - Tracking ✅
-   
+
 3. Leaderboard
    - Top referrers ✅
    - Weekly/monthly winners ✅
@@ -695,28 +717,30 @@ SPOTLIGHT:
 4. Newsletter
    - Subscribe widget ✅
    - Send capability ✅
-   
+
    Expected ROI: 20-30% user growth/month
 ```
 
 ### **Phase 3: SCALE (Month 2)**
+
 ```
 5. Affiliate Program
    - Tier system ✅
    - Payouts ✅
-   
+
 6. Ambassador Program
    - Selection ✅
    - Dashboard ✅
-   
+
 7. Content Creator Program
    - Submissions ✅
    - Rewards ✅
-   
+
    Expected ROI: 30-50%+ user growth/month
 ```
 
 ### **Phase 4: ADVANCED (Month 3+)**
+
 ```
 8. Viral Loops
 9. Advanced Analytics
@@ -729,22 +753,23 @@ SPOTLIGHT:
 
 ## 🎯 EXPECTED IMPACT
 
-| Feature | Implementation | Monthly Growth | Customer LTV Impact |
-|---------|-----------------|-----------------|---------------------|
-| Referral System | 1 week | +15% | +30% |
-| Social Sharing | 2 days | +5% | +10% |
-| Leaderboard | 3 days | +10% | +20% |
-| Affiliate Program | 2 weeks | +20% | +50% |
-| Ambassador Program | 2 weeks | +10% | +40% |
-| Content Creator | 2 weeks | +5% | +25% |
-| Newsletter | 1 week | +10% | +15% |
-| **TOTAL ESTIMATED** | **8 weeks** | **+75%** | **+190%** |
+| Feature             | Implementation | Monthly Growth | Customer LTV Impact |
+| ------------------- | -------------- | -------------- | ------------------- |
+| Referral System     | 1 week         | +15%           | +30%                |
+| Social Sharing      | 2 days         | +5%            | +10%                |
+| Leaderboard         | 3 days         | +10%           | +20%                |
+| Affiliate Program   | 2 weeks        | +20%           | +50%                |
+| Ambassador Program  | 2 weeks        | +10%           | +40%                |
+| Content Creator     | 2 weeks        | +5%            | +25%                |
+| Newsletter          | 1 week         | +10%           | +15%                |
+| **TOTAL ESTIMATED** | **8 weeks**    | **+75%**       | **+190%**           |
 
 ---
 
 ## 💡 QUICK START
 
 **This week: Build Referral System**
+
 1. Add referral code to User model
 2. Create referral tracking UI
 3. Add bonus reward logic

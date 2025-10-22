@@ -317,7 +317,14 @@ export async function sendFallbackEmails() {
         createdAt: { lt: cutoff },
         emailSent: false,
       },
-      include: { user: true },
+      select: {
+        id: true,
+        userId: true,
+        title: true,
+        message: true,
+        type: true,
+        createdAt: true,
+      },
       take: 50, // Limit to prevent overwhelming
     });
 
@@ -328,13 +335,19 @@ export async function sendFallbackEmails() {
     console.log(`📧 Sending ${unread.length} fallback email(s)...`);
 
     for (const notification of unread) {
-      if (!notification.user.email) continue;
+      // Fetch user email separately
+      const user = await prisma.user.findUnique({
+        where: { id: notification.userId },
+        select: { email: true },
+      });
+
+      if (!user?.email) continue;
 
       try {
         await emailTransporter.sendMail({
           from: EMAIL_FROM,
           replyTo: EMAIL_REPLY_TO,
-          to: notification.user.email,
+          to: user.email,
           subject: `⚠️ Unread Notification: ${notification.title}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #FEF3C7;">
@@ -360,7 +373,7 @@ export async function sendFallbackEmails() {
           data: { emailSent: true, emailSentAt: new Date() },
         });
 
-        console.log(`📧 Fallback email sent to ${notification.user.email}`);
+        console.log(`📧 Fallback email sent to ${user.email}`);
       } catch (error) {
         console.error(
           `❌ Fallback email failed for notification ${notification.id}:`,
@@ -533,4 +546,3 @@ export async function notifyAllAdmins(
     throw error;
   }
 }
-
