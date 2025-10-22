@@ -1,89 +1,81 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import twilio from "twilio";
 import prisma from "../prismaClient";
 import { config } from "../config";
-import { createNotification } from "../services/notificationService";
+import { rateLimit } from "../middleware/security";
+import * as nodemailer from "nodemailer";
+import twilio from "twilio";
+import { z } from "zod";
+import { getRedis } from "../services/redisClient";
 import { authenticateToken } from "../middleware/auth";
+import {
+  createNotification,
+  notifyAllAdmins,
+} from "../services/notificationService";
 
 const router = express.Router();
 
-/**
- * Middleware: Validate API Key
- */
-const validateApiKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+// Optional API key guard (lenient in development)
+const validateApiKey = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
   const apiKey = req.headers["x-api-key"];
   const expectedKey = process.env.API_KEY;
-  
-  // Allow requests without API key in development
   if (process.env.NODE_ENV === "development" && !expectedKey) {
     return next();
   }
-  
   if (!apiKey || apiKey !== expectedKey) {
     return res.status(401).json({ error: "Invalid or missing API key" });
   }
-  
   next();
 };
 
-/**
- * Register new user with email/password
- * POST /api/auth/register
- * Body: { email: string, password: string, username?: string, firstName?: string, lastName?: string }
- */
+// POST /api/auth/register
 router.post("/register", validateApiKey, async (req, res) => {
   try {
-    const { email, password, username, firstName, lastName } = req.body;
-
+    const { email, password, username, firstName, lastName } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
-
-    // Validate password strength
-    if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    if (typeof password !== "string" || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters" });
     }
 
-    // Check if user exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email },
-          ...(username ? [{ username }] : [])
-        ]
-      }
+    const existing = await prisma.user.findFirst({
+      where: { OR: [{ email }, ...(username ? [{ username }] : [])] },
+      select: { id: true },
     });
-
-    if (existingUser) {
+    if (existing) {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
-
-    // Create user
     const user = await prisma.user.create({
       data: {
         email,
-        username: username || email.split('@')[0],
+        username: username || email.split("@")[0],
         passwordHash,
-        firstName: firstName || '',
-        lastName: lastName || '',
+        firstName: firstName || "",
+        lastName: lastName || "",
         termsAccepted: true,
         termsAcceptedAt: new Date(),
-      }
+      },
     });
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       config.jwtSecret,
-      { expiresIn: '7d' }
+      {
+        expiresIn: "7d",
+      }
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "User registered successfully",
       token,
       user: {
@@ -91,86 +83,61 @@ router.post("/register", validateApiKey, async (req, res) => {
         email: user.email,
         username: user.username,
         firstName: user.firstName,
-        lastName: user.lastName
-      }
+        lastName: user.lastName,
+      },
     });
-  } catch (error) {
-    console.error("Registration error:", error);
-    // Log full error for debugging
-    res.status(500).json({ 
-      error: "Failed to register user",
-      details: error instanceof Error ? error.message : "Unknown error"
-    });
+  } catch (err) {
+    console.error("Registration error:", err);
+    return res.status(500).json({ error: "Failed to register user" });
   }
 });
 
-/**
- * Login user with email/password
- * POST /api/auth/login
- * Body: { email: string, password: string }
- */
+// POST /api/auth/login
 router.post("/login", validateApiKey, async (req, res) => {
   try {
-    const { email, password } = req.body;
-
+    const { email, password } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Find user by email or username
     const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email },
-          { username: email } // Allow login with username
-        ]
-      }
+      where: { OR: [{ email }, { username: email }] },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        passwordHash: true,
+        usdBalance: true,
+      },
     });
-
     if (!user || !user.passwordHash) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Verify password
-    const validPassword = await bcrypt.compare(password, user.passwordHash);
-
-    if (!validPassword) {
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLogin: new Date() }
-    });
-
-    // Send security notification
+    // Update last login (best effort)
     try {
-      await createNotification({
-        userId: user.id,
-        type: "all",
-        priority: "normal",
-        category: "security",
-        title: "New Login Detected",
-        message: `You logged in from ${req.ip || "an unknown location"}`,
-        data: {
-          loginTime: new Date().toISOString(),
-          ipAddress: req.get("X-Forwarded-For") || req.ip,
-          userAgent: req.get("User-Agent"),
-        },
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() },
       });
-    } catch (notifyErr) {
-      console.warn("Login notification failed (non-fatal):", notifyErr);
-    }
+    } catch {}
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       config.jwtSecret,
-      { expiresIn: '7d' }
+      {
+        expiresIn: "7d",
+      }
     );
 
-    res.json({
+    return res.json({
       message: "Login successful",
       token,
       user: {
@@ -179,338 +146,466 @@ router.post("/login", validateApiKey, async (req, res) => {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
-        usdBalance: user.usdBalance.toString()
-      }
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Failed to login" });
-  }
-});
-
-// Initialize Twilio client
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-const twilioFromNumber = process.env.TWILIO_PHONE_NUMBER;
-const twilioVerifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-// Store OTPs in-memory (use Redis in production for scalability)
-interface OTPEntry {
-  code: string;
-  expires: number;
-  type: "email" | "sms";
-}
-
-const otps = new Map<string, OTPEntry>();
-
-// Generate 6-digit OTP
-function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-/**
- * Send OTP via Email
- * POST /api/auth/send-otp-email
- * Body: { email: string }
- */
-router.post("/send-otp-email", async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
-
-    const code = generateOTP();
-    const expires = Date.now() + 5 * 60_000; // 5 minutes
-
-    otps.set(email, { code, expires, type: "email" });
-
-    // TODO: Send actual email via SendGrid/AWS SES
-    // For now, log to console (DEVELOPMENT ONLY)
-    console.log(`📧 OTP for ${email}: ${code} (expires in 5 min)`);
-
-    res.json({
-      message: "OTP sent to your email",
-      // Include code in response for development/testing only
-      ...(process.env.NODE_ENV === "development" && { code }),
-    });
-  } catch (error) {
-    console.error("Error sending email OTP:", error);
-    res.status(500).json({ error: "Failed to send OTP" });
-  }
-});
-
-/**
- * Send OTP via SMS (Twilio Verify API)
- * POST /api/auth/send-otp-sms
- * Body: { phone: string }
- */
-router.post("/send-otp-sms", async (req, res) => {
-  try {
-    const { phone } = req.body;
-
-    if (!phone) {
-      return res.status(400).json({ error: "Phone number is required" });
-    }
-
-    // Validate Twilio credentials
-    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
-      console.error("❌ Twilio credentials not configured");
-      return res.status(500).json({ error: "SMS service not configured" });
-    }
-
-    const code = generateOTP();
-    const expires = Date.now() + 5 * 60_000; // 5 minutes
-
-    otps.set(phone, { code, expires, type: "sms" });
-
-    // Use Twilio Verify API if Service SID is configured
-    if (twilioVerifyServiceSid) {
-      try {
-        const verification = await twilioClient.verify.v2
-          .services(twilioVerifyServiceSid)
-          .verifications.create({ to: phone, channel: "sms" });
-
-        console.log(`📱 Verify API - SMS OTP sent to ${phone} (SID: ${verification.sid})`);
-
-        return res.json({
-          message: "OTP sent to your phone via Verify API",
-          verificationSid: verification.sid,
-          status: verification.status,
-        });
-      } catch (verifyError: any) {
-        console.error("Verify API error, falling back to direct SMS:", verifyError.message);
-        // Fall through to direct SMS method
-      }
-    }
-
-    // Fallback: Send SMS via Twilio Messaging API
-    if (!twilioFromNumber) {
-      console.error("❌ TWILIO_PHONE_NUMBER not configured");
-      return res.status(500).json({ error: "SMS sender not configured" });
-    }
-
-    await twilioClient.messages.create({
-      body: `Your Advancia Pay verification code is: ${code}\n\nValid for 5 minutes.`,
-      from: twilioFromNumber,
-      to: phone,
-    });
-
-    console.log(`📱 Direct SMS OTP sent to ${phone}`);
-
-    res.json({
-      message: "OTP sent to your phone",
-      // Include code in response for development/testing only
-      ...(process.env.NODE_ENV === "development" && { code }),
-    });
-  } catch (error: any) {
-    console.error("Error sending SMS OTP:", error);
-    res.status(500).json({
-      error: "Failed to send SMS",
-      details: error.message,
-    });
-  }
-});
-
-/**
- * Verify OTP and issue JWT token
- * POST /api/auth/verify-otp
- * Body: { identifier: string (email or phone), code: string }
- */
-router.post("/verify-otp", async (req, res) => {
-  try {
-    const { identifier, code } = req.body;
-
-    if (!identifier || !code) {
-      return res.status(400).json({ error: "Identifier and code are required" });
-    }
-
-    // Determine if this is a phone number (for Twilio Verify) or email
-    const isPhone = identifier.startsWith("+") || /^\d+$/.test(identifier);
-    let isValidOTP = false;
-    let otpType = "email";
-
-    // If it's a phone number and Verify API is configured, use Twilio Verify
-    if (isPhone && twilioVerifyServiceSid) {
-      try {
-        console.log(`🔍 Verifying code via Twilio Verify API for ${identifier}`);
-        
-        const verificationCheck = await twilioClient.verify.v2
-          .services(twilioVerifyServiceSid)
-          .verificationChecks.create({
-            to: identifier,
-            code: code,
-          });
-
-        console.log(`📊 Twilio Verify response: ${verificationCheck.status}`);
-
-        if (verificationCheck.status === "approved") {
-          isValidOTP = true;
-          otpType = "sms";
-          console.log(`✅ Code verified via Twilio Verify API`);
-        } else {
-          return res.status(400).json({ error: "Invalid code" });
-        }
-      } catch (twilioError: any) {
-        console.error("❌ Twilio Verify API error:", twilioError.message);
-        // Fall back to in-memory check
-        console.log("⚠️ Falling back to in-memory OTP check");
-      }
-    }
-
-    // If not validated via Twilio Verify, check in-memory storage
-    if (!isValidOTP) {
-      const entry = otps.get(identifier);
-
-      // Validate OTP
-      if (!entry) {
-        return res.status(400).json({ error: "No OTP found for this identifier" });
-      }
-
-      if (entry.code !== code) {
-        return res.status(400).json({ error: "Invalid code" });
-      }
-
-      if (entry.expires < Date.now()) {
-        otps.delete(identifier);
-        return res.status(400).json({ error: "Code has expired" });
-      }
-
-      // OTP is valid - clean up
-      otps.delete(identifier);
-      isValidOTP = true;
-      otpType = entry.type;
-      console.log(`✅ Code verified via in-memory storage`);
-    }
-
-    // Create or get user
-    let user;
-    try {
-      if (otpType === "email") {
-        user = await prisma.user.upsert({
-          where: { email: identifier },
-          update: { lastLogin: new Date() },
-          create: {
-            email: identifier,
-            username: identifier.split("@")[0],
-            passwordHash: "", // OTP-based, no password
-          },
-        });
-      } else {
-        // For phone authentication, use phone as identifier
-        // Check if user exists by phone or create with phone as email temporarily
-        const phoneAsEmail = `${identifier.replace(/\+/g, "")}@phone.temp`;
-        user = await prisma.user.upsert({
-          where: { email: phoneAsEmail },
-          update: { lastLogin: new Date() },
-          create: {
-            email: phoneAsEmail,
-            username: identifier.replace(/\+/g, ""),
-            passwordHash: "", // OTP-based, no password
-          },
-        });
-      }
-    } catch (dbError: any) {
-      console.error("⚠️ Database error (continuing with temp user):", dbError.message);
-      // Create a temporary user object if database is unavailable
-      const tempUserId = `temp-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      user = {
-        id: tempUserId,
-        email: otpType === "email" ? identifier : `${identifier.replace(/\+/g, "")}@phone.temp`,
-        name: null,
-        username: otpType === "email" ? identifier.split("@")[0] : identifier.replace(/\+/g, ""),
-      };
-      console.log(`⚠️ Using temporary user ID: ${tempUserId}`);
-    }
-
-    // Issue JWT token
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        type: "otp-auth",
+        usdBalance: user.usdBalance?.toString?.() ?? "0",
       },
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ error: "Failed to login" });
+  }
+});
+
+// ============================================
+// DOCTOR REGISTRATION (Invite-Only)
+// ============================================
+
+const registerDoctorSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  specialization: z.string().min(1),
+  licenseNumber: z.string().min(1),
+  phoneNumber: z.string().optional(),
+  inviteCode: z.string().min(1, "Invite code is required"),
+});
+
+// POST /api/auth/register-doctor
+router.post("/register-doctor", validateApiKey, async (req, res) => {
+  try {
+    const data = registerDoctorSchema.parse(req.body);
+
+    // Verify invite code
+    const expectedCode = process.env.DOCTOR_INVITE_CODE;
+    if (!expectedCode) {
+      return res.status(500).json({
+        error: "Server configuration error: DOCTOR_INVITE_CODE not set",
+      });
+    }
+
+    if (data.inviteCode !== expectedCode) {
+      return res.status(403).json({ error: "Invalid invite code" });
+    }
+
+    // Check if doctor already exists
+    const existing = await prisma.doctor.findFirst({
+      where: { email: data.email },
+      select: { id: true },
+    });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ error: "Doctor with this email already exists" });
+    }
+
+    // Check license number uniqueness
+    const existingLicense = await prisma.doctor.findFirst({
+      where: { licenseNumber: data.licenseNumber },
+      select: { id: true },
+    });
+    if (existingLicense) {
+      return res
+        .status(400)
+        .json({ error: "License number already registered" });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(data.password, 10);
+
+    // Create doctor (status: PENDING by default)
+    const doctor = await prisma.doctor.create({
+      data: {
+        email: data.email,
+        passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        specialization: data.specialization,
+        licenseNumber: data.licenseNumber,
+        phoneNumber: data.phoneNumber || null,
+        inviteCode: data.inviteCode,
+        status: "PENDING",
+      },
+    });
+
+    // Generate JWT for doctor
+    const token = jwt.sign(
+      { doctorId: doctor.id, email: doctor.email, type: "doctor" },
       config.jwtSecret,
       { expiresIn: "7d" }
     );
 
-    console.log(`🎉 User authenticated successfully: ${user.id}`);
-
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name || null,
+    // Notify all admins about new doctor registration
+    console.log("📢 Notifying admins about new doctor registration...");
+    await notifyAllAdmins({
+      type: "all",
+      category: "admin",
+      title: "New Doctor Registration",
+      message: `Dr. ${doctor.firstName} ${doctor.lastName} (${doctor.specialization}) has registered. Review their credentials and verify their account.`,
+      priority: "high",
+      data: {
+        doctorId: doctor.id,
+        email: doctor.email,
+        specialization: doctor.specialization,
+        licenseNumber: doctor.licenseNumber,
       },
     });
-  } catch (error) {
-    console.error("Error verifying OTP:", error);
-    res.status(500).json({ error: "Failed to verify OTP" });
+
+    return res.status(201).json({
+      message: "Doctor registered successfully. Awaiting admin verification.",
+      token,
+      doctor: {
+        id: doctor.id,
+        email: doctor.email,
+        firstName: doctor.firstName,
+        lastName: doctor.lastName,
+        specialization: doctor.specialization,
+        status: doctor.status,
+      },
+    });
+  } catch (err) {
+    if ((err as any)?.name === "ZodError") {
+      return res.status(400).json({ error: (err as any).issues });
+    }
+    console.error("Doctor registration error:", err);
+    return res.status(500).json({ error: "Failed to register doctor" });
   }
 });
 
-/**
- * Resend OTP
- * POST /api/auth/resend-otp
- * Body: { identifier: string, type: "email" | "sms" }
- */
-router.post("/resend-otp", async (req, res) => {
+// POST /api/auth/login-doctor
+router.post("/login-doctor", validateApiKey, async (req, res) => {
   try {
-    const { identifier, type } = req.body;
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
 
-    if (type === "email") {
-      // Generate new OTP for email
-      const code = generateOTP();
-      const expires = Date.now() + 5 * 60_000;
-      otps.set(identifier, { code, expires, type: "email" });
-      
-      console.log(`📧 OTP for ${identifier}: ${code} (expires in 5 min)`);
-      
-      return res.status(200).json({
-        success: true,
-        message: "New OTP sent to your email",
-        ...(process.env.NODE_ENV === "development" && { code }),
-      });
-    } else if (type === "sms") {
-      // Generate new OTP for SMS
-      const code = generateOTP();
-      const expires = Date.now() + 5 * 60_000;
-      otps.set(identifier, { code, expires, type: "sms" });
-      
-      // Send SMS via Twilio
-      await twilioClient.messages.create({
-        body: `Your verification code is: ${code}`,
-        from: twilioFromNumber,
-        to: identifier,
-      });
-      
-      return res.status(200).json({
-        success: true,
-        message: "New OTP sent to your phone",
+    const doctor = await prisma.doctor.findFirst({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        specialization: true,
+        status: true,
+        passwordHash: true,
+      },
+    });
+
+    if (!doctor || !doctor.passwordHash) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const valid = await bcrypt.compare(password, doctor.passwordHash);
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { doctorId: doctor.id, email: doctor.email, type: "doctor" },
+      config.jwtSecret,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      message: "Doctor login successful",
+      token,
+      doctor: {
+        id: doctor.id,
+        email: doctor.email,
+        firstName: doctor.firstName,
+        lastName: doctor.lastName,
+        specialization: doctor.specialization,
+        status: doctor.status,
+      },
+    });
+  } catch (err) {
+    console.error("Doctor login error:", err);
+    return res.status(500).json({ error: "Failed to login doctor" });
+  }
+});
+
+// ------- OTP (Email/SMS) Flows (Redis-backed) ------- //
+const otpLimiter = rateLimit({ windowMs: 60_000, maxRequests: 5 });
+
+const sendOtpSchema = z
+  .object({
+    email: z.string().email().optional(),
+    phone: z
+      .string()
+      .regex(/^\+?[1-9]\d{6,14}$/)
+      .optional(),
+  })
+  .refine((d) => !!d.email || !!d.phone, { message: "Provide email or phone" });
+
+const verifyOtpSchema = z
+  .object({
+    email: z.string().email().optional(),
+    phone: z
+      .string()
+      .regex(/^\+?[1-9]\d{6,14}$/)
+      .optional(),
+    code: z.string().length(6),
+  })
+  .refine((d) => !!d.email || !!d.phone, { message: "Provide email or phone" });
+
+// Simple SMTP test payload
+const testSmtpSchema = z.object({
+  to: z.string().email(),
+  subject: z.string().optional(),
+  message: z.string().optional(),
+});
+
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function getTwilioClient() {
+  const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN } = process.env as any;
+  if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
+    return twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  }
+  return null;
+}
+
+// POST /api/auth/send-otp
+router.post("/send-otp", otpLimiter, async (req, res) => {
+  try {
+    const { email, phone } = sendOtpSchema.parse(req.body || {});
+
+    const user = await prisma.user.findFirst({
+      where: email ? { email } : { username: phone },
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const code = generateCode();
+    const key = email || phone!;
+
+    const redis = getRedis();
+    const ttlSeconds = 5 * 60;
+    const maxAttemptsWindow = 10 * 60; // 10 minutes
+    const maxSendPerWindow = 5;
+    const countKey = `otp:cnt:${key}`;
+    const lockKey = `otp:lock:${key}`;
+
+    // Fallback in-memory store when Redis not configured
+    const mem: any =
+      (global as any).__otpMem ||
+      ((global as any).__otpMem = new Map<string, any>());
+
+    if (redis) {
+      const locked = await redis.get(lockKey);
+      if (locked)
+        return res.status(429).json({ error: "Too many attempts. Try later." });
+      const cnt = await redis.incr(countKey);
+      if (cnt === 1) await redis.expire(countKey, maxAttemptsWindow);
+      if (cnt > maxSendPerWindow) {
+        await redis.set(lockKey, "1", "EX", 30 * 60); // 30 min lockout
+        return res
+          .status(429)
+          .json({ error: "Too many OTP requests. Try again later." });
+      }
+      await redis.setex(`otp:${key}`, ttlSeconds, code);
+    } else {
+      const now = Date.now();
+      const entry = mem.get(key) || { count: 0, windowStart: now };
+      if (now - entry.windowStart > maxAttemptsWindow * 1000) {
+        entry.count = 0;
+        entry.windowStart = now;
+      }
+      entry.count += 1;
+      if (entry.count > maxSendPerWindow) {
+        return res
+          .status(429)
+          .json({ error: "Too many OTP requests. Try again later." });
+      }
+      mem.set(key, { ...entry, code, exp: now + ttlSeconds * 1000 });
+    }
+
+    if (phone) {
+      const client = getTwilioClient();
+      const from = process.env.TWILIO_PHONE_NUMBER;
+      if (client && from) {
+        await client.messages.create({
+          to: phone,
+          from,
+          body: `Your Advancia verification code is ${code}`,
+        });
+      } else {
+        console.log(`[DEV] OTP for ${phone}: ${code}`);
+      }
+    } else if (email) {
+      // Send via nodemailer if configured, else log
+      if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD,
+          },
+        });
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Your verification code",
+          text: `Your Advancia verification code is ${code}`,
+        });
+      } else {
+        console.log(`[DEV] OTP for ${email}: ${code}`);
+      }
+    }
+
+    return res.json({ message: "OTP sent" });
+  } catch (err) {
+    if ((err as any)?.name === "ZodError") {
+      return res.status(400).json({ error: (err as any).issues });
+    }
+    console.error("send-otp error:", err);
+    return res.status(500).json({ error: "Failed to send OTP" });
+  }
+});
+
+// POST /api/auth/test-smtp
+// Sends a direct SMTP email using configured Gmail credentials; does NOT require DB
+router.post("/test-smtp", validateApiKey, async (req, res) => {
+  try {
+    const { to, subject, message } = testSmtpSchema.parse(req.body || {});
+
+    const EMAIL_USER = process.env.EMAIL_USER;
+    const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
+    const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
+    const EMAIL_REPLY_TO =
+      process.env.EMAIL_REPLY_TO || EMAIL_USER || undefined;
+
+    if (!EMAIL_USER || !EMAIL_PASSWORD) {
+      return res.status(500).json({
+        error:
+          "SMTP not configured. Set EMAIL_USER and EMAIL_PASSWORD (Gmail App Password) in backend/.env",
       });
     }
 
-    res.status(400).json({ error: "Invalid type" });
-  } catch (error) {
-    console.error("Error resending OTP:", error);
-    res.status(500).json({ error: "Failed to resend OTP" });
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: EMAIL_USER, pass: EMAIL_PASSWORD },
+    });
+
+    await transporter.sendMail({
+      from: EMAIL_FROM,
+      replyTo: EMAIL_REPLY_TO,
+      to,
+      subject: subject || "SMTP Test from Advancia",
+      text:
+        message ||
+        "This is a direct SMTP test using Gmail. If you see this, your EMAIL_USER/EMAIL_PASSWORD work.",
+    });
+
+    return res.json({ message: "SMTP test email sent", to });
+  } catch (err: any) {
+    if (err?.name === "ZodError") {
+      return res.status(400).json({ error: err.issues });
+    }
+    console.error("test-smtp error:", err);
+    return res.status(500).json({ error: "Failed to send SMTP test email" });
   }
 });
 
-/**
- * Get current authenticated user info
- * GET /api/auth/me
- * Headers: Authorization: Bearer <token>
- */
+// POST /api/auth/verify-otp
+router.post("/verify-otp", otpLimiter, async (req, res) => {
+  try {
+    const { email, phone, code } = verifyOtpSchema.parse(req.body || {});
+    const key = email || phone!;
+
+    const redis = getRedis();
+    let stored: string | null = null;
+    if (redis) {
+      stored = await redis.get(`otp:${key}`);
+      if (!stored)
+        return res
+          .status(400)
+          .json({ error: "No OTP requested or OTP expired" });
+      if (String(code) !== stored)
+        return res.status(400).json({ error: "Invalid OTP" });
+      await redis.del(`otp:${key}`);
+    } else {
+      const mem: any =
+        (global as any).__otpMem ||
+        ((global as any).__otpMem = new Map<string, any>());
+      const entry = mem.get(key);
+      if (!entry || Date.now() > entry.exp)
+        return res
+          .status(400)
+          .json({ error: "No OTP requested or OTP expired" });
+      if (String(code) !== entry.code)
+        return res.status(400).json({ error: "Invalid OTP" });
+      mem.delete(key);
+    }
+
+    const user = await prisma.user.findFirst({
+      where: email ? { email } : { username: phone },
+    });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      config.jwtSecret,
+      { expiresIn: "7d" }
+    );
+    return res.json({ message: "OTP verified", token });
+  } catch (err) {
+    if ((err as any)?.name === "ZodError") {
+      return res.status(400).json({ error: (err as any).issues });
+    }
+    console.error("verify-otp error:", err);
+    return res.status(500).json({ error: "Failed to verify OTP" });
+  }
+});
+
+// POST /api/auth/test-email
+// Sends a simple email notification to the authenticated user to verify SMTP configuration
+router.post(
+  "/test-email",
+  validateApiKey,
+  authenticateToken,
+  async (req: any, res) => {
+    try {
+      const user = req.user;
+      if (!user?.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const subject = req.body?.subject || "Test Email from Advancia";
+      const message =
+        req.body?.message ||
+        "This is a test email sent from the Advancia backend to verify SMTP settings.";
+
+      await createNotification({
+        userId: user.userId,
+        type: "email",
+        category: "system",
+        title: subject,
+        message,
+      });
+
+      return res.json({ message: "Test email enqueued" });
+    } catch (err) {
+      console.error("test-email error:", err);
+      return res.status(500).json({ error: "Failed to send test email" });
+    }
+  }
+);
+
+// GET /api/auth/me - Get current user data from token
 router.get("/me", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
+      where: { id: userId },
       select: {
         id: true,
         email: true,
@@ -518,10 +613,9 @@ router.get("/me", authenticateToken, async (req: any, res) => {
         firstName: true,
         lastName: true,
         role: true,
-        usdBalance: true,
-        lastLogin: true,
-        totpEnabled: true,
+        active: true,
         createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -529,231 +623,10 @@ router.get("/me", authenticateToken, async (req: any, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(user);
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Failed to fetch user data" });
-  }
-});
-
-/**
- * Generate backup codes for a user
- * POST /api/auth/generate-backup-codes
- * Headers: { Authorization: "Bearer <token>" }
- * Returns: Array of 8 backup codes (shown only once)
- */
-router.post("/generate-backup-codes", validateApiKey, async (req, res) => {
-  try {
-    // Extract JWT token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Authorization token required" });
-    }
-
-    const token = authHeader.substring(7);
-    let decoded;
-    
-    try {
-      decoded = jwt.verify(token, config.jwtSecret) as { userId: string };
-    } catch (error) {
-      return res.status(401).json({ error: "Invalid or expired token" });
-    }
-
-    const userId = decoded.userId;
-
-    // Delete any existing backup codes for this user
-    await prisma.backupCode.deleteMany({
-      where: { userId }
-    });
-
-    // Generate 8 new backup codes
-    const codes: string[] = [];
-    const hashedCodes = [];
-
-    for (let i = 0; i < 8; i++) {
-      // Generate 9-digit backup code
-      const code = Math.floor(100000000 + Math.random() * 900000000).toString();
-      codes.push(code);
-      
-      // Hash the code before storing
-      const hashedCode = await bcrypt.hash(code, 10);
-      hashedCodes.push(hashedCode);
-    }
-
-    // Store hashed codes in database
-    await prisma.backupCode.createMany({
-      data: hashedCodes.map((hashedCode) => ({
-        userId,
-        code: hashedCode,
-      })),
-    });
-
-    console.log(`✅ Generated 8 backup codes for user ${userId}`);
-
-    res.json({
-      success: true,
-      message: "Backup codes generated successfully",
-      codes, // Return plain codes ONLY on generation
-      warning: "Save these codes securely. They will not be shown again."
-    });
-  } catch (error) {
-    console.error("Error generating backup codes:", error);
-    res.status(500).json({ error: "Failed to generate backup codes" });
-  }
-});
-
-/**
- * Verify backup code and authenticate user
- * POST /api/auth/verify-backup-code
- * Body: { email: string, code: string }
- * Returns: JWT token if code is valid
- */
-router.post("/verify-backup-code", validateApiKey, async (req, res) => {
-  try {
-    const { email, code } = req.body;
-
-    if (!email || !code) {
-      return res.status(400).json({ error: "Email and code are required" });
-    }
-
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // Get all unused backup codes for this user
-    const backupCodes = await prisma.backupCode.findMany({
-      where: {
-        userId: user.id,
-        isUsed: false
-      }
-    });
-
-    if (backupCodes.length === 0) {
-      return res.status(400).json({ 
-        error: "No backup codes available. Please use another authentication method or contact support." 
-      });
-    }
-
-    // Check if any of the backup codes match
-    let matchedCode = null;
-    for (const backupCode of backupCodes) {
-      const isMatch = await bcrypt.compare(code, backupCode.code);
-      if (isMatch) {
-        matchedCode = backupCode;
-        break;
-      }
-    }
-
-    if (!matchedCode) {
-      return res.status(401).json({ error: "Invalid backup code" });
-    }
-
-    // Mark the code as used
-    await prisma.backupCode.update({
-      where: { id: matchedCode.id },
-      data: {
-        isUsed: true,
-        usedAt: new Date()
-      }
-    });
-
-    // Update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLogin: new Date() }
-    });
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      config.jwtSecret,
-      { expiresIn: '7d' }
-    );
-
-    // Count remaining codes
-    const remainingCodes = await prisma.backupCode.count({
-      where: {
-        userId: user.id,
-        isUsed: false
-      }
-    });
-
-    console.log(`✅ Backup code used successfully for user ${user.id}. Remaining: ${remainingCodes}`);
-
-    res.json({
-      success: true,
-      message: "Authentication successful via backup code",
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
-      remainingBackupCodes: remainingCodes,
-      warning: remainingCodes <= 3 ? "You have 3 or fewer backup codes remaining. Consider generating new ones." : undefined
-    });
-  } catch (error) {
-    console.error("Error verifying backup code:", error);
-    res.status(500).json({ error: "Failed to verify backup code" });
-  }
-});
-
-/**
- * Get backup codes status for authenticated user
- * GET /api/auth/backup-codes-status
- * Headers: { Authorization: "Bearer <token>" }
- */
-router.get("/backup-codes-status", validateApiKey, async (req, res) => {
-  try {
-    // Extract JWT token from Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Authorization token required" });
-    }
-
-    const token = authHeader.substring(7);
-    let decoded;
-    
-    try {
-      decoded = jwt.verify(token, config.jwtSecret) as { userId: string };
-    } catch (error) {
-      return res.status(401).json({ error: "Invalid or expired token" });
-    }
-
-    const userId = decoded.userId;
-
-    // Count total and unused codes
-    const totalCodes = await prisma.backupCode.count({
-      where: { userId }
-    });
-
-    const unusedCodes = await prisma.backupCode.count({
-      where: {
-        userId,
-        isUsed: false
-      }
-    });
-
-    const usedCodes = totalCodes - unusedCodes;
-
-    res.json({
-      success: true,
-      totalCodes,
-      unusedCodes,
-      usedCodes,
-      hasBackupCodes: totalCodes > 0,
-      needsRegeneration: unusedCodes <= 3
-    });
-  } catch (error) {
-    console.error("Error getting backup codes status:", error);
-    res.status(500).json({ error: "Failed to get backup codes status" });
+    return res.json({ user });
+  } catch (err) {
+    console.error("auth/me error:", err);
+    return res.status(500).json({ error: "Failed to fetch user data" });
   }
 });
 

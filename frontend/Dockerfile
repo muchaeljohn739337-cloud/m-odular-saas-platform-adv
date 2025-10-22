@@ -1,35 +1,48 @@
-# Build stage
-FROM node:18-alpine AS builder
+## Build Next.js (standalone) and run with node server.js
 
+FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copy the entire project (need root package.json for dependencies)
-COPY . .
+# Accept build-time environment variables for Next.js (with safe defaults)
+ARG NEXT_PUBLIC_API_URL=https://api.advanciapayledger.com
+ARG NEXT_PUBLIC_APP_NAME="Advancia PayLedger"
+ARG NEXT_PUBLIC_CURRENCY_LIST="USD,EUR,BTC,ETH,USDT,TRUMP,MEDBED"
+ARG NEXT_PUBLIC_FEATURE_FLAGS="notifications,bonus_tokens,debit_card,crypto_recovery"
+ARG NEXT_PUBLIC_VAPID_KEY
+ARG NEXT_PUBLIC_API_KEY
+ARG NEXT_PUBLIC_BOTPRESS_BOT_ID
 
-# Install all dependencies from root
+# Set them as ENV so Next.js build can use them
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
+ENV NEXT_PUBLIC_CURRENCY_LIST=$NEXT_PUBLIC_CURRENCY_LIST
+ENV NEXT_PUBLIC_FEATURE_FLAGS=$NEXT_PUBLIC_FEATURE_FLAGS
+ENV NEXT_PUBLIC_VAPID_KEY=$NEXT_PUBLIC_VAPID_KEY
+ENV NEXT_PUBLIC_API_KEY=$NEXT_PUBLIC_API_KEY
+ENV NEXT_PUBLIC_BOTPRESS_BOT_ID=$NEXT_PUBLIC_BOTPRESS_BOT_ID
+
+# Copy only frontend package manifests for better cache usage
+COPY frontend/package*.json ./
 RUN npm ci
 
-# Change to frontend and install frontend dependencies
-WORKDIR /app/frontend
-RUN npm ci
+# Copy frontend sources
+COPY frontend/ ./
 
-# Build the frontend
+# Log API URL to verify and bust cache
+RUN echo "Building with API URL: $NEXT_PUBLIC_API_URL"
+
+# Build Next.js (produces .next/standalone)
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine
-
+FROM node:18-alpine AS runner
+ENV NODE_ENV=production
+ENV PORT=3000
 WORKDIR /app
 
-# Copy only necessary files from builder
-COPY --from=builder /app/frontend/package*.json ./
-COPY --from=builder /app/frontend/.next ./.next
-COPY --from=builder /app/frontend/public ./public
-COPY --from=builder /app/frontend/next.config.js ./
+# Copy public assets and server
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# Install production dependencies only
-RUN npm ci --omit=dev
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
+EXPOSE ${PORT}
+CMD ["node", "server.js"]

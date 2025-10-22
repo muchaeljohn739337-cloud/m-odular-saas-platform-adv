@@ -1,0 +1,70 @@
+{
+  // CRITICAL: Remove secrets from workspace settings
+  // "secrets.passphrase": "Good_mother1!?", // MOVED TO USER SETTINGS FOR SECURITY
+
+  // CSS/Styling
+  "css.lint.unknownAtRules": "ignore",
+
+  // General Editor Settings
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.rulers": [80, 120],
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+
+  // TypeScript/JavaScript Settings
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+  "typescript.suggest.autoImports": true,
+  "javascript.preferences.preferTypeOnlyAutoImports": true,
+
+  // File Associations
+  "files.associations": {
+    "*.env*": "dotenv",
+    "docker-compose*.yml": "dockercompose",
+    "Dockerfile*": "dockerfile",
+    "*.prisma": "prisma"
+  },
+
+  // Git Settings
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+
+  // Testing Settings
+  "jest.autoEnable": false,
+  "jest.disabledWorkspaceFolders": ["Advancia Pay Ledger (Root)", "Frontend"],
+  "jest.rootPath": "backend",
+  "playwright.showTrace": true,
+
+  // ESLint Settings
+  "eslint.workingDirectories": ["backend", "frontend"],
+
+  // Search Settings
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/coverage": true,
+    "**/backups": true,
+    "**/.venv": true
+  },
+
+  // Security
+  "security.workspace.trust.untrustedFiles": "open",
+
+  // YAML: map GitHub Actions schema to workflows and reduce false positives
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*"
+  },
+  "[dockercompose]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  }
+}

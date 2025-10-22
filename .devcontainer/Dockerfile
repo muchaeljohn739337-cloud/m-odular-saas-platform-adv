@@ -1,21 +1,16 @@
-# Codespace Development Dockerfile
-FROM node:18-bullseye-slim
+# Development container for Advancia Pay Ledger
+ARG VARIANT="18-bullseye"
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install essential development tools
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get -y install --no-install-recommends \
+    postgresql-client \
+    redis-tools \
     git \
     curl \
     wget \
-    unzip \
-    gnupg \
-    lsb-release \
-    ca-certificates \
-    software-properties-common \
+    gnupg2 \
     build-essential \
-    python3 \
-    python3-pip \
-    postgresql-client \
-    redis-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Docker CLI
@@ -37,8 +32,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+RUN groupadd --gid $USER_GID $USERNAME || true \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME || usermod -l $USERNAME -d /home/$USERNAME $(getent passwd $USER_UID | cut -d: -f1) \
     && apt-get update \
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
@@ -63,10 +58,6 @@ RUN npm install -g \
 RUN npx playwright install-deps \
     && npx playwright install
 
-# Copy package files for better caching
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
-
 # Switch to non-root user
 USER $USERNAME
 
@@ -76,7 +67,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Expose ports
-EXPOSE 3000 3001 3003 3005 8080
+EXPOSE 3000 4000 3001 3003 3005 8080
 
 # Default command
 CMD ["sleep", "infinity"]

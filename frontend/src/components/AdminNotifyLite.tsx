@@ -21,7 +21,7 @@ export default function AdminNotifyLite() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
         const response = await fetch(`${apiUrl}/api/notify/stats`);
         const data = await response.json();
         setStats(data);
@@ -39,7 +39,7 @@ export default function AdminNotifyLite() {
   }, []);
 
   const handleExport = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
     window.open(`${apiUrl}/api/notify/export`, "_blank");
   };
 

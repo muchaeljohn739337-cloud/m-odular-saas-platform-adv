@@ -29,7 +29,7 @@ export default function QuickActions() {
       title: "Deposit USD",
       description: "Add funds to your account",
       icon: "💳",
-      href: "/deposit",
+      href: "/payments/topup",
       color: "bg-indigo-500 hover:bg-indigo-600",
     },
     {

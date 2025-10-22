@@ -2,13 +2,19 @@
   "name": "AdvanciaPayLedger - Payment & Ledger Platform",
   "dockerComposeFile": ["./docker-compose.yml"],
   "service": "app",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-
+  "workspaceFolder": "/workspaces/modular-saas-platform",
+  
+  "initializeCommand": "pwsh -Command \"if (-not (Test-Path .env)) { Copy-Item .env.example .env -ErrorAction SilentlyContinue }\"",
+  
   // Forward ports for development services
-  "forwardPorts": [3000, 3003, 3005, 5432, 6379, 9090, 3001],
+  "forwardPorts": [3000, 4000, 5432, 6379],
   "portsAttributes": {
     "3000": {
       "label": "Next.js App",
+      "onAutoForward": "notify"
+    },
+    "4000": {
+      "label": "Backend API",
       "onAutoForward": "notify"
     },
     "3003": {
@@ -96,7 +102,7 @@
 
   // Enhanced lifecycle commands
   "postCreateCommand": ".devcontainer/setup.sh",
-  "postStartCommand": "npm run dev:services",
+  "postStartCommand": "echo 'Dev container ready!'",
 
   // Container features and tools
   "features": {
@@ -121,7 +127,7 @@
     "NODE_ENV": "development",
     "NEXT_TELEMETRY_DISABLED": "1",
     "DATABASE_URL": "postgresql://postgres:password@db:5432/saas_platform_dev",
-    "REDIS_URL": "redis://redis:6379"
+    "REDIS_URL": "redis://:devpassword@redis:6379"
   },
 
   // Mount additional volumes

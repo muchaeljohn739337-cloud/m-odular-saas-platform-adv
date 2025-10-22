@@ -28,14 +28,15 @@ const authOptions: NextAuthOptions = {
 
         try {
           // Call backend API
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+          const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+          const apiUrl = `${base.replace(/\/$/, '')}/api`;
           const apiKey = process.env.NEXT_PUBLIC_API_KEY || 'development-key';
-          
+
           const response = await fetch(`${apiUrl}/auth/login`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
-              'X-API-Key': apiKey
+              'x-api-key': apiKey
             },
             body: JSON.stringify({
               email: credentials.email,

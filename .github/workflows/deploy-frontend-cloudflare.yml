@@ -1,0 +1,60 @@
+name: Deploy Frontend to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend-cloudflare.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Workers
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Next.js for Cloudflare
+        working-directory: frontend
+        env:
+          CF_PAGES: "true"
+          NEXT_PUBLIC_API_URL: https://api.advanciapayledger.com
+          NEXT_PUBLIC_SOCKET_URL: https://api.advanciapayledger.com
+        run: npm run build
+
+      - name: Verify build output
+        working-directory: frontend
+        run: |
+          echo "Checking for out directory..."
+          ls -la out || echo "❌ out directory not found"
+          echo "Build output contents:"
+          ls -la out/ || exit 1
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: frontend
+          command: deploy
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "✅ Frontend deployed successfully!"
+          echo "🌐 Production URL: https://advanciafrontend.pdtribe181.workers.dev"
+          echo "📦 Custom Domain (after DNS): https://advanciapayledger.com"

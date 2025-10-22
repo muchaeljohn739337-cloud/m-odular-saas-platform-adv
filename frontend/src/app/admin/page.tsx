@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
 import AdminNotifyLite from "@/components/AdminNotifyLite";
+import RecentBulkCredits from "@/components/RecentBulkCredits";
 
 type SessionUser = {
   id?: string;
@@ -312,6 +313,17 @@ export default function AdminPanel() {
               transition={{ delay: 0.6 }}
             >
               <AdminNotifyLite />
+            </motion.div>
+          </div>
+
+          {/* Bulk Credits Summary */}
+          <div className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65 }}
+            >
+              <RecentBulkCredits limit={5} />
             </motion.div>
           </div>
 
