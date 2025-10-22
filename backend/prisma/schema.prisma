@@ -630,6 +630,15 @@ model NotificationLog {
   @@map("notification_logs")
 }
 
+// Subscriber model for marketing newsletter
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("subscribers")
+}
+
 // Support Ticket model for customer support
 model SupportTicket {
   id          String   @id @default(uuid())
@@ -804,4 +813,53 @@ model ConsultationMessage {
   @@index([consultationId])
   @@index([createdAt])
   @@map("consultation_messages")
+}
+
+// Newsletter subscription model for marketing
+model NewsletterSubscriber {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  subscribed  Boolean   @default(true)
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([subscribed])
+  @@map("newsletter_subscribers")
+}
+
+// Contact messages model for support inquiries
+model ContactMessage {
+  id        String    @id @default(uuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  read      Boolean   @default(false)
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([read])
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
+// Share event tracking for referrals and social sharing
+model ShareEvent {
+  id        String    @id @default(uuid())
+  userId    String?
+  type      String    // "twitter", "facebook", "referral", "email"
+  metadata  String?   // JSON metadata
+  
+  createdAt DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("share_events")
 }

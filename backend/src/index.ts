@@ -21,9 +21,14 @@ import chatRouter, { setChatSocketIO } from "./routes/chat";
 import adminRouter from "./routes/admin";
 import consultationRouter from "./routes/consultation";
 import systemRouter from "./routes/system";
+import marketingRouter from "./routes/marketing";
+import subscribersRouter from "./routes/subscribers";
+import authAdminRouter, { setBroadcastSessions as setAuthBroadcast } from "./routes/authAdmin";
+import sessionsRouter, { setBroadcastSessions as setSessionsBroadcast } from "./routes/sessions";
 import { activityLogger } from "./middleware/activityLogger";
 import { rateLimit, validateInput } from "./middleware/security";
 import { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
+import { activeSessions } from "./routes/authAdmin";
 
 // Load environment variables
 dotenv.config();
@@ -73,6 +78,10 @@ app.use("/api/transactions", transactionsRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/consultation", consultationRouter);
 app.use("/api/system", systemRouter);
+app.use("/api/marketing", marketingRouter);
+app.use("/api/subscribers", subscribersRouter);
+app.use("/api/auth/admin", authAdminRouter);
+app.use("/api/sessions", sessionsRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -132,7 +141,15 @@ io.on("connection", (socket) => {
   socket.on("join-room", (reqUserId: string) => {
     if (reqUserId && reqUserId === userId) socket.join(`user-${userId}`);
   });
+
+  // Broadcast session updates to admins
+  socket.emit("sessions:update", activeSessions);
 });
+
+// Broadcast sessions update helper
+export function broadcastSessions() {
+  io.to("admins").emit("sessions:update", activeSessions);
+}
 
 // Inject Socket.IO into services/routers that need it
 setNotificationSocket(io);
@@ -143,6 +160,10 @@ setMedbedsSocketIO(io);
 setChatSocketIO(io);
 setSupportSocketIO(io);
 setPaymentsSocketIO(io);
+
+// Wire up session broadcasting
+setAuthBroadcast(broadcastSessions);
+setSessionsBroadcast(broadcastSessions);
 
 // Start server
 const PORT = config.port || process.env.PORT || 5000;
