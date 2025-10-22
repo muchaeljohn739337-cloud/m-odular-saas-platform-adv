@@ -11,6 +11,10 @@
     "start": "next start -H 0.0.0.0 -p 3000",
     "start:standalone": "cross-env HOSTNAME=127.0.0.1 PORT=3000 node .next/standalone/server.js",
     "test": "echo \"✅ Frontend tests passed (placeholder)\" && exit 0",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:report": "npx playwright show-report",
     "lint": "next lint",
     "clean": "npx kill-port 3000 && npm run dev"
   },
