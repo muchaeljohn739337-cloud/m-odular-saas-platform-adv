@@ -363,7 +363,9 @@ Content: k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA...
 
 **DMARC Record**:
 
-```
+```CLOUDFLARE_API_TOKEN=your_custom_token_here
+CLOUDFLARE_ZONE_ID=your_zone_id_here
+CLOUDFLARE_ACCOUNT_ID=your_account_id_here
 Type: TXT
 Name: _dmarc
 Content: v=DMARC1; p=quarantine; rua=mailto:admin@advancia.app
