@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     rootDir: backend
-    buildCommand: "npm ci && npx prisma migrate deploy && npm run build"
+    buildCommand: "npm ci && npx prisma migrate resolve --rolled-back 20251022094130_add_crypto_balances_to_users || true && npx prisma migrate deploy && npm run build"
     startCommand: "npm run start:render"
     envVars:
       - key: NODE_ENV
