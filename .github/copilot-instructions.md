@@ -12,15 +12,15 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
 
 ### Key runtime behaviors and cross-cutting concerns
 - Rate limiting applies to all `/api/**` (see `rateLimit` middleware in `backend/src/index.ts`).
-- Stripe webhook requires raw body on `/api/payments/webhook` before `express.json()`. Don’t move middleware order.
+- Stripe webhook requires raw body on `/api/payments/webhook` before `express.json()`. Don't move middleware order.
 - AuthN/AuthZ: JWT with `authenticateToken` and role gates via `allowRoles/requireAdmin` (see `backend/src/middleware/auth.ts` and usages in routes like `users.ts`, `support.ts`). Some routes also check an `x-api-key` header in development-friendly way (see `routes/auth.ts`).
-- Decimals: Prisma Decimal fields should be serialized as strings in JSON responses (see patterns in `routes/tokens.ts`, `users.ts`).
+- Decimals: Prisma Decimal fields should be serialized as strings in JSON responses. Use `backend/src/utils/decimal.ts` helpers: `serializeDecimal()`, `serializeDecimalFields()`, `serializeDecimalArray()`.
 - Background jobs: `node-cron` schedules notification fallback emails in `index.ts`.
 
 ### Route conventions and wiring
 - Routers live in `backend/src/routes/*.ts`. Each exports an Express router:
   - Example: `tokens.ts`, `rewards.ts`, `auth.ts`, `system.ts`, `users.ts`, `support.ts`.
-- Register routers in `backend/src/index.ts` under `/api/<name>` in the “Registering routes” section. Keep the Stripe webhook raw-body line before `express.json()`.
+- Register routers in `backend/src/index.ts` under `/api/<name>` in the "Registering routes" section. Keep the Stripe webhook raw-body line before `express.json()`.
 - Input validation and security headers live in `backend/src/middleware/security.ts`; reuse `validateInput`, `securityHeaders` if adding endpoints.
 
 ### Data model hot spots (Prisma)
@@ -31,11 +31,15 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
   - Verify with `npx prisma studio`.
 
 ### Realtime and notifications
-- To emit to a specific user: join room `user-${userId}` then `io.to(\`user-${userId}\`).emit('event', payload)`.
-- Notification service sends socket, push (web-push), and email (nodemailer). Environment keys: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `EMAIL_USER`, `EMAIL_PASSWORD`.
+- To emit to a specific user: join room `user-${userId}` then `io.to(`user-${userId}`).emit(''event'', payload)`.
+- Notification service sends socket, push (web-push), and email (nodemailer). Environment keys: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `EMAIL_USER`, `EMAIL_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`.
 
 ### External integrations
-- Twilio OTP/SMS in `routes/auth.ts`: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID`, `TWILIO_PHONE_NUMBER`.
+- **Authentication (Email-Only OTP)**: Twilio SMS removed for cost savings ($18-27/year saved). Authentication now uses:
+  - Email OTP via Gmail SMTP (free) - see `routes/auth.ts`
+  - Password login with bcrypt hashing
+  - TOTP 2FA (Time-based One-Time Password)
+  - Required env vars: `EMAIL_USER`, `EMAIL_PASSWORD`, `SMTP_HOST` (smtp.gmail.com), `SMTP_PORT` (587)
 - Stripe payments webhook in `routes/payments.ts`: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
 - Ethereum gateway endpoints in `routes/ethereum.ts` (ethers v5 on backend; ethers v6 in frontend).
 
@@ -56,7 +60,7 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
 
 ### Implementation tips specific to this repo
 - Always import Prisma via `backend/src/prismaClient.ts` to avoid multiple clients.
-- Convert Prisma Decimal to string in responses to keep the UI stable.
+- Convert Prisma Decimal to string in responses using `backend/src/utils/decimal.ts` helpers.
 - When adding a new route that emits events, inject `io` via helper (see `setSocketIO` in notification service or `setTokenSocketIO` in `routes/tokens.ts`).
 - Respect CORS policy: add new dev origins in `backend/src/config/index.ts` so the middleware allows them.
 - Keep `/api/payments/webhook` raw-body middleware before any JSON parser.
@@ -65,7 +69,8 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
 - `backend/src/index.ts` (server, middleware order, route wiring, Socket.IO, cron)
 - `backend/src/config/index.ts` (origins, ports, env derivation)
 - `backend/src/services/notificationService.ts` (push/email/socket pattern)
+- `backend/src/utils/decimal.ts` (Decimal serialization helpers)
 - `backend/prisma/schema.prisma` (entities & relations)
 - `frontend/README.md` and `backend/README.md` (commands and structure)
 
-If anything here is unclear or you need deeper conventions (tests, logging fields, error formats), ask and we’ll refine this guide.
+If anything here is unclear or you need deeper conventions (tests, logging fields, error formats), ask and we'll refine this guide.
