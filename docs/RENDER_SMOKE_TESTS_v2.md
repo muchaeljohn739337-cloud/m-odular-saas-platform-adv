@@ -24,9 +24,9 @@ Body (example):
 - Fetch from frontend origin to API (simple GET):
 
 ```js
-fetch('<BASE_URL>/api/health', { credentials: 'include' })
-  .then(r => [r.status, r.headers.get('access-control-allow-origin')])
-  .then(console.log)
+fetch("<BASE_URL>/api/health", { credentials: "include" })
+  .then((r) => [r.status, r.headers.get("access-control-allow-origin")])
+  .then(console.log);
 ```
 
 - Expected: status 200, ACAO header present and matching your origin.
