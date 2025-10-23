@@ -4,7 +4,12 @@ import { Decimal } from "@prisma/client/runtime/library";
  * Type guard to check if a value is a Prisma Decimal instance.
  */
 function isDecimal(value: any): value is Decimal {
-  return value && typeof value === "object" && value.constructor && value.constructor.name === "Decimal";
+  return (
+    value &&
+    typeof value === "object" &&
+    value.constructor &&
+    value.constructor.name === "Decimal"
+  );
 }
 
 /**
