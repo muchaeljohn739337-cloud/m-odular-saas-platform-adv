@@ -1,6 +1,7 @@
 services:
   - type: web
     name: advancia-backend
+    runtime: node
     plan: free
     region: oregon
     rootDir: backend
@@ -39,11 +40,11 @@ services:
 
   - type: web
     name: advancia-frontend
+    runtime: docker
     plan: free
     region: virginia
     dockerfilePath: frontend/Dockerfile
     dockerContext: .
-    # Force the start command so Render doesn't use any stale UI override
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
