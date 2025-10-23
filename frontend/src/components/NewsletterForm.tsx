@@ -28,15 +28,12 @@ export default function NewsletterForm() {
         setEmail("");
 
         // Track conversion
-        trackEvent("newsletter_signup", {
-          email_domain: email.split("@")[1],
-          timestamp: new Date().toISOString(),
-        });
+        trackEvent("newsletter_signup", "engagement", email.split("@")[1]);
       } else {
         const data = await res.json();
         setStatus("error");
         setMessage(data.error || "❌ Subscription failed. Please try again.");
-        trackEvent("newsletter_signup_failed", { reason: data.error });
+        trackEvent("newsletter_signup_failed", "engagement", data.error);
       }
     } catch (err) {
       setStatus("error");
