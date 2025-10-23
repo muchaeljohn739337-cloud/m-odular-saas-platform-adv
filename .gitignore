@@ -173,3 +173,6 @@ db_backups/
 CLEANUP_*.md
 CI_*.md
 DEPLOYMENT_*.md
+
+# Allow VS Code launch config for team debugging
+!.vscode/launch.json
