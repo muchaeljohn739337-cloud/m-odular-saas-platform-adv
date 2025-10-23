@@ -1,5 +1,4 @@
 import Script from "next/script";
-import Head from "next/head";
 
 // Type definitions for Google Analytics
 declare global {
@@ -10,48 +9,15 @@ declare global {
 }
 
 /**
- * Marketing Meta Component
- * Handles SEO, Open Graph, Twitter Cards, and Google Analytics
+ * Marketing Scripts Component
+ * Handles Google Analytics and tracking scripts
  */
-export function MarketingMeta() {
-  const title = "Advancia Pay Ledger – Your Fintech Dashboard";
-  const description =
-    "Multi-currency ledger, MedBed care, crypto recovery, gamified rewards, and more. Self-hosted fintech platform.";
-  const siteUrl = "https://advanciapayledger.com";
-  const logoUrl = `${siteUrl}/logo.png`;
+export function MarketingScripts() {
   const gaId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || "G-XXXXXXX";
 
   return (
     <>
-      <Head>
-        {/* ✅ SEO & social meta */}
-        <title>{title}</title>
-        <meta name="description" content={description} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta charSet="utf-8" />
-
-        {/* Open Graph for social sharing */}
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
-        <meta property="og:image" content={logoUrl} />
-        <meta property="og:url" content={siteUrl} />
-        <meta property="og:type" content="website" />
-
-        {/* Twitter Card */}
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:title" content={title} />
-        <meta property="twitter:description" content={description} />
-        <meta property="twitter:image" content={logoUrl} />
-
-        {/* Favicon */}
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/logo.png" />
-
-        {/* Canonical URL */}
-        <link rel="canonical" href={siteUrl} />
-      </Head>
-
-      {/* ✅ Google Analytics 4 */}
+      {/* Google Analytics 4 */}
       <Script
         async
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
@@ -69,22 +35,14 @@ export function MarketingMeta() {
         `}
       </Script>
 
-      {/* ✅ Google Site Verification (optional) */}
-      {process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && (
-        <meta
-          name="google-site-verification"
-          content={process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION}
-        />
-      )}
-
-      {/* ✅ Structured Data (JSON-LD) */}
+      {/* Structured Data (JSON-LD) */}
       <Script id="structured-data" type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebApplication",
           name: "Advancia Pay Ledger",
-          description,
-          url: siteUrl,
+          description: "Multi-currency ledger, MedBed care, crypto recovery, gamified rewards, and more.",
+          url: "https://advanciapayledger.com",
           applicationCategory: "FinanceApplication",
           offers: {
             "@type": "Offer",

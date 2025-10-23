@@ -4,7 +4,7 @@
 import prisma from "../prismaClient";
 import { rpaConfig } from "./config";
 import nodemailer from "nodemailer";
-import twilio from "twilio";
+// SMS/Twilio removed to save costs
 
 interface NotificationPayload {
   userId: string;
@@ -23,7 +23,7 @@ interface NotificationResult {
 
 export class NotificationAutomation {
   private emailTransporter: nodemailer.Transporter | null = null;
-  private twilioClient: twilio.Twilio | null = null;
+  private twilioClient: any = null; // SMS removed
   private notificationQueue: NotificationPayload[] = [];
   private rateLimitCounter = {
     perMinute: 0,
@@ -55,18 +55,7 @@ export class NotificationAutomation {
       }
     }
 
-    // Initialize Twilio SMS
-    if (rpaConfig.notifications.sms.enabled) {
-      try {
-        this.twilioClient = twilio(
-          rpaConfig.notifications.sms.twilioAccountSid,
-          rpaConfig.notifications.sms.twilioAuthToken
-        );
-        console.log("✅ SMS service initialized");
-      } catch (error) {
-        console.error("❌ Failed to initialize SMS service:", error);
-      }
-    }
+    // SMS/Twilio service disabled to save costs
   }
 
   /**
@@ -375,3 +364,6 @@ export class NotificationAutomation {
 }
 
 export default new NotificationAutomation();
+
+
+

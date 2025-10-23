@@ -34,7 +34,7 @@ export default function AdminBalanceManager({
     setLoading(true);
 
     try {
-      const response = await adminApi.post(
+      const response: any = await adminApi.post(
         `/admin/users/${userId}/add-balance`,
         {
           balanceType,

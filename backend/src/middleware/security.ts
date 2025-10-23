@@ -123,7 +123,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Referrer policy
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   
-  // Content Security Policy
+  // HTTP Strict Transport Security (force HTTPS)\n  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");\n  \n  // Remove X-Powered-By header\n  res.removeHeader("X-Powered-By");\n  \n  // Content Security Policy
   res.setHeader(
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
@@ -131,3 +131,4 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
 
   next();
 }
+

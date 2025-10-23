@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { Parser } from "json2csv";
 import { Server as SocketIOServer } from "socket.io";
 import { authenticateToken, requireAdmin } from "../middleware/auth";
-import { checkOALRules } from "../services/oalAlert";
+// OAL Rules feature disabled
 import {
   createOALLog,
   updateOALStatus,
@@ -182,7 +182,7 @@ router.post("/", async (req: Request, res: Response) => {
       status: status || OALStatus.PENDING,
     });
 
-    await checkOALRules(log);
+    // OAL Rules checking disabled
     broadcastOALUpdate(log);
 
     return res.status(201).json({ success: true, log });
@@ -254,3 +254,5 @@ router.post("/balance-adjustment", async (req: Request, res: Response) => {
 });
 
 export default router;
+
+

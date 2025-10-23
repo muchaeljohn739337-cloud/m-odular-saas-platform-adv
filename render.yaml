@@ -1,13 +1,11 @@
 services:
   - type: web
     name: advancia-backend
-    env: node
     plan: free
     region: oregon
     rootDir: backend
     buildCommand: npm ci && npm run build
     startCommand: npm run start:render
-    maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
         value: production
@@ -41,14 +39,12 @@ services:
 
   - type: web
     name: advancia-frontend
-    env: docker
     plan: free
     region: virginia
     dockerfilePath: frontend/Dockerfile
     dockerContext: .
     # Force the start command so Render doesn't use any stale UI override
     startCommand: node server.js
-    maxRequestBodySize: 10MB
     envVars:
       - key: NODE_ENV
         value: production

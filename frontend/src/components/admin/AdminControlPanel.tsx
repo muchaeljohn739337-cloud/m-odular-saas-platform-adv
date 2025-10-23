@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import UserManagementTab from "./UserManagementTab";
 import ProductManagementTab from "./ProductManagementTab";
 import WithdrawalManagementTab from "./WithdrawalManagementTab";
-import AnalyticsTab from "./AnalyticsTab";
+// import AnalyticsTab from "./AnalyticsTab";
 
 const AdminControlPanel = () => {
   const router = useRouter();
@@ -103,13 +103,7 @@ const AdminControlPanel = () => {
       description: "Review and process withdrawal requests",
       component: WithdrawalManagementTab,
     },
-    {
-      id: "analytics",
-      label: "Analytics",
-      icon: "📊",
-      description: "Platform insights and performance metrics",
-      component: AnalyticsTab,
-    },
+    
   ];
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);

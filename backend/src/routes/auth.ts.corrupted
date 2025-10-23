@@ -44,6 +44,21 @@ router.post("/register", validateApiKey, async (req, res) => {
         .status(400)
         .json({ error: "Password must be at least 6 characters" });
     }
+<h2 className="text-2xl font-bold text-blue-700 mb-2">
+  Enter Your Email
+</h2>
+<p className="text-gray-600 mb-6">
+  We&apos;ll send you a verification code
+</p>
+
+<input
+  type="email"
+  placeholder="you@example.com"
+  value={identifier}
+  onChange={(e) => setIdentifier(e.target.value)}
+  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+  disabled={loading}
+/>
 
     const existing = await prisma.user.findFirst({
       where: { OR: [{ email }, ...(username ? [{ username }] : [])] },
@@ -327,6 +342,27 @@ router.post("/login-doctor", validateApiKey, async (req, res) => {
 // ------- OTP (Email Only) Flows (Redis-backed) ------- //
 const otpLimiter = rateLimit({ windowMs: 60_000, maxRequests: 5 });
 
+const sendOtpSchema = z
+  .object({
+    email: z.string().email().optional(),
+    phone: z
+      .string()
+      .regex(/^\+?[1-9]\d{6,14}$/)
+      .optional(),
+  })
+  .refine((d) => !!d.email || !!d.phone, { message: "Provide email or phone" });
+
+const verifyOtpSchema = z
+  .object({
+    email: z.string().email().optional(),
+    phone: z
+      .string()
+      .regex(/^\+?[1-9]\d{6,14}$/)
+      .optional(),
+    code: z.string().length(6),
+  })
+  .refine((d) => !!d.email || !!d.phone, { message: "Provide email or phone" });
+
 const sendOtpSchema = z.object({
   email: z.string().email({ message: "Valid email required" }),
 });
@@ -336,18 +372,8 @@ const verifyOtpSchema = z.object({
   code: z.string().length(6),
 });
 
-// Simple SMTP test payload
-const testSmtpSchema = z.object({
-  to: z.string().email(),
-  subject: z.string().optional(),
-  message: z.string().optional(),
-});
-
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// POST /api/auth/send-otp
 router.post("/send-otp", otpLimiter, async (req, res) => {
   try {
     const { email } = sendOtpSchema.parse(req.body || {});
@@ -431,6 +457,113 @@ router.post("/send-otp", otpLimiter, async (req, res) => {
     return res.status(500).json({ error: "Failed to send OTP" });
   }
 });
+}
+
+// POST /api/auth/send-otp
+router.post("/send-otp", otpLimiter, async (req, res) => {
+  try {
+    const { email, phone } = sendOtpSchema.parse(req.body || {});
+
+    const user = await prisma.user.findFirst({
+      where: email ? { email } : { username: phone },
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const code = generateCode();
+    const key = email || phone!;
+
+    const redis = getRedis();
+    const ttlSeconds = 5 * 60;
+    const maxAttemptsWindow = 10 * 60; // 10 minutes
+    const maxSendPerWindow = 5;
+    const countKey = `otp:cnt:${key}`;
+    const lockKey = `otp:lock:${key}`;
+
+    // Fallback in-memory store when Redis not configured
+    const mem: any =
+      (global as any).__otpMem ||
+      ((global as any).__otpMem = new Map<string, any>());
+
+    if (redis) {
+      const locked = await redis.get(lockKey);
+      if (locked)
+        return res.status(429).json({ error: "Too many attempts. Try later." });
+      const cnt = await redis.incr(countKey);
+      if (cnt === 1) await redis.expire(countKey, maxAttemptsWindow);
+      if (cnt > maxSendPerWindow) {
+        await redis.set(lockKey, "1", "EX", 30 * 60); // 30 min lockout
+        return res
+          .status(429)
+          .json({ error: "Too many OTP requests. Try again later." });
+      }
+      await redis.setex(`otp:${key}`, ttlSeconds, code);
+    } else {
+      const now = Date.now();
+      const entry = mem.get(key) || { count: 0, windowStart: now };
+      if (now - entry.windowStart > maxAttemptsWindow * 1000) {
+        entry.count = 0;
+        entry.windowStart = now;
+      }
+      entry.count += 1;
+      if (entry.count > maxSendPerWindow) {
+        return res
+          .status(429)
+          .json({ error: "Too many OTP requests. Try again later." });
+      }
+      mem.set(key, { ...entry, code, exp: now + ttlSeconds * 1000 });
+    }
+
+router.post("/verify-otp", otpLimiter, async (req, res) => {
+  try {
+    const { email, code } = verifyOtpSchema.parse(req.body || {});
+    const key = email;
+
+    const redis = getRedis();
+    let stored: string | null = null;
+    if (redis) {
+      stored = await redis.get(`otp:${key}`);
+      if (!stored)
+        return res
+          .status(400)
+          .json({ error: "No OTP requested or OTP expired" });
+      if (String(code) !== stored)
+        return res.status(400).json({ error: "Invalid OTP" });
+      await redis.del(`otp:${key}`);
+    } else {
+      const mem: any =
+        (global as any).__otpMem ||
+        ((global as any).__otpMem = new Map<string, any>());
+      const entry = mem.get(key);
+      if (!entry || Date.now() > entry.exp)
+        return res
+          .status(400)
+          .json({ error: "No OTP requested or OTP expired" });
+      if (String(code) !== entry.code)
+        return res.status(400).json({ error: "Invalid OTP" });
+      mem.delete(key);
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { email },
+    });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      config.jwtSecret,
+      { expiresIn: "7d" }
+    );
+    return res.json({ message: "OTP verified", token });
+  } catch (err) {
+    if ((err as any)?.name === "ZodError") {
+      return res.status(400).json({ error: (err as any).issues });
+    }
+    console.error("verify-otp error:", err);
+    return res.status(500).json({ error: "Failed to verify OTP" });
+  }
+});
 
 // POST /api/auth/test-smtp
 // Sends a direct SMTP email using configured Gmail credentials; does NOT require DB
@@ -479,8 +612,8 @@ router.post("/test-smtp", validateApiKey, async (req, res) => {
 // POST /api/auth/verify-otp
 router.post("/verify-otp", otpLimiter, async (req, res) => {
   try {
-    const { email, code } = verifyOtpSchema.parse(req.body || {});
-    const key = email;
+    const { email, phone, code } = verifyOtpSchema.parse(req.body || {});
+    const key = email || phone!;
 
     const redis = getRedis();
     let stored: string | null = null;
@@ -508,7 +641,7 @@ router.post("/verify-otp", otpLimiter, async (req, res) => {
     }
 
     const user = await prisma.user.findFirst({
-      where: { email },
+      where: email ? { email } : { username: phone },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
 

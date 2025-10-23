@@ -321,24 +321,24 @@ export default function AdminUserDetailPage() {
                       </span>
                     </div>
                     {userData.kyc.status === "PENDING" && (
-                      <div className="flex gap-2">
-                        <button
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
-                          onClick={() =>
-                            toast.info("KYC approval not yet implemented")
-                          }
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
-                          onClick={() =>
-                            toast.info("KYC rejection not yet implemented")
-                          }
-                        >
-                          Reject
-                        </button>
-                      </div>
+                          <div className="flex gap-2">
+                          <button
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
+                            onClick={() =>
+                            toast("KYC approval not yet implemented")
+                            }
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+                            onClick={() => {
+                            toast("KYC rejection not yet implemented");
+                            }}
+                          >
+                            Reject
+                          </button>
+                          </div>
                     )}
                   </div>
                   {userData.kyc.documents.length === 0 && (

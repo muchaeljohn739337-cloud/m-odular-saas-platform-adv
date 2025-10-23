@@ -42,9 +42,7 @@ export default function AdminWithdrawalsPage() {
   const fetchWithdrawals = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await adminApi.get("/withdrawals/admin/all", {
-        params: { status: filterStatus || undefined },
-      });
+      const url = filterStatus ? `/withdrawals/admin/all?status=${filterStatus}` : "/withdrawals/admin/all"; const response: any = await adminApi.get(url);
 
       if (response.data && Array.isArray(response.data.withdrawals)) {
         setWithdrawals(response.data.withdrawals);
@@ -78,7 +76,7 @@ export default function AdminWithdrawalsPage() {
     setProcessing(true);
 
     try {
-      const response = await adminApi.patch(
+      const response: any = await adminApi.patch(
         `/withdrawals/admin/${withdrawalId}`,
         {
           action,
@@ -139,7 +137,7 @@ export default function AdminWithdrawalsPage() {
   };
 
   return (
-    <RequireRole allowedRoles={["ADMIN"]}>
+    <RequireRole roles={["ADMIN"]}>
       <div className="min-h-screen bg-gray-50 p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

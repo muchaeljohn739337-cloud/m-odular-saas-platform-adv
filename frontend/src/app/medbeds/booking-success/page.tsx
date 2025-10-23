@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle, Calendar, Clock, DollarSign } from "lucide-react";
 import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-export default function BookingSuccessPage() {
+function BookingSuccessContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("booking_id");
   const sessionId = searchParams.get("session_id");
@@ -40,10 +40,7 @@ export default function BookingSuccessPage() {
           setError("Booking not found");
         }
       } catch (err) {
-        console.error("Error fetching booking:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch booking"
-        );
+        setError(err instanceof Error ? err.message : "Failed to fetch booking");
       } finally {
         setLoading(false);
       }
@@ -54,41 +51,24 @@ export default function BookingSuccessPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading your booking...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
-  if (error || !booking) {
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-red-50 border-2 border-red-200 rounded-xl p-8 text-center">
-          <div className="text-red-600 mb-4">
-            <svg
-              className="w-16 h-16 mx-auto"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-red-900 mb-2">Error</h2>
-          <p className="text-red-700 mb-6">{error || "Booking not found"}</p>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="text-red-600 text-5xl mb-4">❌</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
           <Link
-            href="/features"
-            className="inline-block px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+            href="/medbeds"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
           >
-            Return to Features
+            Back to MedBeds
           </Link>
         </div>
       </div>
@@ -96,142 +76,122 @@ export default function BookingSuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
-        {/* Success Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-8 text-white text-center">
-          <div className="mb-4">
-            <CheckCircle size={64} className="mx-auto animate-pulse" />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-white rounded-lg shadow-xl p-8">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+            <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Booking Confirmed!</h1>
-          <p className="text-green-100">
-            Your Med Beds session has been successfully booked
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Booking Confirmed!
+          </h1>
+          <p className="text-gray-600">
+            Your MedBed session has been successfully booked.
           </p>
         </div>
 
-        {/* Booking Details */}
-        <div className="p-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Session Details
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-                <Calendar
-                  className="text-blue-600 flex-shrink-0 mt-1"
-                  size={24}
-                />
-                <div>
-                  <p className="text-sm font-semibold text-gray-600">
-                    Session Date & Time
-                  </p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {new Date(booking.sessionDate).toLocaleDateString("en-US", {
-                      weekday: "long",
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+        {booking && (
+          <div className="space-y-6">
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Booking Details
+              </h2>
+              <div className="space-y-3">
+                <div className="flex items-center text-gray-700">
+                  <Calendar className="w-5 h-5 mr-3 text-blue-600" />
+                  <span className="font-medium mr-2">Date:</span>
+                  {new Date(booking.startTime).toLocaleDateString()}
                 </div>
-              </div>
-
-              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-                <Clock
-                  className="text-purple-600 flex-shrink-0 mt-1"
-                  size={24}
-                />
-                <div>
-                  <p className="text-sm font-semibold text-gray-600">
-                    Duration
-                  </p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {booking.duration} minutes
-                  </p>
+                <div className="flex items-center text-gray-700">
+                  <Clock className="w-5 h-5 mr-3 text-blue-600" />
+                  <span className="font-medium mr-2">Time:</span>
+                  {new Date(booking.startTime).toLocaleTimeString()} -{" "}
+                  {new Date(booking.endTime).toLocaleTimeString()}
                 </div>
-              </div>
-
-              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-                <DollarSign
-                  className="text-green-600 flex-shrink-0 mt-1"
-                  size={24}
-                />
-                <div>
-                  <p className="text-sm font-semibold text-gray-600">
-                    Total Paid
-                  </p>
-                  <p className="text-lg font-bold text-gray-900">
-                    ${booking.cost}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1 capitalize">
-                    Paid via {booking.paymentMethod}
-                  </p>
+                <div className="flex items-center text-gray-700">
+                  <DollarSign className="w-5 h-5 mr-3 text-blue-600" />
+                  <span className="font-medium mr-2">Price:</span>$
+                  {booking.price?.toFixed(2) || "0.00"}
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mb-6 p-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl text-white">
-            <h3 className="text-xl font-bold mb-2">{booking.chamberName}</h3>
-            <p className="text-blue-100 capitalize">
-              {booking.chamberType} Session
-            </p>
-            <p className="text-sm text-blue-100 mt-4">
-              Status:{" "}
-              <span className="font-semibold capitalize">{booking.status}</span>
-            </p>
-          </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Booking ID:</strong> {booking.id}
+              </p>
+              <p className="text-sm text-blue-800 mt-2">
+                A confirmation email has been sent to your registered email address.
+              </p>
+            </div>
 
-          {/* Next Steps */}
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
-            <h3 className="font-bold text-blue-900 mb-3 text-lg">
-              What Happens Next?
-            </h3>
-            <ul className="space-y-2 text-sm text-blue-800">
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-blue-600">1.</span>
-                <span>
-                  You'll receive a confirmation email with your booking details
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-blue-600">2.</span>
-                <span>Our team will prepare the Med Bed for your session</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-blue-600">3.</span>
-                <span>
-                  Arrive 10 minutes early for check-in and preparation
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-blue-600">4.</span>
-                <span>
-                  After your session, you'll receive a detailed health report
-                </span>
-              </li>
-            </ul>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/medbeds/my-bookings"
+                className="flex-1 bg-blue-600 text-white text-center px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
+              >
+                View My Bookings
+              </Link>
+              <Link
+                href="/medbeds"
+                className="flex-1 bg-gray-200 text-gray-700 text-center px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
+              >
+                Book Another Session
+              </Link>
+            </div>
           </div>
+        )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <Link
-              href="/dashboard"
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow text-center"
-            >
-              Go to Dashboard
-            </Link>
-            <Link
-              href="/features"
-              className="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center"
-            >
-              Book Another Session
-            </Link>
-          </div>
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h3 className="font-semibold text-gray-900 mb-3">What happens next?</h3>
+          <ul className="space-y-2 text-sm text-gray-600">
+            <li className="flex items-start">
+              <span className="mr-2">1.</span>
+              <span>You will receive a confirmation email with all the details.</span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">2.</span>
+              <span>
+                Please arrive 10 minutes before your scheduled time.
+              </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">3.</span>
+              <span>
+                Bring a valid ID and your booking confirmation.
+              </span>
+            </li>
+            <li className="flex items-start">
+              <span className="mr-2">4.</span>
+              <span>
+                If you need to reschedule or cancel, please do so at least 24
+                hours in advance.
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/dashboard"
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Return to Dashboard →
+          </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BookingSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    }>
+      <BookingSuccessContent />
+    </Suspense>
   );
 }
