@@ -33,7 +33,7 @@ import sessionsRouter, {
   setBroadcastSessions as setSessionsBroadcast,
 } from "./routes/sessions";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
-import oalRouter from "./routes/oal";
+// import oalRouter, { setOALSocketIO } from "./routes/oal";
 import { activityLogger } from "./middleware/activityLogger";
 import { rateLimit, validateInput } from "./middleware/security";
 import { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
@@ -105,7 +105,7 @@ app.use("/api/admin/ip-blocks", ipBlocksRouter);
 app.use("/api/auth/admin", authAdminRouter);
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/withdrawals", withdrawalsRouter);
-app.use("/api/oal", oalRouter);
+// app.use("/api/oal", oalRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -185,6 +185,7 @@ setChatSocketIO(io);
 setSupportSocketIO(io);
 setPaymentsSocketIO(io);
 setWithdrawalSocketIO(io);
+// setOALSocketIO(io);
 
 // Wire up session broadcasting
 setAuthBroadcast(broadcastSessions);
