@@ -97,3 +97,11 @@ jobs:
       
       - name: Deployment notification
         run: echo "✅ Deployment triggered! Check Render dashboard for status."
+
+      - name: Trigger Render Deployment
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "🚀 Triggering Render deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          echo "✅ Deployment triggered successfully"
+          echo "🔗 Check status: https://dashboard.render.com"

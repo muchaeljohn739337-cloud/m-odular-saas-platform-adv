@@ -191,3 +191,44 @@ export async function logConfigChange(params: {
     createdById: params.adminId,
   });
 }
+/**
+
+/**
+ * Get OAL logs with count for pagination
+ */
+export async function getOALLogsWithCount(filters: {
+  object?: string;
+  action?: string;
+  location?: string;
+  status?: OALStatus;
+  createdById?: string;
+  subjectId?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const { limit = 20, offset = 0, ...where } = filters;
+
+  const [items, count] = await Promise.all([
+    prisma.oAL.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
+      
+    }),
+    prisma.oAL.count({ where }),
+  ]);
+
+  return { items, count };
+}
+
+/**
+ * Get all OAL logs for export (no pagination)
+ */
+export async function getAllOALLogsForExport() {
+  return await prisma.oAL.findMany({
+    orderBy: { createdAt: "desc" },
+    
+  });
+}
+

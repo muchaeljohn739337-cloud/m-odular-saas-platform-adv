@@ -1,29 +1,47 @@
-/**
- * OAL (Object-Action-Location) Audit Log Routes
- *
- * Admin-only endpoints for viewing and managing audit logs
- */
-
 import { Router, Request, Response } from "express";
+import { Parser } from "json2csv";
+import { Server as SocketIOServer } from "socket.io";
 import { authenticateToken, requireAdmin } from "../middleware/auth";
+import { checkOALRules } from "../services/oalAlert";
 import {
   createOALLog,
   updateOALStatus,
-  getOALLogs,
+  getOALLogsWithCount,
+  getAllOALLogsForExport,
   getOALLogById,
   logBalanceAdjustment,
 } from "../services/oalService";
 import { OALStatus } from "@prisma/client";
 
 const router = Router();
-
-// All routes require admin authentication
 router.use(authenticateToken, requireAdmin);
 
-/**
- * GET /api/oal
- * Get audit logs with optional filters
- */
+const sseClients = new Set<Response>();
+let io: SocketIOServer | null = null;
+
+export function setOALSocketIO(socketIO: SocketIOServer) {
+  io = socketIO;
+}
+
+export function broadcastOALUpdate(entry: any) {
+  const sseData = `data: ${JSON.stringify(entry)}\n\n`;
+  for (const client of sseClients) {
+    try {
+      client.write(sseData);
+    } catch (err) {
+      sseClients.delete(client);
+    }
+  }
+  if (io) {
+    if (entry.createdById) {
+      io.to(`user-${entry.createdById}`).emit("oal:update", entry);
+    }
+    if (entry.subjectId && entry.subjectId !== entry.createdById) {
+      io.to(`user-${entry.subjectId}`).emit("oal:update", entry);
+    }
+  }
+}
+
 router.get("/", async (req: Request, res: Response) => {
   try {
     const {
@@ -33,28 +51,36 @@ router.get("/", async (req: Request, res: Response) => {
       status,
       createdById,
       subjectId,
-      limit,
-      offset,
+      page = "1",
+      limit = "20",
     } = req.query;
 
-    const logs = await getOALLogs({
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
+
+    const { items, count } = await getOALLogsWithCount({
       object: object as string | undefined,
       action: action as string | undefined,
       location: location as string | undefined,
       status: status as OALStatus | undefined,
       createdById: createdById as string | undefined,
       subjectId: subjectId as string | undefined,
-      limit: limit ? parseInt(limit as string) : undefined,
-      offset: offset ? parseInt(offset as string) : undefined,
+      limit: limitNum,
+      offset,
     });
 
     return res.json({
       success: true,
-      count: logs.length,
-      logs,
+      count,
+      items,
+      total: count,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(count / limitNum),
     });
   } catch (error) {
-    console.error("Error fetching OAL logs:", error);
+    console.error("[OAL] Error fetching logs:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch audit logs",
@@ -62,29 +88,71 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/oal/:id
- * Get a specific audit log by ID
- */
+router.get("/export", async (req: Request, res: Response) => {
+  try {
+    const { format = "csv" } = req.query;
+    const items = await getAllOALLogsForExport();
+
+    if (format === "json") {
+      return res.json({ success: true, logs: items });
+    }
+
+    const csvData = items.map((item: any) => ({
+      id: item.id,
+      object: item.object,
+      action: item.action,
+      location: item.location,
+      status: item.status,
+      createdById: item.createdById,
+      subjectId: item.subjectId || "",
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      createdByEmail: item.createdBy?.email || "",
+      subjectEmail: item.subject?.email || "",
+      metadata: JSON.stringify(item.metadata),
+    }));
+
+    const parser = new Parser();
+    const csv = parser.parse(csvData);
+
+    res.header("Content-Type", "text/csv");
+    res.attachment(`oal-export-${new Date().toISOString().split("T")[0]}.csv`);
+    return res.send(csv);
+  } catch (error) {
+    console.error("[OAL] Error exporting logs:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to export audit logs",
+    });
+  }
+});
+
+router.get("/stream", (req: Request, res: Response) => {
+  res.set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+  res.flushHeaders();
+  sseClients.add(res);
+  req.on("close", () => {
+    sseClients.delete(res);
+  });
+});
+
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     const log = await getOALLogById(id);
-
     if (!log) {
       return res.status(404).json({
         success: false,
         message: "Audit log not found",
       });
     }
-
-    return res.json({
-      success: true,
-      log,
-    });
+    return res.json({ success: true, log });
   } catch (error) {
-    console.error("Error fetching OAL log:", error);
+    console.error("[OAL] Error fetching log:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch audit log",
@@ -92,21 +160,10 @@ router.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/oal
- * Create a new audit log entry
- */
 router.post("/", async (req: Request, res: Response) => {
   try {
     const { object, action, location, subjectId, metadata, status } = req.body;
     const userId = (req as any).user?.userId;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
 
     if (!object || !action || !location) {
       return res.status(400).json({
@@ -122,15 +179,15 @@ router.post("/", async (req: Request, res: Response) => {
       subjectId,
       metadata,
       createdById: userId,
-      status,
+      status: status || OALStatus.PENDING,
     });
 
-    return res.status(201).json({
-      success: true,
-      log,
-    });
+    await checkOALRules(log);
+    broadcastOALUpdate(log);
+
+    return res.status(201).json({ success: true, log });
   } catch (error) {
-    console.error("Error creating OAL log:", error);
+    console.error("[OAL] Error creating log:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create audit log",
@@ -138,42 +195,25 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * PATCH /api/oal/:id/status
- * Update audit log status (approve/reject)
- */
 router.patch("/:id/status", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
     const userId = (req as any).user?.userId;
 
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
-
-    if (!status || !["APPROVED", "REJECTED", "PENDING"].includes(status)) {
+    if (!Object.values(OALStatus).includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Must be APPROVED, REJECTED, or PENDING",
+        message: "Invalid status. Must be PENDING, APPROVED, or REJECTED",
       });
     }
 
-    const log = await updateOALStatus({
-      id,
-      status: status as OALStatus,
-      updatedById: userId,
-    });
+    const log = await updateOALStatus({ id, status, updatedById: userId });
+    broadcastOALUpdate(log);
 
-    return res.json({
-      success: true,
-      log,
-    });
+    return res.json({ success: true, log });
   } catch (error) {
-    console.error("Error updating OAL status:", error);
+    console.error("[OAL] Error updating status:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update audit log status",
@@ -181,21 +221,10 @@ router.patch("/:id/status", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/oal/balance-adjustment
- * Helper endpoint to log balance adjustments
- */
 router.post("/balance-adjustment", async (req: Request, res: Response) => {
   try {
     const { userId: subjectUserId, currency, delta, reason } = req.body;
     const adminId = (req as any).user?.userId;
-
-    if (!adminId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
 
     if (!subjectUserId || !currency || delta === undefined || !reason) {
       return res.status(400).json({
@@ -213,12 +242,10 @@ router.post("/balance-adjustment", async (req: Request, res: Response) => {
       location: "admin.api",
     });
 
-    return res.status(201).json({
-      success: true,
-      log,
-    });
+    broadcastOALUpdate(log);
+    return res.status(201).json({ success: true, log });
   } catch (error) {
-    console.error("Error logging balance adjustment:", error);
+    console.error("[OAL] Error logging balance adjustment:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to log balance adjustment",
