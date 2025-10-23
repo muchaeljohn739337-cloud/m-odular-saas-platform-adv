@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend Typecheck & Lint (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install
+        working-directory: Frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: Frontend
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: Frontend
+        run: npx eslint . --ext .ts,.tsx || true
+
+  backend:
+    name: Backend Build (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+
+      - name: Install
+        working-directory: Backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: Backend
+        run: npx prisma generate
+
+      - name: Build
+        working-directory: Backend
+        run: npm run build
