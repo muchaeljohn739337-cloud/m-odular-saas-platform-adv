@@ -1,19 +1,592 @@
-{
-  "summarize-file": "Analyze the open file and describe its purpose, key functions, and dependencies.",
-  "fix-typescript-errors": "Scan the file for TypeScript errors, add missing types, and fix issues automatically.",
-  "create-express-route": "Create a new Express route under backend/src/routes with default CRUD handlers and authentication middleware.",
-  "generate-dashboard-card": "Generate a React component for a dashboard card displaying ETH balance, USD equivalent, and last updated time.",
-  "debug-session": "Start a Node.js inspector session on port 9229, set breakpoints in the current file, and print values for watched variables.",
-  "explain-stack-trace": "Analyze the last stack trace from console output and suggest minimal code fixes.",
-  "evaluate-expression": "Evaluate the given expression in the current paused debug frame and return its value.",
-  "prisma-health-check": "Add an Express route /health that returns { db: 'ok' } if Prisma connection succeeds.",
-  "generate-prisma-migration": "Create a new Prisma migration adding a 'currency' column to the Transaction model.",
-  "auth-middleware": "Add Express middleware that verifies JWTs and attaches the user object to the request.",
-  "socketio-notification": "Emit newNotification Socket.io event when a new record is created in the notifications table.",
-  "eth-balance-route": "Implement route /api/wallet/:userId/balance using ethers.js Cloudflare gateway and return wallet balance.",
-  "rpa-worker": "Build a daily automation script that summarizes transactions and emails admin reports.",
-  "support-chatbot": "Create /api/chatbot endpoint that connects to Dialogflow or Botpress and returns assistant replies.",
-  "fix-build": "Inspect Next.js build logs, identify failed imports or static export conflicts, and propose corrections.",
-  "security-scan": "Search the backend for unvalidated inputs, hard-coded secrets, or unsafe operations, and suggest mitigations.",
-  "add-tests": "Generate Jest + Supertest unit tests for authentication and notification routes."
+{{{{
+
+  "version": "1.0.0",
+
+  "collections": [  "version": "1.0.0",
+
+    {
+
+      "title": "⭐ Advancia Shortcuts",  "collections": [  "version": "1.0.0",  "summarize-file": "Analyze the open file and describe its purpose, key functions, and dependencies.",
+
+      "description": "Core Copilot prompts for Advancia Pay Ledger development, backend/frontend refactors, and testing automation.",
+
+      "prompts": [    {
+
+        {
+
+          "name": "Refactor Prisma Safety",      "title": "⭐ Advancia Shortcuts",  "collections": [  "fix-typescript-errors": "Scan the file for TypeScript errors, add missing types, and fix issues automatically.",
+
+          "prompt": "@workspace audit all backend TypeScript files and wrap every Prisma call in try/catch with proper error messages and logging."
+
+        },      "description": "Core Copilot prompts for Advancia Pay Ledger development, backend/frontend refactors, and testing automation.",
+
+        {
+
+          "name": "Add JSDoc Comments",      "prompts": [    {  "create-express-route": "Create a new Express route under backend/src/routes with default CRUD handlers and authentication middleware.",
+
+          "prompt": "@file add JSDoc comments for all exported functions in this service file for better IntelliSense."
+
+        },        {
+
+        {
+
+          "name": "Clean Imports",          "name": "Refactor Prisma Safety",      "title": "⭐ Advancia Shortcuts",  "generate-dashboard-card": "Generate a React component for a dashboard card displaying ETH balance, USD equivalent, and last updated time.",
+
+          "prompt": "@workspace detect and remove any unused imports or dead functions in backend/src/**/*.ts."
+
+        },          "prompt": "@workspace audit all backend TypeScript files and wrap every Prisma call in try/catch with proper error messages and logging."
+
+        {
+
+          "name": "Next.js Performance Refactor",        },      "description": "Custom GitHub Copilot prompt library for Advancia Pay Ledger development and DevOps automation.",  "debug-session": "Start a Node.js inspector session on port 9229, set breakpoints in the current file, and print values for watched variables.",
+
+          "prompt": "@workspace refactor all pages under frontend/app/admin to use Suspense and dynamic imports for better performance."
+
+        },        {
+
+        {
+
+          "name": "Standardize Imports",          "name": "Add JSDoc Comments",      "prompts": [  "explain-stack-trace": "Analyze the last stack trace from console output and suggest minimal code fixes.",
+
+          "prompt": "@file standardize all import paths to use @/components instead of relative paths like ../../components."
+
+        },          "prompt": "@file add JSDoc comments for all exported functions in this service file for better IntelliSense."
+
+        {
+
+          "name": "Render & Vercel Review",        },        {  "evaluate-expression": "Evaluate the given expression in the current paused debug frame and return its value.",
+
+          "prompt": "@workspace review render.yaml, package.json, and next.config.js for any mismatched build commands between Render and Vercel."
+
+        },        {
+
+        {
+
+          "name": "PowerShell Build Runner",          "name": "Clean Imports",          "name": "Refactor Prisma Safety",  "prisma-health-check": "Add an Express route /health that returns { db: 'ok' } if Prisma connection succeeds.",
+
+          "prompt": "@workspace create a PowerShell script that runs npm run build, starts the backend on port 4000, checks health at /api/health, then opens http://localhost:3000 automatically."
+
+        },          "prompt": "@workspace detect and remove any unused imports or dead functions in backend/src/**/*.ts."
+
+        {
+
+          "name": "Admin Dashboard Consistency",        },          "prompt": "@workspace audit all backend TypeScript files and wrap every Prisma call in try/catch with proper error messages and logging."  "generate-prisma-migration": "Create a new Prisma migration adding a 'currency' column to the Transaction model.",
+
+          "prompt": "@workspace review all admin dashboard components and ensure consistent loading states, toast notifications, and tab navigation behavior."
+
+        },        {
+
+        {
+
+          "name": "Add Error Boundary",          "name": "Next.js Performance Refactor",        },  "auth-middleware": "Add Express middleware that verifies JWTs and attaches the user object to the request.",
+
+          "prompt": "@file add a unified AdminErrorBoundary component and wrap all admin pages with it."
+
+        },          "prompt": "@workspace refactor all pages under frontend/app/admin to use Suspense and dynamic imports for better performance."
+
+        {
+
+          "name": "Fix Prisma Migrations",        },        {  "socketio-notification": "Emit newNotification Socket.io event when a new record is created in the notifications table.",
+
+          "prompt": "@workspace inspect all Prisma migration files for pending or failed migrations and generate a single reset script for local dev."
+
+        },        {
+
+        {
+
+          "name": "Document Relations",          "name": "Standardize Imports",          "name": "Add JSDoc Comments",  "eth-balance-route": "Implement route /api/wallet/:userId/balance using ethers.js Cloudflare gateway and return wallet balance.",
+
+          "prompt": "@file add comments describing relations in schema.prisma and ensure naming consistency (snake_case vs camelCase)."
+
+        },          "prompt": "@file standardize all import paths to use @/components instead of relative paths like ../../components."
+
+        {
+
+          "name": "E2E Admin Tests",        },          "prompt": "@file add JSDoc comments for all exported functions in this service file for better IntelliSense."  "rpa-worker": "Build a daily automation script that summarizes transactions and emails admin reports.",
+
+          "prompt": "@workspace add Playwright E2E tests for admin login, user management, and ticket details, using data-testid selectors."
+
+        },        {
+
+        {
+
+          "name": "Generate README",          "name": "Render & Vercel Review",        },  "support-chatbot": "Create /api/chatbot endpoint that connects to Dialogflow or Botpress and returns assistant replies.",
+
+          "prompt": "@workspace generate a README.md for backend folder with build steps, environment variables, and deploy checklist."
+
+        },          "prompt": "@workspace review render.yaml, package.json, and next.config.js for any mismatched build commands between Render and Vercel."
+
+        {
+
+          "name": "Generate Changelog",        },        {  "fix-build": "Inspect Next.js build logs, identify failed imports or static export conflicts, and propose corrections.",
+
+          "prompt": "@workspace generate CHANGELOG.md based on recent commits mentioning 'fix:', 'feat:', or 'deploy:'."
+
+        },        {
+
+        {
+
+          "name": "Summarize Commits",          "name": "PowerShell Build Runner",          "name": "Clean Imports",  "security-scan": "Search the backend for unvalidated inputs, hard-coded secrets, or unsafe operations, and suggest mitigations.",
+
+          "prompt": "@workspace generate a commit message summarizing all staged changes following conventional commit format."
+
+        }          "prompt": "@workspace create a PowerShell script that runs npm run build, starts the backend on port 4000, checks health at /api/health, then opens http://localhost:3000 automatically."
+
+      ]
+
+    },        },          "prompt": "@workspace detect and remove any unused imports or dead functions in backend/src/**/*.ts."  "add-tests": "Generate Jest + Supertest unit tests for authentication and notification routes."
+
+    {
+
+      "title": "🛠 DevOps / CI-CD Prompts",        {
+
+      "description": "GitLens, Render, GitHub Actions, and deployment diagnostics tools for Advancia Platform.",
+
+      "prompts": [          "name": "Admin Dashboard Consistency",        },}
+
+        {
+
+          "name": "Render Deployment Debugger",          "prompt": "@workspace review all admin dashboard components and ensure consistent loading states, toast notifications, and tab navigation behavior."
+
+          "prompt": "@workspace analyze last Render deployment logs for errors and suggest YAML or build command fixes."
+
+        },        },        {
+
+        {
+
+          "name": "GitLens Graph Summary",        {          "name": "Next.js Performance Refactor",
+
+          "prompt": "@workspace summarize the recent GitLens commit graph and identify merged branches or hotfix trends."
+
+        },          "name": "Add Error Boundary",          "prompt": "@workspace refactor all pages under frontend/app/admin to use Suspense and dynamic imports for better performance."
+
+        {
+
+          "name": "CI/CD Health Check",          "prompt": "@file add a unified AdminErrorBoundary component and wrap all admin pages with it."        },
+
+          "prompt": "@workspace review .github/workflows/*.yml for outdated actions, Node versions, or caching issues."
+
+        },        },        {
+
+        {
+
+          "name": "Render YAML Optimizer",        {          "name": "Standardize Imports",
+
+          "prompt": "@file optimize this render.yaml by merging build and start commands efficiently, and suggest environment variable placeholders."
+
+        },          "name": "Fix Prisma Migrations",          "prompt": "@file standardize all import paths to use @/components instead of relative paths like ../../components."
+
+        {
+
+          "name": "Git Branch Analyzer",          "prompt": "@workspace inspect all Prisma migration files for pending or failed migrations and generate a single reset script for local dev."        },
+
+          "prompt": "@workspace analyze current Git branches, list stale feature branches, and recommend cleanup strategy."
+
+        },        },        {
+
+        {
+
+          "name": "Docker Health Fixer",        {          "name": "Render & Vercel Review",
+
+          "prompt": "@workspace scan Dockerfile and docker-compose.yml for missing health checks or incorrect CMD instructions."
+
+        },          "name": "Document Relations",          "prompt": "@workspace review render.yaml, package.json, and next.config.js for any mismatched build commands between Render and Vercel."
+
+        {
+
+          "name": "Render Logs Parser",          "prompt": "@file add comments describing relations in schema.prisma and ensure naming consistency (snake_case vs camelCase)."        },
+
+          "prompt": "@workspace parse backend build logs for common Prisma or Node errors, and explain root cause + fix steps."
+
+        },        },        {
+
+        {
+
+          "name": "CI Notification Bot",        {          "name": "PowerShell Build Runner",
+
+          "prompt": "@workspace create a script that sends VS Code notifications when CI/CD pipeline fails or finishes successfully."
+
+        },          "name": "E2E Admin Tests",          "prompt": "@workspace create a PowerShell script that runs npm run build, starts the backend on port 4000, checks health at /api/health, then opens http://localhost:3000 automatically."
+
+        {
+
+          "name": "GitHub Actions Cache Review",          "prompt": "@workspace add Playwright E2E tests for admin login, user management, and ticket details, using data-testid selectors."        },
+
+          "prompt": "@workspace review npm caching strategy in GitHub Actions and recommend optimized restore/save paths."
+
+        },        },        {
+
+        {
+
+          "name": "Version Bump Automation",        {          "name": "Admin Dashboard Consistency",
+
+          "prompt": "@workspace create a GitHub Action to auto-bump package.json versions and generate CHANGELOG entries on merge."
+
+        }          "name": "Generate README",          "prompt": "@workspace review all admin dashboard components and ensure consistent loading states, toast notifications, and tab navigation behavior."
+
+      ]
+
+    },          "prompt": "@workspace generate a README.md for backend folder with build steps, environment variables, and deploy checklist."        },
+
+    {
+
+      "title": "🧠 AI Insight Prompts",        },        {
+
+      "description": "Smart GPT-5 powered insight and recommendation tools for Advancia Pay Ledger AI analytics (Trump Coin, MedBed, Product Recommendations).",
+
+      "prompts": [        {          "name": "Add Error Boundary",
+
+        {
+
+          "name": "Trump Coin Wallet Analysis",          "name": "Generate Changelog",          "prompt": "@file add a unified AdminErrorBoundary component and wrap all admin pages with it."
+
+          "prompt": "@workspace analyze user's Trump Coin wallet activity, balance changes, and risk patterns using available wallet and transaction data. Output structured insights and recommendations."
+
+        },          "prompt": "@workspace generate CHANGELOG.md based on recent commits mentioning 'fix:', 'feat:', or 'deploy:'."        },
+
+        {
+
+          "name": "Cash-Out Eligibility Advisor",        },        {
+
+          "prompt": "@workspace simulate AI compliance analysis for a user requesting Trump Coin cash-out — include eligibility score, risk level, and justification with recommendations."
+
+        },        {          "name": "Fix Prisma Migrations",
+
+        {
+
+          "name": "Market Trend Summary",          "name": "Summarize Commits",          "prompt": "@workspace inspect all Prisma migration files for pending or failed migrations and generate a single reset script for local dev."
+
+          "prompt": "@workspace summarize the last 30 days of crypto-related transactions (Trump Coin, Bitcoin, Ethereum) and describe market sentiment, trading behavior, and opportunity signals."
+
+        },          "prompt": "@workspace generate a commit message summarizing all staged changes following conventional commit format."        },
+
+        {
+
+          "name": "MedBed Purchase Insights",        }        {
+
+          "prompt": "@workspace analyze recent MedBed product orders, identify high-value customers, and suggest incentive or loyalty reward strategies."
+
+        },      ]          "name": "Document Relations",
+
+        {
+
+          "name": "Product Recommendation AI",    },          "prompt": "@file add comments describing relations in schema.prisma and ensure naming consistency (snake_case vs camelCase)."
+
+          "prompt": "@workspace analyze product categories, crypto transaction patterns, and user behavior to suggest the top 5 personalized MedBed Marketplace recommendations."
+
+        },    {        },
+
+        {
+
+          "name": "User Risk Profiling",      "title": "🛠 DevOps / CI-CD Prompts",        {
+
+          "prompt": "@workspace evaluate historical user activity and generate a structured low/medium/high risk profile with fraud indicators and suggested mitigation actions."
+
+        },      "description": "GitLens, Render, GitHub Actions, and deployment diagnostics tools for Advancia Platform.",          "name": "E2E Admin Tests",
+
+        {
+
+          "name": "AI Ledger Optimization",      "prompts": [          "prompt": "@workspace add Playwright E2E tests for admin login, user management, and ticket details, using data-testid selectors."
+
+          "prompt": "@workspace scan current ledger schema and transaction flow to suggest optimizations for bonus distribution, wallet accuracy, and admin approval performance."
+
+        },        {        },
+
+        {
+
+          "name": "Advancia Market Report",          "name": "Render Deployment Debugger",        {
+
+          "prompt": "@workspace generate an AI-powered summary of all product sales, top categories, and Trump Coin circulation insights for presentation in the admin dashboard."
+
+        },          "prompt": "@workspace analyze last Render deployment logs for errors and suggest YAML or build command fixes."          "name": "Generate README",
+
+        {
+
+          "name": "Auto-Insights Dashboard Widget",        },          "prompt": "@workspace generate a README.md for backend folder with build steps, environment variables, and deploy checklist."
+
+          "prompt": "@workspace design a React component that automatically displays AI insights for admins based on user transactions, badges, and wallet balance trends."
+
+        },        {        },
+
+        {
+
+          "name": "AI System Health Check",          "name": "GitLens Graph Summary",        {
+
+          "prompt": "@workspace evaluate all AI integration points (OpenAI SDK, API keys, error handling) and confirm stability, retry logic, and fallbacks."
+
+        }          "prompt": "@workspace summarize the recent GitLens commit graph and identify merged branches or hotfix trends."          "name": "Generate Changelog",
+
+      ]
+
+    },        },          "prompt": "@workspace generate CHANGELOG.md based on recent commits mentioning 'fix:', 'feat:', or 'deploy:'."
+
+    {
+
+      "title": "🛠️ Legacy Quick Actions",        {        },
+
+      "description": "Original flat-format prompts for quick development tasks.",
+
+      "prompts": [          "name": "CI/CD Health Check",        {
+
+        {
+
+          "name": "Summarize File",          "prompt": "@workspace review .github/workflows/*.yml for outdated actions, Node versions, or caching issues."          "name": "Summarize Commits",
+
+          "prompt": "Analyze the open file and describe its purpose, key functions, and dependencies."
+
+        },        },          "prompt": "@workspace generate a commit message summarizing all staged changes following conventional commit format."
+
+        {
+
+          "name": "Fix TypeScript Errors",        {        }
+
+          "prompt": "Scan the file for TypeScript errors, add missing types, and fix issues automatically."
+
+        },          "name": "Render YAML Optimizer",      ]
+
+        {
+
+          "name": "Create Express Route",          "prompt": "@file optimize this render.yaml by merging build and start commands efficiently, and suggest environment variable placeholders."    },
+
+          "prompt": "Create a new Express route under backend/src/routes with default CRUD handlers and authentication middleware."
+
+        },        },    {
+
+        {
+
+          "name": "Generate Dashboard Card",        {      "title": "🛠️ Legacy Quick Actions",
+
+          "prompt": "Generate a React component for a dashboard card displaying ETH balance, USD equivalent, and last updated time."
+
+        },          "name": "Git Branch Analyzer",      "description": "Original flat-format prompts for quick development tasks.",
+
+        {
+
+          "name": "Debug Session",          "prompt": "@workspace analyze current Git branches, list stale feature branches, and recommend cleanup strategy."      "prompts": [
+
+          "prompt": "Start a Node.js inspector session on port 9229, set breakpoints in the current file, and print values for watched variables."
+
+        },        },        {
+
+        {
+
+          "name": "Explain Stack Trace",        {          "name": "Summarize File",
+
+          "prompt": "Analyze the last stack trace from console output and suggest minimal code fixes."
+
+        },          "name": "Docker Health Fixer",          "prompt": "Analyze the open file and describe its purpose, key functions, and dependencies."
+
+        {
+
+          "name": "Evaluate Expression",          "prompt": "@workspace scan Dockerfile and docker-compose.yml for missing health checks or incorrect CMD instructions."        },
+
+          "prompt": "Evaluate the given expression in the current paused debug frame and return its value."
+
+        },        },        {
+
+        {
+
+          "name": "Prisma Health Check",        {          "name": "Fix TypeScript Errors",
+
+          "prompt": "Add an Express route /health that returns { db: 'ok' } if Prisma connection succeeds."
+
+        },          "name": "Render Logs Parser",          "prompt": "Scan the file for TypeScript errors, add missing types, and fix issues automatically."
+
+        {
+
+          "name": "Generate Prisma Migration",          "prompt": "@workspace parse backend build logs for common Prisma or Node errors, and explain root cause + fix steps."        },
+
+          "prompt": "Create a new Prisma migration adding a 'currency' column to the Transaction model."
+
+        },        },        {
+
+        {
+
+          "name": "Auth Middleware",        {          "name": "Create Express Route",
+
+          "prompt": "Add Express middleware that verifies JWTs and attaches the user object to the request."
+
+        },          "name": "CI Notification Bot",          "prompt": "Create a new Express route under backend/src/routes with default CRUD handlers and authentication middleware."
+
+        {
+
+          "name": "Socket.IO Notification",          "prompt": "@workspace create a script that sends VS Code notifications when CI/CD pipeline fails or finishes successfully."        },
+
+          "prompt": "Emit newNotification Socket.io event when a new record is created in the notifications table."
+
+        },        },        {
+
+        {
+
+          "name": "ETH Balance Route",        {          "name": "Generate Dashboard Card",
+
+          "prompt": "Implement route /api/wallet/:userId/balance using ethers.js Cloudflare gateway and return wallet balance."
+
+        },          "name": "GitHub Actions Cache Review",          "prompt": "Generate a React component for a dashboard card displaying ETH balance, USD equivalent, and last updated time."
+
+        {
+
+          "name": "RPA Worker",          "prompt": "@workspace review npm caching strategy in GitHub Actions and recommend optimized restore/save paths."        },
+
+          "prompt": "Build a daily automation script that summarizes transactions and emails admin reports."
+
+        },        },        {
+
+        {
+
+          "name": "Support Chatbot",        {          "name": "Debug Session",
+
+          "prompt": "Create /api/chatbot endpoint that connects to Dialogflow or Botpress and returns assistant replies."
+
+        },          "name": "Version Bump Automation",          "prompt": "Start a Node.js inspector session on port 9229, set breakpoints in the current file, and print values for watched variables."
+
+        {
+
+          "name": "Fix Build",          "prompt": "@workspace create a GitHub Action to auto-bump package.json versions and generate CHANGELOG entries on merge."        },
+
+          "prompt": "Inspect Next.js build logs, identify failed imports or static export conflicts, and propose corrections."
+
+        },        }        {
+
+        {
+
+          "name": "Security Scan",      ]          "name": "Explain Stack Trace",
+
+          "prompt": "Search the backend for unvalidated inputs, hard-coded secrets, or unsafe operations, and suggest mitigations."
+
+        },    },          "prompt": "Analyze the last stack trace from console output and suggest minimal code fixes."
+
+        {
+
+          "name": "Add Tests",    {        },
+
+          "prompt": "Generate Jest + Supertest unit tests for authentication and notification routes."
+
+        }      "title": "🛠️ Legacy Quick Actions",        {
+
+      ]
+
+    }      "description": "Original flat-format prompts for quick development tasks.",          "name": "Evaluate Expression",
+
+  ]
+
+}      "prompts": [          "prompt": "Evaluate the given expression in the current paused debug frame and return its value."
+
+
+        {        },
+
+          "name": "Summarize File",        {
+
+          "prompt": "Analyze the open file and describe its purpose, key functions, and dependencies."          "name": "Prisma Health Check",
+
+        },          "prompt": "Add an Express route /health that returns { db: 'ok' } if Prisma connection succeeds."
+
+        {        },
+
+          "name": "Fix TypeScript Errors",        {
+
+          "prompt": "Scan the file for TypeScript errors, add missing types, and fix issues automatically."          "name": "Generate Prisma Migration",
+
+        },          "prompt": "Create a new Prisma migration adding a 'currency' column to the Transaction model."
+
+        {        },
+
+          "name": "Create Express Route",        {
+
+          "prompt": "Create a new Express route under backend/src/routes with default CRUD handlers and authentication middleware."          "name": "Auth Middleware",
+
+        },          "prompt": "Add Express middleware that verifies JWTs and attaches the user object to the request."
+
+        {        },
+
+          "name": "Generate Dashboard Card",        {
+
+          "prompt": "Generate a React component for a dashboard card displaying ETH balance, USD equivalent, and last updated time."          "name": "Socket.IO Notification",
+
+        },          "prompt": "Emit newNotification Socket.io event when a new record is created in the notifications table."
+
+        {        },
+
+          "name": "Debug Session",        {
+
+          "prompt": "Start a Node.js inspector session on port 9229, set breakpoints in the current file, and print values for watched variables."          "name": "ETH Balance Route",
+
+        },          "prompt": "Implement route /api/wallet/:userId/balance using ethers.js Cloudflare gateway and return wallet balance."
+
+        {        },
+
+          "name": "Explain Stack Trace",        {
+
+          "prompt": "Analyze the last stack trace from console output and suggest minimal code fixes."          "name": "RPA Worker",
+
+        },          "prompt": "Build a daily automation script that summarizes transactions and emails admin reports."
+
+        {        },
+
+          "name": "Evaluate Expression",        {
+
+          "prompt": "Evaluate the given expression in the current paused debug frame and return its value."          "name": "Support Chatbot",
+
+        },          "prompt": "Create /api/chatbot endpoint that connects to Dialogflow or Botpress and returns assistant replies."
+
+        {        },
+
+          "name": "Prisma Health Check",        {
+
+          "prompt": "Add an Express route /health that returns { db: 'ok' } if Prisma connection succeeds."          "name": "Fix Build",
+
+        },          "prompt": "Inspect Next.js build logs, identify failed imports or static export conflicts, and propose corrections."
+
+        {        },
+
+          "name": "Generate Prisma Migration",        {
+
+          "prompt": "Create a new Prisma migration adding a 'currency' column to the Transaction model."          "name": "Security Scan",
+
+        },          "prompt": "Search the backend for unvalidated inputs, hard-coded secrets, or unsafe operations, and suggest mitigations."
+
+        {        },
+
+          "name": "Auth Middleware",        {
+
+          "prompt": "Add Express middleware that verifies JWTs and attaches the user object to the request."          "name": "Add Tests",
+
+        },          "prompt": "Generate Jest + Supertest unit tests for authentication and notification routes."
+
+        {        }
+
+          "name": "Socket.IO Notification",      ]
+
+          "prompt": "Emit newNotification Socket.io event when a new record is created in the notifications table."    }
+
+        },  ]
+
+        {}
+
+          "name": "ETH Balance Route",
+          "prompt": "Implement route /api/wallet/:userId/balance using ethers.js Cloudflare gateway and return wallet balance."
+        },
+        {
+          "name": "RPA Worker",
+          "prompt": "Build a daily automation script that summarizes transactions and emails admin reports."
+        },
+        {
+          "name": "Support Chatbot",
+          "prompt": "Create /api/chatbot endpoint that connects to Dialogflow or Botpress and returns assistant replies."
+        },
+        {
+          "name": "Fix Build",
+          "prompt": "Inspect Next.js build logs, identify failed imports or static export conflicts, and propose corrections."
+        },
+        {
+          "name": "Security Scan",
+          "prompt": "Search the backend for unvalidated inputs, hard-coded secrets, or unsafe operations, and suggest mitigations."
+        },
+        {
+          "name": "Add Tests",
+          "prompt": "Generate Jest + Supertest unit tests for authentication and notification routes."
+        }
+      ]
+    }
+  ]
 }
