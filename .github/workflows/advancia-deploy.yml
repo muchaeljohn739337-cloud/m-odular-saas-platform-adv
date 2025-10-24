@@ -158,8 +158,16 @@ jobs:
       - name: Monitor summary
         run: |
           echo "📊 RPA Monitor Summary:"
-          echo "Site Status: ${{ steps.health.outputs.down == 'true' && '❌ DOWN' || '✅ UP' }}"
-          echo "API Status: ${{ steps.api_health.outputs.api_down == 'true' && '❌ DOWN' || '✅ UP' }}"
+          if [ "${{ steps.health.outputs.down }}" == "true" ]; then
+            echo "Site Status: ❌ DOWN"
+          else
+            echo "Site Status: ✅ UP"
+          fi
+          if [ "${{ steps.api_health.outputs.api_down }}" == "true" ]; then
+            echo "API Status: ❌ DOWN"
+          else
+            echo "API Status: ✅ UP"
+          fi
           if [ "${{ steps.health.outputs.down }}" == "true" ] || [ "${{ steps.api_health.outputs.api_down }}" == "true" ]; then
             echo "Action: 🚀 Auto-redeploy triggered"
           else
