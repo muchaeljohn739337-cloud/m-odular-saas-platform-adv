@@ -27,7 +27,7 @@ ENV NEXT_PUBLIC_BOTPRESS_BOT_ID=$NEXT_PUBLIC_BOTPRESS_BOT_ID
 COPY frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci || npm install
 
 # Copy app sources
 COPY frontend/ ./
