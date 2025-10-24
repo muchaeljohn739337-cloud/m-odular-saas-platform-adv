@@ -179,3 +179,28 @@ Set in Render Dashboard → advancia-frontend → Environment:
 - `docs/RENDER_LOG_TRIAGE_CHECKLIST.md`
 - `docs/RENDER_SMOKE_TESTS.md`
 - `.github/workflows/post-deploy-smoke.yml`
+
+## ❌ Cloudflare Workers — REMOVED
+
+**Cloudflare Workers integration has been removed from this project.**
+
+- rontend/wrangler.toml archived to docs/archive/ (Oct 24, 2025)
+- .github/workflows/cloudflare-*.yml deleted (Oct 24, 2025)
+- Frontend deploys to **Render** using Docker, NOT Cloudflare Pages/Workers
+
+### Why Removed?
+
+1. **Redundant** - Render already handles frontend deployment
+2. **Complexity** - Maintaining dual deployment paths unnecessary
+3. **CI/CD Noise** - Cloudflare build failures blocking unrelated PRs
+4. **Single Platform Strategy** - All services on Render for consistency
+
+### Note on Cloudflare DNS
+
+Cloudflare is still used for **DNS and proxying only**:
+- DNS records point to Render services
+- SSL/TLS proxied through Cloudflare
+- No Workers/Pages deployment
+
+---
+
