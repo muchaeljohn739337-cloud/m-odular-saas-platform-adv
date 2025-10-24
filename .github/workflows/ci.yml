@@ -7,9 +7,73 @@ on:
     branches: [main, develop]
 
 jobs:
+  validate-config:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Validate Database Init Files
+        run: |
+          echo "🔍 Validating database initialization files..."
+          
+          # Check db/init-db.sql (for CI/CD)
+          if [ ! -e db/init-db.sql ]; then
+            echo "❌ ERROR: db/init-db.sql not found"
+            exit 1
+          fi
+          if [ -d db/init-db.sql ]; then
+            echo "❌ ERROR: db/init-db.sql is a directory (should be a file)"
+            ls -la db/
+            exit 1
+          fi
+          echo "✅ db/init-db.sql exists and is a file"
+          head -n 20 db/init-db.sql
+          
+          # Check backend/scripts/init-db.sql (for Docker Compose)
+          if [ ! -e backend/scripts/init-db.sql ]; then
+            echo "❌ ERROR: backend/scripts/init-db.sql not found"
+            exit 1
+          fi
+          if [ -d backend/scripts/init-db.sql ]; then
+            echo "❌ ERROR: backend/scripts/init-db.sql is a directory (should be a file)"
+            ls -la backend/scripts/
+            exit 1
+          fi
+          echo "✅ backend/scripts/init-db.sql exists and is a file"
+          head -n 20 backend/scripts/init-db.sql
+      
+      - name: Validate JSON Configuration Files
+        run: |
+          echo "�� Validating JSON configuration files..."
+          
+          # Validate copilot-instructions.json if it exists
+          if [ -f .github/copilot-instructions.json ]; then
+            echo "Checking .github/copilot-instructions.json..."
+            if ! jq empty .github/copilot-instructions.json 2>/dev/null; then
+              echo "❌ ERROR: .github/copilot-instructions.json is invalid JSON"
+              exit 1
+            fi
+            echo "✅ .github/copilot-instructions.json is valid JSON"
+          fi
+          
+          # Validate package.json files
+          for pkg in backend/package.json frontend/package.json; do
+            if [ -f $pkg ]; then
+              echo "Checking $pkg..."
+              if ! jq empty $pkg 2>/dev/null; then
+                echo "❌ ERROR: $pkg is invalid JSON"
+                exit 1
+              fi
+              echo "✅ $pkg is valid JSON"
+            fi
+          done
+
   test-backend:
     name: Test Backend
     runs-on: ubuntu-latest
+    needs: validate-config
     if: github.actor != 'copilot-swe-agent[bot]'
 
     services:
@@ -30,7 +94,7 @@ jobs:
       redis:
         image: redis:7
         options: >-
-          --health-cmd "redis-cli ping"
+          --health-cmd \"redis-cli ping\"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -44,8 +108,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: \"22\"
+          cache: \"npm\"
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
@@ -82,6 +146,7 @@ jobs:
   test-frontend:
     name: Test Frontend
     runs-on: ubuntu-latest
+    needs: validate-config
     if: github.actor != 'copilot-swe-agent[bot]'
 
     steps:
@@ -91,8 +156,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
-          cache: "npm"
+          node-version: \"18\"
+          cache: \"npm\"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
@@ -119,6 +184,7 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
+    needs: validate-config
 
     steps:
       - name: Checkout code
@@ -127,7 +193,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: \"18\"
 
       - name: Lint Backend
         working-directory: ./backend
@@ -147,6 +213,7 @@ jobs:
     continue-on-error: true
     name: Health Check Test
     runs-on: ubuntu-latest
+    needs: validate-config
     if: github.actor != 'copilot-swe-agent[bot]'
     
     steps:
@@ -195,12 +262,12 @@ jobs:
       
       - name: Run health check
         run: |
-          curl -f http://localhost:3000/health || (echo "Health check failed" && cat /tmp/app.log && exit 1)
+          curl -f http://localhost:3000/health || (echo \"Health check failed\" && cat /tmp/app.log && exit 1)
       
       - name: Show logs on failure
         if: failure()
         run: |
-          echo "=== Application Logs ==="
-          cat /tmp/app.log || echo "No app logs found"
-          echo "=== Docker Compose Logs ==="
-          docker compose logs || echo "No docker logs found"
+          echo \"=== Application Logs ===\"
+          cat /tmp/app.log || echo \"No app logs found\"
+          echo \"=== Docker Compose Logs ===\"
+          docker compose logs || echo \"No docker logs found\"
