@@ -182,7 +182,7 @@ router.delete("/workflows/:id", async (req: Request, res: Response) => {
 router.post("/workflows/:id/execute", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const execution = await executeWorkflow({ workflowId: id });
+    const execution = await executeWorkflow(id);
 
     broadcastRPAUpdate("execution:started", execution);
 
@@ -233,5 +233,3 @@ router.get("/executions", async (req: Request, res: Response) => {
 });
 
 export default router;
-
-

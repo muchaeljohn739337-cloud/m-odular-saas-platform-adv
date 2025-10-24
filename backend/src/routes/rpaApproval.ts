@@ -95,7 +95,7 @@ router.post(
           where: { id },
           data: {
             status: "approved",
-            processedAt: new Date(),
+            approvedAt: new Date(),
             adminNotes: adminNotes || "Auto-approved by RPA (low risk)",
           },
         });
@@ -110,7 +110,7 @@ router.post(
             metadata: JSON.stringify({
               riskScore: riskAssessment.score,
               riskLevel: riskAssessment.level,
-              amount: withdrawal.amount.toString(),
+              amount: withdrawal.cryptoAmount.toString(),
               cryptoType: withdrawal.cryptoType,
               factors: riskAssessment.factors,
             }),
@@ -142,7 +142,7 @@ router.post(
           metadata: JSON.stringify({
             riskScore: riskAssessment.score,
             riskLevel: riskAssessment.level,
-            amount: withdrawal.amount.toString(),
+            amount: withdrawal.cryptoAmount.toString(),
             cryptoType: withdrawal.cryptoType,
             factors: riskAssessment.factors,
             requiresReview: riskAssessment.requiresReview,
@@ -226,7 +226,7 @@ router.post(
                 where: { id: withdrawal.id },
                 data: {
                   status: "approved",
-                  processedAt: new Date(),
+                  approvedAt: new Date(),
                   adminNotes: `Auto-approved by RPA batch (risk: ${riskAssessment.score})`,
                 },
               });
@@ -253,7 +253,7 @@ router.post(
             results.details.push({
               id: withdrawal.id,
               userId: withdrawal.userId,
-              amount: withdrawal.amount.toString(),
+              amount: withdrawal.cryptoAmount.toString(),
               action: "AUTO_APPROVED",
               riskScore: riskAssessment.score,
             });
@@ -262,7 +262,7 @@ router.post(
             results.details.push({
               id: withdrawal.id,
               userId: withdrawal.userId,
-              amount: withdrawal.amount.toString(),
+              amount: withdrawal.cryptoAmount.toString(),
               action: "FLAGGED",
               riskScore: riskAssessment.score,
               reason: riskAssessment.factors.join(", "),
@@ -538,3 +538,4 @@ async function performKYCVerification(
 }
 
 export default router;
+
