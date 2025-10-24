@@ -5,7 +5,7 @@ import {
   requireAdmin,
   logAdminAction,
 } from "../middleware/auth";
-import { AuthRequest } from "../types";
+import { AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -113,11 +113,10 @@ router.post(
                   type: "bonus",
                   status: "completed",
                   description: description || `Admin bulk bonus: ${bonusType}`,
-                  metadata: {
-                    source: "admin_bulk_bonus",
+                  metadata: JSON.stringify({
                     adminId: req.user?.userId,
                     bonusType,
-                  },
+                  }),
                 },
               });
               break;
@@ -134,11 +133,8 @@ router.post(
                   userId: user.id,
                   amount: bonusAmount,
                   type: "credit",
-                  currency: "USD",
                   status: "COMPLETED",
                   description: description || "Admin bulk USD bonus",
-                  source: "admin_bulk_bonus",
-                  metadata: { adminId: req.user?.userId },
                 },
               });
               break;
@@ -159,11 +155,8 @@ router.post(
                   userId: user.id,
                   amount: bonusAmount,
                   type: "credit",
-                  currency: "USD",
                   status: "COMPLETED",
                   description: description || "Admin MedBed credit bonus",
-                  source: "admin_medbed_bonus",
-                  metadata: { adminId: req.user?.userId, bonusType: "MEDBED" },
                 },
               });
               break;
@@ -185,31 +178,23 @@ router.post(
         }
       }
 
-      // Log bulk operation
-      await prisma.adminTransfer.create({
-        data: {
-          adminId: req.user?.userId || null,
-          userId: null,
-          currency: currency || bonusType,
-          amount: results.totalAmount,
-          note: `Bulk bonus: ${bonusType} to ${results.successful.length} users`,
-          source: "admin:bulk-bonus",
-        },
-      });
+      // Note: AdminTransfer logging commented out (model doesn't exist in schema)
 
       // Create audit log
       await prisma.auditLog.create({
         data: {
           userId: req.user?.userId || "system",
           action: "BULK_BONUS_ASSIGNMENT",
-          details: {
+          resourceType: "bonus",
+          resourceId: "bulk",
+          metadata: JSON.stringify({
             bonusType,
             amount: bonusAmount,
             totalUsers: userIds.length,
             successfulUsers: results.successful.length,
             failedUsers: results.failed.length,
             totalAmount: results.totalAmount,
-          },
+          }),
           ipAddress: req.ip || "unknown",
           userAgent: req.get("user-agent") || "unknown",
         },
@@ -318,12 +303,6 @@ router.post(
             type: "bonus",
             status: "completed",
             description: description || `Admin bonus: ${bonusType}`,
-            metadata: {
-              source: "admin_single_bonus",
-              adminId: req.user?.userId,
-              bonusType,
-              autoApprove: autoApprove || false,
-            },
           },
         });
       } else {
@@ -338,18 +317,8 @@ router.post(
             userId: user.id,
             amount: bonusAmount,
             type: "credit",
-            currency: currency || "USD",
             status: "COMPLETED",
             description: description || `Admin ${bonusType} bonus`,
-            source:
-              bonusType === "MEDBED_CREDIT"
-                ? "admin_medbed_bonus"
-                : "admin_bonus",
-            metadata: {
-              adminId: req.user?.userId,
-              bonusType,
-              autoApprove: autoApprove || false,
-            },
           },
         });
       }
@@ -359,7 +328,9 @@ router.post(
         data: {
           userId: req.user?.userId || "system",
           action: "SINGLE_BONUS_AWARD",
-          details: {
+          resourceType: "bonus",
+          resourceId: "bulk",
+          metadata: {
             targetUserId: user.id,
             targetEmail: user.email,
             bonusType,
@@ -382,8 +353,7 @@ router.post(
         bonus: {
           type: bonusType,
           amount: bonusAmount,
-          currency: currency || bonusType,
-        },
+          },
         wallet: wallet
           ? {
               balance: wallet.balance.toString(),
@@ -442,7 +412,6 @@ router.get(
             currency: true,
             amount: true,
             note: true,
-            source: true,
             createdAt: true,
           },
         }),

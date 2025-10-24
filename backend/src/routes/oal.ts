@@ -11,6 +11,7 @@ import {
   getOALLogById,
   logBalanceAdjustment,
 } from "../services/oalService";
+import { checkOALTriggers } from "../services/rpaService";
 import { OALStatus } from "@prisma/client";
 
 const router = Router();
@@ -23,7 +24,7 @@ export function setOALSocketIO(socketIO: SocketIOServer) {
   io = socketIO;
 }
 
-export function broadcastOALUpdate(entry: any) {
+export function broadcastOALUpdate(entry: Record<string, any>) {
   const sseData = `data: ${JSON.stringify(entry)}\n\n`;
   for (const client of sseClients) {
     try {
@@ -97,7 +98,7 @@ router.get("/export", async (req: Request, res: Response) => {
       return res.json({ success: true, logs: items });
     }
 
-    const csvData = items.map((item: any) => ({
+    const csvData = items.map((item: Record<string, any>) => ({
       id: item.id,
       object: item.object,
       action: item.action,
@@ -138,6 +139,7 @@ router.get("/stream", (req: Request, res: Response) => {
   req.on("close", () => {
     sseClients.delete(res);
   });
+  // No explicit return needed for SSE stream
 });
 
 router.get("/:id", async (req: Request, res: Response) => {
@@ -184,6 +186,11 @@ router.post("/", async (req: Request, res: Response) => {
 
     // OAL Rules checking disabled
     broadcastOALUpdate(log);
+
+    // Check RPA triggers
+    checkOALTriggers(log).catch((error) => {
+      console.error("[OAL] Error checking RPA triggers:", error);
+    });
 
     return res.status(201).json({ success: true, log });
   } catch (error) {
@@ -254,5 +261,3 @@ router.post("/balance-adjustment", async (req: Request, res: Response) => {
 });
 
 export default router;
-
-

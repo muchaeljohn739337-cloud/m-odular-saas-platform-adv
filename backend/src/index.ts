@@ -34,11 +34,11 @@ import sessionsRouter, {
 } from "./routes/sessions";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
+import rpaRouter, { setRPASocketIO } from "./routes/rpa";
 import { activityLogger } from "./middleware/activityLogger";
 import { rateLimit, validateInput } from "./middleware/security";
 import { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
 import { activeSessions } from "./routes/authAdmin";
-
 // Load environment variables
 dotenv.config();
 
@@ -106,6 +106,7 @@ app.use("/api/auth/admin", authAdminRouter);
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/withdrawals", withdrawalsRouter);
 app.use("/api/oal", oalRouter);
+app.use("/api/rpa", rpaRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -186,6 +187,7 @@ setSupportSocketIO(io);
 setPaymentsSocketIO(io);
 setWithdrawalSocketIO(io);
 setOALSocketIO(io);
+setRPASocketIO(io);
 
 // Wire up session broadcasting
 setAuthBroadcast(broadcastSessions);

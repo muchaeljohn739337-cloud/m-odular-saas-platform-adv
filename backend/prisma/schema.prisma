@@ -32,6 +32,7 @@ model User {
   updatedAt          DateTime            @updatedAt
   cryptoWithdrawals  CryptoWithdrawal[]
   medBedsBookings    MedBedsBooking[]
+  rpaWorkflows       RPAWorkflow[]       @relation("RPAWorkflowCreator")
 
   @@map("users")
 }
@@ -452,7 +453,7 @@ model PushSubscription {
   deviceInfo Json?
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime @default(now())
 
   @@unique([userId, endpoint])
   @@index([userId])
@@ -602,6 +603,44 @@ model ConsultationMessage {
   @@map("consultation_messages")
 }
 
+model RPAWorkflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     Json     // { type: 'oal', conditions: {...} } or { type: 'schedule', cron: '...' }
+  actions     Json     // Array of actions to execute
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation("RPAWorkflowCreator", fields: [createdById], references: [id])
+  
+  executions  RPAExecution[]
+
+  @@index([createdById])
+  @@index([enabled])
+}
+
+model RPAExecution {
+  id          String   @id @default(cuid())
+  workflowId  String
+  workflow    RPAWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status      RPAExecutionStatus @default(RUNNING)
+  trigger     Json     // What triggered this execution
+  steps       Json     // Array of step results
+  error       String?
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  @@index([workflowId])
+  @@index([status])
+  @@index([startedAt])
+}
+enum RPAExecutionStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
 enum Role {
   USER
   STAFF
