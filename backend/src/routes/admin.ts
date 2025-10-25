@@ -603,4 +603,55 @@ router.get("/stats", adminAuth, async (req, res) => {
   }
 });
 
+// POST /api/admin/users/:userId/update-balance - Update user balance
+router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { currency, amount } = req.body;
+
+    if (!userId || !currency || amount === undefined) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const validCurrencies = ["USD", "BTC", "ETH", "USDT"];
+    const currencyUpper = currency.toUpperCase();
+    
+    if (!validCurrencies.includes(currencyUpper)) {
+      return res.status(400).json({ error: `Invalid currency: ${currencyUpper}` });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const balanceField = `${currencyUpper.toLowerCase()}Balance`;
+    const currentBalance = Number(user[balanceField as keyof typeof user] || 0);
+    const newBalance = currentBalance + Number(amount);
+
+    if (newBalance < 0) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
+
+    const updateData: Record<string, number> = {};
+    updateData[balanceField] = newBalance;
+
+    await prisma.user.update({ where: { id: userId }, data: updateData });
+
+    await prisma.transaction.create({
+      data: {
+        userId,
+        amount: Number(amount),
+        type: "ADMIN_ADJUSTMENT",
+        description: `Admin adjusted ${currencyUpper} by ${amount}`,
+        status: "completed",
+      },
+    });
+
+    return res.json({ success: true, newBalance });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 export default router;
+
