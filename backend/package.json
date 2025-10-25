@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "postbuild": "echo '✅ Build complete' || true",
+    "postbuild": "npm run db:backup && npx prisma migrate deploy && npx prisma generate",
     "start": "node dist/index.js",
     "start:render": "prisma migrate deploy && node dist/index.js",
     "postinstall": "prisma generate && npm run build",
@@ -25,7 +25,7 @@
     "prisma:push": "prisma db push",
     "prisma:pull": "prisma db pull",
     "db:seed": "tsx scripts/seed-admin.ts",
-    "db:backup": "pg_dump $DATABASE_URL > backup.sql",
+    "db:backup": "node scripts/backup-database.js",
     "db:restore": "psql $DATABASE_URL < backup.sql",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "secrets:encrypt": "tsx scripts/secrets/encrypt-env.ts --in .env --out .env.enc.json",
@@ -89,3 +89,4 @@
     "typescript": "^5.3.3"
   }
 }
+
