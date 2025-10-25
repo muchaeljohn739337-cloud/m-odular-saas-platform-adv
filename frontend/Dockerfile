@@ -49,6 +49,9 @@ COPY --from=builder /app/frontend/public ./public
 COPY --from=builder /app/frontend/.next/standalone ./
 COPY --from=builder /app/frontend/.next/static ./.next/static
 
+# CRITICAL: Copy server.js wrapper to container root
+COPY --from=builder /app/frontend/server.js ./server.js
+
 EXPOSE 3000
 
 # Start Next standalone server
