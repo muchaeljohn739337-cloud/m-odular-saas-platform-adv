@@ -33,6 +33,7 @@ import sessionsRouter, {
   setBroadcastSessions as setSessionsBroadcast,
 } from "./routes/sessions";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
+import healthRouter from './routes/health';
 import oalRouter, { setOALSocketIO } from "./routes/oal";
 import { activityLogger } from "./middleware/activityLogger";
 import { rateLimit, validateInput } from "./middleware/security";
@@ -74,15 +75,10 @@ app.use(validateInput);
 app.use(activityLogger);
 app.use("/api", rateLimit({ windowMs: 60_000, maxRequests: 300 }));
 
+import healthRouter from "./routes/health";
+
 // Health check endpoint (critical for production monitoring)
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    environment: config.nodeEnv,
-    version: "1.0.0",
-  });
-});
+app.use("/api", healthRouter);
 
 // Regular routes
 app.use("/api/payments", paymentsRouter);
@@ -187,12 +183,22 @@ setPaymentsSocketIO(io);
 setWithdrawalSocketIO(io);
 setOALSocketIO(io);
 
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+
 // Wire up session broadcasting
 setAuthBroadcast(broadcastSessions);
 setSessionsBroadcast(broadcastSessions);
+
+// 404 handler for undefined routes (before error handler)
+app.use(notFoundHandler);
+
+// Global error handler (MUST be last middleware)
+app.use(errorHandler);
 
 // Start server
 const PORT = config.port || process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+

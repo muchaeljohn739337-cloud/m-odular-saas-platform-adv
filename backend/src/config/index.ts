@@ -141,3 +141,4 @@ if (!config.stripeSecretKey) {
     "⚠️  STRIPE_SECRET_KEY not set. Payment endpoints will be disabled."
   );
 }
+
