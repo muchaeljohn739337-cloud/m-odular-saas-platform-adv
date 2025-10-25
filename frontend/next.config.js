@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Use 'export' for Cloudflare Workers, 'standalone' for traditional deployments
-  output: process.env.CF_PAGES ? "export" : "standalone",
+  // Use 'standalone' for traditional Node.js deployments (Render, Heroku, etc)
+  output: 'standalone',
   images: {
     unoptimized: true,
   },
@@ -14,13 +14,8 @@ const nextConfig = {
     NEXT_PUBLIC_SOCKET_URL:
       process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000",
   },
-  // Disable trailing slashes for better Cloudflare compatibility
+  // Disable trailing slashes
   trailingSlash: false,
-  // Experimental features for edge compatibility
-  experimental: {
-    // Enable if using App Router with Cloudflare
-    // serverActions: false,
-  },
 };
 
 module.exports = nextConfig;
