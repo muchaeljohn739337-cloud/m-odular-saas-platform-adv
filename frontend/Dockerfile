@@ -1,9 +1,8 @@
 ## Build Next.js (standalone) and run with node server.js
-
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Accept build-time environment variables for Next.js (with safe defaults)
+# Accept build-time environment variables for Next.js
 ARG NEXT_PUBLIC_API_URL=https://api.advanciapayledger.com
 ARG NEXT_PUBLIC_APP_NAME="Advancia PayLedger"
 ARG NEXT_PUBLIC_CURRENCY_LIST="USD,EUR,BTC,ETH,USDT,TRUMP,MEDBED"
@@ -12,7 +11,7 @@ ARG NEXT_PUBLIC_VAPID_KEY
 ARG NEXT_PUBLIC_API_KEY
 ARG NEXT_PUBLIC_BOTPRESS_BOT_ID
 
-# Set them as ENV so Next.js build can use them
+# Set as ENV
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 ENV NEXT_PUBLIC_CURRENCY_LIST=$NEXT_PUBLIC_CURRENCY_LIST
@@ -20,32 +19,37 @@ ENV NEXT_PUBLIC_FEATURE_FLAGS=$NEXT_PUBLIC_FEATURE_FLAGS
 ENV NEXT_PUBLIC_VAPID_KEY=$NEXT_PUBLIC_VAPID_KEY
 ENV NEXT_PUBLIC_API_KEY=$NEXT_PUBLIC_API_KEY
 ENV NEXT_PUBLIC_BOTPRESS_BOT_ID=$NEXT_PUBLIC_BOTPRESS_BOT_ID
+ENV NODE_ENV=production
 
-# Copy only frontend package manifests for better cache usage
-COPY frontend/package*.json ./
-# Fallback to npm install if lockfile is out of sync
-RUN npm ci || npm install
+# Copy all package files from workspace root
+COPY package*.json ./
 
-# Copy frontend sources
-COPY frontend/ ./
+# Copy frontend package files
+COPY frontend/package*.json ./frontend/
 
-# Log API URL to verify and bust cache
-RUN echo "Building with API URL: $NEXT_PUBLIC_API_URL"
+# Install workspace dependencies
+RUN npm ci --prefer-offline || npm install
+
+# Copy entire frontend source
+COPY frontend ./frontend
+
+# Navigate to frontend for build
+WORKDIR /app/frontend
 
 # Build Next.js (produces .next/standalone)
 RUN npm run build
 
+# Runtime stage
 FROM node:18-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy public assets and server
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy public and built assets from builder
+COPY --from=builder /app/frontend/public ./public
+COPY --from=builder /app/frontend/.next/standalone ./
+COPY --from=builder /app/frontend/.next/static ./.next/static
 
-# EXPOSE is optional for Render; document default Next.js port
 EXPOSE 3000
 
-# Next standalone server reads $PORT if provided by platform (Render sets PORT)
+# Start Next standalone server
 CMD ["node", "server.js"]
