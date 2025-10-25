@@ -37,19 +37,16 @@ services:
         value: "mailto:support@advanciapayledger.com"
     healthCheckPath: /api/health
 
-  - type: web
+  - type: static
     name: advancia-frontend
-    runtime: docker
+    buildCommand: "cd frontend && npm ci && npm run build"
+    staticPublishPath: frontend/out
     plan: free
     region: virginia
-    dockerfilePath: Frontend/Dockerfile
-    dockerContext: .
-    startCommand: "node server.js"
+    autoDeploy: true
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: "3000"
+      - key: CF_PAGES
+        value: "true"
       - key: NEXT_PUBLIC_API_URL
         value: "https://api.advanciapayledger.com"
       - key: NEXT_PUBLIC_APP_NAME
@@ -66,11 +63,6 @@ services:
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false
-      - key: NEXTAUTH_SECRET
-        sync: false
-      - key: NEXTAUTH_URL
-        value: "https://advanciapayledger.com"
-    healthCheckPath: /
 
 databases:
   - name: advancia-db
