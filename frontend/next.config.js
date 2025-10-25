@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Use 'standalone' for traditional Node.js deployments (Render, Heroku, etc)
-  output: 'standalone',
+  // Changed from 'standalone' to 'export' for static site deployment
+  output: 'export',
   images: {
     unoptimized: true,
   },

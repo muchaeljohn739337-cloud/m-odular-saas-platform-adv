@@ -16,14 +16,20 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: SMTP_SERVER
-        sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
+      - key: SESSION_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: https://advancia-frontend.onrender.com
+        value: https://advanciapayledger.com
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:support@advanciapayledger.com
 
   # 💻 Frontend (Next.js Static Site)
   - type: static
@@ -32,10 +38,13 @@ services:
       cd frontend
       npm ci
       npm run build
-      npm run export
     publishDir: frontend/out
     envVars:
       - key: NODE_VERSION
         value: 20
       - key: NEXT_PUBLIC_API_URL
-        value: https://advancia-backend.onrender.com
+        value: https://api.advanciapayledger.com
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Advancia PayLedger
+      - key: NEXTAUTH_URL
+        value: https://advanciapayledger.com
