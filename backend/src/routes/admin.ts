@@ -603,6 +603,30 @@ router.get("/stats", adminAuth, async (req, res) => {
   }
 });
 
+// GET /api/admin/transactions - Get transaction history
+router.get("/transactions", adminAuth, async (req, res) => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 1000,
+      select: {
+        id: true,
+        userId: true,
+        amount: true,
+        type: true,
+        description: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    return res.json(transactions);
+  } catch (err) {
+    console.error("Transaction fetch error:", err);
+    return res.status(500).json({ error: "Failed to load transactions" });
+  }
+});
+
 // POST /api/admin/users/:userId/update-balance - Update user balance
 router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
   try {
@@ -653,5 +677,31 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
   }
 });
 
+// GET /api/admin/transactions - Get transaction history
+router.get("/transactions", adminAuth, async (req, res) => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 1000,
+      select: {
+        id: true,
+        userId: true,
+        amount: true,
+        type: true,
+        description: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    return res.json(transactions);
+  } catch (err) {
+    console.error("Transaction fetch error:", err);
+    return res.status(500).json({ error: "Failed to load transactions" });
+  }
+});
+
 export default router;
+
+
 
