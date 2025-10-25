@@ -48,7 +48,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-- key: NEXT_PUBLIC_API_URL
+      - key: NEXT_PUBLIC_API_URL
         value: "https://api.advanciapayledger.com"
       - key: NEXT_PUBLIC_APP_NAME
         value: "Advancia PayLedger"
@@ -76,4 +76,3 @@ databases:
     user: advancia_user
     plan: free
     region: virginia
-
