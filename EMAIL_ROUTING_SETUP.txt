@@ -1,0 +1,69 @@
+════════════════════════════════════════════════════════════════
+            EMAIL ROUTING SETUP GUIDE
+════════════════════════════════════════════════════════════════
+
+📧 CLOUDFLARE EMAIL ROUTING (RECOMMENDED - FREE)
+
+Step-by-step:
+1. Go to: https://dash.cloudflare.com/
+2. Click: advanciapayledger.com
+3. Navigate to: Email → Email Routing
+4. Click: Enable Email Routing
+5. Add destination email: your-personal-email@gmail.com
+6. Create catch-all or specific routes:
+
+   Recommended Routes:
+   ├─ support@advanciapayledger.com → your-email@gmail.com
+   ├─ admin@advanciapayledger.com → your-email@gmail.com
+   ├─ noreply@advanciapayledger.com → your-email@gmail.com
+   ├─ info@advanciapayledger.com → your-email@gmail.com
+   └─ hello@advanciapayledger.com → your-email@gmail.com
+
+Benefits:
+✅ Free forever
+✅ No setup costs
+✅ Unlimited forwarding
+✅ SPF/DKIM handled automatically
+✅ Professional email addresses
+✅ Easy management via Cloudflare dashboard
+
+════════════════════════════════════════════════════════════════
+
+📤 SENDING EMAILS (Future - Optional)
+
+If your app needs to SEND emails (OTP, notifications, alerts):
+
+OPTION 1: SendGrid (https://sendgrid.com)
+  Free tier: 100 emails/day
+  Setup: Add API key to backend env vars
+
+OPTION 2: Mailgun (https://mailgun.com)
+  Free tier: 1,000 emails/month
+  Setup: Add API key to backend env vars
+
+OPTION 3: AWS SES (https://aws.amazon.com/ses/)
+  Pay-as-you-go: \.10 per 1,000 emails
+  Setup: AWS credentials in backend
+
+════════════════════════════════════════════════════════════════
+
+🔧 BACKEND EMAIL CONFIGURATION
+
+Current email settings in backend:
+  EMAIL_USER=support@advanciapayledger.com (Gmail SMTP)
+  EMAIL_PASSWORD=[configured]
+  SMTP_HOST=smtp.gmail.com
+  SMTP_PORT=587
+
+This is for SENDING emails from the backend.
+Cloudflare Email Routing is for RECEIVING emails.
+
+════════════════════════════════════════════════════════════════
+
+💡 RECOMMENDED SETUP:
+
+1. NOW: Enable Cloudflare Email Routing (receiving)
+2. LATER: Add SendGrid if you need to send more emails
+3. Keep Gmail SMTP for low-volume transactional emails
+
+════════════════════════════════════════════════════════════════
