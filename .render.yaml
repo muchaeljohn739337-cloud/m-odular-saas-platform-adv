@@ -1,0 +1,41 @@
+services:
+  # 🧠 Backend (API)
+  - type: web
+    name: advancia-backend
+    env: node
+    plan: free
+    buildCommand: |
+      cd backend
+      npm ci
+      npm run build
+    startCommand: node dist/server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SMTP_SERVER
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: FRONTEND_URL
+        value: https://advancia-frontend.onrender.com
+
+  # 💻 Frontend (Next.js Static Site)
+  - type: static
+    name: advancia-frontend
+    buildCommand: |
+      cd frontend
+      npm ci
+      npm run build
+      npm run export
+    publishDir: frontend/out
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_API_URL
+        value: https://advancia-backend.onrender.com

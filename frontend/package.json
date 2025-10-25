@@ -16,7 +16,8 @@
     "test:e2e:headed": "npx playwright test --headed",
     "test:e2e:report": "npx playwright show-report",
     "lint": "next lint",
-    "clean": "npx kill-port 3000 && npm run dev"
+    "clean": "npx kill-port 3000 && npm run dev",
+    "export": "next export"
   },
   "dependencies": {
     "@sentry/nextjs": "^8.0.0",
