@@ -8,30 +8,31 @@ datasource db {
 }
 
 model User {
-  id                 String              @id @default(uuid())
-  email              String              @unique
-  username           String              @unique
-  passwordHash       String
-  firstName          String?
-  lastName           String?
-  role               Role                @default(USER)
-  usdBalance         Decimal             @default(0)
-  btcBalance         Decimal             @default(0)
-  ethBalance         Decimal             @default(0)
-  usdtBalance        Decimal             @default(0)
-  active             Boolean             @default(true)
-  lastLogin          DateTime?
-  termsAccepted      Boolean             @default(false)
-  termsAcceptedAt    DateTime?
-  totpSecret         String?
-  totpEnabled        Boolean             @default(false)
-  totpVerified       Boolean             @default(false)
-  backupCodes        String?
-  ethWalletAddress   String?             @unique
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  cryptoWithdrawals  CryptoWithdrawal[]
-  medBedsBookings    MedBedsBooking[]
+  id                String             @id @default(uuid())
+  email             String             @unique
+  username          String             @unique
+  passwordHash      String
+  firstName         String?
+  lastName          String?
+  role              Role               @default(USER)
+  usdBalance        Decimal            @default(0)
+  active            Boolean            @default(true)
+  lastLogin         DateTime?
+  termsAccepted     Boolean            @default(false)
+  termsAcceptedAt   DateTime?
+  totpSecret        String?
+  totpEnabled       Boolean            @default(false)
+  totpVerified      Boolean            @default(false)
+  backupCodes       String?
+  ethWalletAddress  String?            @unique
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  btcBalance        Decimal            @default(0)
+  ethBalance        Decimal            @default(0)
+  usdtBalance       Decimal            @default(0)
+  RPAWorkflow       RPAWorkflow[]
+  cryptoWithdrawals CryptoWithdrawal[]
+  medBedsBookings   MedBedsBooking[]
 
   @@map("users")
 }
@@ -276,7 +277,6 @@ model CryptoOrder {
 model CryptoWithdrawal {
   id                String    @id @default(uuid())
   userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   cryptoType        String
   cryptoAmount      Decimal
   usdEquivalent     Decimal
@@ -292,6 +292,7 @@ model CryptoWithdrawal {
   cancelledAt       DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -452,7 +453,7 @@ model PushSubscription {
   deviceInfo Json?
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime @default(now()) @updatedAt
 
   @@unique([userId, endpoint])
   @@index([userId])
@@ -602,6 +603,115 @@ model ConsultationMessage {
   @@map("consultation_messages")
 }
 
+model AdminLoginLog {
+  id        Int      @id @default(autoincrement())
+  email     String
+  phone     String?
+  status    String
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@map("admin_login_logs")
+}
+
+model IpBlock {
+  id        String    @id @default(uuid())
+  ip        String    @unique
+  reason    String?
+  until     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([updatedAt])
+  @@map("ip_blocks")
+}
+
+model MedBedsBooking {
+  id              String   @id @default(uuid())
+  userId          String
+  chamberType     String
+  chamberName     String
+  sessionDate     DateTime
+  duration        Int
+  cost            Decimal  @db.Decimal(10, 2)
+  paymentMethod   String
+  paymentStatus   String   @default("pending")
+  transactionId   String?
+  stripeSessionId String?
+  status          String   @default("scheduled")
+  effectiveness   Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionDate])
+  @@index([status])
+  @@index([paymentStatus])
+  @@map("medbeds_bookings")
+}
+
+model OAL {
+  id          String    @id @default(cuid())
+  object      String
+  action      String
+  location    String
+  subjectId   String?
+  metadata    Json?
+  status      OALStatus @default(PENDING)
+  createdById String
+  updatedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([object])
+  @@index([action])
+  @@index([location])
+  @@index([status])
+  @@index([createdById])
+  @@index([subjectId])
+  @@index([createdAt])
+  @@map("oal_audit_log")
+}
+
+model RPAExecution {
+  id          String             @id
+  workflowId  String
+  status      RPAExecutionStatus @default(RUNNING)
+  trigger     Json
+  steps       Json
+  error       String?
+  startedAt   DateTime           @default(now())
+  completedAt DateTime?
+  RPAWorkflow RPAWorkflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([startedAt])
+  @@index([status])
+  @@index([workflowId])
+}
+
+model RPAWorkflow {
+  id           String         @id
+  name         String
+  description  String?
+  trigger      Json
+  actions      Json
+  enabled      Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  createdById  String
+  RPAExecution RPAExecution[]
+  users        User           @relation(fields: [createdById], references: [id])
+
+  @@index([createdById])
+  @@index([enabled])
+}
+
 enum Role {
   USER
   STAFF
@@ -632,90 +742,14 @@ enum ConsultationStatus {
   CANCELLED
 }
 
-// Admin login audit log
-model AdminLoginLog {
-  id         Int      @id @default(autoincrement())
-  email      String
-  phone      String?
-  status     String   // "SUCCESS", "FAILED_PASSWORD", "FAILED_OTP", "OTP_SENT"
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
-  
-  @@index([email])
-  @@index([status])
-  @@index([createdAt])
-  @@map("admin_login_logs")
-}
-
-model IpBlock {
-  id        String    @id @default(uuid())
-  ip        String    @unique
-  reason    String?
-  until     DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@index([updatedAt])
-  @@map("ip_blocks")
-}
-
-model MedBedsBooking {
-  id              String   @id @default(uuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chamberType     String   // "recovery", "enhancement", "diagnostic"
-  chamberName     String
-  sessionDate     DateTime
-  duration        Int      // minutes
-  cost            Decimal  @db.Decimal(10, 2)
-  paymentMethod   String   // "balance", "stripe"
-  paymentStatus   String   @default("pending") // "pending", "paid", "failed", "refunded"
-  transactionId   String?
-  stripeSessionId String?
-  status          String   @default("scheduled") // "scheduled", "in-progress", "completed", "cancelled"
-  effectiveness   Int?     // 0-100
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([userId])
-  @@index([sessionDate])
-  @@index([status])
-  @@index([paymentStatus])
-  @@map("medbeds_bookings")
-}
-
-// OAL: Object-Action-Location audit model for tracking sensitive operations
-model OAL {
-  id         String    @id @default(cuid())
-  object     String    // e.g., "ledger.balance", "user.role", "system.config"
-  action     String    // e.g., "adjust", "create", "delete", "update"
-  location   String    // e.g., "admin.panel", "api.endpoint", "cron.job"
-  
-  // Optional context
-  subjectId  String?   // e.g., user id the action concerns
-  metadata   Json?     // Additional context (delta, reason, old/new values, etc)
-  status     OALStatus @default(PENDING)
-
-  // Auditing
-  createdById String   // Admin/user who initiated the action
-  updatedById String?  // Admin who approved/rejected (if applicable)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([object])
-  @@index([action])
-  @@index([location])
-  @@index([status])
-  @@index([createdById])
-  @@index([subjectId])
-  @@index([createdAt])
-  @@map("oal_audit_log")
-}
-
 enum OALStatus {
-  PENDING   // Awaiting approval
-  APPROVED  // Action approved and executed
-  REJECTED  // Action rejected
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RPAExecutionStatus {
+  RUNNING
+  SUCCESS
+  FAILED
 }
