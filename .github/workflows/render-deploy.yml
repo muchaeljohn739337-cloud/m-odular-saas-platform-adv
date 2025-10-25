@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       force_deploy:
-        description: 'Force deploy both services'
+        description: "Force deploy both services"
         required: false
         type: boolean
         default: false
@@ -26,8 +26,8 @@ jobs:
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: 🔐 Validate Render API Key
         env:
@@ -45,7 +45,7 @@ jobs:
         run: |
           BACKEND_CHANGED=false
           FRONTEND_CHANGED=false
-          
+
           if [ "${{ github.event.inputs.force_deploy }}" == "true" ]; then
             echo "🔄 Force deploy requested"
             BACKEND_CHANGED=true
@@ -63,7 +63,7 @@ jobs:
               echo "🎨 Frontend changes detected"
             fi
           fi
-          
+
           echo "backend_changed=$BACKEND_CHANGED" >> $GITHUB_OUTPUT
           echo "frontend_changed=$FRONTEND_CHANGED" >> $GITHUB_OUTPUT
 
@@ -73,7 +73,7 @@ jobs:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           echo "🧱 Triggering backend deployment..."
-          
+
           # Using Render API to trigger deployment
           curl -X POST "https://api.render.com/v1/services/advancia-backend/deploys" \
             -H "Authorization: Bearer $RENDER_API_KEY" \
@@ -88,7 +88,7 @@ jobs:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           echo "🎨 Triggering frontend deployment..."
-          
+
           curl -X POST "https://api.render.com/v1/services/advancia-frontend/deploys" \
             -H "Authorization: Bearer $RENDER_API_KEY" \
             -H "Content-Type: application/json" \
@@ -109,7 +109,7 @@ jobs:
             EMOJI="❌"
             COLOR="danger"
           fi
-          
+
           curl -X POST "$SLACK_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "{

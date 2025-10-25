@@ -11,12 +11,14 @@ Deploy both frontend (Next.js) and backend (Node/Prisma) to Render with a single
 The `render.yaml` blueprint automatically creates:
 
 1. **Backend Service** (`advancia-backend`)
+
    - Node.js 20 + Express + Prisma
    - Health check at `/health`
    - Auto-deploys from `backend/**` changes
    - PostgreSQL database connection
 
 2. **Frontend Service** (`advancia-frontend`)
+
    - Next.js 14 + React + PWA
    - Static site generation
    - Auto-deploys from `frontend/**` changes
@@ -59,6 +61,7 @@ cd -modular-saas-platform
 Create each service manually:
 
 **Backend Service:**
+
 - Type: Web Service
 - Environment: Node
 - Build Command: `cd backend && npm install && npx prisma generate && npm run build`
@@ -67,7 +70,8 @@ Create each service manually:
 - Auto-Deploy: Yes
 
 **Frontend Service:**
-- Type: Web Service  
+
+- Type: Web Service
 - Environment: Node
 - Build Command: `cd frontend && npm install && npm run build`
 - Start Command: `cd frontend && npm start`
@@ -75,6 +79,7 @@ Create each service manually:
 - Auto-Deploy: Yes
 
 **Database:**
+
 - Type: PostgreSQL
 - Name: `advancia-db`
 - Database: `advancia_db`
@@ -84,6 +89,7 @@ Create each service manually:
 #### 3. Configure Environment Variables
 
 **Backend Environment Variables:**
+
 ```bash
 NODE_VERSION=20
 PORT=4000
@@ -101,6 +107,7 @@ VAPID_PRIVATE_KEY=<generate-vapid-key>
 ```
 
 **Frontend Environment Variables:**
+
 ```bash
 NODE_VERSION=20
 NEXT_PUBLIC_API_URL=<from-backend-service>
@@ -113,16 +120,19 @@ NEXT_PUBLIC_STRIPE_PUBLIC_KEY=<your-stripe-public-key>
 #### 4. Generate Required Secrets
 
 **JWT Secret:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
 **VAPID Keys (for web push):**
+
 ```bash
 cd backend && npx web-push generate-vapid-keys
 ```
 
 **Gmail App Password:**
+
 1. Go to [Google Account Security](https://myaccount.google.com/security)
 2. Enable 2-Step Verification
 3. Create App Password for "Mail"
@@ -143,16 +153,19 @@ Once the PostgreSQL database is created:
 #### 6. Custom Domain (Optional)
 
 **Backend:**
+
 1. Go to backend service → Settings → Custom Domains
 2. Add `api.advanciapayledger.com`
 3. Update DNS with Render's CNAME
 
 **Frontend:**
+
 1. Go to frontend service → Settings → Custom Domains
 2. Add `advanciapayledger.com`
 3. Update DNS with Render's CNAME
 
 **Update CORS:**
+
 ```bash
 # Update backend's ALLOWED_ORIGINS
 ALLOWED_ORIGINS=https://advanciapayledger.com,https://api.advanciapayledger.com
@@ -167,11 +180,13 @@ The repository includes `.github/workflows/render-deploy.yml` for automatic depl
 **Setup:**
 
 1. **Get Render API Key:**
+
    - Go to [Render Account Settings](https://dashboard.render.com/account)
    - Create new API key
    - Copy the key
 
 2. **Add GitHub Secret:**
+
    - Go to GitHub repo → Settings → Secrets and variables → Actions
    - Click **New repository secret**
    - Name: `RENDER_API_KEY`
@@ -181,6 +196,7 @@ The repository includes `.github/workflows/render-deploy.yml` for automatic depl
    - Add `SLACK_WEBHOOK_URL` secret (if using Slack)
 
 **How It Works:**
+
 - Pushes to `main` trigger automatic deployment
 - Smart detection: only deploys changed services
 - Manual trigger available via workflow_dispatch
@@ -190,11 +206,13 @@ The repository includes `.github/workflows/render-deploy.yml` for automatic depl
 Use the included PowerShell scripts:
 
 **Setup Credentials:**
+
 ```powershell
 .\scripts\setup-api-tokens.ps1
 ```
 
 **Deploy Frontend:**
+
 ```powershell
 .\scripts\render-frontend-auto.ps1
 ```
@@ -204,11 +222,13 @@ Use the included PowerShell scripts:
 ### Verify Deployment
 
 **Backend Health Check:**
+
 ```bash
 curl https://advancia-backend.onrender.com/health
 ```
 
 **Expected Response:**
+
 ```json
 {
   "status": "ok",
@@ -219,6 +239,7 @@ curl https://advancia-backend.onrender.com/health
 ```
 
 **Frontend Check:**
+
 ```bash
 curl -I https://advancia-frontend.onrender.com
 ```
@@ -226,6 +247,7 @@ curl -I https://advancia-frontend.onrender.com
 ### Database Setup
 
 **Seed Admin User:**
+
 ```bash
 # Connect to backend shell via Render dashboard
 cd backend
@@ -235,10 +257,12 @@ npm run seed:admin
 ### Monitoring
 
 **View Logs:**
+
 - Render Dashboard → Service → Logs
 - Real-time streaming available
 
 **Metrics:**
+
 - CPU usage
 - Memory usage
 - Request count
@@ -249,6 +273,7 @@ npm run seed:admin
 ### Build Failures
 
 **Backend Build Issues:**
+
 ```bash
 # Check Prisma schema
 cd backend && npx prisma validate
@@ -261,6 +286,7 @@ npm run build
 ```
 
 **Frontend Build Issues:**
+
 ```bash
 # Clear Next.js cache
 cd frontend && rm -rf .next
@@ -285,6 +311,7 @@ npx prisma db push --skip-generate
 ### CORS Errors
 
 Update backend's `ALLOWED_ORIGINS`:
+
 ```bash
 ALLOWED_ORIGINS=https://advancia-frontend.onrender.com,https://advanciapayledger.com,http://localhost:3000
 ```
@@ -292,6 +319,7 @@ ALLOWED_ORIGINS=https://advancia-frontend.onrender.com,https://advanciapayledger
 ### Service Won't Start
 
 Check logs for:
+
 - Port conflicts (should use `process.env.PORT`)
 - Missing environment variables
 - Database connection failures
@@ -301,11 +329,13 @@ Check logs for:
 ### Free Tier Limitations
 
 Render Free tier services:
+
 - Spin down after 15 minutes of inactivity
 - First request after spin-down takes 30-60 seconds
 - 750 hours/month runtime
 
 **Solutions:**
+
 1. Upgrade to paid plan ($7/month)
 2. Use external uptime monitor (every 10 minutes)
 3. Accept cold starts
@@ -317,10 +347,10 @@ Render Free tier services:
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL + '?connection_limit=1'
-    }
-  }
-})
+      url: process.env.DATABASE_URL + "?connection_limit=1",
+    },
+  },
+});
 ```
 
 ## Security Checklist
@@ -337,12 +367,14 @@ const prisma = new PrismaClient({
 ## Cost Breakdown
 
 **Free Tier:**
+
 - Backend: $0
-- Frontend: $0  
+- Frontend: $0
 - Database (500MB): $0
 - **Total: $0/month**
 
 **Paid Plan (Recommended for Production):**
+
 - Backend (Starter): $7/month
 - Frontend (Starter): $7/month
 - Database (1GB): $7/month
