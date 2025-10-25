@@ -1,4 +1,4 @@
-﻿services:
+services:
   - type: web
     name: advancia-backend-upnrf
     runtime: node
@@ -6,7 +6,7 @@
     region: oregon
     rootDir: backend
     autoDeploy: true
-    buildCommand: "npm ci && npx prisma generate && npx prisma migrate deploy && npm run build"
+    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
     envVars:
       - key: NODE_ENV
         value: production
@@ -43,6 +43,8 @@
     region: virginia
     dockerfilePath: Frontend/Dockerfile
     dockerContext: .
+    dockerCommand: ""
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
