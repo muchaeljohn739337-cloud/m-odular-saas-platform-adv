@@ -23,7 +23,8 @@ ENV NEXT_PUBLIC_BOTPRESS_BOT_ID=$NEXT_PUBLIC_BOTPRESS_BOT_ID
 
 # Copy only frontend package manifests for better cache usage
 COPY frontend/package*.json ./
-RUN npm ci
+# Fallback to npm install if lockfile is out of sync
+RUN npm ci || npm install
 
 # Copy frontend sources
 COPY frontend/ ./
