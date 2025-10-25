@@ -41,7 +41,7 @@ services:
     runtime: docker
     plan: free
     region: virginia
-    dockerfilePath: Frontend/Dockerfile
+    dockerfilePath: frontend/Dockerfile
     dockerContext: .
     dockerCommand: ""
     autoDeploy: true
