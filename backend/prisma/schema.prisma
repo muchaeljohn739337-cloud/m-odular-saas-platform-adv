@@ -762,4 +762,5 @@ model SystemConfig {
   createdAt DateTime @default(now())
 
   @@map("system_config")
+
 }
