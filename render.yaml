@@ -7,6 +7,7 @@ services:
     rootDir: backend
     autoDeploy: true
     buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -36,16 +37,22 @@ services:
         value: "mailto:support@advanciapayledger.com"
     healthCheckPath: /api/health
 
-  - type: static
+  - type: web
     name: advancia-frontend
-    buildCommand: "cd frontend && npm ci && npm run build"
-    staticPublishPath: frontend/out
+    runtime: node
     plan: free
     region: virginia
+    rootDir: frontend
     autoDeploy: true
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
     envVars:
-      - key: CF_PAGES
-        value: "true"
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: HOSTNAME
+        value: "0.0.0.0"
       - key: NEXT_PUBLIC_API_URL
         value: "https://api.advanciapayledger.com"
       - key: NEXT_PUBLIC_APP_NAME
@@ -61,6 +68,10 @@ services:
       - key: NEXT_PUBLIC_BOTPRESS_BOT_ID
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: NEXTAUTH_URL
+        value: "https://advanciapayledger.com"
+      - key: NEXTAUTH_SECRET
         sync: false
 
 databases:
