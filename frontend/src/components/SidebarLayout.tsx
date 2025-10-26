@@ -40,7 +40,7 @@ interface NavLinkProps {
   onClick?: () => void;
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function SidebarLayout({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const sessionUser = session?.user as SessionUser | undefined;
   const pathname = usePathname();
@@ -294,3 +294,4 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
