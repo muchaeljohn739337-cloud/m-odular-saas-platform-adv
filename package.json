@@ -33,5 +33,8 @@
     "docker"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "sharp": "^0.34.4"
+  }
 }

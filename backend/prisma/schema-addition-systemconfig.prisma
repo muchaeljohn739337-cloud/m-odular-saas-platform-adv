@@ -1,0 +1,11 @@
+// Append this to the end of backend/prisma/schema.prisma
+
+model SystemConfig {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("system_config")
+}

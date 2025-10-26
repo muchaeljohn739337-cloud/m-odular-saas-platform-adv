@@ -20,7 +20,7 @@ export default function AdminBalanceManager({
   currentBalances,
   onBalanceUpdated,
 }: AdminBalanceManagerProps) {
-  const [balanceType, setBalanceType] = useState<string>("USD");
+  const [currency, setcurrency] = useState<string>("USD");
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -35,11 +35,11 @@ export default function AdminBalanceManager({
 
     try {
       const response: any = await adminApi.post(
-        `/admin/users/${userId}/add-balance`,
+        `/admin/users/${userId}/update-balance`,
         {
-          balanceType,
+          currency,
           amount: parseFloat(amount),
-          description: description || `Admin added ${amount} ${balanceType}`,
+          description: description || `Admin added ${amount} ${currency}`,
         }
       );
 
@@ -114,8 +114,8 @@ export default function AdminBalanceManager({
             Balance Type
           </label>
           <select
-            value={balanceType}
-            onChange={(e) => setBalanceType(e.target.value)}
+            value={currency}
+            onChange={(e) => setcurrency(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             aria-label="Select balance type"
           >
@@ -135,7 +135,7 @@ export default function AdminBalanceManager({
             step="any"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={`Enter ${balanceType} amount`}
+            placeholder={`Enter ${currency} amount`}
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             aria-label="Amount to add"
           />
@@ -166,7 +166,7 @@ export default function AdminBalanceManager({
               Adding...
             </span>
           ) : (
-            `Add ${amount || "0"} ${balanceType}`
+            `Add ${amount || "0"} ${currency}`
           )}
         </button>
       </div>
@@ -181,3 +181,5 @@ export default function AdminBalanceManager({
     </div>
   );
 }
+
+

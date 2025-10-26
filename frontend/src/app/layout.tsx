@@ -7,6 +7,7 @@ import LiveSupportScript from "@/components/LiveSupportScript";
 import SystemFeedbackBanner from "@/components/SystemFeedbackBanner";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import ChatbotWidget from "@/components/ChatbotWidget";
+import SilentModeProvider from "@/components/SilentModeProvider";
 
 export const metadata: Metadata = {
   title: "Advancia Pay Ledger - Fintech Dashboard",
@@ -25,6 +26,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ScrollToTop />
           <AuthProvider>
+            <SilentModeProvider />
             <SystemFeedbackBanner />
             <LiveSupportScript />
             <ServiceWorkerRegistration />
@@ -36,3 +38,4 @@ export default function RootLayout({
     </html>
   );
 }
+
