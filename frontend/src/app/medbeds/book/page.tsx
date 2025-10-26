@@ -39,8 +39,8 @@ export default function MedbedsBookingPage() {
         <input className="border rounded px-3 py-2" placeholder="Full name" value={fullName} onChange={e=>setFullName(e.target.value)} />
         <input className="border rounded px-3 py-2" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
         <input className="border rounded px-3 py-2" placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} />
-        <input className=\"border rounded px-3 py-2\" type=\"date\" title=\"Preferred appointment date\" value={preferredDate} onChange={e=>setPreferredDate(e.target.value)} />
-        <input className=\"border rounded px-3 py-2\" type=\"time\" title=\"Preferred appointment time\" value={preferredTime} onChange={e=>setPreferredTime(e.target.value)} />
+        <input className="border rounded px-3 py-2" type="date" title="Preferred appointment date" value={preferredDate} onChange={e=>setPreferredDate(e.target.value)} />
+        <input className="border rounded px-3 py-2" type="time" title="Preferred appointment time" value={preferredTime} onChange={e=>setPreferredTime(e.target.value)} />
         <textarea className="border rounded px-3 py-2" placeholder="Additional notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} />
         <textarea className="border rounded px-3 py-2" placeholder="Paste your JWT token" value={token} onChange={e=>setToken(e.target.value)} />
       </div>
