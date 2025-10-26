@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   // Changed from 'standalone' to 'export' for static site deployment
-  output: 'export',
+  output: 'standalone',
   images: {
     unoptimized: true,
   },
@@ -19,3 +19,5 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+
+
