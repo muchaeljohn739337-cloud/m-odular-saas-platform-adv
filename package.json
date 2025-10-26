@@ -19,7 +19,8 @@
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
     "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces"
+    "lint": "npm run lint --workspaces",
+    "start": "cd frontend && npm start"
   },
   "engines": {
     "node": ">=18.0.0",
