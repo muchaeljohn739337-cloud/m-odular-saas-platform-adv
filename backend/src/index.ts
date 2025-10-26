@@ -34,7 +34,7 @@ import sessionsRouter, {
 } from "./routes/sessions";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import healthRouter from './routes/health';
-import tokensRouter from "./routes/tokens";
+import tokensRouter, { setTokenSocketIO } from "./routes/tokens";
 import rewardsRouter from "./routes/rewards";
 import healthReadingsRouter from "./routes/health-readings";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
@@ -187,6 +187,7 @@ setSupportSocketIO(io);
 setPaymentsSocketIO(io);
 setWithdrawalSocketIO(io);
 setOALSocketIO(io);
+setTokenSocketIO(io);
 
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
