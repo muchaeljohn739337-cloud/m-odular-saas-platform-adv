@@ -34,6 +34,8 @@ import sessionsRouter, {
 } from "./routes/sessions";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import healthRouter from './routes/health';
+import tokensRouter from "./routes/tokens";
+import rewardsRouter from "./routes/rewards";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
 import { activityLogger } from "./middleware/activityLogger";
 import { rateLimit, validateInput } from "./middleware/security";
@@ -101,6 +103,8 @@ app.use("/api/auth/admin", authAdminRouter);
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/withdrawals", withdrawalsRouter);
 app.use("/api/oal", oalRouter);
+app.use("/api/tokens", tokensRouter);
+app.use("/api/rewards", rewardsRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -199,5 +203,6 @@ const PORT = config.port || process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
