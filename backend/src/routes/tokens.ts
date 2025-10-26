@@ -181,4 +181,166 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
   }
 });
 
+
+// Withdraw tokens to a blockchain address
+router.post("/withdraw", authenticateToken as any, async (req, res) => {
+  try {
+    const { userId, amount, toAddress } = req.body;
+    
+    if (!userId || !amount || !toAddress) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    const withdrawAmount = new Decimal(amount);
+    
+    if (withdrawAmount.lte(0)) {
+      return res.status(400).json({ error: "Amount must be positive" });
+    }
+    
+    // Validate address format (basic check)
+    if (!toAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return res.status(400).json({ error: "Invalid blockchain address" });
+    }
+    
+    const result = await prisma.$transaction(async (tx) => {
+      let wallet = await tx.tokenWallet.findUnique({
+        where: { userId },
+      });
+      
+      if (!wallet) {
+        throw new Error("Wallet not found");
+      }
+      
+      if (wallet.balance.lt(withdrawAmount)) {
+        throw new Error("Insufficient balance for withdrawal");
+      }
+      
+      // Deduct from wallet
+      await tx.tokenWallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: withdrawAmount } },
+      });
+      
+      // Record transaction
+      const transaction = await tx.tokenTransaction.create({
+        data: {
+          walletId: wallet.id,
+          amount: withdrawAmount.neg(),
+          type: "withdraw",
+          status: "pending",
+          description: `Withdrawal to ${toAddress.substring(0, 10)}...`,
+          toAddress: toAddress,
+          metadata: JSON.stringify({
+            toAddress,
+            withdrawnAt: new Date().toISOString(),
+          }),
+        },
+      });
+      
+      return transaction;
+    });
+    
+    // Emit Socket.IO event
+    if (io) {
+      io.to(`user-${userId}`).emit("token:withdrawn", {
+        amount: withdrawAmount.toString(),
+        toAddress,
+        transactionId: result.id,
+        status: "pending",
+      });
+    }
+    
+    res.json({
+      success: true,
+      transactionId: result.id,
+      amount: withdrawAmount.toString(),
+      toAddress,
+      status: "pending",
+      message: "Withdrawal initiated. Processing...",
+    });
+  } catch (error: any) {
+    console.error("[TOKENS] Error processing withdrawal:", error);
+    res.status(500).json({ error: error.message || "Failed to process withdrawal" });
+  }
+});
+
+// Cashout tokens to USD (convert to fiat)
+router.post("/cashout", authenticateToken as any, async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+    
+    if (!userId || !amount) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    const cashoutAmount = new Decimal(amount);
+    const conversionRate = new Decimal("0.10"); // 1 token = $0.10 USD
+    
+    if (cashoutAmount.lte(0)) {
+      return res.status(400).json({ error: "Amount must be positive" });
+    }
+    
+    const result = await prisma.$transaction(async (tx) => {
+      let wallet = await tx.tokenWallet.findUnique({
+        where: { userId },
+      });
+      
+      if (!wallet) {
+        throw new Error("Wallet not found");
+      }
+      
+      if (wallet.balance.lt(cashoutAmount)) {
+        throw new Error("Insufficient balance for cashout");
+      }
+      
+      const usdValue = cashoutAmount.mul(conversionRate);
+      
+      // Deduct tokens
+      await tx.tokenWallet.update({
+        where: { id: wallet.id },
+        data: { balance: { decrement: cashoutAmount } },
+      });
+      
+      // Record cashout transaction
+      const transaction = await tx.tokenTransaction.create({
+        data: {
+          walletId: wallet.id,
+          amount: cashoutAmount.neg(),
+          type: "cashout",
+          status: "completed",
+          description: `Cashed out ${cashoutAmount.toString()} tokens for $${usdValue.toString()}`,
+          metadata: JSON.stringify({
+            usdValue: usdValue.toString(),
+            conversionRate: conversionRate.toString(),
+            cashedOutAt: new Date().toISOString(),
+          }),
+        },
+      });
+      
+      return { transaction, usdValue };
+    });
+    
+    // Emit Socket.IO event
+    if (io) {
+      io.to(`user-${userId}`).emit("token:cashout", {
+        tokensSpent: cashoutAmount.toString(),
+        usdReceived: result.usdValue.toString(),
+        transactionId: result.transaction.id,
+      });
+    }
+    
+    res.json({
+      success: true,
+      transactionId: result.transaction.id,
+      tokensSpent: cashoutAmount.toString(),
+      usdReceived: result.usdValue.toString(),
+      message: `Successfully cashed out $${result.usdValue.toString()}!`,
+    });
+  } catch (error: any) {
+    console.error("[TOKENS] Error processing cashout:", error);
+    res.status(500).json({ error: error.message || "Failed to process cashout" });
+  }
+});
+
+
 export default router;

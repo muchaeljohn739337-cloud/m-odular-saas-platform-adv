@@ -249,4 +249,78 @@ router.post("/tier/points", authenticateToken as any, async (req, res) => {
   }
 });
 
+
+// Get pending rewards for a user
+router.get("/pending/:userId", authenticateToken as any, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const rewards = await prisma.reward.findMany({
+      where: { 
+        userId,
+        status: "pending",
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } }
+        ]
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    
+    const total = rewards.reduce((sum, r) => sum.add(r.amount), new Decimal(0));
+    
+    res.json({
+      rewards: rewards.map(r => ({
+        ...r,
+        amount: r.amount.toString(),
+      })),
+      summary: {
+        total: total.toString(),
+        count: rewards.length,
+      },
+    });
+  } catch (error: any) {
+    console.error("[REWARDS] Error fetching pending rewards:", error);
+    res.status(500).json({ error: "Failed to fetch pending rewards" });
+  }
+});
+
+// Get global leaderboard
+router.get("/leaderboard", async (req, res) => {
+  try {
+    const limit = Math.min(100, Number(req.query.limit) || 10);
+    
+    const leaderboard = await prisma.userTier.findMany({
+      orderBy: { points: "desc" },
+      take: limit,
+    });
+    
+    // Get user details for formatted response
+    const formatted = await Promise.all(leaderboard.map(async (entry, index) => {
+      const user = await prisma.user.findUnique({
+        where: { id: entry.userId },
+        select: { email: true, firstName: true, lastName: true }
+      });
+      
+      return {
+        rank: index + 1,
+        userId: entry.userId,
+        userName: user?.firstName || user?.email || "Anonymous",
+        points: entry.points,
+        tier: entry.currentTier,
+        lifetimePoints: entry.lifetimePoints,
+      };
+    }));
+    
+    res.json({
+      leaderboard: formatted,
+      count: formatted.length,
+    });
+  } catch (error: any) {
+    console.error("[REWARDS] Error fetching leaderboard:", error);
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
+});
+
+
 export default router;
