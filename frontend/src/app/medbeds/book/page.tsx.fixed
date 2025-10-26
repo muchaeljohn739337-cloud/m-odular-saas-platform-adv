@@ -36,11 +36,11 @@ export default function MedbedsBookingPage() {
       <h1 className="text-3xl font-bold">Schedule a Med Beds Appointment</h1>
       <p className="text-gray-600">Complete the form below to request an appointment. Our team will review and confirm availability.</p>
       <div className="grid gap-3">
-        <input className="border rounded px-3 py-2" placeholder="Full name" value={fullName} onChange={e=>setFullName(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} />
-        <input className=\"border rounded px-3 py-2\" type=\"date\" title=\"Preferred appointment date\" value={preferredDate} onChange={e=>setPreferredDate(e.target.value)} />
-        <input className=\"border rounded px-3 py-2\" type=\"time\" title=\"Preferred appointment time\" value={preferredTime} onChange={e=>setPreferredTime(e.target.value)} />
+        <input className="border rounded px-3 py-2" placeholder="Full name" title="Full name" value={fullName} onChange={e=>setFullName(e.target.value)} />
+        <input className="border rounded px-3 py-2" placeholder="Email" title="Email address" value={email} onChange={e=>setEmail(e.target.value)} />
+        <input className="border rounded px-3 py-2" placeholder="Phone" title="Phone number" value={phone} onChange={e=>setPhone(e.target.value)} />
+        <input className="border rounded px-3 py-2" type="date" placeholder="Preferred date" title="Preferred appointment date" value={preferredDate} onChange={e=>setPreferredDate(e.target.value)} />
+        <input className="border rounded px-3 py-2" type="time" placeholder="Preferred time" title="Preferred appointment time" value={preferredTime} onChange={e=>setPreferredTime(e.target.value)} />
         <textarea className="border rounded px-3 py-2" placeholder="Additional notes (optional)" value={notes} onChange={e=>setNotes(e.target.value)} />
         <textarea className="border rounded px-3 py-2" placeholder="Paste your JWT token" value={token} onChange={e=>setToken(e.target.value)} />
       </div>

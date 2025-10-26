@@ -231,10 +231,7 @@ export default function CryptoRecovery() {
                     <code className="text-sm text-slate-600 bg-slate-100 px-2 py-1 rounded">
                       {wallet.address}
                     </code>
-                    <button
-                      onClick={() => copyToClipboard(wallet.address)}
-                      className="p-1 hover:bg-slate-100 rounded transition-colors"
-                    >
+                    <button title="Copy address" onClick={() => copyToClipboard(wallet.address)} className="p-1 hover:bg-slate-100 rounded transition-colors">
                       <Copy size={14} className="text-slate-600" />
                     </button>
                   </div>

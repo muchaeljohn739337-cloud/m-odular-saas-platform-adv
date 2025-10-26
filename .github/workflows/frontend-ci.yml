@@ -58,8 +58,8 @@ jobs:
         working-directory: frontend
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.advanciapayledger.com' }}
-          NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL || 'wss://api.advanciapayledger.com' }}
+          NEXT_PUBLIC_API_URL: https://api.advanciapayledger.com
+          NEXT_PUBLIC_WS_URL: wss://api.advanciapayledger.com
         run: npm run build
 
       - name: 📤 Upload build artifacts
@@ -144,3 +144,5 @@ jobs:
           echo "- **Author**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Please check the logs above for details." >> $GITHUB_STEP_SUMMARY
+
+

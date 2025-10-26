@@ -48,8 +48,8 @@ jobs:
       - name: 🏗️ Build Next.js
         working-directory: ${{ env.WORKING_DIR }}
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.advanciapayledger.com' }}
-          NEXT_PUBLIC_SOCKET_URL: ${{ secrets.NEXT_PUBLIC_SOCKET_URL || 'https://api.advanciapayledger.com' }}
+          NEXT_PUBLIC_API_URL: https://api.advanciapayledger.com
+          NEXT_PUBLIC_SOCKET_URL: https://api.advanciapayledger.com
           NODE_ENV: production
         run: npm run build
 
@@ -114,3 +114,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Docker image built successfully" >> $GITHUB_STEP_SUMMARY
           echo "- 📦 Image: advancia-frontend:test" >> $GITHUB_STEP_SUMMARY
+
+
