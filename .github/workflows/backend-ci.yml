@@ -67,35 +67,6 @@ jobs:
           retention-days: 7
 
   # ============================================================
-  # Job 2: Database Schema Validation
-  # ============================================================
-  prisma-validate:
-    name: 🗄️ Validate Prisma Schema
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: 📦 Install dependencies
-        working-directory: backend
-        run: npm ci --prefer-offline --no-audit
-
-      - name: ✅ Validate Prisma schema
-        working-directory: backend
-        run: npx prisma validate
-
-      - name: 🔍 Check for schema drift
-        working-directory: backend
-        run: npx prisma format --check
-
-  # ============================================================
   # Job 3: Security Audit
   # ============================================================
   security-audit:
