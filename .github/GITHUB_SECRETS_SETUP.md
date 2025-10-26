@@ -15,6 +15,7 @@ This guide shows you how to configure GitHub Secrets for automated CI/CD deploym
 ### Step 1: Get Render Deploy Hooks
 
 #### For Frontend Service:
+
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Select your **Frontend service** (advanciapayledger.com)
 3. Click **Settings** in the left sidebar
@@ -24,6 +25,7 @@ This guide shows you how to configure GitHub Secrets for automated CI/CD deploym
 7. Copy the webhook URL (looks like: `https://api.render.com/deploy/srv-xxxxx?key=yyyyy`)
 
 #### For Backend Service:
+
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Select your **Backend service** (api.advanciapayledger.com)
 3. Click **Settings** in the left sidebar
@@ -43,14 +45,15 @@ This guide shows you how to configure GitHub Secrets for automated CI/CD deploym
 
 Add these 4 secrets:
 
-| Secret Name | Value | Required |
-|------------|-------|----------|
-| `RENDER_DEPLOY_HOOK_FRONTEND` | Frontend deploy hook URL from Step 1 | ✅ Yes |
-| `RENDER_DEPLOY_HOOK_BACKEND` | Backend deploy hook URL from Step 1 | ✅ Yes |
-| `NEXT_PUBLIC_API_URL` | `https://api.advanciapayledger.com` | ⚠️ Optional |
-| `NEXT_PUBLIC_WS_URL` | `wss://api.advanciapayledger.com` | ⚠️ Optional |
+| Secret Name                   | Value                                | Required    |
+| ----------------------------- | ------------------------------------ | ----------- |
+| `RENDER_DEPLOY_HOOK_FRONTEND` | Frontend deploy hook URL from Step 1 | ✅ Yes      |
+| `RENDER_DEPLOY_HOOK_BACKEND`  | Backend deploy hook URL from Step 1  | ✅ Yes      |
+| `NEXT_PUBLIC_API_URL`         | `https://api.advanciapayledger.com`  | ⚠️ Optional |
+| `NEXT_PUBLIC_WS_URL`          | `wss://api.advanciapayledger.com`    | ⚠️ Optional |
 
 **How to add each secret:**
+
 1. Click **New repository secret**
 2. Enter the **Name** (exactly as shown above)
 3. Paste the **Value**
@@ -73,6 +76,7 @@ Add these 4 secrets:
 ### Step 4: Test the CI/CD Pipeline
 
 **Option 1: Trigger by pushing code**
+
 ```bash
 # Make a small change to trigger workflows
 cd frontend
@@ -83,6 +87,7 @@ git push origin main
 ```
 
 **Option 2: Check existing workflow runs**
+
 1. Go to your repository → **Actions** tab
 2. You should see workflows running (they were triggered by the workflow files you just pushed)
 3. Click on a workflow run to see details
@@ -94,7 +99,8 @@ git push origin main
 
 ### When you push to `main` branch:
 
-**Frontend changes (`frontend/**`)**
+**Frontend changes (`frontend/**`)\*\*
+
 ```
 Trigger: Push to main with frontend/ changes
    ↓
@@ -108,7 +114,8 @@ Trigger: Push to main with frontend/ changes
 ✅ Frontend live at: advanciapayledger.com
 ```
 
-**Backend changes (`backend/**`)**
+**Backend changes (`backend/**`)\*\*
+
 ```
 Trigger: Push to main with backend/ changes
    ↓
@@ -140,22 +147,26 @@ Trigger: Push to main with backend/ changes
 ### Common Issues
 
 **Issue: "Secret not found"**
+
 - **Solution:** Verify secret name matches exactly (case-sensitive)
 - Check: `RENDER_DEPLOY_HOOK_FRONTEND` not `render_deploy_hook_frontend`
 
 **Issue: "Deployment not triggering"**
+
 - **Solution:** Check that:
   1. Push is to `main` branch (not `develop` or feature branch)
   2. Secret is set correctly in GitHub
   3. Render deploy hook URL is valid
 
 **Issue: "Build failing in CI but works locally"**
-- **Solution:** 
+
+- **Solution:**
   1. Run `npm ci` locally (not `npm install`)
   2. Commit `package-lock.json`
   3. Run `npx tsc --noEmit` to check TypeScript
 
 **Issue: "Workflow not running"**
+
 - **Solution:**
   1. Check that `.github/workflows/*.yml` files are in the repository
   2. Go to **Actions** tab → If disabled, click "Enable workflows"
@@ -176,12 +187,14 @@ Trigger: Push to main with backend/ changes
 ## 🛡️ Security Best Practices
 
 ✅ **DO:**
+
 - Keep deploy hooks secret (never commit to repository)
 - Rotate deploy hooks every 90 days
 - Use GitHub's encrypted secrets (never plain text)
 - Review workflow logs regularly
 
 ❌ **DON'T:**
+
 - Don't share deploy hook URLs publicly
 - Don't commit secrets to `.env` files
 - Don't disable security audits
@@ -206,13 +219,16 @@ If you need to update a secret:
 ## 🆘 Need Help?
 
 **Workflow logs:**
+
 - Go to **Actions** tab → Click workflow run → View logs
 
 **Render deployment logs:**
+
 - Go to [Render Dashboard](https://dashboard.render.com/)
 - Select service → **Logs** tab
 
 **Test locally before pushing:**
+
 ```bash
 # Frontend
 cd frontend
@@ -242,6 +258,7 @@ Once you've completed all steps above, your CI/CD pipeline is ready:
 - ✅ GitHub status badges in your README
 
 **Next steps:**
+
 1. Add status badges to your README (see `.github/workflows/README.md`)
 2. Configure Slack/Discord notifications (optional)
 3. Set up E2E tests (Playwright)
