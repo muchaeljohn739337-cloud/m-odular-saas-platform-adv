@@ -1,6 +1,6 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
-import prisma from "./prismaClient";
+import prisma from "../prismaClient";
 
 let isShuttingDown = false;
 
