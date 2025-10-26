@@ -383,21 +383,21 @@ The Advancia Pay Ledger platform has **fully functional and integrated** medbed 
 
 ### Implemented Security Measures
 
-**1. Seed Phrase Recovery**
+#### 1. Seed Phrase Recovery
 
 - ✅ Show/hide toggle for security
 - ✅ Download encrypted backup
 - ✅ Copy to clipboard verification
 - ✅ Offline storage recommendations
 
-**2. Multi-Signature (M-of-N)**
+#### 2. Multi-Signature (M-of-N)
 
 - ✅ Distribute keys to trusted contacts
 - ✅ Requires M signatures to recover
 - ✅ Flexible threshold configuration (2-of-3, 3-of-5, etc.)
 - ✅ Key distribution automation
 
-**3. Social Recovery (Guardians)**
+#### 3. Social Recovery (Guardians)
 
 - ✅ Add trusted recovery contacts
 - ✅ Guardian voting system
@@ -426,7 +426,7 @@ The Advancia Pay Ledger platform has **fully functional and integrated** medbed 
 
 ### Medbeds APIs
 
-```
+```text
 POST   /api/medbeds/book-with-payment    (Auth, User)
 POST   /api/medbeds/book                 (Auth, Admin)
 GET    /api/medbeds/my-bookings          (Auth, User)
@@ -435,7 +435,7 @@ POST   /api/medbeds/confirm              (Auth, User)
 
 ### Crypto Purchase APIs
 
-```
+```text
 POST   /api/payments/crypto-purchase     (Auth, User)
 PUT    /api/payments/crypto-order/:id/approve  (Auth, Admin)
 PUT    /api/payments/crypto-order/:id/reject   (Auth, Admin)
@@ -444,7 +444,7 @@ GET    /api/payments/my-crypto-orders    (Auth, User)
 
 ### Crypto Withdrawal APIs
 
-```
+```text
 POST   /api/withdrawals/request          (Auth, User)
 PUT    /api/withdrawals/:id/approve      (Auth, Admin)
 PUT    /api/withdrawals/:id/reject       (Auth, Admin)
@@ -460,8 +460,8 @@ GET    /api/tokens/balance               (Auth, User)
 
 ### Production URLs
 
-- Frontend: https://advanciapayledger.com/
-- Backend: https://api.advanciapayledger.com/
+- Frontend: [https://advanciapayledger.com](https://advanciapayledger.com)
+- Backend: [https://api.advanciapayledger.com](https://api.advanciapayledger.com)
 
 ### Features Live
 
