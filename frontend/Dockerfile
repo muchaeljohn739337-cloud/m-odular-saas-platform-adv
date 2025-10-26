@@ -1,58 +1,49 @@
-## Build Next.js (standalone) and run with node server.js
+# ===== Builder Stage =====
+# Creates the Next.js standalone build
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Accept build-time environment variables for Next.js
-ARG NEXT_PUBLIC_API_URL=https://api.advanciapayledger.com
-ARG NEXT_PUBLIC_APP_NAME="Advancia PayLedger"
-ARG NEXT_PUBLIC_CURRENCY_LIST="USD,EUR,BTC,ETH,USDT,TRUMP,MEDBED"
-ARG NEXT_PUBLIC_FEATURE_FLAGS="notifications,bonus_tokens,debit_card,crypto_recovery"
-ARG NEXT_PUBLIC_VAPID_KEY
-ARG NEXT_PUBLIC_API_KEY
-ARG NEXT_PUBLIC_BOTPRESS_BOT_ID
+# Install dependencies for building
+RUN apk add --no-cache libc6-compat
 
-# Set as ENV
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
-ENV NEXT_PUBLIC_CURRENCY_LIST=$NEXT_PUBLIC_CURRENCY_LIST
-ENV NEXT_PUBLIC_FEATURE_FLAGS=$NEXT_PUBLIC_FEATURE_FLAGS
-ENV NEXT_PUBLIC_VAPID_KEY=$NEXT_PUBLIC_VAPID_KEY
-ENV NEXT_PUBLIC_API_KEY=$NEXT_PUBLIC_API_KEY
-ENV NEXT_PUBLIC_BOTPRESS_BOT_ID=$NEXT_PUBLIC_BOTPRESS_BOT_ID
-ENV NODE_ENV=production
-
-# Copy all package files from workspace root
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm ci --prefer-offline --no-audit
 
-# Copy frontend package files
-COPY frontend/package*.json ./frontend/
+# Copy the rest of your source code
+COPY . .
 
-# Install workspace dependencies
-RUN npm ci --prefer-offline || npm install
-
-# Copy entire frontend source
-COPY frontend ./frontend
-
-# Navigate to frontend for build
-WORKDIR /app/frontend
-
-# Build Next.js (produces .next/standalone)
+# Build Next.js in standalone mode (outputs to .next/standalone)
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 RUN npm run build
 
-# Runtime stage
+# ===== Runner Stage =====
+# This is the final, small, and secure image that runs in production
 FROM node:18-alpine AS runner
-ENV NODE_ENV=production
 WORKDIR /app
 
-# Copy public and built assets from builder
-COPY --from=builder /app/frontend/public ./public
-COPY --from=builder /app/frontend/.next/standalone ./
-COPY --from=builder /app/frontend/.next/static ./.next/static
+# Set a non-root user for better security
+# Fixed to not fail if the user/group already exists
+RUN if ! getent group nodejs >/dev/null 2>&1; then addgroup -g 1001 -S nodejs; fi \
+    && if ! getent passwd nextjs >/dev/null 2>&1; then adduser -S nextjs -u 1001 -G nodejs; fi
 
-# CRITICAL: Copy server.js wrapper to container root
-COPY --from=builder /app/frontend/server.js ./server.js
+# Copy public assets
+COPY --from=builder /app/public ./public
+
+# Copy Next.js standalone output
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Switch to the non-root user
+USER nextjs
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000
 
-# Start Next standalone server
+# Start the Next.js standalone server
 CMD ["node", "server.js"]
