@@ -72,7 +72,7 @@ services:
       - key: NEXTAUTH_URL
         value: "https://advanciapayledger.com"
       - key: NEXTAUTH_SECRET
-        sync: false
+        value: "changeme-please-set-real-secret"
 
 databases:
   - name: advancia-db
