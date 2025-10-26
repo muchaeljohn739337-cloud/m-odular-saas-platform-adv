@@ -114,6 +114,7 @@ export default function SilentModeSwitch() {
 
         {/* Toggle Switch */}
         <button
+          aria-label={`Toggle Silent Mode ${isEnabled ? 'off' : 'on'}`}
           onClick={() => toggleSilentMode(!isEnabled)}
           disabled={updating || isLocked}
           className={`

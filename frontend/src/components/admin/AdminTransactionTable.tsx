@@ -89,6 +89,7 @@ const AdminTransactionTable: React.FC = () => {
 
       <div className="flex flex-wrap gap-3 mb-4">
         <select
+          aria-label="Filter transactions by currency"
           className="border rounded p-2"
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
