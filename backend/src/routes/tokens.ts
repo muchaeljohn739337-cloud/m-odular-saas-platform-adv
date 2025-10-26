@@ -2,8 +2,18 @@ import { Router } from "express";
 import prisma from "../prismaClient";
 import { authenticateToken } from "../middleware/auth";
 import { Decimal } from "@prisma/client/runtime/library";
+import { serializeDecimalFields } from "../utils/decimal";
+import { Server as SocketServer } from "socket.io";
 
 const router = Router();
+
+// Socket.IO instance (injected from index.ts)
+let io: SocketServer | null = null;
+
+export function setTokenSocketIO(socketServer: SocketServer) {
+  io = socketServer;
+  console.log("✅ Socket.IO injected into token service");
+}
 
 router.get("/balance/:userId", authenticateToken as any, async (req, res) => {
   try {
@@ -19,12 +29,7 @@ router.get("/balance/:userId", authenticateToken as any, async (req, res) => {
       });
     }
     
-    res.json({
-      balance: wallet.balance.toString(),
-      lockedBalance: wallet.lockedBalance.toString(),
-      lifetimeEarned: wallet.lifetimeEarned.toString(),
-      tokenType: wallet.tokenType,
-    });
+    res.json(serializeDecimalFields(wallet));
   } catch (error: any) {
     console.error("[TOKENS] Error fetching balance:", error);
     res.status(500).json({ error: "Failed to fetch balance" });
@@ -58,10 +63,7 @@ router.get("/history/:userId", authenticateToken as any, async (req, res) => {
     ]);
     
     res.json({
-      transactions: transactions.map(t => ({
-        ...t,
-        amount: t.amount.toString(),
-      })),
+      transactions: transactions.map(t => serializeDecimalFields(t)),
       total,
       limit,
       offset,
@@ -148,8 +150,25 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
         },
       });
       
-      return { fromTx, toTx };
+      return { fromTx, toTx, fromWallet, toWallet };
     });
+    
+    // Emit Socket.IO events to notify users
+    if (io) {
+      io.to(`user-${fromUserId}`).emit("token:transfer", {
+        type: "sent",
+        amount: transferAmount.toString(),
+        to: toUserId,
+        transactionId: result.fromTx.id,
+      });
+      
+      io.to(`user-${toUserId}`).emit("token:transfer", {
+        type: "received",
+        amount: transferAmount.toString(),
+        from: fromUserId,
+        transactionId: result.toTx.id,
+      });
+    }
     
     res.json({
       success: true,
