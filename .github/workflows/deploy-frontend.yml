@@ -1,82 +1,37 @@
 name: Deploy Frontend to Render
-
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-frontend.yml'
 
 jobs:
   deploy:
-    name: 🚀 Deploy Frontend to Render
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'copilot-swe-agent[bot]' }}
-
+    defaults:
+      run:
+        working-directory: .
+    
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🔧 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: 📦 Install frontend dependencies
-        working-directory: ./frontend
+      
+      # Install root dependencies (workspace setup)
+      - name: Install root dependencies
         run: npm ci
-
-      - name: 🔎 Check deploy secret
-        id: check_secret
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+      
+      # Build frontend workspace
+      - name: Build frontend
+        run: npm run build --workspace=frontend
+      
+      # Trigger Render deploy
+      - name: Deploy to Render
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND != '' }}
         run: |
-          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
-            echo "has_secret=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_secret=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: ✅ Build check (Next.js)
-        working-directory: ./frontend
-        env:
-          NEXT_PUBLIC_API_URL: https://advancia-backend.onrender.com
-        run: npm run build
-
-      - name: 🚀 Trigger Render Deploy
-        if: ${{ steps.check_secret.outputs.has_secret == 'true' }}
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
-        run: |
-          echo "📡 Triggering Render frontend deployment..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK")
-          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
-            echo "✅ Deploy triggered successfully (HTTP $HTTP_STATUS)"
-          else
-            echo "::warning::Render frontend deploy hook responded with HTTP $HTTP_STATUS. Treating as non-fatal and continuing."
-            echo "### ⚠️ Frontend Render Hook Warning" >> $GITHUB_STEP_SUMMARY
-            echo "- Response HTTP status: $HTTP_STATUS" >> $GITHUB_STEP_SUMMARY
-            echo "- Verify the hook URL in repository secrets (RENDER_DEPLOY_HOOK_FRONTEND)." >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: ⚠️ Skip deploy (missing secret)
-        if: ${{ steps.check_secret.outputs.has_secret == 'false' }}
-        run: |
-          echo "::warning::RENDER_DEPLOY_HOOK_FRONTEND not set. Skipping deploy."
-          echo "### ⚠️ Frontend Deploy Skipped" >> $GITHUB_STEP_SUMMARY
-          echo "- Secret RENDER_DEPLOY_HOOK_FRONTEND not configured." >> $GITHUB_STEP_SUMMARY
-          echo "- Configure in Settings > Secrets and variables > Actions to enable auto-deploy." >> $GITHUB_STEP_SUMMARY
-
-      - name: 📝 Deployment summary
-        run: |
-          echo "### 🚀 Frontend Deployment Triggered" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Service:** Frontend Web App" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check deployment status in [Render Dashboard](https://dashboard.render.com)" >> $GITHUB_STEP_SUMMARY
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}"

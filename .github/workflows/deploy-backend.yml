@@ -1,80 +1,31 @@
 name: Deploy Backend to Render
-
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'backend/**'
       - '.github/workflows/deploy-backend.yml'
 
 jobs:
   deploy:
-    name: 🚀 Deploy Backend to Render
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'copilot-swe-agent[bot]' }}
-
+    
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🔧 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: 📦 Install backend dependencies
-        working-directory: ./backend
+      
+      - name: Install root dependencies
         run: npm ci
-
-      - name: 🛠 Generate Prisma client
-        working-directory: ./backend
-        run: npx prisma generate
-
-      - name: � Check deploy secret
-        id: check_secret
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+      
+      - name: Build backend
+        run: npm run build --workspace=backend
+      
+      - name: Deploy to Render
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND != '' }}
         run: |
-          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
-            echo "has_secret=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_secret=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: 🚀 Trigger Render Deploy
-        if: ${{ steps.check_secret.outputs.has_secret == 'true' }}
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
-        run: |
-          echo "📡 Triggering Render backend deployment..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK")
-          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
-            echo "✅ Deploy triggered successfully (HTTP $HTTP_STATUS)"
-          else
-            echo "::warning::Render backend deploy hook responded with HTTP $HTTP_STATUS. Treating as non-fatal and continuing."
-            echo "### ⚠️ Backend Render Hook Warning" >> $GITHUB_STEP_SUMMARY
-            echo "- Response HTTP status: $HTTP_STATUS" >> $GITHUB_STEP_SUMMARY
-            echo "- Verify the hook URL in repository secrets (RENDER_DEPLOY_HOOK_BACKEND)." >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: ⚠️ Skip deploy (missing secret)
-        if: ${{ steps.check_secret.outputs.has_secret == 'false' }}
-        run: |
-          echo "::warning::RENDER_DEPLOY_HOOK_BACKEND not set. Skipping deploy."
-          echo "### ⚠️ Backend Deploy Skipped" >> $GITHUB_STEP_SUMMARY
-          echo "- Secret RENDER_DEPLOY_HOOK_BACKEND not configured." >> $GITHUB_STEP_SUMMARY
-          echo "- Configure in Settings > Secrets and variables > Actions to enable auto-deploy." >> $GITHUB_STEP_SUMMARY
-
-      - name: 📝 Deployment summary
-        run: |
-          echo "### 🚀 Backend Deployment Triggered" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Service:** Backend API" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check deployment status in [Render Dashboard](https://dashboard.render.com)" >> $GITHUB_STEP_SUMMARY
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}"
