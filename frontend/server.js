@@ -1,53 +1,40 @@
-#!/usr/bin/env node
-const { spawn } = require('child_process');
+const { createServer } = require('http');
+const { parse } = require('url');
+const next = require('next');
 const path = require('path');
 const fs = require('fs');
 
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = process.env.HOSTNAME || '0.0.0.0';
 const port = parseInt(process.env.PORT || '3000', 10);
 
-// Next.js standalone puts server.js at .next/standalone/server.js
-// But it expects to be run from the directory containing .next/
-const standaloneDir = path.join(__dirname, '.next', 'standalone');
-const serverPath = path.join(standaloneDir, 'server.js');
+// For standalone mode, check if we have the standalone server
+const standaloneServer = path.join(__dirname, '.next', 'standalone', 'server.js');
 
-console.log('🔍 Checking for Next.js standalone server...');
-console.log('   Looking in:', standaloneDir);
+if (fs.existsSync(standaloneServer)) {
+  // Use the Next.js standalone server (production)
+  console.log('✅ Using Next.js standalone server');
+  require(standaloneServer);
+} else {
+  // Fallback to regular Next.js server (development)
+  console.log('⚙️ Starting Next.js dev/production server');
+  
+  const app = next({ dev, hostname, port });
+  const handle = app.getRequestHandler();
 
-if (!fs.existsSync(serverPath)) {
-  console.error('❌ Server file not found at:', serverPath);
-  console.error('   Current directory:', __dirname);
-  console.error('   .next exists:', fs.existsSync(path.join(__dirname, '.next')));
-  console.error('   standalone exists:', fs.existsSync(standaloneDir));
-  
-  // List what IS in .next if it exists
-  const nextDir = path.join(__dirname, '.next');
-  if (fs.existsSync(nextDir)) {
-    console.error('   Contents of .next/:', fs.readdirSync(nextDir).join(', '));
-  }
-  
-  process.exit(1);
+  app.prepare().then(() => {
+    createServer(async (req, res) => {
+      try {
+        const parsedUrl = parse(req.url, true);
+        await handle(req, res, parsedUrl);
+      } catch (err) {
+        console.error('Error occurred handling', req.url, err);
+        res.statusCode = 500;
+        res.end('internal server error');
+      }
+    }).listen(port, hostname, (err) => {
+      if (err) throw err;
+      console.log(`✅ Server ready on http://${hostname}:${port}`);
+    });
+  });
 }
-
-console.log('✅ Found standalone server at:', serverPath);
-console.log(`🚀 Starting Next.js server on port ${port}...`);
-
-// Start the Next.js standalone server
-const child = spawn('node', [serverPath], {
-  stdio: 'inherit',
-  env: { ...process.env, PORT: port.toString() }
-});
-
-child.on('error', (err) => {
-  console.error('❌ Failed to start server:', err);
-  process.exit(1);
-});
-
-child.on('exit', (code) => {
-  if (code !== 0) {
-    console.error(`❌ Server exited with code ${code}`);
-    process.exit(code || 1);
-  }
-});
-
-process.on('SIGTERM', () => child.kill('SIGTERM'));
-process.on('SIGINT', () => child.kill('SIGINT'));
