@@ -23,15 +23,15 @@ jobs:
           node-version: "20"
           cache: "npm"
       - name: Install
-        working-directory: Frontend
+        working-directory: frontend
         run: npm ci
 
       - name: Typecheck
-        working-directory: Frontend
+        working-directory: frontend
         run: npx tsc --noEmit
 
       - name: Lint
-        working-directory: Frontend
+        working-directory: frontend
         run: npx eslint . --ext .ts,.tsx || true
 
   backend:
@@ -47,14 +47,15 @@ jobs:
           node-version: "20"
           cache: "npm"
       - name: Install
-        working-directory: Backend
+        working-directory: backend
         run: npm ci
 
       - name: Generate Prisma Client
-        working-directory: Backend
+        working-directory: backend
         run: npx prisma generate
 
       - name: Build
-        working-directory: Backend
+        working-directory: backend
         run: npm run build
+
 
