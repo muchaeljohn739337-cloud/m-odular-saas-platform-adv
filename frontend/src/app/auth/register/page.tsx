@@ -68,7 +68,7 @@ export default function RegisterPage() {
       // Redirect to login after successful registration
       const url = new URL(window.location.href);
       const callbackUrl = url.searchParams.get('callbackUrl');
-      router.push(`/auth/login?registered=true${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`);
+      router.push(`/auth/verify-otp?email=${encodeURIComponent(email)}${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ''}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
