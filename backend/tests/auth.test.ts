@@ -24,7 +24,7 @@ describe("Auth Routes", () => {
   });
 
   describe("POST /api/auth/register", () => {
-    it("successfully registers a new user", async () => {
+    it("successfully registers a new user (pending approval)", async () => {
       const mockUser = {
         id: "test-user-id",
         email: "test@example.com",
@@ -52,8 +52,9 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty(
         "message",
-        "User registered successfully"
+        "Registration submitted. Awaiting admin approval."
       );
+      expect(response.body).toHaveProperty("status", "pending_approval");
       expect(response.body).toHaveProperty("token");
       expect(response.body.user).toMatchObject({
         email: "test@example.com",
@@ -183,3 +184,4 @@ describe("Auth Routes", () => {
     });
   });
 });
+
