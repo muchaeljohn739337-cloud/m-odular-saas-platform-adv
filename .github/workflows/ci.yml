@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   backend:
@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run lint || echo \ Lint warnings only\
+      - run: npm run lint || true
       - run: npm run build
 
   frontend:
@@ -34,9 +34,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run lint || echo \Lint warnings only\
+      - run: npm run lint || true
       - run: npm run build
         env:
           NEXT_PUBLIC_API_URL: https://api.advanciapayledger.com
-
-
