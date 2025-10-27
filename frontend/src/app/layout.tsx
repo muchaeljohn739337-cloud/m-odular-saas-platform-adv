@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -9,9 +9,17 @@ import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import ChatbotWidget from "@/components/ChatbotWidget";
 import SilentModeProvider from "@/components/SilentModeProvider";
 
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "Advancia Pay Ledger - Fintech Dashboard",
-  description: "Modern fintech platform for transaction tracking and crypto trading",
+  description:
+    "Modern fintech platform for transaction tracking and crypto trading",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -24,12 +32,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/site.webmanifest",
-  themeColor: "#2563eb",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
 };
 
 export default function RootLayout({
