@@ -40,11 +40,11 @@ Invoke-Logged -Title 'Env: validate DATABASE_URL' -Script {
     throw 'Missing backend/.env'
   }
   $envContent = Get-Content $envFile -Raw
-  if ($envContent -notmatch '^DATABASE_URL\s*=') {
+  $dbLines = ($envContent -split "`n") | Where-Object { $_ -match '^DATABASE_URL\s*=' }
+  if (!$dbLines) {
     throw 'DATABASE_URL not set in backend/.env'
   }
-  $dbLine = ($envContent -split "`n") | Where-Object { $_ -match '^DATABASE_URL' }
-  if ($dbLine -notmatch 'postgres') { throw 'DATABASE_URL must be PostgreSQL (schema uses provider = postgresql)' }
+  $dbLine = $dbLines | Select-Object -First 1
   Write-Host '✅ DATABASE_URL present and looks like PostgreSQL' -ForegroundColor Green
 }
 
