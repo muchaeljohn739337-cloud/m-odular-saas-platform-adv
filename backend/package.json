@@ -9,7 +9,6 @@
     "postbuild": "echo \"Skipping postbuild in CI - database operations run on deployment\"",
     "start": "node dist/index.js",
     "start:render": "prisma migrate deploy && node dist/index.js",
-    "postinstall": "prisma generate && npm run build",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
@@ -89,4 +88,3 @@
     "typescript": "^5.3.3"
   }
 }
-
