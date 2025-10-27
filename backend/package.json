@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "postbuild": "echo \"Skipping postbuild in CI - database operations run on deployment\"",
     "start": "node dist/index.js",
     "start:render": "prisma generate && prisma migrate deploy && node dist/index.js",
