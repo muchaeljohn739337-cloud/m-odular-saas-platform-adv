@@ -10,31 +10,25 @@ jobs:
   backend:
     name: Backend Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - run: npm run lint || true
-      - run: npm run build
+      - run: npm ci
+      - run: npm run lint --workspace=backend || true
+      - run: npm run build --workspace=backend
 
   frontend:
     name: Frontend Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - run: npm run lint || true
-      - run: npm run build
+      - run: npm ci
+      - run: npm run lint --workspace=frontend || true
+      - run: npm run build --workspace=frontend
         env:
           NEXT_PUBLIC_API_URL: https://api.advanciapayledger.com
