@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function VerifyOtpPage() {
   const router = useRouter();
-  const params = useSearchParams();
-  const [email, setEmail] = useState<string>(params.get("email") || "");
+  
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"request" | "verify" | "done">("request");
   const [error, setError] = useState("");
@@ -16,6 +16,13 @@ export default function VerifyOtpPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
   const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const e = params.get("email");
+      if (e) setEmail(e);
+    } catch {}
+  }, []);
 
   async function requestCode(e: React.FormEvent) {
     e.preventDefault();
