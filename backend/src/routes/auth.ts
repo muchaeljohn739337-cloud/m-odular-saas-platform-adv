@@ -32,7 +32,7 @@ const validateApiKey = (
   next();
 };
 
-// POST /api/auth/register
+// POST /api/auth/register - NOW WITH ADMIN APPROVAL WORKFLOW
 router.post("/register", validateApiKey, async (req, res) => {
   try {
     const { email, password, username, firstName, lastName } = req.body || {};
@@ -63,8 +63,24 @@ router.post("/register", validateApiKey, async (req, res) => {
         lastName: lastName || "",
         termsAccepted: true,
         termsAcceptedAt: new Date(),
+        active: false, // ✨ NEW: Set to pending approval
       },
     });
+
+    // ✨ NEW: Notify admins of pending registration
+    try {
+      await notifyAllAdmins({
+        type: "all",
+        category: "admin",
+        title: "New User Registration - Pending Approval",
+        message: `User ${email} (${firstName} ${lastName}) has registered and is awaiting approval.`,
+        priority: "high",
+        data: { userId: user.id, email, firstName, lastName },
+      });
+    } catch (notifyErr) {
+      console.error("Failed to notify admins of registration:", notifyErr);
+      // Continue anyway - notification failure shouldn't block registration
+    }
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
@@ -74,8 +90,10 @@ router.post("/register", validateApiKey, async (req, res) => {
       }
     );
 
+    // ✨ CHANGED: Updated response message and added status field
     return res.status(201).json({
-      message: "User registered successfully",
+      message: "Registration submitted. Awaiting admin approval.",
+      status: "pending_approval",
       token,
       user: {
         id: user.id,
@@ -90,7 +108,6 @@ router.post("/register", validateApiKey, async (req, res) => {
     return res.status(500).json({ error: "Failed to register user" });
   }
 });
-
 // POST /api/auth/login
 router.post("/login", validateApiKey, async (req, res) => {
   try {
@@ -596,3 +613,4 @@ router.get("/me", authenticateToken, async (req: any, res) => {
 });
 
 export default router;
+
