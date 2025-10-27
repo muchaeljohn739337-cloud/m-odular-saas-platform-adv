@@ -125,8 +125,7 @@ router.post("/login", validateApiKey, async (req, res) => {
         firstName: true,
         lastName: true,
         passwordHash: true,
-        usdBalance: true,
-      },
+        usdBalance: true,`n        active: true,`n        emailVerified: true,`n      },
     });
     if (!user || !user.passwordHash) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -137,7 +136,7 @@ router.post("/login", validateApiKey, async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Update last login (best effort)
+    if (!user.emailVerified) {`n      return res.status(403).json({ error: "Email not verified. Please verify your email to continue.", status: "email_unverified" });`n    }`n`n    if (!user.active) {`n      return res.status(403).json({ error: "Account pending admin approval.", status: "pending_approval" });`n    }`n    // Update last login (best effort)
     try {
       await prisma.user.update({
         where: { id: user.id },
@@ -317,7 +316,7 @@ router.post("/login-doctor", validateApiKey, async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
+    if (!user.emailVerified) {`n      return res.status(403).json({ error: "Email not verified. Please verify your email to continue.", status: "email_unverified" });`n    }`n`n    if (!user.active) {`n      return res.status(403).json({ error: "Account pending admin approval.", status: "pending_approval" });`n    }`n    const token = jwt.sign(
       { doctorId: doctor.id, email: doctor.email, type: "doctor" },
       config.jwtSecret,
       { expiresIn: "7d" }
@@ -534,7 +533,7 @@ router.post("/verify-otp", otpLimiter, async (req, res) => {
       config.jwtSecret,
       { expiresIn: "7d" }
     );
-    return res.json({ message: "OTP verified", token });
+    try {`n      await notifyAllAdmins({`n        type: "all",`n        category: "admin",`n        title: "User Email Verified",`n        message: `"User ${user.email} has verified their email and is awaiting approval.`",`n        priority: "normal",`n        data: { userId: user.id, email: user.email },`n      });`n    } catch (e) {`n      console.error("Admin notify failed (email verified):", e);`n    }`n    return res.json({ message: "OTP verified", status: "pending_approval", token });
   } catch (err) {
     if ((err as any)?.name === "ZodError") {
       return res.status(400).json({ error: (err as any).issues });

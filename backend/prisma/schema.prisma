@@ -17,6 +17,8 @@ model User {
   role              Role               @default(USER)
   usdBalance        Decimal            @default(0)
   active            Boolean            @default(true)
+    emailVerified    Boolean  @default(false)
+    emailVerifiedAt  DateTime?
   lastLogin         DateTime?
   termsAccepted     Boolean            @default(false)
   termsAcceptedAt   DateTime?
