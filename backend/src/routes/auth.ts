@@ -32,7 +32,7 @@ const validateApiKey = (
   next();
 };
 
-// POST /api/auth/register - NOW WITH ADMIN APPROVAL WORKFLOW
+// POST /api/auth/register - WITH ADMIN APPROVAL WORKFLOW
 router.post("/register", validateApiKey, async (req, res) => {
   try {
     const { email, password, username, firstName, lastName } = req.body || {};
@@ -63,11 +63,12 @@ router.post("/register", validateApiKey, async (req, res) => {
         lastName: lastName || "",
         termsAccepted: true,
         termsAcceptedAt: new Date(),
-        active: false, // ✨ NEW: Set to pending approval
+        active: false, // pending admin approval
+        emailVerified: false,
       },
     });
 
-    // ✨ NEW: Notify admins of pending registration
+    // Notify admins of pending registration
     try {
       await notifyAllAdmins({
         type: "all",
@@ -79,7 +80,6 @@ router.post("/register", validateApiKey, async (req, res) => {
       });
     } catch (notifyErr) {
       console.error("Failed to notify admins of registration:", notifyErr);
-      // Continue anyway - notification failure shouldn't block registration
     }
 
     const token = jwt.sign(
@@ -90,7 +90,6 @@ router.post("/register", validateApiKey, async (req, res) => {
       }
     );
 
-    // ✨ CHANGED: Updated response message and added status field
     return res.status(201).json({
       message: "Registration submitted. Awaiting admin approval.",
       status: "pending_approval",
@@ -108,6 +107,7 @@ router.post("/register", validateApiKey, async (req, res) => {
     return res.status(500).json({ error: "Failed to register user" });
   }
 });
+
 // POST /api/auth/login
 router.post("/login", validateApiKey, async (req, res) => {
   try {
@@ -125,7 +125,10 @@ router.post("/login", validateApiKey, async (req, res) => {
         firstName: true,
         lastName: true,
         passwordHash: true,
-        usdBalance: true,`n        active: true,`n        emailVerified: true,`n      },
+        usdBalance: true,
+        active: true,
+        emailVerified: true,
+      },
     });
     if (!user || !user.passwordHash) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -136,7 +139,22 @@ router.post("/login", validateApiKey, async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    if (!user.emailVerified) {`n      return res.status(403).json({ error: "Email not verified. Please verify your email to continue.", status: "email_unverified" });`n    }`n`n    if (!user.active) {`n      return res.status(403).json({ error: "Account pending admin approval.", status: "pending_approval" });`n    }`n    // Update last login (best effort)
+    if (!user.emailVerified) {
+      return res
+        .status(403)
+        .json({
+          error: "Email not verified. Please verify your email to continue.",
+          status: "email_unverified",
+        });
+    }
+
+    if (!user.active) {
+      return res
+        .status(403)
+        .json({ error: "Account pending admin approval.", status: "pending_approval" });
+    }
+
+    // Update last login (best effort)
     try {
       await prisma.user.update({
         where: { id: user.id },
@@ -161,7 +179,7 @@ router.post("/login", validateApiKey, async (req, res) => {
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
-        usdBalance: user.usdBalance?.toString?.() ?? "0",
+        usdBalance: (user as any).usdBalance?.toString?.() ?? "0",
       },
     });
   } catch (err) {
@@ -250,20 +268,23 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
     );
 
     // Notify all admins about new doctor registration
-    console.log("📢 Notifying admins about new doctor registration...");
-    await notifyAllAdmins({
-      type: "all",
-      category: "admin",
-      title: "New Doctor Registration",
-      message: `Dr. ${doctor.firstName} ${doctor.lastName} (${doctor.specialization}) has registered. Review their credentials and verify their account.`,
-      priority: "high",
-      data: {
-        doctorId: doctor.id,
-        email: doctor.email,
-        specialization: doctor.specialization,
-        licenseNumber: doctor.licenseNumber,
-      },
-    });
+    try {
+      await notifyAllAdmins({
+        type: "all",
+        category: "admin",
+        title: "New Doctor Registration",
+        message: `Dr. ${doctor.firstName} ${doctor.lastName} (${doctor.specialization}) has registered. Review their credentials and verify their account.`,
+        priority: "high",
+        data: {
+          doctorId: doctor.id,
+          email: doctor.email,
+          specialization: doctor.specialization,
+          licenseNumber: doctor.licenseNumber,
+        },
+      });
+    } catch (e) {
+      console.error("Admin notify failed (doctor registered):", e);
+    }
 
     return res.status(201).json({
       message: "Doctor registered successfully. Awaiting admin verification.",
@@ -316,7 +337,7 @@ router.post("/login-doctor", validateApiKey, async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    if (!user.emailVerified) {`n      return res.status(403).json({ error: "Email not verified. Please verify your email to continue.", status: "email_unverified" });`n    }`n`n    if (!user.active) {`n      return res.status(403).json({ error: "Account pending admin approval.", status: "pending_approval" });`n    }`n    const token = jwt.sign(
+    const token = jwt.sign(
       { doctorId: doctor.id, email: doctor.email, type: "doctor" },
       config.jwtSecret,
       { expiresIn: "7d" }
@@ -523,17 +544,34 @@ router.post("/verify-otp", otpLimiter, async (req, res) => {
       mem.delete(key);
     }
 
-    const user = await prisma.user.findFirst({
-      where: { email },
-    });
+    const user = await prisma.user.findFirst({ where: { email } });
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerified: true, emailVerifiedAt: new Date() },
+    });
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       config.jwtSecret,
       { expiresIn: "7d" }
     );
-    try {`n      await notifyAllAdmins({`n        type: "all",`n        category: "admin",`n        title: "User Email Verified",`n        message: `"User ${user.email} has verified their email and is awaiting approval.`",`n        priority: "normal",`n        data: { userId: user.id, email: user.email },`n      });`n    } catch (e) {`n      console.error("Admin notify failed (email verified):", e);`n    }`n    return res.json({ message: "OTP verified", status: "pending_approval", token });
+
+    try {
+      await notifyAllAdmins({
+        type: "all",
+        category: "admin",
+        title: "User Email Verified",
+        message: `User ${user.email} has verified their email and is awaiting approval.`,
+        priority: "normal",
+        data: { userId: user.id, email: user.email },
+      });
+    } catch (e) {
+      console.error("Admin notify failed (email verified):", e);
+    }
+
+    return res.json({ message: "OTP verified", status: "pending_approval", token });
   } catch (err) {
     if ((err as any)?.name === "ZodError") {
       return res.status(400).json({ error: (err as any).issues });
@@ -612,4 +650,3 @@ router.get("/me", authenticateToken, async (req: any, res) => {
 });
 
 export default router;
-
