@@ -58,7 +58,7 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
-    needs: backend
+    needs: [setup, backend]
     defaults:
       run:
         working-directory: frontend

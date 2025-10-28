@@ -5,6 +5,7 @@
 
 import { test as setup } from "@playwright/test";
 import path from "path";
+import { execSync } from "child_process";
 
 const STORAGE_STATE = path.join(__dirname, "../.auth/user.json");
 
@@ -15,7 +16,7 @@ setup("seed test database", async () => {
   console.log("🌱 Seeding database for E2E tests...");
 
   try {
-    // Call backend seeding script
+    // Call backend seeding endpoint
     const response = await fetch("http://localhost:4000/api/test/seed", {
       method: "POST",
       headers: {
@@ -29,7 +30,6 @@ setup("seed test database", async () => {
       console.log("Using fallback seeding method...");
 
       // Fallback: run seeding script directly if endpoint not available
-      const { execSync } = require("child_process");
       execSync("npm run test:seed", {
         cwd: path.join(__dirname, "../../backend"),
         stdio: "inherit",
@@ -50,19 +50,17 @@ setup("seed test database", async () => {
 setup("authenticate as test user", async ({ page }) => {
   console.log("🔐 Authenticating test user...");
 
-  await page.goto("http://localhost:3001/auth/login");
+  await page.goto("http://localhost:3000/login");
 
-  await page.fill('input[name="email"]', "user@test.com");
-  await page.fill('input[name="password"]', "User123!@#");
+  await page.fill('input[type="email"]', "user@test.com");
+  await page.fill('input[type="password"]', "testpassword123");
   await page.click('button[type="submit"]');
 
-  // Wait for successful login redirect
-  await page.waitForURL("**/dashboard", { timeout: 10000 }).catch(() => {
-    console.warn("⚠️  Login redirect timeout - user may not be approved");
-  });
+  // Wait for navigation to dashboard
+  await page.waitForURL("**/dashboard");
 
-  // Save authentication state
+  // Save authenticated state
   await page.context().storageState({ path: STORAGE_STATE });
 
-  console.log("✅ Test user authenticated");
+  console.log("✅ Test user authenticated and state saved");
 });

@@ -1,52 +1,38 @@
-/**
- * Test Database Seeding Script
- * Seeds test database with users and initial data for E2E testing
- */
-
 import prisma from "../src/prismaClient";
-import bcrypt from "bcryptjs";
 
 export async function seedTestDatabase() {
   console.log("🌱 Seeding test database...");
 
   try {
-    // Create test admin user
-    const adminPasswordHash = await bcrypt.hash("Admin123!@#", 10);
+    // Create admin test user
     const adminUser = await prisma.user.upsert({
       where: { email: "admin@test.com" },
       update: {},
       create: {
         email: "admin@test.com",
-        username: "admin",
-        passwordHash: adminPasswordHash,
-        firstName: "Admin",
-        lastName: "User",
+        username: "testadmin",
+        password: "$2a$10$dummyHashForTestingOnly",
+        firstName: "Test",
+        lastName: "Admin",
         role: "ADMIN",
         active: true,
-        emailVerified: true,
-        termsAccepted: true,
-        termsAcceptedAt: new Date(),
       },
     });
 
     console.log(`✅ Created admin user: ${adminUser.email}`);
 
     // Create regular test user
-    const userPasswordHash = await bcrypt.hash("User123!@#", 10);
     const testUser = await prisma.user.upsert({
       where: { email: "user@test.com" },
       update: {},
       create: {
         email: "user@test.com",
         username: "testuser",
-        passwordHash: userPasswordHash,
+        password: "$2a$10$dummyHashForTestingOnly",
         firstName: "Test",
         lastName: "User",
         role: "USER",
         active: true,
-        emailVerified: true,
-        termsAccepted: true,
-        termsAcceptedAt: new Date(),
       },
     });
 
@@ -59,7 +45,6 @@ export async function seedTestDatabase() {
       create: {
         userId: testUser.id,
         balance: 1000,
-        currency: "ADV",
       },
     });
 
@@ -84,11 +69,12 @@ export async function cleanTestDatabase() {
     // Delete in reverse order of dependencies
     await prisma.tokenWallet.deleteMany({
       where: {
-        user: {
-          email: {
-            in: ["admin@test.com", "user@test.com"],
-          },
-        },
+        userId: {
+          in: await prisma.user.findMany({
+            where: { email: { in: ["admin@test.com", "user@test.com"] } },
+            select: { id: true }
+          }).then(users => users.map(u => u.id))
+        }
       },
     });
 
@@ -104,18 +90,7 @@ export async function cleanTestDatabase() {
   } catch (error) {
     console.error("❌ Error cleaning test database:", error);
     throw error;
+  } finally {
+    await prisma.$disconnect();
   }
-}
-
-// Run seeding if called directly
-if (require.main === module) {
-  seedTestDatabase()
-    .then(() => {
-      console.log("Seeding complete");
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error("Seeding failed:", error);
-      process.exit(1);
-    });
 }

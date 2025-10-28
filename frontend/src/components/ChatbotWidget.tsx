@@ -14,7 +14,7 @@ export default function ChatbotWidget() {
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([{
     role: "bot",
-    text: "Hi! I’m Advancia Help. I can guide payments, debit card orders, Med Beds, OTP, and more. How can I help?",
+    text: "Hi! I'm Advancia Help. I can guide payments, debit card orders, Med Beds, OTP, and more. How can I help?",
     at: new Date().toISOString(),
   }]);
   const sessionId = useMemo(() => {
@@ -89,8 +89,7 @@ export default function ChatbotWidget() {
       {/* Floating Button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 9999 }}
-        className="rounded-full bg-blue-600 text-white shadow-xl w-14 h-14 flex items-center justify-center hover:bg-blue-700"
+        className="fixed right-5 bottom-5 z-[9999] rounded-full bg-blue-600 text-white shadow-xl w-14 h-14 flex items-center justify-center hover:bg-blue-700"
         aria-label="Open Advancia Help"
       >
         {open ? '×' : 'AI'}
@@ -98,7 +97,7 @@ export default function ChatbotWidget() {
 
       {/* Panel */}
       {open && (
-        <div style={{ position: 'fixed', right: 20, bottom: 90, width: 360, height: 520, zIndex: 9999 }} className="bg-white border shadow-2xl rounded-xl flex flex-col">
+        <div className="fixed right-5 bottom-[90px] w-[360px] h-[520px] z-[9999] bg-white border shadow-2xl rounded-xl flex flex-col">
           <div className="p-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-xl">
             <div className="font-semibold">Advancia Help</div>
             <div className="text-xs opacity-90">Live chat + guided help</div>
