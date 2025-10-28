@@ -6,7 +6,8 @@
  */
 
 import request from "supertest";
-import app from "../src/app";
+import app from "./test-app";
+import { seedTestDatabase, cleanTestDatabase } from "./seed-test-db";
 
 describe("Integration Tests - Core Endpoints", () => {
   let authToken: string;
