@@ -1,6 +1,6 @@
 # Advancia Support Staff Training Guide
 
-## Welcome to the Advancia Support Team!
+## Welcome to the Advancia Support Team
 
 This guide will help you provide excellent customer support using our AI-powered knowledge base and platform tools.
 
@@ -16,10 +16,10 @@ This guide will help you provide excellent customer support using our AI-powered
 
 ### Quick Access
 
-- **Backend API**: http://localhost:4000/api
-- **Frontend**: http://localhost:3001
-- **AI Analytics**: http://localhost:4000/api/ai-analytics
-- **Admin Chat Monitor**: http://localhost:3001/admin/chat
+- **Backend API**: <http://localhost:4000/api>
+- **Frontend**: <http://localhost:3001>
+- **AI Analytics**: <http://localhost:4000/api/ai-analytics>
+- **Admin Chat Monitor**: <http://localhost:3001/admin/chat>
 
 ---
 
@@ -61,7 +61,7 @@ This guide will help you provide excellent customer support using our AI-powered
 
 **Template Response:**
 
-```
+`	ext
 To check your balance:
 1. Navigate to your Dashboard
 2. Your balances are displayed at the top:
@@ -71,7 +71,7 @@ To check your balance:
    - USDT Balance (Tether stablecoin)
 
 You can also view detailed transaction history in the Transactions section.
-```
+`	ext
 
 #### Adding Funds
 
@@ -79,7 +79,7 @@ You can also view detailed transaction history in the Transactions section.
 
 **Template Response:**
 
-```
+`	ext
 To add funds to your Advancia account:
 
 1. CRYPTO DEPOSIT:
@@ -101,7 +101,7 @@ To add funds to your Advancia account:
    - 2.5% processing fee applies
 
 Need additional help? I'm here!
-```
+`	ext
 
 #### Transaction Issues
 
@@ -109,7 +109,7 @@ Need additional help? I'm here!
 
 **Template Response:**
 
-```
+`	ext
 Let's troubleshoot your failed transaction:
 
 COMMON CAUSES:
@@ -125,7 +125,7 @@ WHAT TO DO:
 4. Try a smaller amount to test
 
 If issue persists, I can create a priority support ticket for you. Would you like me to do that?
-```
+`	ext
 
 #### Crypto Trading
 
@@ -133,7 +133,7 @@ If issue persists, I can create a priority support ticket for you. Would you lik
 
 **Template Response:**
 
-```
+`	ext
 Buying Bitcoin on Advancia is simple:
 
 STEP-BY-STEP:
@@ -155,7 +155,7 @@ TIPS:
 - Set price alerts for your target buy price
 
 We also support Ethereum (ETH), Tether (USDT), and ADVANCIA Token!
-```
+`	ext
 
 #### Med Beds Booking
 
@@ -163,7 +163,7 @@ We also support Ethereum (ETH), Tether (USDT), and ADVANCIA Token!
 
 **Template Response:**
 
-```
+`	ext
 Booking your Med Bed session is easy:
 
 STEP-BY-STEP:
@@ -192,7 +192,7 @@ CANCELLATION POLICY:
 • No refund within 24 hours
 
 Need help selecting the right chamber for your needs?
-```
+`	ext
 
 #### Debit Card Requests
 
@@ -200,7 +200,7 @@ Need help selecting the right chamber for your needs?
 
 **Template Response:**
 
-```
+`	ext
 Get your Advancia Virtual Debit Card instantly:
 
 💳 CARD DETAILS:
@@ -222,7 +222,7 @@ USING YOUR CARD:
 • Balance: Your card balance = Your USD balance
 
 The card number, expiration, and CVV will be displayed immediately after purchase.
-```
+`	ext
 
 #### 2FA Setup
 
@@ -230,7 +230,7 @@ The card number, expiration, and CVV will be displayed immediately after purchas
 
 **Template Response:**
 
-```
+`	ext
 Secure your account with Two-Factor Authentication:
 
 SETUP PROCESS:
@@ -256,7 +256,7 @@ SETUP PROCESS:
 - Store securely offline
 
 Enable 2FA now for maximum security!
-```
+`	ext
 
 #### Password Reset
 
@@ -264,7 +264,7 @@ Enable 2FA now for maximum security!
 
 **Template Response:**
 
-```
+`	ext
 Reset your Advancia password easily:
 
 STEP-BY-STEP:
@@ -289,7 +289,7 @@ EMAIL NOT RECEIVED?
 • Request new reset link
 
 If you still can't access your account, I can escalate this to our account recovery team.
-```
+`	ext
 
 ---
 
@@ -401,40 +401,40 @@ If you still can't access your account, I can escalate this to our account recov
 
 #### Check User Wallet
 
-```
+`	ext
 GET /api/ai-analytics/wallet/:userId
 Authorization: Bearer {admin_token}
 
 Response: Crypto portfolio analysis, order history, recommendations
-```
+`	ext
 
 #### Cash-Out Eligibility
 
-```
+`	ext
 POST /api/ai-analytics/cashout/:userId
 Authorization: Bearer {admin_token}
 Body: { "requestedAmount": 5000 }
 
 Response: Eligibility assessment, risk analysis, recommendations
-```
+`	ext
 
 #### Product Recommendations
 
-```
+`	ext
 GET /api/ai-analytics/recommendations/:userId
 Authorization: Bearer {admin_token}
 
 Response: Personalized service recommendations based on user activity
-```
+`	ext
 
 #### Market Insights
 
-```
+`	ext
 GET /api/ai-analytics/market-insights
 Authorization: Bearer {admin_token}
 
 Response: Platform-wide analytics and trends
-```
+`	ext
 
 ---
 
@@ -636,15 +636,15 @@ Before making account changes:
 ### Internal Support
 
 - **Team Lead:** [Insert contact]
-- **Technical Support:** tech@advanciapayledger.com
-- **Security Team:** security@advanciapayledger.com
-- **Compliance:** compliance@advanciapayledger.com
+- **Technical Support:** <tech@advanciapayledger.com>
+- **Security Team:** <security@advanciapayledger.com>
+- **Compliance:** <compliance@advanciapayledger.com>
 
 ### External Support (for users)
 
-- **General Support:** support@advanciapayledger.com
-- **Technical Issues:** tech@advanciapayledger.com
-- **Billing Questions:** billing@advanciapayledger.com
+- **General Support:** <support@advanciapayledger.com>
+- **Technical Issues:** <tech@advanciapayledger.com>
+- **Billing Questions:** <billing@advanciapayledger.com>
 
 ### Emergency Escalation
 
@@ -762,7 +762,9 @@ Before making account changes:
 
 ---
 
-**Welcome to the team! You're now equipped to provide world-class support to Advancia users. Let's make every interaction count! 🚀**
+---
+
+**Welcome to the team!** You're now equipped to provide world-class support to Advancia users. Let's make every interaction count! 🚀
 
 _Last Updated: October 28, 2025_  
 _Version: 1.0_  

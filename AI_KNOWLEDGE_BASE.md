@@ -11,7 +11,7 @@
 **User:** "What's my balance?"  
 **AI Response:**
 
-```
+`	ext
 To check your balance:
 1. Navigate to your Dashboard
 2. Your balances are displayed at the top:
@@ -21,12 +21,12 @@ To check your balance:
    - USDT Balance (Tether stablecoin)
 
 You can also view detailed transaction history in the Transactions section.
-```
+`	ext
 
 **User:** "How do I add money to my account?"  
 **AI Response:**
 
-```
+`	ext
 To add funds to your Advancia account:
 
 1. CRYPTO DEPOSIT:
@@ -47,15 +47,15 @@ To add funds to your Advancia account:
    - Instant credit to your account
    - 2.5% processing fee applies
 
-Need help? Contact support@advanciapayledger.com
-```
+Need help? Contact <support@advanciapayledger.com>
+`	ext
 
 ### Transaction Issues
 
 **User:** "My transaction failed"  
 **AI Response:**
 
-```
+`	ext
 Let's troubleshoot your failed transaction:
 
 COMMON CAUSES:
@@ -78,7 +78,7 @@ If issue persists:
    - Error message screenshot
 
 Support team typically responds within 24 hours.
-```
+`	ext
 
 ---
 
@@ -89,7 +89,7 @@ Support team typically responds within 24 hours.
 **User:** "How do I buy Bitcoin?"  
 **AI Response:**
 
-```
+`	ext
 Buying Bitcoin on Advancia is simple:
 
 STEP-BY-STEP:
@@ -117,12 +117,12 @@ Need more crypto options? We also support:
 • Ethereum (ETH)
 • Tether (USDT)
 • ADVANCIA Token (native platform token)
-```
+`	ext
 
 **User:** "Can I withdraw my Bitcoin?"  
 **AI Response:**
 
-```
+`	ext
 Yes! Withdraw your Bitcoin easily:
 
 WITHDRAWAL PROCESS:
@@ -152,14 +152,14 @@ SECURITY TIPS:
 ⚠️ Never share your wallet private keys
 
 Track your withdrawal in Real-Time under Withdrawals → Status
-```
+`	ext
 
 ### Trump Coin Specific
 
 **User:** "What is Trump Coin?"  
 **AI Response:**
 
-```
+`	ext
 Trump Coin is a specialized cryptocurrency available on Advancia:
 
 OVERVIEW:
@@ -188,7 +188,7 @@ Cryptocurrency trading involves risk. Trump Coin is highly volatile.
 Only invest what you can afford to lose. Past performance ≠ future results.
 
 Current market data available in Market Insights section.
-```
+`	ext
 
 ---
 
@@ -199,7 +199,7 @@ Current market data available in Market Insights section.
 **User:** "What are Med Beds?"  
 **AI Response:**
 
-```
+`	ext
 Med Beds are Advancia's advanced wellness technology chambers:
 
 🛏️ CHAMBER TYPES:
@@ -236,12 +236,12 @@ BOOKING:
 → Receive confirmation email
 
 View your booking history and health data in the Med Beds Dashboard.
-```
+`	ext
 
 **User:** "How do I book a Med Bed session?"  
 **AI Response:**
 
-```
+`	ext
 Booking your Med Bed session is easy:
 
 STEP-BY-STEP BOOKING:
@@ -282,8 +282,8 @@ CANCELLATION POLICY:
 • 50% refund 24-48 hours before
 • No refund within 24 hours
 
-Questions? Contact med-beds@advanciapayledger.com
-```
+Questions? Contact <med-beds@advanciapayledger.com>
+`	ext
 
 ---
 
@@ -292,7 +292,7 @@ Questions? Contact med-beds@advanciapayledger.com
 **User:** "How do I get a debit card?"  
 **AI Response:**
 
-```
+`	ext
 Get your Advancia Virtual Debit Card instantly:
 
 💳 CARD DETAILS:
@@ -338,7 +338,7 @@ Your card balance = Your USD balance
 Add funds to USD balance to increase card spending power
 
 Manage your card in Debit Card → My Cards section
-```
+`	ext
 
 ---
 
@@ -347,7 +347,7 @@ Manage your card in Debit Card → My Cards section
 **User:** "Can I get a loan?"  
 **AI Response:**
 
-```
+`	ext
 Yes! Advancia offers Personal Loans:
 
 💰 LOAN DETAILS:
@@ -391,7 +391,7 @@ VIEW ELIGIBILITY:
 → Get personalized loan recommendation
 
 Need help? Loan specialists available via Support Chat.
-```
+`	ext
 
 ---
 
@@ -400,7 +400,7 @@ Need help? Loan specialists available via Support Chat.
 **User:** "How do I earn rewards?"  
 **AI Response:**
 
-```
+`	ext
 Earn rewards on Advancia automatically:
 
 🎁 REWARD EARNING:
@@ -447,7 +447,7 @@ TIER PROGRESSION:
 • Platinum ($50,000 total volume): +100% rewards
 
 View your tier progress: Profile → Tier Status
-```
+`	ext
 
 ---
 
@@ -458,7 +458,7 @@ View your tier progress: Profile → Tier Status
 **User:** "How do I enable 2FA?"  
 **AI Response:**
 
-```
+`	ext
 Secure your account with Two-Factor Authentication:
 
 SETUP PROCESS:
@@ -494,7 +494,7 @@ USING 2FA:
 
 LOST ACCESS?
 → Use backup codes
-→ Contact support@advanciapayledger.com with:
+→ Contact <support@advanciapayledger.com> with:
   - Account email
   - Photo ID
   - Recent transaction details
@@ -506,14 +506,14 @@ BENEFITS:
 ✓ Peace of mind
 
 Enable 2FA now for maximum security!
-```
+`	ext
 
 ### Password Reset
 
 **User:** "I forgot my password"  
 **AI Response:**
 
-```
+`	ext
 Reset your Advancia password easily:
 
 STEP-BY-STEP RESET:
@@ -538,7 +538,7 @@ EMAIL NOT RECEIVED?
 
 STILL CAN'T ACCESS?
 → Contact Account Recovery:
-   Email: support@advanciapayledger.com
+   Email: <support@advanciapayledger.com>
    Subject: "Password Reset Assistance"
    Include:
    - Registered email
@@ -555,7 +555,7 @@ PASSWORD TIPS:
 🔒 Enable 2FA for extra security
 
 Your account security is our priority!
-```
+`	ext
 
 ---
 
@@ -566,7 +566,7 @@ Your account security is our priority!
 **User:** "How do I contact support?"  
 **AI Response:**
 
-```
+`	ext
 Multiple ways to get help on Advancia:
 
 1. SUPPORT TICKET SYSTEM (Best for complex issues):
@@ -589,7 +589,7 @@ Multiple ways to get help on Advancia:
    → Great for simple inquiries
 
 3. EMAIL SUPPORT:
-   → General: support@advanciapayledger.com
+   → General: <support@advanciapayledger.com>
    → Technical: tech@advanciapayledger.com
    → Billing: billing@advanciapayledger.com
    → Response within 24-48 hours
@@ -622,7 +622,7 @@ AVERAGE RESPONSE TIMES:
 • Low (feature requests): 24-48 hours
 
 We're here to help! 🎧
-```
+`	ext
 
 ---
 
@@ -631,7 +631,7 @@ We're here to help! 🎧
 **User:** "What can AI Analytics tell me?"  
 **AI Response:**
 
-```
+`	ext
 Advancia's AI Analytics provides powerful insights:
 
 🤖 AVAILABLE ANALYTICS:
@@ -693,7 +693,7 @@ BENEFITS:
 ✓ Personalized financial guidance
 
 Try it now: Dashboard → AI Analytics section
-```
+`	ext
 
 ---
 
@@ -702,7 +702,7 @@ Try it now: Dashboard → AI Analytics section
 **User:** "Do you have an API?"  
 **AI Response:**
 
-```
+`	ext
 Yes! Advancia offers a comprehensive REST API:
 
 📡 API DETAILS:
@@ -770,7 +770,7 @@ COMING SOON:
 • npm package for Node.js
 
 Start building: Get your API key in Settings → Developer
-```
+`	ext
 
 ---
 
@@ -781,7 +781,7 @@ Start building: Get your API key in Settings → Developer
 **Error:** "Access token required"  
 **Solution:**
 
-```
+`	ext
 This means you need to log in.
 
 FIX:
@@ -794,12 +794,12 @@ If already logged in:
 → Your session may have expired
 → Refresh the page and log in again
 → Sessions last 7 days of inactivity
-```
+`	ext
 
 **Error:** "Invalid or expired token"  
 **Solution:**
 
-```
+`	ext
 Your login session has ended.
 
 FIX:
@@ -811,14 +811,14 @@ PREVENTION:
 • Don't share login links
 • Log out on shared computers
 • Enable "Remember Me" for personal devices
-```
+`	ext
 
 ### Transaction Errors
 
 **Error:** "Insufficient balance"  
 **Solution:**
 
-```
+`	ext
 You don't have enough funds for this action.
 
 CHECK:
@@ -833,14 +833,14 @@ SOLUTIONS:
 • Wait for pending deposits to clear
 
 Need funds quickly? Use instant card deposit.
-```
+`	ext
 
 ### API Errors
 
 **Error:** "Route not found" (404)  
 **Solution:**
 
-```
+`	ext
 The API endpoint doesn't exist or URL is misspelled.
 
 CHECK:
@@ -853,7 +853,7 @@ Example correct format:
 ✓ /api/transactions
 ✗ /api/transaction (missing 's')
 ✗ /transactions (missing 'api/')
-```
+`	ext
 
 ---
 
@@ -864,7 +864,7 @@ Example correct format:
 **User:** "Are there withdrawal limits?"  
 **AI Response:**
 
-```
+`	ext
 Yes, limits vary by tier and verification status:
 
 DAILY WITHDRAWAL LIMITS:
@@ -907,7 +907,7 @@ INCREASE YOUR LIMITS:
 4. Request limit increase via support
 
 View your current limits: Settings → Account Limits
-```
+`	ext
 
 ---
 
@@ -968,4 +968,6 @@ When to direct users to human support:
 
 ---
 
-_This knowledge base is continuously updated. Last update: October 28, 2025_
+---
+
+**Note:** This knowledge base is continuously updated. Last update: October 28, 2025
