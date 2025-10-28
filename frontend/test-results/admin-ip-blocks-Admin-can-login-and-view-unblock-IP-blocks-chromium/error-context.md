@@ -21,5 +21,4 @@
       - button "Send OTP" [ref=e21] [cursor=pointer]
     - paragraph [ref=e23]: 🔒 Protected by SMS verification
   - button "Open Advancia Help" [ref=e24] [cursor=pointer]: AI
-  - alert [ref=e25]
 ```

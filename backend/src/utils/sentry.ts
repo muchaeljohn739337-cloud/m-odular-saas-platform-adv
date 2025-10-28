@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node";
-import { ProfilingIntegration } from "@sentry/profiling-node";
+import { httpIntegration, consoleIntegration, onUncaughtExceptionIntegration, onUnhandledRejectionIntegration } from "@sentry/node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
 // Initialize Sentry for error tracking and performance monitoring
 export function initSentry() {
@@ -13,12 +14,12 @@ export function initSentry() {
     environment: process.env.NODE_ENV || "development",
     integrations: [
       // Add profiling integration for performance monitoring
-      new ProfilingIntegration(),
+      nodeProfilingIntegration(),
       // Add other integrations as needed
-      new Sentry.Integrations.Http({ tracing: true }),
-      new Sentry.Integrations.Console(),
-      new Sentry.Integrations.OnUncaughtException(),
-      new Sentry.Integrations.OnUnhandledRejection(),
+      httpIntegration(),
+      consoleIntegration(),
+      onUncaughtExceptionIntegration(),
+      onUnhandledRejectionIntegration(),
     ],
     // Performance Monitoring
     tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0, // 10% in production, 100% in development
@@ -32,7 +33,7 @@ export function initSentry() {
       // Filter out common non-errors
       if (event.exception) {
         const error = hint.originalException;
-        if (error && typeof error.message === "string") {
+        if (error && error instanceof Error && typeof error.message === "string") {
           // Filter out network errors that are expected
           if (
             error.message.includes("ECONNREFUSED") ||
@@ -72,7 +73,8 @@ export function captureMessage(
   context?: any
 ) {
   if (process.env.SENTRY_DSN) {
-    Sentry.captureMessage(message, level, {
+    Sentry.captureMessage(message, {
+      level,
       tags: {
         component: "backend",
         ...context?.tags,
@@ -116,3 +118,11 @@ export function addBreadcrumb(
     });
   }
 }
+
+
+
+
+
+
+
+
