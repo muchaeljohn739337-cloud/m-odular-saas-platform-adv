@@ -11,8 +11,8 @@ test.describe("Admin User Detail", () => {
   }) => {
     // 1. Login as admin via OTP (dev mode)
     await page.goto("http://localhost:3000/admin/login");
-    await page.fill('input[type="email"]', "admin@advancia.com");
-    await page.fill('input[type="password"]', "Admin@123");
+    await page.fill('input[type="email"]', "admin@test.com");
+    await page.fill('input[type="password"]', "Admin123!@#");
     await page.fill('input[type="tel"]', "+15551234567");
     await page.click('button:has-text("Send OTP")');
 

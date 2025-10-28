@@ -3,8 +3,8 @@ import { test, expect } from "@playwright/test";
 const FRONTEND_BASE = process.env.FRONTEND_URL || "http://localhost:3000";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@advancia.com";
-const ADMIN_PASS = process.env.ADMIN_PASS || "Admin@123";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@test.com";
+const ADMIN_PASS = process.env.ADMIN_PASS || "Admin123!@#";
 const ADMIN_PHONE = process.env.ADMIN_PHONE || "+15551234567";
 
 async function fetchDevOtpCode(
