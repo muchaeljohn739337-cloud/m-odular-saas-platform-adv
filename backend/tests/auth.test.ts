@@ -1,5 +1,6 @@
 import request from "supertest";
-import app from "../src/app";
+import app from "./test-app";
+import { seedTestDatabase, cleanTestDatabase } from "./seed-test-db";
 import prisma from "../src/prismaClient";
 import bcrypt from "bcryptjs";
 
@@ -184,4 +185,5 @@ describe("Auth Routes", () => {
     });
   });
 });
+
 

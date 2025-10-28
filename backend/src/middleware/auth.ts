@@ -112,7 +112,7 @@ export const restrictBackendAccess = (
   next: NextFunction
 ) => {
   // Allow public routes
-  const publicRoutes = ["/health", "/auth/send-otp", "/auth/verify-otp"];
+  const publicRoutes = ["/health", "/auth/send-otp", "/auth/verify-otp", "/auth/forgot-password", "/auth/reset-password"];
   if (publicRoutes.some((route) => req.path.startsWith(route))) {
     return next();
   }
