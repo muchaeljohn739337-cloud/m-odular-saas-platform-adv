@@ -728,7 +728,7 @@ router.post("/reset-password", async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: userId },
-      data: { /* password field needs schema check */ },
+      data: { passwordHash: hashedPassword },
     });
 
     // Clean up the token
