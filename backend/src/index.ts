@@ -6,6 +6,7 @@ import { Server as SocketIOServer } from "socket.io";
 import jwt from "jsonwebtoken";
 import app from "./app";
 import { config } from "./config";
+import { initSentry } from "./utils/sentry";
 import { setSocketIO as setNotificationSocket } from "./services/notificationService";
 import { setTransactionSocketIO } from "./routes/transactions";
 import prisma from "./prismaClient";
@@ -45,6 +46,9 @@ import { activeSessions } from "./routes/authAdmin";
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Sentry for error tracking and monitoring
+initSentry();
 
 // Create HTTP server and attach Socket.IO
 // Create server

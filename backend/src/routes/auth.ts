@@ -373,6 +373,24 @@ const verifyOtpSchema = z.object({
   code: z.string().length(6),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: "Valid email required" }),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, { message: "Reset token is required" }),
+  newPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: 'Valid email required' }),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, { message: 'Reset token is required' }),
+  newPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+});
+
 // Simple SMTP test payload
 const testSmtpSchema = z.object({
   to: z.string().email(),
@@ -382,6 +400,10 @@ const testSmtpSchema = z.object({
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function generateResetToken(): string {
+  return require('crypto').randomBytes(32).toString('hex');
 }
 
 // POST /api/auth/send-otp
@@ -576,12 +598,7 @@ router.post("/verify-otp", otpLimiter, async (req, res) => {
     if ((err as any)?.name === "ZodError") {
       return res.status(400).json({ error: (err as any).issues });
     }
-    console.error("verify-otp error:", err);
-    return res.status(500).json({ error: "Failed to verify OTP" });
-  }
-});
-
-// POST /api/auth/test-email
+    console.error("verify-otp error:", err);\s*return res.status(500).json({ error: "Failed to verify OTP" });\s*}\s*}\);\s*\n\s*// POST /api/auth/forgot-password\nrouter.post("/forgot-password", otpLimiter, async (req, res) => {\n  try {\n    const { email } = forgotPasswordSchema.parse(req.body || {});\n\n    const user = await prisma.user.findFirst({\n      where: { email },\n    });\n    if (!user) {\n      return res.status(404).json({ error: "User not found" });\n    }\n\n    const resetToken = generateResetToken();\n    const key = eset:\;\n\n    const redis = getRedis();\n    const ttlSeconds = 60 * 60; // 1 hour\n    const maxAttemptsWindow = 10 * 60; // 10 minutes\n    const maxRequestsPerWindow = 3;\n    const countKey = eset:cnt:\;\n    const lockKey = eset:lock:\;\n\n    // Fallback in-memory store when Redis not configured\n    const mem: any =\n      (global as any).__resetMem ||\n      ((global as any).__resetMem = new Map<string, any>());\n\n    if (redis) {\n      const locked = await redis.get(lockKey);\n      if (locked)\n        return res.status(429).json({ error: "Too many attempts. Try later." });\n      const cnt = await redis.incr(countKey);\n      if (cnt === 1) await redis.expire(countKey, maxAttemptsWindow);\n      if (cnt > maxRequestsPerWindow) {\n        await redis.set(lockKey, "1", "EX", 30 * 60); // 30 min lockout\n        return res\n          .status(429)\n          .json({ error: "Too many password reset requests. Try again later." });\n      }\n      await redis.setex(eset:\, ttlSeconds, resetToken);\n    } else {\n      const now = Date.now();\n      const entry = mem.get(key) || { count: 0, windowStart: now };\n      if (now - entry.windowStart > maxAttemptsWindow * 1000) {\n        entry.count = 0;\n        entry.windowStart = now;\n      }\n      entry.count += 1;\n      if (entry.count > maxRequestsPerWindow) {\n        return res\n          .status(429)\n          .json({ error: "Too many password reset requests. Try again later." });\n      }\n      mem.set(key, { ...entry, token: resetToken, exp: now + ttlSeconds * 1000 });\n    }\n\n    // Send reset email\n    const resetLink = \/auth/reset-password?token=\;\n    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {\n      const transporter = nodemailer.createTransporter({\n        service: "gmail",\n        auth: {\n          user: process.env.EMAIL_USER,\n          pass: process.env.EMAIL_PASSWORD,\n        },\n      });\n      await transporter.sendMail({\n        from: process.env.EMAIL_USER,\n        to: email,\n        subject: "Reset your Advancia password",\n        html: <p>Hi \,</p><p>You requested a password reset for your Advancia account.</p><p>Click the link below to reset your password:</p><p><a href="\">Reset Password</a></p><p>This link will expire in 1 hour.</p><p>If you didn't request this reset, please ignore this email.</p><p>Best,<br>The Advancia Team</p>,\n      });\n    } else {\n      console.log([DEV] Password reset for \: \);\n    }\n\n    return res.json({ message: "Password reset email sent" });\n  } catch (err) {\n    if ((err as any)?.name === "ZodError") {\n      return res.status(400).json({ error: (err as any).issues });\n    }\n    console.error("forgot-password error:", err);\n    return res.status(500).json({ error: "Failed to send reset email" });\n  }\n});\n\n// POST /api/auth/test-email
 // Sends a simple email notification to the authenticated user to verify SMTP configuration
 router.post(
   "/test-email",
@@ -650,3 +667,5 @@ router.get("/me", authenticateToken, async (req: any, res) => {
 });
 
 export default router;
+
+
