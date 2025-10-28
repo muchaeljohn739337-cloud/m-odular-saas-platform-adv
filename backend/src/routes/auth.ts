@@ -851,3 +851,4 @@ async function sendPasswordResetEmail(email: string, token: string) {
 
 // Password reset routes removed - use Redis-based implementation
 
+export default router;
