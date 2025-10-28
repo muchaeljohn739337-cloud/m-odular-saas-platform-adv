@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { replayIntegration } from "@sentry/nextjs";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -17,7 +18,7 @@ Sentry.init({
 
   // You can remove this option if you're not planning to use the Sentry Session Replay feature:
   integrations: [
-    new Sentry.Replay({
+    replayIntegration({
       // Additional Replay configuration goes in here, for example:
       maskAllText: true,
       blockAllMedia: true,
@@ -29,3 +30,4 @@ Sentry.init({
 
   environment: process.env.NODE_ENV || "development",
 });
+

@@ -5,7 +5,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState('')
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setStatus('Sending...')
     try {
@@ -41,3 +41,4 @@ export default function ForgotPasswordPage() {
     </div>
   )
 }
+

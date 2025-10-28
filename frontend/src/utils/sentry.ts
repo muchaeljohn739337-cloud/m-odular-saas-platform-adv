@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { replayIntegration } from '@sentry/nextjs';
 
 /**
  * Sentry Error Tracking Initialization for Next.js
@@ -28,7 +29,7 @@ export function initSentry(): void {
 
     // You can remove this option if you're not planning to use the Sentry Session Replay feature:
     integrations: [
-      new Sentry.Replay({
+      replayIntegration({
         // Additional Replay configuration goes in here, for example:
         maskAllText: true,
         blockAllMedia: true,
@@ -58,7 +59,8 @@ export function captureException(error: Error, context?: any): void {
 
 export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: any): void {
   if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-    Sentry.captureMessage(message, level, {
+    Sentry.captureMessage(message, {
+      level,
       tags: {
         component: 'frontend',
         ...context?.tags
@@ -66,7 +68,7 @@ export function captureMessage(message: string, level: Sentry.SeverityLevel = 'i
       extra: context?.extra
     });
   } else {
-    console.log(Message (Sentry disabled) []:, message);
+    console.log(`Message (Sentry disabled):`, message);
   }
 }
 
@@ -97,3 +99,7 @@ export function addBreadcrumb(message: string, category?: string, level?: Sentry
     });
   }
 }
+
+
+
+
