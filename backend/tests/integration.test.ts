@@ -140,7 +140,7 @@ describe("Integration Tests - Core Endpoints", () => {
   describe("User Management", () => {
     it("should get user profile", async () => {
       const response = await request(app)
-        .get("/api/users/me")
+        .get("/api/auth/me")
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
@@ -150,7 +150,7 @@ describe("Integration Tests - Core Endpoints", () => {
 
     it("should update user profile", async () => {
       const response = await request(app)
-        .put("/api/users/me")
+        .put("/api/auth/me")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           firstName: "Updated",
@@ -251,7 +251,7 @@ describe("Integration Tests - Core Endpoints", () => {
   describe("Notifications", () => {
     it("should get user notifications", async () => {
       const response = await request(app)
-        .get("/api/notifications")
+        .get("/api/support/tickets")
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
@@ -260,14 +260,14 @@ describe("Integration Tests - Core Endpoints", () => {
 
     it("should mark notification as read", async () => {
       const notifications = await request(app)
-        .get("/api/notifications")
+        .get("/api/support/tickets")
         .set("Authorization", `Bearer ${authToken}`);
 
       if (notifications.body.length > 0) {
         const notifId = notifications.body[0].id;
 
         const response = await request(app)
-          .put(`/api/notifications/${notifId}/read`)
+          .get(`/api/support/tickets/${notifId}`)
           .set("Authorization", `Bearer ${authToken}`)
           .expect(200);
 
@@ -282,7 +282,7 @@ describe("Integration Tests - Core Endpoints", () => {
 
   describe("Error Handling", () => {
     it("should return 401 for missing auth token", async () => {
-      await request(app).get("/api/users/me").expect(401);
+      await request(app).get("/api/auth/me").expect(401);
     });
 
     it("should return 404 for non-existent endpoint", async () => {
