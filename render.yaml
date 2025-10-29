@@ -6,8 +6,13 @@ services:
     region: oregon
     rootDir: backend
     autoDeploy: true
+<<<<<<< HEAD
     buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm start
+=======
+    buildCommand: "npm ci --production=false && npx prisma generate && npx prisma migrate deploy && npm run build"
+    startCommand: "npm run start:render"
+>>>>>>> ci/fix-postgres-init-and-prisma
     envVars:
       - key: NODE_ENV
         value: production

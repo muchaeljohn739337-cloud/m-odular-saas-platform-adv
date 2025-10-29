@@ -22,6 +22,7 @@ import transactionsRouter from "./routes/transactions";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
 import adminRouter from "./routes/admin";
 import consultationRouter from "./routes/consultation";
+import adminDoctorsRouter from "./routes/adminDoctors";
 import systemRouter from "./routes/system";
 import marketingRouter from "./routes/marketing";
 import subscribersRouter from "./routes/subscribers";
@@ -39,11 +40,11 @@ import tokensRouter, { setTokenSocketIO } from "./routes/tokens";
 import rewardsRouter from "./routes/rewards";
 import healthReadingsRouter from "./routes/health-readings";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
+import rpaRouter, { setRPASocketIO } from "./routes/rpa";
 import { activityLogger } from "./middleware/activityLogger";
 import { rateLimit, validateInput } from "./middleware/security";
 import { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
 import { activeSessions } from "./routes/authAdmin";
-
 // Load environment variables
 dotenv.config();
 
@@ -99,6 +100,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/consultation", consultationRouter);
+app.use("/api/admin/doctors", adminDoctorsRouter);
 app.use("/api/system", systemRouter);
 app.use("/api/marketing", marketingRouter);
 app.use("/api/subscribers", subscribersRouter);
@@ -111,6 +113,7 @@ app.use("/api/oal", oalRouter);
 app.use("/api/tokens", tokensRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/health-readings", healthReadingsRouter);
+app.use("/api/rpa", rpaRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -192,6 +195,7 @@ setPaymentsSocketIO(io);
 setWithdrawalSocketIO(io);
 setOALSocketIO(io);
 setTokenSocketIO(io);
+setRPASocketIO(io);
 
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
@@ -210,6 +214,7 @@ const PORT = config.port || process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
