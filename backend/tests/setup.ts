@@ -3,6 +3,9 @@
 
 import { PrismaClient } from "@prisma/client";
 
+// Mock notification service before any imports that use it
+jest.mock("../src/services/notificationService");
+
 // Global test setup
 beforeAll(async () => {
   console.log("🧪 Setting up test environment...");

@@ -117,6 +117,8 @@ describe("Auth Routes", () => {
         lastName: "User",
         passwordHash: "hashed-password",
         usdBalance: "100.00",
+        active: true,
+        emailVerified: true,
       };
 
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
@@ -185,5 +187,3 @@ describe("Auth Routes", () => {
     });
   });
 });
-
-

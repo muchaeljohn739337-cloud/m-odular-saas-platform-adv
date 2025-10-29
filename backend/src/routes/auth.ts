@@ -67,7 +67,7 @@ router.post("/register", validateApiKey, async (req, res) => {
         termsAccepted: true,
         termsAcceptedAt: new Date(),
         active: false, // pending admin approval
-        emailVerified: false,
+        emailVerified: true,
       },
     });
 
