@@ -1,5 +1,6 @@
 import express from "express";
 import { config } from "../config";
+import prisma from "../prismaClient";
 
 const router = express.Router();
 
@@ -19,6 +20,57 @@ router.get("/health", (req, res) => {
     service: "system",
     time: new Date().toISOString(),
   });
+});
+
+// GET /api/system/status - returns system-wide status for frontend banner
+router.get("/status", async (req, res) => {
+  try {
+    // Check if SystemStatus table has any alerts
+    const services = await prisma.systemStatus.findMany({
+      orderBy: { updatedAt: "desc" },
+    });
+
+    // Determine overall status
+    let overallStatus: "operational" | "degraded" | "down" = "operational";
+    let alertLevel: "none" | "warning" | "danger" = "none";
+
+    if (services.length > 0) {
+      const hasDown = services.some((s) => s.status === "down");
+      const hasDegraded = services.some((s) => s.status === "degraded");
+      const hasDanger = services.some((s) => s.alertLevel === "danger");
+      const hasWarning = services.some((s) => s.alertLevel === "warning");
+
+      if (hasDown) overallStatus = "down";
+      else if (hasDegraded) overallStatus = "degraded";
+
+      if (hasDanger) alertLevel = "danger";
+      else if (hasWarning) alertLevel = "warning";
+    }
+
+    return res.json({
+      overall: {
+        status: overallStatus,
+        alertLevel,
+        timestamp: new Date().toISOString(),
+      },
+      services: services.map((s) => ({
+        serviceName: s.serviceName,
+        status: s.status,
+        statusMessage: s.statusMessage || "",
+        alertLevel: s.alertLevel || "none",
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching system status:", error);
+    return res.status(500).json({
+      overall: {
+        status: "operational",
+        alertLevel: "none",
+        timestamp: new Date().toISOString(),
+      },
+      services: [],
+    });
+  }
 });
 
 export default router;

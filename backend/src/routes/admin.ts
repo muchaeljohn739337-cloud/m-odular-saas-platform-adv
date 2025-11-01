@@ -1,11 +1,11 @@
 import express from "express";
-import prisma from "../prismaClient";
 import { adminAuth } from "../middleware/adminAuth";
 import {
   authenticateToken,
-  requireAdmin,
   logAdminAction,
+  requireAdmin,
 } from "../middleware/auth";
+import prisma from "../prismaClient";
 
 const router = express.Router();
 
@@ -639,9 +639,11 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
 
     const validCurrencies = ["USD", "BTC", "ETH", "USDT"];
     const currencyUpper = currency.toUpperCase();
-    
+
     if (!validCurrencies.includes(currencyUpper)) {
-      return res.status(400).json({ error: `Invalid currency: ${currencyUpper}` });
+      return res
+        .status(400)
+        .json({ error: `Invalid currency: ${currencyUpper}` });
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -701,7 +703,6 @@ router.get("/transactions", adminAuth, async (req, res) => {
   }
 });
 
-
 // ✨ NEW ENDPOINTS: Registration Approval System
 
 // GET /api/admin/users/pending-approvals - List pending user registrations
@@ -747,7 +748,9 @@ router.get(
       });
     } catch (err) {
       console.error("Error fetching pending approvals:", err);
-      return res.status(500).json({ error: "Failed to fetch pending approvals" });
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch pending approvals" });
     }
   }
 );
@@ -765,7 +768,8 @@ router.post(
 
       if (!userId || !action || !["approve", "reject"].includes(action)) {
         return res.status(400).json({
-          error: "Invalid request. userId and action (approve/reject) required.",
+          error:
+            "Invalid request. userId and action (approve/reject) required.",
         });
       }
 
@@ -842,7 +846,8 @@ router.post(
         !["approve", "reject"].includes(action)
       ) {
         return res.status(400).json({
-          error: "Invalid request. userIds (array) and action (approve/reject) required.",
+          error:
+            "Invalid request. userIds (array) and action (approve/reject) required.",
         });
       }
 
@@ -906,8 +911,42 @@ router.post(
     }
   }
 );
+
+// GET /api/admin/config/silent-mode - Get silent mode status
+router.get("/config/silent-mode", async (req, res) => {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "silentMode" },
+    });
+
+    return res.json({
+      silentMode: config?.value === "true" || false,
+    });
+  } catch (err) {
+    console.error("Error fetching silent mode config:", err);
+    return res.json({ silentMode: false });
+  }
+});
+
+// POST /api/admin/config/silent-mode - Toggle silent mode (admin only)
+router.post("/config/silent-mode", adminAuth, async (req, res) => {
+  try {
+    const { silentMode } = req.body;
+
+    const config = await prisma.systemConfig.upsert({
+      where: { key: "silentMode" },
+      update: { value: silentMode ? "true" : "false" },
+      create: { key: "silentMode", value: silentMode ? "true" : "false" },
+    });
+
+    return res.json({
+      silentMode: config.value === "true",
+      message: `Silent mode ${silentMode ? "enabled" : "disabled"}`,
+    });
+  } catch (err) {
+    console.error("Error updating silent mode config:", err);
+    return res.status(500).json({ error: "Failed to update silent mode" });
+  }
+});
+
 export default router;
-
-
-
-
