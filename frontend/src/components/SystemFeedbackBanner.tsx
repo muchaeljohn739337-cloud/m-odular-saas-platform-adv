@@ -123,7 +123,7 @@ export default function SystemFeedbackBanner() {
           notifyAdminsOnly: true, // Only notify admins, not regular users
         }),
       });
-      
+
       // Silently ignore 404 - endpoint not implemented yet
       if (response.status === 404) {
         return;

@@ -155,7 +155,10 @@ export default function SettingsPage() {
                 </div>
                 <div className="p-6 space-y-4">
                   <div>
-                    <label htmlFor="user-name" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="user-name"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       Name
                     </label>
                     <input
@@ -168,7 +171,10 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="user-email" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="user-email"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       Email
                     </label>
                     <input
