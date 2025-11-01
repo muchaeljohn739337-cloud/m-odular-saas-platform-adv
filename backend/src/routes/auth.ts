@@ -1,34 +1,37 @@
+import bcrypt from "bcryptjs";
 import express from "express";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import prisma from "../prismaClient";
-import { config } from "../config";
-import { rateLimit } from "../middleware/security";
 import * as nodemailer from "nodemailer";
 import { z } from "zod";
-import { getRedis } from "../services/redisClient";
+import { config } from "../config";
 import { authenticateToken } from "../middleware/auth";
+import { rateLimit } from "../middleware/security";
+import prisma from "../prismaClient";
 import {
   createNotification,
   notifyAllAdmins,
 } from "../services/notificationService";
+import { getRedis } from "../services/redisClient";
 
 const router = express.Router();
 
-// Optional API key guard (lenient in development)
+// Optional API key guard - only enforce if API_KEY is explicitly set
+// This allows public access to auth endpoints while still supporting
+// API key validation when needed for testing/internal use
 const validateApiKey = (
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
 ) => {
-  // Skip API key validation in development or test environments
-  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+  const expectedKey = process.env.API_KEY;
+
+  // If no API_KEY is configured, skip validation (public access)
+  if (!expectedKey) {
     return next();
   }
-  
+
+  // If API_KEY is configured, validate it
   const apiKey = req.headers["x-api-key"];
-  const expectedKey = process.env.API_KEY;
-  
   if (!apiKey || apiKey !== expectedKey) {
     return res.status(401).json({ error: "Invalid or missing API key" });
   }
@@ -143,18 +146,19 @@ router.post("/login", validateApiKey, async (req, res) => {
     }
 
     if (!user.emailVerified) {
-      return res
-        .status(403)
-        .json({
-          error: "Email not verified. Please verify your email to continue.",
-          status: "email_unverified",
-        });
+      return res.status(403).json({
+        error: "Email not verified. Please verify your email to continue.",
+        status: "email_unverified",
+      });
     }
 
     if (!user.active) {
       return res
         .status(403)
-        .json({ error: "Account pending admin approval.", status: "pending_approval" });
+        .json({
+          error: "Account pending admin approval.",
+          status: "pending_approval",
+        });
     }
 
     // Update last login (best effort)
@@ -382,7 +386,9 @@ const forgotPasswordSchema = z.object({
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, { message: "Reset token is required" }),
-  newPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  newPassword: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
 });
 
 // Simple SMTP test payload
@@ -397,7 +403,7 @@ function generateCode(): string {
 }
 
 function generateResetToken(): string {
-  return require('crypto').randomBytes(32).toString('hex');
+  return require("crypto").randomBytes(32).toString("hex");
 }
 
 // POST /api/auth/send-otp
@@ -587,7 +593,11 @@ router.post("/verify-otp", otpLimiter, async (req, res) => {
       console.error("Admin notify failed (email verified):", e);
     }
 
-    return res.json({ message: "OTP verified", status: "pending_approval", token });
+    return res.json({
+      message: "OTP verified",
+      status: "pending_approval",
+      token,
+    });
   } catch (err) {
     if ((err as any)?.name === "ZodError") {
       return res.status(400).json({ error: (err as any).issues });
@@ -634,7 +644,9 @@ router.post("/forgot-password", otpLimiter, async (req, res) => {
         await redis.set(lockKey, "1", "EX", 30 * 60); // 30 min lockout
         return res
           .status(429)
-          .json({ error: "Too many password reset requests. Try again later." });
+          .json({
+            error: "Too many password reset requests. Try again later.",
+          });
       }
       await redis.setex(key, ttlSeconds, resetToken);
     } else {
@@ -648,9 +660,15 @@ router.post("/forgot-password", otpLimiter, async (req, res) => {
       if (entry.count > maxRequestsPerWindow) {
         return res
           .status(429)
-          .json({ error: "Too many password reset requests. Try again later." });
+          .json({
+            error: "Too many password reset requests. Try again later.",
+          });
       }
-      mem.set(key, { ...entry, token: resetToken, exp: now + ttlSeconds * 1000 });
+      mem.set(key, {
+        ...entry,
+        token: resetToken,
+        exp: now + ttlSeconds * 1000,
+      });
     }
 
     // Send reset email
@@ -667,7 +685,9 @@ router.post("/forgot-password", otpLimiter, async (req, res) => {
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Reset your Advancia password",
-        html: `<p>Hi ${user.firstName || 'there'},</p><p>You requested a password reset for your Advancia account.</p><p>Click the link below to reset your password:</p><p><a href="${resetLink}">Reset Password</a></p><p>This link will expire in 1 hour.</p><p>If you didn't request this reset, please ignore this email.</p><p>Best,<br>The Advancia Team</p>`,
+        html: `<p>Hi ${
+          user.firstName || "there"
+        },</p><p>You requested a password reset for your Advancia account.</p><p>Click the link below to reset your password:</p><p><a href="${resetLink}">Reset Password</a></p><p>This link will expire in 1 hour.</p><p>If you didn't request this reset, please ignore this email.</p><p>Best,<br>The Advancia Team</p>`,
       });
     } else {
       console.log(`[DEV] Password reset for ${email}: ${resetLink}`);
@@ -700,7 +720,11 @@ router.post("/reset-password", async (req, res) => {
       // Find the user ID by scanning all reset:* keys
       const keys = await redis.keys("reset:*");
       for (const key of keys) {
-        if (key.startsWith("reset:") && !key.includes(":cnt:") && !key.includes(":lock:")) {
+        if (
+          key.startsWith("reset:") &&
+          !key.includes(":cnt:") &&
+          !key.includes(":lock:")
+        ) {
           const stored = await redis.get(key);
           if (stored === token) {
             userId = key.replace("reset:", "");
@@ -712,7 +736,11 @@ router.post("/reset-password", async (req, res) => {
     } else {
       // Check in-memory store
       for (const [key, entry] of mem.entries()) {
-        if (key.startsWith("reset:") && entry.token === token && entry.exp > Date.now()) {
+        if (
+          key.startsWith("reset:") &&
+          entry.token === token &&
+          entry.exp > Date.now()
+        ) {
           userId = key.replace("reset:", "");
           storedToken = entry.token;
           break;
@@ -817,7 +845,6 @@ router.get("/me", authenticateToken, async (req: any, res) => {
 });
 
 // ===== PASSWORD RESET ROUTES =====
-import crypto from "crypto";
 
 // Helper function to send password reset email
 async function sendPasswordResetEmail(email: string, token: string) {
@@ -831,7 +858,9 @@ async function sendPasswordResetEmail(email: string, token: string) {
     },
   });
 
-  const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+  const resetUrl = `${
+    process.env.FRONTEND_URL || "http://localhost:3000"
+  }/reset-password?token=${token}`;
 
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
@@ -847,7 +876,6 @@ async function sendPasswordResetEmail(email: string, token: string) {
     `,
   });
 }
-
 
 // Password reset routes removed - use Redis-based implementation
 
