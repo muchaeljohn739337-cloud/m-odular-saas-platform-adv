@@ -75,4 +75,19 @@ router.get("/status", async (req, res) => {
   }
 });
 
+// Debug endpoint to list all registered routes
+router.get("/debug/routes", (req, res) => {
+  const routes = router.stack
+    .filter((r) => r.route)
+    .map((r) => ({
+      path: r.route.path,
+      methods: Object.keys(r.route.methods),
+    }));
+  res.json({
+    message: "System router routes",
+    routes,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 export default router;
