@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, XCircle, CheckCircle, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertTriangle, CheckCircle, X, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface SystemStatus {
   overall: {
@@ -28,8 +28,8 @@ export default function SystemFeedbackBanner() {
     // Check if user is admin (from localStorage or session)
     const checkAdminStatus = () => {
       try {
-        const userRole = localStorage.getItem('userRole');
-        const isUserAdmin = userRole === 'admin' || userRole === 'superadmin';
+        const userRole = localStorage.getItem("userRole");
+        const isUserAdmin = userRole === "admin" || userRole === "superadmin";
         setIsAdmin(isUserAdmin);
       } catch {
         setIsAdmin(false);
@@ -41,22 +41,36 @@ export default function SystemFeedbackBanner() {
     // Check system status on mount and periodically
     const checkStatus = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
         const response = await fetch(`${apiUrl}/api/system/status`);
+
+        // Silently handle 404 - endpoint not yet available
+        if (response.status === 404) {
+          setIsVisible(false);
+          return;
+        }
+
         if (response.ok) {
           const data = await response.json();
           setSystemStatus(data);
-          
+
           // Only show banner if there's an issue
-          if (data.overall.alertLevel === "none" && data.overall.status === "operational") {
+          if (
+            data.overall.alertLevel === "none" &&
+            data.overall.status === "operational"
+          ) {
             setIsVisible(false);
           } else {
             setIsVisible(true);
             setIsDismissed(false); // Reset dismissed state when new issue appears
-            
+
             // 🤖 Trigger RPA workers to handle the issue automatically
             // RPA workers will attempt to resolve backend issues without user intervention
-            if (data.overall.status === "down" || data.overall.alertLevel === "danger") {
+            if (
+              data.overall.status === "down" ||
+              data.overall.alertLevel === "danger"
+            ) {
               triggerRpaWorkers(data);
             }
           }
@@ -79,11 +93,11 @@ export default function SystemFeedbackBanner() {
             },
           ],
         };
-        
+
         setSystemStatus(issueData);
         setIsVisible(true);
         setIsDismissed(false);
-        
+
         // 🤖 Let RPA workers handle backend connection issues
         triggerRpaWorkers(issueData);
       }
@@ -98,19 +112,20 @@ export default function SystemFeedbackBanner() {
   // 🤖 Trigger RPA workers to automatically handle system issues
   const triggerRpaWorkers = async (statusData: SystemStatus) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       await fetch(`${apiUrl}/api/rpa/auto-resolve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           issue: statusData,
-          priority: statusData.overall.alertLevel === 'danger' ? 'high' : 'medium',
+          priority:
+            statusData.overall.alertLevel === "danger" ? "high" : "medium",
           notifyAdminsOnly: true, // Only notify admins, not regular users
         }),
       });
     } catch {
       // Silently fail - RPA endpoint might not be available yet
-      console.log('RPA auto-resolve queued for retry');
+      console.log("RPA auto-resolve queued for retry");
     }
   };
 
@@ -129,7 +144,8 @@ export default function SystemFeedbackBanner() {
   }
 
   const { overall } = systemStatus;
-  const shouldShow = overall.alertLevel !== "none" || overall.status !== "operational";
+  const shouldShow =
+    overall.alertLevel !== "none" || overall.status !== "operational";
 
   if (!shouldShow) {
     return null;
@@ -144,7 +160,10 @@ export default function SystemFeedbackBanner() {
     bgColor = "bg-red-500";
     icon = <XCircle className="w-5 h-5" />;
     message = "System experiencing issues";
-  } else if (overall.alertLevel === "warning" || overall.status === "degraded") {
+  } else if (
+    overall.alertLevel === "warning" ||
+    overall.status === "degraded"
+  ) {
     bgColor = "bg-yellow-500";
     icon = <AlertTriangle className="w-5 h-5" />;
     message = "System performance degraded";
@@ -172,7 +191,9 @@ export default function SystemFeedbackBanner() {
                 <p className="font-semibold">🔧 Admin Alert: {message}</p>
                 {affectedServices.length > 0 && (
                   <p className="text-sm opacity-90 mt-1">
-                    Affected services: {affectedServices.map((s) => s.serviceName).join(", ")} • RPA workers handling automatically
+                    Affected services:{" "}
+                    {affectedServices.map((s) => s.serviceName).join(", ")} •
+                    RPA workers handling automatically
                   </p>
                 )}
               </div>

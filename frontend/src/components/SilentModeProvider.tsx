@@ -17,10 +17,24 @@ export default function SilentModeProvider() {
           credentials: "include",
         });
 
+        // Silently handle 404 - endpoint not yet available
+        if (response.status === 404) {
+          if (typeof window !== "undefined") {
+            window.__SILENT_MODE__ = false;
+          }
+          return;
+        }
+
         if (!response.ok) {
-          console.warn(
-            "[Silent Mode] Failed to fetch config, defaulting to disabled"
-          );
+          // Only log non-404 errors
+          if (process.env.NODE_ENV === "development") {
+            console.warn(
+              "[Silent Mode] Failed to fetch config, defaulting to disabled"
+            );
+          }
+          if (typeof window !== "undefined") {
+            window.__SILENT_MODE__ = false;
+          }
           return;
         }
 
@@ -48,8 +62,7 @@ export default function SilentModeProvider() {
           }
         }
       } catch (error) {
-        console.error("[Silent Mode] Error checking configuration:", error);
-        // Default to not enabled on error
+        // Silently fail - this is a non-critical feature
         if (typeof window !== "undefined") {
           window.__SILENT_MODE__ = false;
         }

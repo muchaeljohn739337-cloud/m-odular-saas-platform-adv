@@ -8,6 +8,16 @@ let silentModeEnabled = false;
 export const initSilentMode = async (): Promise<boolean> => {
   try {
     const res = await fetch("/api/admin/config/silent-mode");
+
+    // Silently handle 404 - endpoint not yet available
+    if (res.status === 404) {
+      return false;
+    }
+
+    if (!res.ok) {
+      return false;
+    }
+
     const data = await res.json();
 
     silentModeEnabled = data.silentMode || false;
@@ -26,7 +36,7 @@ export const initSilentMode = async (): Promise<boolean> => {
 
     return silentModeEnabled;
   } catch (error) {
-    console.error("Failed to initialize Silent Mode:", error);
+    // Silently fail - this is a non-critical feature
     return false;
   }
 };
