@@ -19,6 +19,7 @@ router.get("/health", (req, res) => {
     status: "ok",
     service: "system",
     time: new Date().toISOString(),
+    version: "2025-11-01-v2", // Version marker to confirm deployment
   });
 });
 
