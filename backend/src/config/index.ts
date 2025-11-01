@@ -87,6 +87,17 @@ function getAllowedOrigins(): string[] {
   if (process.env.NODE_ENV === "production") {
     set.add("https://advanciapayledger.com");
     set.add("https://www.advanciapayledger.com");
+    set.add("https://admin.advanciapayledger.com");
+  }
+
+  // Add Vercel preview/production domains
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    set.add(`https://${vercelUrl}`);
+  }
+  // Also check for specific Vercel deployment URL pattern
+  if (frontendUrl.includes("vercel.app")) {
+    set.add(frontendUrl);
   }
 
   // Add localhost variants for development
@@ -141,4 +152,3 @@ if (!config.stripeSecretKey) {
     "⚠️  STRIPE_SECRET_KEY not set. Payment endpoints will be disabled."
   );
 }
-
