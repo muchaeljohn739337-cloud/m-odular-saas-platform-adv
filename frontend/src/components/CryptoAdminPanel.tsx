@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 interface AdminSettings {
@@ -51,7 +51,9 @@ export default function CryptoAdminPanel() {
   const [orders, setOrders] = useState<CryptoOrder[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"settings" | "orders" | "withdrawals">("settings");
+  const [activeTab, setActiveTab] = useState<
+    "settings" | "orders" | "withdrawals"
+  >("settings");
 
   useEffect(() => {
     fetchData();
@@ -62,7 +64,9 @@ export default function CryptoAdminPanel() {
       const [settingsRes, ordersRes, withdrawalsRes] = await Promise.all([
         fetch("http://localhost:4000/api/crypto/admin/settings"),
         fetch("http://localhost:4000/api/crypto/admin/orders?status=pending"),
-        fetch("http://localhost:4000/api/crypto/admin/withdrawals?status=pending"),
+        fetch(
+          "http://localhost:4000/api/crypto/admin/withdrawals?status=pending"
+        ),
       ]);
 
       const settingsData = await settingsRes.json();
@@ -81,11 +85,14 @@ export default function CryptoAdminPanel() {
 
   const updateSettings = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/crypto/admin/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
+      const response = await fetch(
+        "http://localhost:4000/api/crypto/admin/settings",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(settings),
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to update");
 
@@ -95,17 +102,24 @@ export default function CryptoAdminPanel() {
     }
   };
 
-  const completeOrder = async (orderId: string, txHash: string, notes: string) => {
+  const completeOrder = async (
+    orderId: string,
+    txHash: string,
+    notes: string
+  ) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/crypto/admin/orders/${orderId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "completed",
-          txHash,
-          adminNotes: notes,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:4000/api/crypto/admin/orders/${orderId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "completed",
+            txHash,
+            adminNotes: notes,
+          }),
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to complete order");
 
@@ -116,7 +130,11 @@ export default function CryptoAdminPanel() {
     }
   };
 
-  const approveWithdrawal = async (withdrawalId: string, approved: boolean, notes: string) => {
+  const approveWithdrawal = async (
+    withdrawalId: string,
+    approved: boolean,
+    notes: string
+  ) => {
     try {
       const response = await fetch(
         `http://localhost:4000/api/crypto/admin/withdrawals/${withdrawalId}`,
@@ -151,14 +169,18 @@ export default function CryptoAdminPanel() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-white mb-8">🪙 Crypto Admin Panel</h1>
+        <h1 className="text-4xl font-bold text-white mb-8">
+          🪙 Crypto Admin Panel
+        </h1>
 
         {/* Tabs */}
         <div className="flex gap-4 mb-8">
           {["settings", "orders", "withdrawals"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as "settings" | "orders" | "withdrawals")}
+              onClick={() =>
+                setActiveTab(tab as "settings" | "orders" | "withdrawals")
+              }
               className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                 activeTab === tab
                   ? "bg-blue-600 text-white"
@@ -187,38 +209,67 @@ export default function CryptoAdminPanel() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-gray-800 rounded-xl p-8"
           >
-            <h2 className="text-2xl font-bold text-white mb-6">Admin Wallet Settings</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">
+              Admin Wallet Settings
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Wallet Addresses */}
               <div>
-                <label className="block text-gray-300 mb-2">Bitcoin Address</label>
+                <label
+                  htmlFor="btc-address"
+                  className="block text-gray-300 mb-2"
+                >
+                  Bitcoin Address
+                </label>
                 <input
                   type="text"
+                  id="btc-address"
+                  name="btc-address"
                   value={settings.btcAddress || ""}
-                  onChange={(e) => setSettings({ ...settings, btcAddress: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, btcAddress: e.target.value })
+                  }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">Ethereum Address</label>
+                <label
+                  htmlFor="eth-address"
+                  className="block text-gray-300 mb-2"
+                >
+                  Ethereum Address
+                </label>
                 <input
                   type="text"
+                  id="eth-address"
+                  name="eth-address"
                   value={settings.ethAddress || ""}
-                  onChange={(e) => setSettings({ ...settings, ethAddress: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, ethAddress: e.target.value })
+                  }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">USDT Address</label>
+                <label
+                  htmlFor="usdt-address"
+                  className="block text-gray-300 mb-2"
+                >
+                  USDT Address
+                </label>
                 <input
                   type="text"
+                  id="usdt-address"
+                  name="usdt-address"
                   value={settings.usdtAddress || ""}
-                  onChange={(e) => setSettings({ ...settings, usdtAddress: e.target.value })}
+                  onChange={(e) =>
+                    setSettings({ ...settings, usdtAddress: e.target.value })
+                  }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="TJRabPrwbZy45FFMrCLZcRdWWF7E6mWvJ"
                 />
@@ -226,12 +277,19 @@ export default function CryptoAdminPanel() {
 
               {/* Exchange Rates */}
               <div>
-                <label className="block text-gray-300 mb-2">BTC/USD Rate</label>
+                <label htmlFor="btc-rate" className="block text-gray-300 mb-2">
+                  BTC/USD Rate
+                </label>
                 <input
                   type="number"
+                  id="btc-rate"
+                  name="btc-rate"
                   value={settings.exchangeRateBtc || ""}
                   onChange={(e) =>
-                    setSettings({ ...settings, exchangeRateBtc: Number(e.target.value) })
+                    setSettings({
+                      ...settings,
+                      exchangeRateBtc: Number(e.target.value),
+                    })
                   }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="45000"
@@ -239,12 +297,19 @@ export default function CryptoAdminPanel() {
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">ETH/USD Rate</label>
+                <label htmlFor="eth-rate" className="block text-gray-300 mb-2">
+                  ETH/USD Rate
+                </label>
                 <input
                   type="number"
+                  id="eth-rate"
+                  name="eth-rate"
                   value={settings.exchangeRateEth || ""}
                   onChange={(e) =>
-                    setSettings({ ...settings, exchangeRateEth: Number(e.target.value) })
+                    setSettings({
+                      ...settings,
+                      exchangeRateEth: Number(e.target.value),
+                    })
                   }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="2800"
@@ -252,12 +317,19 @@ export default function CryptoAdminPanel() {
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">USDT/USD Rate</label>
+                <label htmlFor="usdt-rate" className="block text-gray-300 mb-2">
+                  USDT/USD Rate
+                </label>
                 <input
                   type="number"
+                  id="usdt-rate"
+                  name="usdt-rate"
                   value={settings.exchangeRateUsdt || ""}
                   onChange={(e) =>
-                    setSettings({ ...settings, exchangeRateUsdt: Number(e.target.value) })
+                    setSettings({
+                      ...settings,
+                      exchangeRateUsdt: Number(e.target.value),
+                    })
                   }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="1.00"
@@ -266,13 +338,23 @@ export default function CryptoAdminPanel() {
 
               {/* Fees */}
               <div>
-                <label className="block text-gray-300 mb-2">Processing Fee (%)</label>
+                <label
+                  htmlFor="processing-fee"
+                  className="block text-gray-300 mb-2"
+                >
+                  Processing Fee (%)
+                </label>
                 <input
                   type="number"
+                  id="processing-fee"
+                  name="processing-fee"
                   step="0.1"
                   value={settings.processingFeePercent || ""}
                   onChange={(e) =>
-                    setSettings({ ...settings, processingFeePercent: Number(e.target.value) })
+                    setSettings({
+                      ...settings,
+                      processingFeePercent: Number(e.target.value),
+                    })
                   }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="2.5"
@@ -280,12 +362,22 @@ export default function CryptoAdminPanel() {
               </div>
 
               <div>
-                <label className="block text-gray-300 mb-2">Minimum Purchase ($)</label>
+                <label
+                  htmlFor="min-purchase"
+                  className="block text-gray-300 mb-2"
+                >
+                  Minimum Purchase ($)
+                </label>
                 <input
                   type="number"
+                  id="min-purchase"
+                  name="min-purchase"
                   value={settings.minPurchaseAmount || ""}
                   onChange={(e) =>
-                    setSettings({ ...settings, minPurchaseAmount: Number(e.target.value) })
+                    setSettings({
+                      ...settings,
+                      minPurchaseAmount: Number(e.target.value),
+                    })
                   }
                   className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 border border-gray-600 focus:border-blue-500"
                   placeholder="10"
@@ -318,7 +410,11 @@ export default function CryptoAdminPanel() {
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => (
-                  <OrderCard key={order.id} order={order} onComplete={completeOrder} />
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    onComplete={completeOrder}
+                  />
                 ))}
               </div>
             )}
@@ -384,7 +480,9 @@ function OrderCard({
       <div className="grid grid-cols-2 gap-4 text-sm mb-4">
         <div>
           <p className="text-gray-400">USD Amount</p>
-          <p className="text-white font-bold">${Number(order.totalUsd).toFixed(2)}</p>
+          <p className="text-white font-bold">
+            ${Number(order.totalUsd).toFixed(2)}
+          </p>
         </div>
         <div>
           <p className="text-gray-400">User Wallet</p>
@@ -453,11 +551,15 @@ function WithdrawalCard({
       <div className="grid grid-cols-2 gap-4 text-sm mb-4">
         <div>
           <p className="text-gray-400">USD Equivalent</p>
-          <p className="text-white font-bold">${Number(withdrawal.usdEquivalent).toFixed(2)}</p>
+          <p className="text-white font-bold">
+            ${Number(withdrawal.usdEquivalent).toFixed(2)}
+          </p>
         </div>
         <div>
           <p className="text-gray-400">Withdrawal Address</p>
-          <p className="text-white font-mono text-xs break-all">{withdrawal.withdrawalAddress}</p>
+          <p className="text-white font-mono text-xs break-all">
+            {withdrawal.withdrawalAddress}
+          </p>
         </div>
       </div>
 
@@ -477,7 +579,9 @@ function WithdrawalCard({
             ✅ Approve
           </button>
           <button
-            onClick={() => onApprove(withdrawal.id, false, notes || "Rejected by admin")}
+            onClick={() =>
+              onApprove(withdrawal.id, false, notes || "Rejected by admin")
+            }
             className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded"
           >
             ❌ Reject
@@ -487,4 +591,3 @@ function WithdrawalCard({
     </div>
   );
 }
-
