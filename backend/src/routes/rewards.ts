@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Router } from "express";
 import prisma from "../prismaClient";
 import { authenticateToken } from "../middleware/auth";
@@ -35,31 +34,10 @@ router.get("/:userId", authenticateToken as any, async (req, res) => {
       },
     });
   } catch (error: any) {
-    console.error("[REWARDS] Error fetching rewards:", error);
-=======
-/**
- * Rewards API Routes (Stub for testing)
- * TODO: Implement full reward system logic
- */
-
-import { Router, Request, Response } from "express";
-import { authenticateToken } from "../middleware/auth";
-
-const router = Router();
-
-// Get user rewards
-router.get("/", authenticateToken, async (req: Request, res: Response) => {
-  try {
-    // Stub: Return empty rewards array
-    res.json([]);
-  } catch (error) {
-    console.error("Error fetching rewards:", error);
->>>>>>> ci/fix-postgres-init-and-prisma
-    res.status(500).json({ error: "Failed to fetch rewards" });
+    console.error("[REWARDS] Error fetching rewards:", error);    res.status(500).json({ error: "Failed to fetch rewards" });
   }
 });
 
-<<<<<<< HEAD
 router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
   try {
     const { rewardId } = req.params;
@@ -343,18 +321,4 @@ router.get("/leaderboard", async (req, res) => {
   }
 });
 
-
-=======
-// Get reward tiers
-router.get("/tiers", authenticateToken, async (req: Request, res: Response) => {
-  try {
-    // Stub: Return empty tiers array
-    res.json([]);
-  } catch (error) {
-    console.error("Error fetching reward tiers:", error);
-    res.status(500).json({ error: "Failed to fetch reward tiers" });
-  }
-});
-
->>>>>>> ci/fix-postgres-init-and-prisma
 export default router;
