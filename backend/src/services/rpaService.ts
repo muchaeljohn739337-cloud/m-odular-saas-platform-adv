@@ -1,6 +1,7 @@
+import { OALStatus, Prisma } from "@prisma/client";
+import { randomUUID } from "crypto";
 import prisma from "../prismaClient";
 import { createOALLog } from "./oalService";
-import { OALStatus } from "@prisma/client";
 
 interface RPAWorkflowData {
   name: string;
@@ -30,14 +31,17 @@ interface ExecutionStep {
 }
 
 export async function createWorkflow(data: RPAWorkflowData) {
+  const now = new Date();
   return await prisma.rPAWorkflow.create({
     data: {
+      id: randomUUID(),
       name: data.name,
-      description: data.description,
-      trigger: data.trigger || {},
-      actions: data.actions || [],
+      description: data.description ?? null,
+      trigger: (data.trigger as Prisma.JsonValue) ?? {},
+      actions: (data.actions as Prisma.JsonValue) ?? [],
       enabled: data.enabled !== false,
       createdById: data.createdById,
+      updatedAt: now,
     },
   });
 }
@@ -50,12 +54,12 @@ export async function getWorkflows(filters: {
   const where: Record<string, any> = {};
   if (filters.status) where.status = filters.status;
 
-  const [items, count] = await Promise.all([
+  const [rawItems, count] = await Promise.all([
     prisma.rPAWorkflow.findMany({
       where,
       include: {
         _count: {
-          select: { executions: true },
+          select: { RPAExecution: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -65,19 +69,44 @@ export async function getWorkflows(filters: {
     prisma.rPAWorkflow.count({ where }),
   ]);
 
+  const items = rawItems.map((workflow) => {
+    const { _count, RPAExecution, ...rest } = workflow as typeof workflow & {
+      RPAExecution?: any[];
+    };
+
+    return {
+      ...rest,
+      executions: RPAExecution ?? [],
+      _count: {
+        executions: _count?.RPAExecution ?? 0,
+      },
+    };
+  });
+
   return { items, count };
 }
 
 export async function getWorkflowById(id: string) {
-  return await prisma.rPAWorkflow.findUnique({
+  const workflow = await prisma.rPAWorkflow.findUnique({
     where: { id },
     include: {
-      executions: {
+      RPAExecution: {
         orderBy: { startedAt: "desc" },
         take: 10,
       },
     },
   });
+
+  if (!workflow) return null;
+
+  const { RPAExecution, ...rest } = workflow as typeof workflow & {
+    RPAExecution: any[];
+  };
+
+  return {
+    ...rest,
+    executions: RPAExecution,
+  };
 }
 
 export async function updateWorkflow(
@@ -86,7 +115,13 @@ export async function updateWorkflow(
 ) {
   const updateData: Record<string, any> = {};
   if (data.name !== undefined) updateData.name = data.name;
-  
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.trigger !== undefined)
+    updateData.trigger = (data.trigger as Prisma.JsonValue) ?? {};
+  if (data.actions !== undefined)
+    updateData.actions = (data.actions as Prisma.JsonValue) ?? [];
+  if (data.enabled !== undefined) updateData.enabled = data.enabled;
+  updateData.updatedAt = new Date();
 
   return await prisma.rPAWorkflow.update({
     where: { id },
@@ -113,37 +148,43 @@ export async function executeWorkflow(data: RPAExecutionData) {
     throw new Error("Workflow is disabled");
   }
 
+  const executionId = randomUUID();
   const execution = await prisma.rPAExecution.create({
     data: {
+      id: executionId,
       workflowId: data.workflowId,
-      status: "RUNNING", trigger: {}, steps: [], },
+      status: "RUNNING",
+      trigger: (data.result as Prisma.JsonValue) ?? {},
+      steps: [] as Prisma.JsonArray,
+    },
   });
 
   // Update workflow last run time
   await prisma.rPAWorkflow.update({
     where: { id: data.workflowId },
-    data: {
-      },
+    data: { updatedAt: new Date() },
   });
 
   // Execute workflow asynchronously
   executeWorkflowSteps(
-    execution.id,
+    executionId,
     data.workflowId,
-    // Default actions if not provided
-    (data.result as any)?.actions || []
+    Array.isArray(workflow.actions)
+      ? (workflow.actions as unknown as WorkflowAction[])
+      : []
   ).catch(async (error: Error) => {
     await prisma.rPAExecution.update({
-      where: { id: execution.id },
+      where: { id: executionId },
       data: {
         status: "FAILED",
-        completedAt: new Date(), error: error.message,
-        },
+        completedAt: new Date(),
+        error: error.message,
+      },
     });
 
     await prisma.rPAWorkflow.update({
       where: { id: data.workflowId },
-      data: { },
+      data: { updatedAt: new Date() },
     });
   });
 
@@ -163,6 +204,7 @@ async function executeWorkflowSteps(
       steps.push({
         action: action.type,
         status: "SUCCESS",
+        result: stepResult,
         timestamp: new Date(),
       });
     }
@@ -173,12 +215,13 @@ async function executeWorkflowSteps(
       data: {
         status: "SUCCESS",
         completedAt: new Date(),
-        },
+        steps: steps as unknown as Prisma.JsonArray,
+      },
     });
 
     await prisma.rPAWorkflow.update({
       where: { id: workflowId },
-      data: { },
+      data: { updatedAt: new Date() },
     });
   } catch (error: any) {
     steps.push({
@@ -192,13 +235,15 @@ async function executeWorkflowSteps(
       where: { id: executionId },
       data: {
         status: "FAILED",
-        completedAt: new Date(), error: error.message,
-        },
+        completedAt: new Date(),
+        error: error.message,
+        steps: steps as unknown as Prisma.JsonArray,
+      },
     });
 
     await prisma.rPAWorkflow.update({
       where: { id: workflowId },
-      data: { },
+      data: { updatedAt: new Date() },
     });
 
     throw error;
@@ -249,7 +294,8 @@ export async function checkOALTriggers(oalLog: Record<string, any>) {
   // Get all workflows that could be triggered
   const workflows = await prisma.rPAWorkflow.findMany({
     where: {
-      },
+      enabled: true,
+    },
   });
 
   for (const workflow of workflows) {
@@ -258,7 +304,11 @@ export async function checkOALTriggers(oalLog: Record<string, any>) {
     if (shouldTriggerWorkflow(workflow, oalLog)) {
       executeWorkflow({
         workflowId: workflow.id,
-        }).catch((error: Error) => {
+        result: {
+          triggerSource: "oal",
+          logId: oalLog?.id,
+        },
+      }).catch((error: Error) => {
         console.error(
           `[RPA] Failed to execute workflow ${workflow.id} for OAL trigger:`,
           error
@@ -287,11 +337,11 @@ export async function getExecutions(filters: {
   if (filters.workflowId) where.workflowId = filters.workflowId;
   if (filters.status) where.status = filters.status;
 
-  const [items, count] = await Promise.all([
+  const [rawItems, count] = await Promise.all([
     prisma.rPAExecution.findMany({
       where,
       include: {
-        workflow: {
+        RPAWorkflow: {
           select: { id: true, name: true, enabled: true },
         },
       },
@@ -301,6 +351,17 @@ export async function getExecutions(filters: {
     }),
     prisma.rPAExecution.count({ where }),
   ]);
+
+  const items = rawItems.map((execution) => {
+    const { RPAWorkflow, ...rest } = execution as typeof execution & {
+      RPAWorkflow?: any;
+    };
+
+    return {
+      ...rest,
+      workflow: RPAWorkflow,
+    };
+  });
 
   return { items, count };
 }
