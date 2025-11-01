@@ -113,7 +113,7 @@ export default function SystemFeedbackBanner() {
   const triggerRpaWorkers = async (statusData: SystemStatus) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      await fetch(`${apiUrl}/api/rpa/auto-resolve`, {
+      const response = await fetch(`${apiUrl}/api/rpa/auto-resolve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -123,9 +123,14 @@ export default function SystemFeedbackBanner() {
           notifyAdminsOnly: true, // Only notify admins, not regular users
         }),
       });
+      
+      // Silently ignore 404 - endpoint not implemented yet
+      if (response.status === 404) {
+        return;
+      }
     } catch {
       // Silently fail - RPA endpoint might not be available yet
-      console.log("RPA auto-resolve queued for retry");
+      // No logging to avoid console spam
     }
   };
 
