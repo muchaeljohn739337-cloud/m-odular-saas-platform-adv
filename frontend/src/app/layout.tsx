@@ -1,19 +1,18 @@
+import AuthProvider from "@/components/AuthProvider";
+import ChatbotWidget from "@/components/ChatbotWidget";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import LiveSupportScript from "@/components/LiveSupportScript";
+import ScrollToTop from "@/components/ScrollToTop";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import SilentModeProvider from "@/components/SilentModeProvider";
+import SystemFeedbackBanner from "@/components/SystemFeedbackBanner";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import AuthProvider from "@/components/AuthProvider";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import ScrollToTop from "@/components/ScrollToTop";
-import LiveSupportScript from "@/components/LiveSupportScript";
-import SystemFeedbackBanner from "@/components/SystemFeedbackBanner";
-import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
-import ChatbotWidget from "@/components/ChatbotWidget";
-import SilentModeProvider from "@/components/SilentModeProvider";
 
 export const viewport: Viewport = {
   themeColor: "#2563eb",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
