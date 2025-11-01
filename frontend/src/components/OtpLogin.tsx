@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type AuthMethod = "email";
 type Step = "enter-identifier" | "enter-code";
@@ -87,19 +87,23 @@ export default function OtpLogin() {
       {/* Enter Email */}
       {step === "enter-identifier" && (
         <>
-          <h2 className="text-2xl font-bold text-blue-700 mb-2">
-            Email Login
-          </h2>
+          <h2 className="text-2xl font-bold text-blue-700 mb-2">Email Login</h2>
           <p className="text-gray-600 mb-6">
             We&apos;ll send you a verification code
           </p>
 
+          <label htmlFor="otp-email" className="sr-only">
+            Email address
+          </label>
           <input
             type="email"
+            id="otp-email"
+            name="email"
             placeholder="you@example.com"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+            autoComplete="email"
             disabled={loading}
           />
 
@@ -126,8 +130,18 @@ export default function OtpLogin() {
             onClick={() => setStep("enter-identifier")}
             className="text-blue-600 hover:text-blue-700 mb-4 flex items-center gap-1"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             Back
           </button>
@@ -135,9 +149,7 @@ export default function OtpLogin() {
           <h2 className="text-2xl font-bold text-blue-700 mb-2">
             Enter Verification Code
           </h2>
-          <p className="text-gray-600 mb-6">
-            Check your email for the code
-          </p>
+          <p className="text-gray-600 mb-6">Check your email for the code</p>
 
           {message && (
             <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm mb-4">
@@ -145,8 +157,13 @@ export default function OtpLogin() {
             </div>
           )}
 
+          <label htmlFor="otp-code" className="sr-only">
+            Verification code
+          </label>
           <input
             type="text"
+            id="otp-code"
+            name="code"
             inputMode="numeric"
             pattern="[0-9]*"
             placeholder="123456"
@@ -154,6 +171,7 @@ export default function OtpLogin() {
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             maxLength={6}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest mb-4"
+            autoComplete="one-time-code"
             disabled={loading}
           />
 
