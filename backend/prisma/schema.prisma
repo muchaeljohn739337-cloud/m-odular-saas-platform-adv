@@ -8,7 +8,6 @@ datasource db {
 }
 
 model User {
-<<<<<<< HEAD
   id                String             @id @default(uuid())
   email             String             @unique
   username          String             @unique
@@ -36,34 +35,6 @@ model User {
   RPAWorkflow       RPAWorkflow[]
   cryptoWithdrawals CryptoWithdrawal[]
   medBedsBookings   MedBedsBooking[]
-=======
-  id                 String              @id @default(uuid())
-  email              String              @unique
-  username           String              @unique
-  passwordHash       String
-  firstName          String?
-  lastName           String?
-  role               Role                @default(USER)
-  usdBalance         Decimal             @default(0)
-  btcBalance         Decimal             @default(0)
-  ethBalance         Decimal             @default(0)
-  usdtBalance        Decimal             @default(0)
-  active             Boolean             @default(true)
-  lastLogin          DateTime?
-  termsAccepted      Boolean             @default(false)
-  termsAcceptedAt    DateTime?
-  totpSecret         String?
-  totpEnabled        Boolean             @default(false)
-  totpVerified       Boolean             @default(false)
-  backupCodes        String?
-  ethWalletAddress   String?             @unique
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  cryptoWithdrawals  CryptoWithdrawal[]
-  medBedsBookings    MedBedsBooking[]
-  rpaWorkflows       RPAWorkflow[]       @relation("RPAWorkflowCreator")
->>>>>>> ci/fix-postgres-init-and-prisma
-
   @@map("users")
 }
 
@@ -483,12 +454,7 @@ model PushSubscription {
   deviceInfo Json?
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
-<<<<<<< HEAD
   updatedAt  DateTime @default(now()) @updatedAt
-=======
-  updatedAt  DateTime @default(now())
->>>>>>> ci/fix-postgres-init-and-prisma
-
   @@unique([userId, endpoint])
   @@index([userId])
   @@index([isActive])
@@ -637,7 +603,6 @@ model ConsultationMessage {
   @@map("consultation_messages")
 }
 
-<<<<<<< HEAD
 model AdminLoginLog {
   id        Int      @id @default(autoincrement())
   email     String
@@ -742,49 +707,10 @@ model RPAWorkflow {
   createdById  String
   RPAExecution RPAExecution[]
   users        User           @relation(fields: [createdById], references: [id])
-=======
-model RPAWorkflow {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  trigger     Json     // { type: 'oal', conditions: {...} } or { type: 'schedule', cron: '...' }
-  actions     Json     // Array of actions to execute
-  enabled     Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String
-  createdBy   User     @relation("RPAWorkflowCreator", fields: [createdById], references: [id])
-  
-  executions  RPAExecution[]
->>>>>>> ci/fix-postgres-init-and-prisma
-
   @@index([createdById])
   @@index([enabled])
 }
 
-<<<<<<< HEAD
-=======
-model RPAExecution {
-  id          String   @id @default(cuid())
-  workflowId  String
-  workflow    RPAWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  status      RPAExecutionStatus @default(RUNNING)
-  trigger     Json     // What triggered this execution
-  steps       Json     // Array of step results
-  error       String?
-  startedAt   DateTime @default(now())
-  completedAt DateTime?
-  
-  @@index([workflowId])
-  @@index([status])
-  @@index([startedAt])
-}
-enum RPAExecutionStatus {
-  RUNNING
-  SUCCESS
-  FAILED
-}
->>>>>>> ci/fix-postgres-init-and-prisma
 enum Role {
   USER
   STAFF
