@@ -5,10 +5,63 @@ Write-Host "🔍 Production Monitoring Check" -ForegroundColor Cyan
 Write-Host "=" * 50 -ForegroundColor Gray
 Write-Host ""
 
+$authHeaders = @{}
+if ($env:ADVANCIA_API_BEARER) {
+    $authHeaders["Authorization"] = "Bearer $($env:ADVANCIA_API_BEARER)"
+}
+if ($env:ADVANCIA_API_KEY) {
+    $authHeaders["x-api-key"] = $env:ADVANCIA_API_KEY
+}
+if ($authHeaders.Count -eq 0) {
+    $authHeaders = $null
+}
+
+function Invoke-ApiRest {
+    param(
+        [string]$Uri,
+        [string]$Method = "Get",
+        [int]$TimeoutSec = 10
+    )
+
+    $params = @{
+        Uri = $Uri
+        Method = $Method
+        TimeoutSec = $TimeoutSec
+        ErrorAction = 'Stop'
+    }
+
+    if ($authHeaders) {
+        $params.Headers = $authHeaders
+    }
+
+    return Invoke-RestMethod @params
+}
+
+function Invoke-ApiRequest {
+    param(
+        [string]$Uri,
+        [string]$Method = "Get",
+        [int]$TimeoutSec = 10
+    )
+
+    $params = @{
+        Uri = $Uri
+        Method = $Method
+        TimeoutSec = $TimeoutSec
+        ErrorAction = 'Stop'
+    }
+
+    if ($authHeaders) {
+        $params.Headers = $authHeaders
+    }
+
+    return Invoke-WebRequest @params
+}
+
 # Check 1: Backend Health
 Write-Host "✓ Checking Backend API..." -ForegroundColor Yellow
 try {
-    $backendHealth = Invoke-RestMethod -Uri "https://api.advanciapayledger.com/api/health" -Method Get -TimeoutSec 10
+    $backendHealth = Invoke-ApiRest -Uri "https://api.advanciapayledger.com/api/health" -Method Get -TimeoutSec 10
     Write-Host "  ✅ Backend: $($backendHealth.status) ($($backendHealth.environment))" -ForegroundColor Green
     Write-Host "     Database: $($backendHealth.database)" -ForegroundColor Gray
     Write-Host "     Uptime: $([math]::Round($backendHealth.uptime / 3600, 2)) hours" -ForegroundColor Gray
@@ -28,14 +81,15 @@ try {
 # Check 3: Key API Endpoints
 Write-Host "`n✓ Checking Critical Endpoints..." -ForegroundColor Yellow
 $endpoints = @(
-    @{Name="Auth Status"; Url="https://api.advanciapayledger.com/api/auth/status"},
-    @{Name="System Info"; Url="https://api.advanciapayledger.com/api/system/status"},
-    @{Name="User Routes"; Url="https://api.advanciapayledger.com/api/users/profile"}
+    @{Name="System Status"; Url="https://api.advanciapayledger.com/api/system/status"; Method="Get"},
+    @{Name="System Health"; Url="https://api.advanciapayledger.com/api/system/health"; Method="Get"},
+    @{Name="Admin Users"; Url="https://api.advanciapayledger.com/api/admin/users"; Method="Get"}
 )
 
 foreach ($endpoint in $endpoints) {
     try {
-        $response = Invoke-WebRequest -Uri $endpoint.Url -Method Head -TimeoutSec 5 -ErrorAction Stop
+        $method = if ($endpoint.ContainsKey("Method")) { $endpoint.Method } else { "Get" }
+        $response = Invoke-ApiRequest -Uri $endpoint.Url -Method $method -TimeoutSec 5
         Write-Host "  ✅ $($endpoint.Name): $($response.StatusCode)" -ForegroundColor Green
     } catch {
         if ($_.Exception.Response.StatusCode -eq 401) {
