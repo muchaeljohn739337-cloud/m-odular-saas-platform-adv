@@ -1,50 +1,53 @@
-import dotenv from "dotenv";
-import http from "http";
-import express from "express";
 import cors from "cors";
-import { Server as SocketIOServer } from "socket.io";
+import dotenv from "dotenv";
+import express from "express";
+import http from "http";
 import jwt from "jsonwebtoken";
+import { Server as SocketIOServer } from "socket.io";
 import app from "./app";
 import { config } from "./config";
-import { initSentry } from "./utils/sentry";
-import { setSocketIO as setNotificationSocket } from "./services/notificationService";
-import { setTransactionSocketIO } from "./routes/transactions";
+import { activityLogger } from "./middleware/activityLogger";
+import { rateLimit, validateInput } from "./middleware/security";
 import prisma from "./prismaClient";
-import paymentsRouter from "./routes/payments";
-import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
-import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
-import supportRouter, { setSupportSocketIO } from "./routes/support";
-import analyticsRouter from "./routes/analytics";
-import aiAnalyticsRouter from "./routes/aiAnalytics";
-import authRouter from "./routes/auth";
-import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
-import transactionsRouter from "./routes/transactions";
-import chatRouter, { setChatSocketIO } from "./routes/chat";
 import adminRouter from "./routes/admin";
-import consultationRouter from "./routes/consultation";
 import adminDoctorsRouter from "./routes/adminDoctors";
-import systemRouter from "./routes/system";
-import marketingRouter from "./routes/marketing";
-import subscribersRouter from "./routes/subscribers";
-import securityLevelRouter from "./routes/securityLevel";
-import ipBlocksRouter from "./routes/ipBlocks";
+import aiAnalyticsRouter from "./routes/aiAnalytics";
+import analyticsRouter from "./routes/analytics";
+import authRouter from "./routes/auth";
 import authAdminRouter, {
+  activeSessions,
   setBroadcastSessions as setAuthBroadcast,
 } from "./routes/authAdmin";
+import chatRouter, { setChatSocketIO } from "./routes/chat";
+import consultationRouter from "./routes/consultation";
+import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
+import healthRouter from "./routes/health";
+import healthReadingsRouter from "./routes/health-readings";
+import ipBlocksRouter from "./routes/ipBlocks";
+import marketingRouter from "./routes/marketing";
+import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
+import oalRouter, { setOALSocketIO } from "./routes/oal";
+import paymentsRouter, {
+  handleStripeWebhook,
+  setPaymentsSocketIO,
+} from "./routes/payments";
+import rewardsRouter from "./routes/rewards";
+import rpaRouter, { setRPASocketIO } from "./routes/rpa";
+import securityLevelRouter from "./routes/securityLevel";
 import sessionsRouter, {
   setBroadcastSessions as setSessionsBroadcast,
 } from "./routes/sessions";
-import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
-import healthRouter from './routes/health';
+import subscribersRouter from "./routes/subscribers";
+import supportRouter, { setSupportSocketIO } from "./routes/support";
+import systemRouter from "./routes/system";
 import tokensRouter, { setTokenSocketIO } from "./routes/tokens";
-import rewardsRouter from "./routes/rewards";
-import healthReadingsRouter from "./routes/health-readings";
-import oalRouter, { setOALSocketIO } from "./routes/oal";
-import rpaRouter, { setRPASocketIO } from "./routes/rpa";
-import { activityLogger } from "./middleware/activityLogger";
-import { rateLimit, validateInput } from "./middleware/security";
-import { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
-import { activeSessions } from "./routes/authAdmin";
+import transactionsRouter, {
+  setTransactionSocketIO,
+} from "./routes/transactions";
+import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
+import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
+import { setSocketIO as setNotificationSocket } from "./services/notificationService";
+import { initSentry } from "./utils/sentry";
 // Load environment variables
 dotenv.config();
 
@@ -83,7 +86,6 @@ app.use(validateInput);
 app.use(activityLogger);
 app.use("/api", rateLimit({ windowMs: 60_000, maxRequests: 300 }));
 
-
 // Health check endpoint (critical for production monitoring)
 app.use("/api", healthRouter);
 
@@ -114,6 +116,7 @@ app.use("/api/tokens", tokensRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/health-readings", healthReadingsRouter);
 app.use("/api/rpa", rpaRouter);
+app.use("/api/internal", internalRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -214,8 +217,3 @@ const PORT = config.port || process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-
-
-
-
