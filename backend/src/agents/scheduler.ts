@@ -1,7 +1,7 @@
 // Agent Scheduler - Orchestrates all RPA agents
 // Initializes and schedules agent execution using node-cron
 
-import cron from "node-cron";
+import cron, { ScheduledTask } from "node-cron";
 import { PrismaClient } from "@prisma/client";
 import { Server as SocketIOServer } from "socket.io";
 import { AgentContext, AgentLogger } from "./types";
@@ -51,7 +51,7 @@ export class AgentScheduler {
   private prisma: PrismaClient;
   private io?: SocketIOServer;
   private agents: any[] = [];
-  private tasks: cron.ScheduledTask[] = [];
+  private tasks: ScheduledTask[] = [];
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
@@ -147,7 +147,6 @@ export class AgentScheduler {
         }
       },
       {
-        scheduled: true,
         timezone: "UTC",
       }
     );
