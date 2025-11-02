@@ -3,11 +3,13 @@
  * Suppresses backend notifications and console logs when enabled
  */
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 let silentModeEnabled = false;
 
 export const initSilentMode = async (): Promise<boolean> => {
   try {
-    const res = await fetch("/api/admin/config/silent-mode");
+    const res = await fetch(`${API_URL}/api/admin/config/silent-mode`);
 
     // Silently handle 404 - endpoint not yet available
     if (res.status === 404) {

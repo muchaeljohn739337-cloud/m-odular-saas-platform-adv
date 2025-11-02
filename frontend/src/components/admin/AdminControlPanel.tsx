@@ -1,16 +1,25 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import UserManagementTab from "./UserManagementTab";
+import { useEffect, useState } from "react";
 import ProductManagementTab from "./ProductManagementTab";
+import UserManagementTab from "./UserManagementTab";
 import WithdrawalManagementTab from "./WithdrawalManagementTab";
 // import AnalyticsTab from "./AnalyticsTab";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+type AdminUser = {
+  id?: string;
+  email?: string;
+  username?: string;
+  role?: string;
+};
 
 const AdminControlPanel = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("users");
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     activeUsers: 0,
@@ -29,7 +38,7 @@ const AdminControlPanel = () => {
           return;
         }
 
-        const response = await fetch("http://localhost:4000/api/auth/me", {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -66,7 +75,7 @@ const AdminControlPanel = () => {
       const token = localStorage.getItem("token");
 
       // Fetch dashboard stats from your backend
-      const response = await fetch("http://localhost:4000/api/admin/stats", {
+      const response = await fetch(`${API_URL}/api/admin/stats`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -103,13 +112,12 @@ const AdminControlPanel = () => {
       description: "Review and process withdrawal requests",
       component: WithdrawalManagementTab,
     },
-    
   ];
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
   const ActiveComponent = activeTabData?.component;
 
-  const getInitials = (name: string) => {
+  const getInitials = (name?: string) => {
     if (!name) return "AD";
     return name
       .split(" ")
@@ -258,7 +266,7 @@ const AdminControlPanel = () => {
                     Access Denied
                   </h3>
                   <p className="text-gray-600">
-                    You don't have permission to access this section.
+                    You do not have permission to access this section.
                   </p>
                 </div>
               )}

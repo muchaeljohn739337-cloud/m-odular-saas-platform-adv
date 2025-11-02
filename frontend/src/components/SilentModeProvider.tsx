@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 /**
  * Silent Mode Provider
  * Checks backend configuration and enables Silent Mode globally
@@ -13,9 +15,12 @@ export default function SilentModeProvider() {
   useEffect(() => {
     const checkSilentMode = async () => {
       try {
-        const response = await fetch("/api/admin/config/silent-mode", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${API_URL}/api/admin/config/silent-mode`,
+          {
+            credentials: "include",
+          }
+        );
 
         // Silently handle 404 - endpoint not yet available
         if (response.status === 404) {

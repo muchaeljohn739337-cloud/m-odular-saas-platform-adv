@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 interface TokenWalletProps {
   userId: string;
 }
@@ -44,13 +46,9 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
     text: string;
   } | null>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
   const fetchBalance = useCallback(async () => {
     try {
-      const res = await fetch(
-        `http://localhost:4000/api/tokens/balance/${userId}`
-      );
+      const res = await fetch(`${API_URL}/api/tokens/balance/${userId}`);
       const data = await res.json();
       setBalance(data);
     } catch (error: unknown) {
@@ -63,7 +61,7 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
   const fetchTransactions = useCallback(async () => {
     try {
       const res = await fetch(
-        `http://localhost:4000/api/tokens/history/${userId}?limit=20`
+        `${API_URL}/api/tokens/history/${userId}?limit=20`
       );
       const data = await res.json();
       setTransactions(data.transactions || []);
@@ -117,7 +115,7 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
 
     setProcessing(true);
     try {
-      const res = await fetch("http://localhost:4000/api/tokens/withdraw", {
+      const res = await fetch(`${API_URL}/api/tokens/withdraw`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -152,7 +150,7 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
 
     setProcessing(true);
     try {
-      const res = await fetch("http://localhost:4000/api/tokens/cashout", {
+      const res = await fetch(`${API_URL}/api/tokens/cashout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -186,7 +184,7 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
 
     setProcessing(true);
     try {
-      const res = await fetch("http://localhost:4000/api/tokens/transfer", {
+      const res = await fetch(`${API_URL}/api/tokens/transfer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,19 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import SidebarLayout from "@/components/SidebarLayout";
 import { motion } from "framer-motion";
 import {
-  Server,
-  AlertCircle,
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
   Activity,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
   RefreshCw,
+  Server,
+  XCircle,
 } from "lucide-react";
-import SidebarLayout from "@/components/SidebarLayout";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 type SessionUser = {
   id?: string;
@@ -67,7 +69,7 @@ export default function SystemMonitoringPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const sessionUser = session?.user as SessionUser | undefined;
-  
+
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [monitoring, setMonitoring] = useState<MonitoringData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,16 +78,17 @@ export default function SystemMonitoringPage() {
   // Check if user is admin
   useEffect(() => {
     if (status === "loading") return;
-    
+
     if (!session) {
       router.push("/");
       return;
     }
 
     const userRole = sessionUser?.role || sessionUser?.email;
-    const isAdmin = userRole === "admin" || 
-                    sessionUser?.email === "admin@advancia.com" ||
-                    sessionUser?.email?.includes("admin");
+    const isAdmin =
+      userRole === "admin" ||
+      sessionUser?.email === "admin@advancia.com" ||
+      sessionUser?.email?.includes("admin");
 
     if (!isAdmin) {
       alert("⛔ Access Denied: Admin privileges required");
@@ -97,16 +100,18 @@ export default function SystemMonitoringPage() {
   const fetchData = async () => {
     try {
       setRefreshing(true);
-      
+
       // Fetch system status
-      const statusResponse = await fetch("http://localhost:4000/api/system/status");
+      const statusResponse = await fetch(`${API_URL}/api/system/status`);
       if (statusResponse.ok) {
         const statusData = await statusResponse.json();
         setSystemStatus(statusData);
       }
 
       // Fetch monitoring data
-      const monitoringResponse = await fetch("http://localhost:4000/api/system/monitoring");
+      const monitoringResponse = await fetch(
+        `${API_URL}/api/system/monitoring`
+      );
       if (monitoringResponse.ok) {
         const monitoringData = await monitoringResponse.json();
         setMonitoring(monitoringData);
@@ -177,7 +182,9 @@ export default function SystemMonitoringPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <Activity className="text-blue-400" size={40} />
-                <h1 className="text-4xl font-bold text-white">System Monitoring</h1>
+                <h1 className="text-4xl font-bold text-white">
+                  System Monitoring
+                </h1>
               </div>
               <p className="text-slate-300">
                 Real-time system status and health monitoring
@@ -188,24 +195,38 @@ export default function SystemMonitoringPage() {
               disabled={refreshing}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
             >
-              <RefreshCw className={refreshing ? "animate-spin" : ""} size={20} />
+              <RefreshCw
+                className={refreshing ? "animate-spin" : ""}
+                size={20}
+              />
               Refresh
             </button>
           </div>
 
           {/* Overall Status */}
           {systemStatus && (
-            <div className={`p-6 rounded-2xl border-2 mb-6 ${getStatusColor(systemStatus.overall.status, systemStatus.overall.alertLevel)}`}>
+            <div
+              className={`p-6 rounded-2xl border-2 mb-6 ${getStatusColor(
+                systemStatus.overall.status,
+                systemStatus.overall.alertLevel
+              )}`}
+            >
               <div className="flex items-center gap-4">
-                {getStatusIcon(systemStatus.overall.status, systemStatus.overall.alertLevel)}
+                {getStatusIcon(
+                  systemStatus.overall.status,
+                  systemStatus.overall.alertLevel
+                )}
                 <div>
                   <h2 className="text-2xl font-bold">
-                    {systemStatus.overall.status === "operational" ? "All Systems Operational" : 
-                     systemStatus.overall.status === "degraded" ? "System Performance Degraded" : 
-                     "System Down"}
+                    {systemStatus.overall.status === "operational"
+                      ? "All Systems Operational"
+                      : systemStatus.overall.status === "degraded"
+                      ? "System Performance Degraded"
+                      : "System Down"}
                   </h2>
                   <p className="text-sm opacity-80">
-                    Last updated: {new Date(systemStatus.overall.timestamp).toLocaleString()}
+                    Last updated:{" "}
+                    {new Date(systemStatus.overall.timestamp).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -222,7 +243,9 @@ export default function SystemMonitoringPage() {
               >
                 <AlertCircle className="text-blue-500 mb-2" size={24} />
                 <p className="text-sm text-gray-600">Total Alerts</p>
-                <p className="text-3xl font-bold">{monitoring.summary.totalAlerts}</p>
+                <p className="text-3xl font-bold">
+                  {monitoring.summary.totalAlerts}
+                </p>
               </motion.div>
 
               <motion.div
@@ -233,7 +256,9 @@ export default function SystemMonitoringPage() {
               >
                 <XCircle className="text-red-500 mb-2" size={24} />
                 <p className="text-sm text-gray-600">Critical Alerts</p>
-                <p className="text-3xl font-bold text-red-600">{monitoring.summary.criticalAlerts}</p>
+                <p className="text-3xl font-bold text-red-600">
+                  {monitoring.summary.criticalAlerts}
+                </p>
               </motion.div>
 
               <motion.div
@@ -244,7 +269,9 @@ export default function SystemMonitoringPage() {
               >
                 <AlertTriangle className="text-orange-500 mb-2" size={24} />
                 <p className="text-sm text-gray-600">High Priority</p>
-                <p className="text-3xl font-bold text-orange-600">{monitoring.summary.highAlerts}</p>
+                <p className="text-3xl font-bold text-orange-600">
+                  {monitoring.summary.highAlerts}
+                </p>
               </motion.div>
 
               <motion.div
@@ -255,7 +282,9 @@ export default function SystemMonitoringPage() {
               >
                 <Server className="text-gray-500 mb-2" size={24} />
                 <p className="text-sm text-gray-600">Services Down</p>
-                <p className="text-3xl font-bold">{monitoring.summary.servicesDown}</p>
+                <p className="text-3xl font-bold">
+                  {monitoring.summary.servicesDown}
+                </p>
               </motion.div>
 
               <motion.div
@@ -266,7 +295,9 @@ export default function SystemMonitoringPage() {
               >
                 <Activity className="text-yellow-500 mb-2" size={24} />
                 <p className="text-sm text-gray-600">Degraded</p>
-                <p className="text-3xl font-bold text-yellow-600">{monitoring.summary.servicesDegraded}</p>
+                <p className="text-3xl font-bold text-yellow-600">
+                  {monitoring.summary.servicesDegraded}
+                </p>
               </motion.div>
             </div>
           )}
@@ -285,25 +316,34 @@ export default function SystemMonitoringPage() {
                   {systemStatus.services.map((service, index) => (
                     <div
                       key={index}
-                      className={`p-4 rounded-xl border-2 ${getStatusColor(service.status, service.alertLevel)}`}
+                      className={`p-4 rounded-xl border-2 ${getStatusColor(
+                        service.status,
+                        service.alertLevel
+                      )}`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {getStatusIcon(service.status, service.alertLevel)}
                           <div>
-                            <h3 className="font-bold text-lg capitalize">{service.serviceName}</h3>
-                            <p className="text-sm opacity-80">{service.statusMessage}</p>
+                            <h3 className="font-bold text-lg capitalize">
+                              {service.serviceName}
+                            </h3>
+                            <p className="text-sm opacity-80">
+                              {service.statusMessage}
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
                           {service.responseTime !== undefined && (
                             <p className="text-sm">
-                              <span className="font-semibold">Response:</span> {service.responseTime}ms
+                              <span className="font-semibold">Response:</span>{" "}
+                              {service.responseTime}ms
                             </p>
                           )}
                           {service.uptime !== undefined && (
                             <p className="text-sm">
-                              <span className="font-semibold">Uptime:</span> {service.uptime}%
+                              <span className="font-semibold">Uptime:</span>{" "}
+                              {service.uptime}%
                             </p>
                           )}
                         </div>
@@ -334,16 +374,29 @@ export default function SystemMonitoringPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getSeverityColor(alert.severity)}`}>
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-semibold ${getSeverityColor(
+                                alert.severity
+                              )}`}
+                            >
                               {alert.severity.toUpperCase()}
                             </span>
-                            <span className="text-sm text-gray-500">{alert.alertType}</span>
+                            <span className="text-sm text-gray-500">
+                              {alert.alertType}
+                            </span>
                           </div>
-                          <h3 className="font-bold text-gray-800 mb-1">{alert.title}</h3>
-                          <p className="text-sm text-gray-600">{alert.description}</p>
+                          <h3 className="font-bold text-gray-800 mb-1">
+                            {alert.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {alert.description}
+                          </p>
                           {alert.serviceName && (
                             <p className="text-sm text-gray-500 mt-2">
-                              Service: <span className="font-semibold">{alert.serviceName}</span>
+                              Service:{" "}
+                              <span className="font-semibold">
+                                {alert.serviceName}
+                              </span>
                             </p>
                           )}
                         </div>

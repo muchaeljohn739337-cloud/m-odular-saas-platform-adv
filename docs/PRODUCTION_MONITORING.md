@@ -3,6 +3,7 @@
 ## Overview
 
 Automated production health checks run every 30 minutes via GitHub Actions to monitor:
+
 - Backend API health (`/api/health`)
 - System status endpoints (`/api/system/status`, `/api/system/health`)
 - Admin endpoints (with authentication)
@@ -59,15 +60,18 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/monitor-production.ps1
 ## What's Monitored
 
 ### Health Endpoints
+
 - ✅ `/api/health` - Backend health and database connectivity
 - ✅ `/api/system/status` - System-wide status and alerts
 - ✅ `/api/system/health` - Detailed system health metrics
 
 ### Admin Endpoints (requires auth)
+
 - ✅ `/api/admin/users` - User management endpoint
 - Returns 401 without valid token (expected behavior)
 
 ### Frontend
+
 - ✅ `https://www.advanciapayledger.com` - Page load time and availability
 - Measures response time and page size
 
@@ -80,13 +84,17 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/monitor-production.ps1
 ## Alerting
 
 ### GitHub Issues
+
 Failed checks automatically create issues with:
+
 - Timestamp of failure
 - Link to workflow run
 - Labels: `production`, `monitoring`, `urgent`
 
 ### Future Enhancements
+
 Consider adding:
+
 - Slack/Discord notifications via webhooks
 - Email alerts via GitHub Actions marketplace actions
 - Integration with Sentry, Datadog, or New Relic
@@ -95,16 +103,19 @@ Consider adding:
 ## Troubleshooting
 
 ### Workflow Not Running
+
 - Check if workflow is enabled in Actions tab
 - Verify cron schedule syntax
 - Check repository permissions for Actions
 
 ### Authentication Failures
+
 - Verify secrets are set correctly
 - Ensure bearer token hasn't expired
 - Check API key is valid
 
 ### False Positives
+
 - Review script output in workflow logs
 - Adjust timeout values in `monitor-production.ps1` if needed
 - Update expected status codes for your endpoints
@@ -112,16 +123,20 @@ Consider adding:
 ## Maintenance
 
 ### Update Monitoring Frequency
+
 Edit cron expression in `.github/workflows/production-monitor.yml`:
+
 ```yaml
 schedule:
-  - cron: '*/15 * * * *'  # Every 15 minutes
-  - cron: '0 * * * *'      # Every hour
-  - cron: '0 0 * * *'      # Daily at midnight
+  - cron: "*/15 * * * *" # Every 15 minutes
+  - cron: "0 * * * *" # Every hour
+  - cron: "0 0 * * *" # Daily at midnight
 ```
 
 ### Add New Endpoints
+
 Edit `scripts/monitor-production.ps1` and add to the `$endpoints` array:
+
 ```powershell
 $endpoints = @(
     @{Name="New Endpoint"; Url="https://api.advanciapayledger.com/api/new"; Method="Get"}
@@ -129,9 +144,11 @@ $endpoints = @(
 ```
 
 ### Disable Monitoring
+
 Navigate to workflow in Actions tab and click **Disable workflow**
 
 ## Related Documentation
+
 - [GitHub Actions Documentation](https://docs.github.com/actions)
 - [Production Deployment Guide](../RENDER_DEPLOY_DEBUG_GUIDE.md)
 - [System Architecture](../README.md)

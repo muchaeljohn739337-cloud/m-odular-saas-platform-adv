@@ -3,13 +3,13 @@ name: Production Health Monitor
 on:
   schedule:
     # Run every 30 minutes
-    - cron: '*/30 * * * *'
+    - cron: "*/30 * * * *"
   workflow_dispatch: # Allow manual trigger
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,14 +26,14 @@ jobs:
           ADVANCIA_API_KEY: ${{ secrets.ADVANCIA_API_KEY }}
         run: |
           $ErrorActionPreference = 'Continue'
-          
+
           Write-Host "🚀 Starting production health check..." -ForegroundColor Cyan
-          
+
           # Run the monitoring script
           & ./scripts/monitor-production.ps1
-          
+
           $exitCode = $LASTEXITCODE
-          
+
           if ($exitCode -eq 0) {
             Write-Host "✅ Production health check passed" -ForegroundColor Green
           } else {

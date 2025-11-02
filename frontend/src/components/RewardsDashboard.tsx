@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
 
 interface RewardsDashboardProps {
   userId: string;
@@ -52,17 +52,24 @@ const TIER_EMOJIS = {
   diamond: "💠",
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [tierInfo, setTierInfo] = useState<TierInfo | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"rewards" | "tier" | "leaderboard">("rewards");
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    "rewards" | "tier" | "leaderboard"
+  >("rewards");
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const fetchRewards = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:4000/api/rewards/pending/${userId}`);
+      const res = await fetch(`${API_URL}/api/rewards/pending/${userId}`);
       const data = await res.json();
       setRewards(data.rewards || []);
     } catch (error) {
@@ -74,7 +81,7 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
 
   const fetchTierInfo = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:4000/api/rewards/tier/${userId}`);
+      const res = await fetch(`${API_URL}/api/rewards/tier/${userId}`);
       const data = await res.json();
       setTierInfo(data.tier);
     } catch (error) {
@@ -84,7 +91,7 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
 
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/rewards/leaderboard?limit=10");
+      const res = await fetch(`${API_URL}/api/rewards/leaderboard?limit=10`);
       const data = await res.json();
       setLeaderboard(data.leaderboard || []);
     } catch (error) {
@@ -100,7 +107,7 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
 
   const handleClaimReward = async (rewardId: string) => {
     try {
-      const res = await fetch("http://localhost:4000/api/rewards/claim", {
+      const res = await fetch(`${API_URL}/api/rewards/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, rewardId }),
@@ -109,12 +116,18 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage({ type: "success", text: `Claimed ${data.tokensAwarded} ADV!` });
+        setMessage({
+          type: "success",
+          text: `Claimed ${data.tokensAwarded} ADV!`,
+        });
         fetchRewards();
         fetchTierInfo();
         setTimeout(() => setMessage(null), 3000);
       } else {
-        setMessage({ type: "error", text: data.error || "Failed to claim reward" });
+        setMessage({
+          type: "error",
+          text: data.error || "Failed to claim reward",
+        });
       }
     } catch (error) {
       console.error("Error claiming reward:", error);
@@ -124,7 +137,7 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
 
   const handleCheckIn = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/rewards/streak/update", {
+      const res = await fetch(`${API_URL}/api/rewards/streak/update`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
@@ -133,11 +146,17 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage({ type: "success", text: `Daily check-in! +${data.tokensAwarded} ADV` });
+        setMessage({
+          type: "success",
+          text: `Daily check-in! +${data.tokensAwarded} ADV`,
+        });
         fetchTierInfo();
         setTimeout(() => setMessage(null), 3000);
       } else {
-        setMessage({ type: "error", text: data.error || "Already checked in today" });
+        setMessage({
+          type: "error",
+          text: data.error || "Already checked in today",
+        });
       }
     } catch (error) {
       console.error("Error updating streak:", error);
@@ -160,15 +179,27 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`bg-gradient-to-br ${TIER_COLORS[tierInfo.currentTier as keyof typeof TIER_COLORS]} rounded-2xl p-8 text-white shadow-2xl`}
+          className={`bg-gradient-to-br ${
+            TIER_COLORS[tierInfo.currentTier as keyof typeof TIER_COLORS]
+          } rounded-2xl p-8 text-white shadow-2xl`}
         >
           <div className="flex justify-between items-start mb-6">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-5xl">{TIER_EMOJIS[tierInfo.currentTier as keyof typeof TIER_EMOJIS]}</span>
+                <span className="text-5xl">
+                  {
+                    TIER_EMOJIS[
+                      tierInfo.currentTier as keyof typeof TIER_EMOJIS
+                    ]
+                  }
+                </span>
                 <div>
-                  <h2 className="text-3xl font-bold capitalize">{tierInfo.currentTier} Tier</h2>
-                  <p className="text-sm opacity-90">{tierInfo.points.toLocaleString()} points</p>
+                  <h2 className="text-3xl font-bold capitalize">
+                    {tierInfo.currentTier} Tier
+                  </h2>
+                  <p className="text-sm opacity-90">
+                    {tierInfo.points.toLocaleString()} points
+                  </p>
                 </div>
               </div>
             </div>
@@ -197,7 +228,9 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
                 />
               </div>
               {tierInfo.pointsToNextTier && (
-                <p className="text-xs opacity-75 mt-1">{tierInfo.pointsToNextTier.toLocaleString()} points needed</p>
+                <p className="text-xs opacity-75 mt-1">
+                  {tierInfo.pointsToNextTier.toLocaleString()} points needed
+                </p>
               )}
             </div>
 
@@ -211,7 +244,9 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
                 <p className="text-xs opacity-75">Best Streak 🏆</p>
               </div>
               <div>
-                <p className="text-2xl font-bold">{tierInfo.lifetimePoints.toLocaleString()}</p>
+                <p className="text-2xl font-bold">
+                  {tierInfo.lifetimePoints.toLocaleString()}
+                </p>
                 <p className="text-xs opacity-75">Lifetime Points ⭐</p>
               </div>
             </div>
@@ -227,7 +262,9 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className={`p-4 rounded-xl ${
-              message.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              message.type === "success"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
             }`}
           >
             {message.text}
@@ -262,10 +299,14 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
             exit={{ opacity: 0, x: 20 }}
             className="bg-white rounded-2xl p-6 shadow-lg"
           >
-            <h3 className="text-xl font-bold text-navy mb-4">Pending Rewards</h3>
+            <h3 className="text-xl font-bold text-navy mb-4">
+              Pending Rewards
+            </h3>
             <div className="space-y-3">
               {rewards.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No pending rewards</p>
+                <p className="text-gray-500 text-center py-8">
+                  No pending rewards
+                </p>
               ) : (
                 rewards.map((reward) => (
                   <motion.div
@@ -275,17 +316,24 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
                     className="flex justify-between items-center p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-gold"
                   >
                     <div>
-                      <p className="font-semibold text-navy capitalize">{reward.type.replace("_", " ")}</p>
-                      <p className="text-sm text-gray-600">{reward.description || "No description"}</p>
+                      <p className="font-semibold text-navy capitalize">
+                        {reward.type.replace("_", " ")}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {reward.description || "No description"}
+                      </p>
                       {reward.expiresAt && (
                         <p className="text-xs text-red-500 mt-1">
-                          Expires: {new Date(reward.expiresAt).toLocaleDateString()}
+                          Expires:{" "}
+                          {new Date(reward.expiresAt).toLocaleDateString()}
                         </p>
                       )}
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-gold">+{parseFloat(reward.amount).toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-gold">
+                          +{parseFloat(reward.amount).toLocaleString()}
+                        </p>
                         <p className="text-xs text-gray-500">ADV</p>
                       </div>
                       <motion.button
@@ -331,14 +379,24 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
                 >
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl">{TIER_EMOJIS[tier.name.toLowerCase() as keyof typeof TIER_EMOJIS]}</span>
+                      <span className="text-3xl">
+                        {
+                          TIER_EMOJIS[
+                            tier.name.toLowerCase() as keyof typeof TIER_EMOJIS
+                          ]
+                        }
+                      </span>
                       <div>
                         <p className="font-bold text-navy">{tier.name}</p>
-                        <p className="text-sm text-gray-600">{tier.points.toLocaleString()} points</p>
+                        <p className="text-sm text-gray-600">
+                          {tier.points.toLocaleString()} points
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-gold">{tier.multiplier}</p>
+                      <p className="text-lg font-bold text-gold">
+                        {tier.multiplier}
+                      </p>
                       <p className="text-xs text-gray-500">Multiplier</p>
                     </div>
                   </div>
@@ -365,24 +423,38 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className={`flex items-center gap-4 p-4 rounded-xl ${
-                    entry.userId === userId ? "bg-amber-50 border border-gold" : "bg-gray-50"
+                    entry.userId === userId
+                      ? "bg-amber-50 border border-gold"
+                      : "bg-gray-50"
                   }`}
                 >
                   <div className="flex-shrink-0 w-8 text-center">
                     {entry.rank <= 3 ? (
                       <span className="text-2xl">
-                        {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : "🥉"}
+                        {entry.rank === 1
+                          ? "🥇"
+                          : entry.rank === 2
+                          ? "🥈"
+                          : "🥉"}
                       </span>
                     ) : (
-                      <span className="text-lg font-bold text-gray-500">#{entry.rank}</span>
+                      <span className="text-lg font-bold text-gray-500">
+                        #{entry.rank}
+                      </span>
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-navy">{entry.userName || `User ${entry.userId.slice(0, 8)}`}</p>
-                    <p className="text-sm text-gray-600 capitalize">{entry.tier} Tier</p>
+                    <p className="font-semibold text-navy">
+                      {entry.userName || `User ${entry.userId.slice(0, 8)}`}
+                    </p>
+                    <p className="text-sm text-gray-600 capitalize">
+                      {entry.tier} Tier
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-navy">{entry.points.toLocaleString()}</p>
+                    <p className="font-bold text-navy">
+                      {entry.points.toLocaleString()}
+                    </p>
                     <p className="text-xs text-gray-500">points</p>
                   </div>
                 </motion.div>

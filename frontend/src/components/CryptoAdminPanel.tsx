@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 interface AdminSettings {
   btcAddress?: string;
   ethAddress?: string;
@@ -62,11 +64,9 @@ export default function CryptoAdminPanel() {
   const fetchData = async () => {
     try {
       const [settingsRes, ordersRes, withdrawalsRes] = await Promise.all([
-        fetch("http://localhost:4000/api/crypto/admin/settings"),
-        fetch("http://localhost:4000/api/crypto/admin/orders?status=pending"),
-        fetch(
-          "http://localhost:4000/api/crypto/admin/withdrawals?status=pending"
-        ),
+        fetch(`${API_URL}/api/crypto/admin/settings`),
+        fetch(`${API_URL}/api/crypto/admin/orders?status=pending`),
+        fetch(`${API_URL}/api/crypto/admin/withdrawals?status=pending`),
       ]);
 
       const settingsData = await settingsRes.json();
@@ -85,14 +85,11 @@ export default function CryptoAdminPanel() {
 
   const updateSettings = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:4000/api/crypto/admin/settings",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(settings),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/crypto/admin/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
 
       if (!response.ok) throw new Error("Failed to update");
 
@@ -109,7 +106,7 @@ export default function CryptoAdminPanel() {
   ) => {
     try {
       const response = await fetch(
-        `http://localhost:4000/api/crypto/admin/orders/${orderId}`,
+        `${API_URL}/api/crypto/admin/orders/${orderId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -137,7 +134,7 @@ export default function CryptoAdminPanel() {
   ) => {
     try {
       const response = await fetch(
-        `http://localhost:4000/api/crypto/admin/withdrawals/${withdrawalId}`,
+        `${API_URL}/api/crypto/admin/withdrawals/${withdrawalId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

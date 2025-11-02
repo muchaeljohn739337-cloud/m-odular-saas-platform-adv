@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function SilentModeIndicator() {
   const [silentMode, setSilentMode] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/config/silent-mode")
+    fetch(`${API_URL}/api/admin/config/silent-mode`)
       .then((res) => res.json())
       .then((data) => {
         const isActive = data.silentMode;

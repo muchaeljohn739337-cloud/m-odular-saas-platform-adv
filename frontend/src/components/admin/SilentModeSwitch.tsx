@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 interface SilentModeConfig {
   silentMode: boolean;
   autoEnabled: boolean;
@@ -22,7 +24,7 @@ export default function SilentModeSwitch() {
 
   const fetchConfig = async () => {
     try {
-      const res = await fetch("/api/admin/config/silent-mode");
+      const res = await fetch(`${API_URL}/api/admin/config/silent-mode`);
       const data = await res.json();
       setConfig(data);
     } catch (error) {
@@ -43,7 +45,7 @@ export default function SilentModeSwitch() {
 
     setUpdating(true);
     try {
-      const res = await fetch("/api/admin/config/silent-mode", {
+      const res = await fetch(`${API_URL}/api/admin/config/silent-mode`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled }),

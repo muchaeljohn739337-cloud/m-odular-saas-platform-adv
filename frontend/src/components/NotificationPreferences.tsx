@@ -312,7 +312,10 @@ export default function NotificationPreferencesComponent({
                       {category.description}
                     </p>
                   </div>
-                  <label htmlFor={`category-${category.key}`} className="relative inline-flex items-center cursor-pointer ml-4">
+                  <label
+                    htmlFor={`category-${category.key}`}
+                    className="relative inline-flex items-center cursor-pointer ml-4"
+                  >
                     <input
                       type="checkbox"
                       id={`category-${category.key}`}
