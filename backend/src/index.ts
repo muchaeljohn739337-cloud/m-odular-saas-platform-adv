@@ -23,6 +23,7 @@ import consultationRouter from "./routes/consultation";
 import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
 import healthRouter from "./routes/health";
 import healthReadingsRouter from "./routes/health-readings";
+import internalRouter from "./routes/internal";
 import ipBlocksRouter from "./routes/ipBlocks";
 import marketingRouter from "./routes/marketing";
 import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
