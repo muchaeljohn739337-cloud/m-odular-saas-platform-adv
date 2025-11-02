@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ShieldAlert, Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -116,7 +116,7 @@ export default function SilentModeSwitch() {
 
         {/* Toggle Switch */}
         <button
-          aria-label={`Toggle Silent Mode ${isEnabled ? 'off' : 'on'}`}
+          aria-label={`Toggle Silent Mode ${isEnabled ? "off" : "on"}`}
           onClick={() => toggleSilentMode(!isEnabled)}
           disabled={updating || isLocked}
           className={`

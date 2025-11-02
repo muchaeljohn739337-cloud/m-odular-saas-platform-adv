@@ -22,21 +22,12 @@ export default function SilentModeProvider() {
           }
         );
 
-        // Silently handle 404 - endpoint not yet available
-        if (response.status === 404) {
-          if (typeof window !== "undefined") {
-            window.__SILENT_MODE__ = false;
-          }
-          return;
-        }
-
-        if (!response.ok) {
-          // Only log non-404 errors
-          if (process.env.NODE_ENV === "development") {
-            console.warn(
-              "[Silent Mode] Failed to fetch config, defaulting to disabled"
-            );
-          }
+        // Silently handle 404/502 - endpoint not yet available or failing
+        if (
+          response.status === 404 ||
+          response.status === 502 ||
+          !response.ok
+        ) {
           if (typeof window !== "undefined") {
             window.__SILENT_MODE__ = false;
           }
@@ -66,7 +57,7 @@ export default function SilentModeProvider() {
             window.__SILENT_MODE__ = false;
           }
         }
-      } catch (error) {
+      } catch {
         // Silently fail - this is a non-critical feature
         if (typeof window !== "undefined") {
           window.__SILENT_MODE__ = false;
