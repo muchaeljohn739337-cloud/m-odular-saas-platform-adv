@@ -49,6 +49,8 @@ import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import { setSocketIO as setNotificationSocket } from "./services/notificationService";
 import { initSentry } from "./utils/sentry";
+import agentRoutes from "./agents/routes";
+import { getAgentScheduler } from "./agents/scheduler";
 // Load environment variables
 dotenv.config();
 
@@ -117,6 +119,7 @@ app.use("/api/tokens", tokensRouter);
 app.use("/api/rewards", rewardsRouter);
 app.use("/api/health-readings", healthReadingsRouter);
 app.use("/api/rpa", rpaRouter);
+app.use("/api/agents", agentRoutes);
 app.use("/api/internal", internalRouter);
 
 const io = new SocketIOServer(server, {
@@ -201,6 +204,11 @@ setOALSocketIO(io);
 setTokenSocketIO(io);
 setRPASocketIO(io);
 
+// Initialize agent scheduler
+const agentScheduler = getAgentScheduler(prisma);
+agentScheduler.initialize();
+agentScheduler.setSocketIO(io);
+
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 // Wire up session broadcasting
@@ -217,4 +225,17 @@ app.use(errorHandler);
 const PORT = config.port || process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+// Graceful shutdown for agents
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: stopping agent scheduler...');
+  agentScheduler.stop();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: stopping agent scheduler...');
+  agentScheduler.stop();
+  process.exit(0);
 });
