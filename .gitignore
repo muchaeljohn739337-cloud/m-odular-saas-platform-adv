@@ -176,3 +176,8 @@ DEPLOYMENT_*.md
 
 # Allow VS Code launch config for team debugging
 !.vscode/launch.json
+
+# Admin creation scripts (contain production credentials)
+backend/create-admin-*.sql
+backend/scripts/create-admin-*.ts
+backend/scripts/generate-admin-sql.ts
