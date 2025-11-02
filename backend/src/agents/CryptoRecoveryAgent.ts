@@ -2,8 +2,7 @@
 // Monitors and recovers stuck crypto transactions
 // Runs every 15 minutes
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
-import { Decimal } from "@prisma/client/runtime/library";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class CryptoRecoveryAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -14,6 +13,7 @@ export class CryptoRecoveryAgent extends BaseAgent {
       retryAttempts: 5,
       timeout: 120000,
       priority: "high",
+      description: "Stuck crypto transaction recovery",
     };
     super(config, context);
   }
@@ -25,16 +25,14 @@ export class CryptoRecoveryAgent extends BaseAgent {
 
     try {
       // Find stuck pending transactions (> 1 hour old)
-      const stuckTransactions = await this.context.prisma.transaction.findMany(
-        {
-          where: {
-            status: "PENDING",
-            createdAt: {
-              lt: new Date(Date.now() - 60 * 60 * 1000), // Older than 1 hour
-            },
+      const stuckTransactions = await this.context.prisma.transaction.findMany({
+        where: {
+          status: "PENDING",
+          createdAt: {
+            lt: new Date(Date.now() - 60 * 60 * 1000), // Older than 1 hour
           },
-        }
-      );
+        },
+      });
 
       for (const tx of stuckTransactions) {
         itemsProcessed++;

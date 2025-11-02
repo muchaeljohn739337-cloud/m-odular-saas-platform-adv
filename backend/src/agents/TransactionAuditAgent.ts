@@ -2,7 +2,7 @@
 // Audits transactions for anomalies, verifies blockchain confirmations
 // Runs every 2 hours
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class TransactionAuditAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -13,6 +13,7 @@ export class TransactionAuditAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 300000,
       priority: "high",
+      description: "Transaction anomaly detection",
     };
     super(config, context);
   }

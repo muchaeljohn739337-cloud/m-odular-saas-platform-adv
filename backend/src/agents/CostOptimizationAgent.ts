@@ -2,8 +2,7 @@
 // Monitors costs, optimizes resource usage, identifies savings
 // Runs daily at 3 AM
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
-import { Decimal } from "@prisma/client/runtime/library";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class CostOptimizationAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -14,6 +13,7 @@ export class CostOptimizationAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 180000,
       priority: "low",
+      description: "Resource and cost optimization",
     };
     super(config, context);
   }
@@ -140,8 +140,7 @@ export class CostOptimizationAgent extends BaseAgent {
 
       // Calculate potential savings
       const storagePerRecord = 0.5; // KB estimate
-      const archivablRecords =
-        oldAuditLogs + oldNotifications + oldFailedTxs;
+      const archivablRecords = oldAuditLogs + oldNotifications + oldFailedTxs;
       const potentialStorageSavings = (
         (archivablRecords * storagePerRecord) /
         1024 /

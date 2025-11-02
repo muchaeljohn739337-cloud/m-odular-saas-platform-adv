@@ -2,7 +2,7 @@
 // Monitors support tickets, auto-responds to common issues
 // Runs every 10 minutes
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class UserSupportAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -13,6 +13,7 @@ export class UserSupportAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 90000,
       priority: "medium",
+      description: "Customer support automation",
     };
     super(config, context);
   }
@@ -24,16 +25,15 @@ export class UserSupportAgent extends BaseAgent {
 
     try {
       // Check for new/unread notifications that might need follow-up
-      const pendingNotifications = await this.context.prisma.notification.findMany(
-        {
+      const pendingNotifications =
+        await this.context.prisma.notification.findMany({
           where: {
             createdAt: {
               gte: new Date(Date.now() - 10 * 60 * 1000), // Last 10 minutes
             },
           },
           take: 50,
-        }
-      );
+        });
 
       // Check for users with failed transactions
       const failedTransactions = await this.context.prisma.transaction.findMany(
@@ -53,16 +53,15 @@ export class UserSupportAgent extends BaseAgent {
 
         try {
           // Check if user already has a notification about this
-          const existingNotif = await this.context.prisma.notification.findFirst(
-            {
+          const existingNotif =
+            await this.context.prisma.notification.findFirst({
               where: {
                 userId: tx.userId,
                 message: {
                   contains: `transaction ${tx.id}`,
                 },
               },
-            }
-          );
+            });
 
           if (!existingNotif) {
             await this.context.prisma.notification.create({

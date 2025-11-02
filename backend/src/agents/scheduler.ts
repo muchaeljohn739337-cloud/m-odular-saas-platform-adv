@@ -1,21 +1,21 @@
 // Agent Scheduler - Orchestrates all RPA agents
 // Initializes and schedules agent execution using node-cron
 
-import cron, { ScheduledTask } from "node-cron";
 import { PrismaClient } from "@prisma/client";
+import cron, { ScheduledTask } from "node-cron";
 import { Server as SocketIOServer } from "socket.io";
-import { AgentContext, AgentLogger } from "./types";
+import { AgentContext, AgentLogger, BaseAgent } from "./BaseAgent";
 
 // Import all agents
-import { MonitorAgent } from "./MonitorAgent";
-import { TransactionAuditAgent } from "./TransactionAuditAgent";
-import { CryptoRecoveryAgent } from "./CryptoRecoveryAgent";
-import { UserSupportAgent } from "./UserSupportAgent";
 import { AdminInsightAgent } from "./AdminInsightAgent";
-import { SecurityFraudAgent } from "./SecurityFraudAgent";
 import { CompliancePolicyAgent } from "./CompliancePolicyAgent";
 import { CostOptimizationAgent } from "./CostOptimizationAgent";
+import { CryptoRecoveryAgent } from "./CryptoRecoveryAgent";
 import { DeployOrchestratorAgent } from "./DeployOrchestratorAgent";
+import { MonitorAgent } from "./MonitorAgent";
+import { SecurityFraudAgent } from "./SecurityFraudAgent";
+import { TransactionAuditAgent } from "./TransactionAuditAgent";
+import { UserSupportAgent } from "./UserSupportAgent";
 
 // Simple logger implementation
 const createLogger = (agentName: string): AgentLogger => ({
@@ -50,7 +50,7 @@ const createLogger = (agentName: string): AgentLogger => ({
 export class AgentScheduler {
   private prisma: PrismaClient;
   private io?: SocketIOServer;
-  private agents: any[] = [];
+  private agents: BaseAgent[] = [];
   private tasks: ScheduledTask[] = [];
 
   constructor(prisma: PrismaClient) {
@@ -125,8 +125,8 @@ export class AgentScheduler {
     console.log(`[AgentScheduler] ${this.agents.length} agents initialized`);
   }
 
-  private scheduleAgent(agent: any): void {
-    const config = (agent as any).config;
+  private scheduleAgent(agent: BaseAgent): void {
+    const config = agent.getConfig();
 
     if (!config.enabled) {
       console.log(`[AgentScheduler] ${config.name} is disabled, skipping`);
@@ -152,11 +152,13 @@ export class AgentScheduler {
     );
 
     this.tasks.push(task);
-    console.log(`[AgentScheduler] Scheduled ${config.name}: ${config.schedule}`);
+    console.log(
+      `[AgentScheduler] Scheduled ${config.name}: ${config.schedule}`
+    );
   }
 
   async executeAgent(agentName: string): Promise<any> {
-    const agent = this.agents.find((a) => a.config.name === agentName);
+    const agent = this.agents.find((a) => a.getConfig().name === agentName);
 
     if (!agent) {
       throw new Error(`Agent not found: ${agentName}`);
@@ -166,14 +168,24 @@ export class AgentScheduler {
   }
 
   getAgentStatus(): any[] {
-    return this.agents.map((agent) => ({
-      name: agent.config.name,
-      enabled: agent.config.enabled,
-      schedule: agent.config.schedule,
-      priority: agent.config.priority,
-      retryAttempts: agent.config.retryAttempts,
-      timeout: agent.config.timeout,
-    }));
+    return this.agents.map((agent) => {
+      const config = agent.getConfig();
+      const lastRun = agent.getLastRun();
+      const lastRunAt = agent.getLastRunAt();
+
+      return {
+        name: config.name,
+        description: config.description ?? "",
+        enabled: config.enabled,
+        schedule: config.schedule,
+        priority: config.priority,
+        retryAttempts: config.retryAttempts,
+        timeout: config.timeout,
+        lastRunSuccessful: lastRun?.success ?? null,
+        lastRunMessage: lastRun?.message ?? null,
+        lastRunAt: lastRunAt ? lastRunAt.toISOString() : null,
+      };
+    });
   }
 
   stop(): void {

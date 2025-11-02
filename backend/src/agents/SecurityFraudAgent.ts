@@ -2,8 +2,8 @@
 // Monitors for suspicious activity, security threats, fraud patterns
 // Runs every 5 minutes
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
 import { Decimal } from "@prisma/client/runtime/library";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class SecurityFraudAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -14,6 +14,7 @@ export class SecurityFraudAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 120000,
       priority: "critical",
+      description: "Security threat detection",
     };
     super(config, context);
   }

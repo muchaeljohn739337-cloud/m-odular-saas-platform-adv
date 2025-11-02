@@ -2,8 +2,8 @@
 // Generates daily reports and insights for admins
 // Runs daily at 2 AM
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
 import { Decimal } from "@prisma/client/runtime/library";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class AdminInsightAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -14,6 +14,7 @@ export class AdminInsightAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 300000,
       priority: "low",
+      description: "Daily admin analytics",
     };
     super(config, context);
   }

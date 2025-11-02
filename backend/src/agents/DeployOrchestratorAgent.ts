@@ -2,7 +2,7 @@
 // Monitors deployments, health checks, auto-rollback on failure
 // Runs every 30 minutes
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class DeployOrchestratorAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -13,6 +13,7 @@ export class DeployOrchestratorAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 120000,
       priority: "high",
+      description: "Deployment health monitoring",
     };
     super(config, context);
   }
@@ -160,8 +161,8 @@ export class DeployOrchestratorAgent extends BaseAgent {
       }
 
       // Check for deployment markers (recent schema changes, etc.)
-      const recentDeploymentMarker = await this.context.prisma.auditLog.findFirst(
-        {
+      const recentDeploymentMarker =
+        await this.context.prisma.auditLog.findFirst({
           where: {
             action: "DEPLOYMENT",
             createdAt: {
@@ -171,8 +172,7 @@ export class DeployOrchestratorAgent extends BaseAgent {
           orderBy: {
             createdAt: "desc",
           },
-        }
-      );
+        });
 
       const deploymentStatus = {
         overallStatus,

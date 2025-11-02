@@ -2,7 +2,7 @@
 // Checks system health, resource utilization, database performance
 // Runs every 5 minutes
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class MonitorAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -13,6 +13,7 @@ export class MonitorAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 60000,
       priority: "critical",
+      description: "System health monitoring",
     };
     super(config, context);
   }

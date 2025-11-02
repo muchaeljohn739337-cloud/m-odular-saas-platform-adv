@@ -2,8 +2,8 @@
 // Ensures platform compliance with regulations, enforces policies
 // Runs every 6 hours
 
-import { BaseAgent, AgentConfig, AgentContext, AgentResult } from "./types";
 import { Decimal } from "@prisma/client/runtime/library";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class CompliancePolicyAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -14,6 +14,7 @@ export class CompliancePolicyAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 300000,
       priority: "high",
+      description: "Regulatory compliance monitoring",
     };
     super(config, context);
   }
@@ -40,18 +41,16 @@ export class CompliancePolicyAgent extends BaseAgent {
 
       // Check transaction limits and reporting thresholds
       const largeTxThreshold = new Decimal(10000);
-      const largeTransactions = await this.context.prisma.transaction.findMany(
-        {
-          where: {
-            createdAt: {
-              gte: lookback,
-            },
-            amount: {
-              gte: largeTxThreshold,
-            },
+      const largeTransactions = await this.context.prisma.transaction.findMany({
+        where: {
+          createdAt: {
+            gte: lookback,
           },
-        }
-      );
+          amount: {
+            gte: largeTxThreshold,
+          },
+        },
+      });
 
       // Flag transactions that require reporting
       for (const tx of largeTransactions) {
@@ -123,9 +122,7 @@ export class CompliancePolicyAgent extends BaseAgent {
       }
 
       // Check for data privacy compliance (inactive users)
-      const inactiveThreshold = new Date(
-        Date.now() - 90 * 24 * 60 * 60 * 1000
-      ); // 90 days
+      const inactiveThreshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days
       const inactiveUsers = await this.context.prisma.user.count({
         where: {
           lastLogin: {
