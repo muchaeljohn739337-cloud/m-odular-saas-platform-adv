@@ -26,12 +26,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
       
-      - name: 📦 Install Backend Dependencies
-        working-directory: ./backend
-        run: npm ci
-      
-      - name: 📦 Install Frontend Dependencies
-        working-directory: ./frontend
+      - name: 📦 Install Dependencies
         run: npm ci
       
       - name: 🧩 Generate Prisma Client
