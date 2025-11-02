@@ -1,3 +1,5 @@
+import bcrypt from "bcryptjs";
+import { timingSafeEqual } from "crypto";
 import express from "express";
 import jwt from "jsonwebtoken";
 import twilio from "twilio";
@@ -9,8 +11,29 @@ const router = express.Router();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@advancia.com";
 const ADMIN_PASS = process.env.ADMIN_PASS || "Admin@123";
+const ADMIN_PASS_IS_HASHED = /^\$2[aby]\$/.test(ADMIN_PASS);
 const JWT_SECRET = process.env.JWT_SECRET!;
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "refresh_secret_key";
+
+async function verifyAdminPassword(candidate: string) {
+  if (ADMIN_PASS_IS_HASHED) {
+    try {
+      return await bcrypt.compare(candidate, ADMIN_PASS);
+    } catch (error) {
+      console.error("Failed to verify hashed admin password", error);
+      return false;
+    }
+  }
+
+  const candidateBuffer = Buffer.from(candidate);
+  const storedBuffer = Buffer.from(ADMIN_PASS);
+
+  if (candidateBuffer.length !== storedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(candidateBuffer, storedBuffer);
+}
 
 // Twilio client for SMS OTP
 function getTwilioClient() {
@@ -76,8 +99,8 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid credentials" });
   }
 
-  // Verify password using bcrypt
-  const passwordValid = await bcrypt.compare(password, ADMIN_PASS);
+  // Verify password (supports hashed and legacy plain text values)
+  const passwordValid = await verifyAdminPassword(password);
   if (!passwordValid) {
     // Log failed password attempt
     await logAdminLogin(req, email, "FAILED_PASSWORD", phone);
