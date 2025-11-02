@@ -3,6 +3,8 @@ import SidebarLayout from "@/components/SidebarLayout";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 type SessionUser = {
   id?: string;
   name?: string;
@@ -48,7 +50,7 @@ export default function SettingsPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/users/users");
+      const response = await fetch(`${API_URL}/api/users/users`);
       const data = await response.json();
       // Ensure data is an array before setting
       setUsers(Array.isArray(data) ? data : []);
@@ -62,16 +64,13 @@ export default function SettingsPage() {
 
   const handleUpdateBalance = async (userId: string) => {
     try {
-      const response = await fetch(
-        `http://localhost:4000/api/users/fund/${userId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ amount: newBalance }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/users/fund/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount: newBalance }),
+      });
 
       const data = await response.json();
 
@@ -93,7 +92,7 @@ export default function SettingsPage() {
   const handleUpdateRole = async (userId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:4000/api/users/update-role/${userId}`,
+        `${API_URL}/api/users/update-role/${userId}`,
         {
           method: "POST",
           headers: {
