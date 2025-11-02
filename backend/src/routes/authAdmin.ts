@@ -1,9 +1,9 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { sendAlert } from "../utils/mailer";
-import { logAdminLogin } from "../utils/logger";
 import twilio from "twilio";
 import prisma from "../prismaClient";
+import { logAdminLogin } from "../utils/logger";
+import { sendAlert } from "../utils/mailer";
 
 const router = express.Router();
 
@@ -64,7 +64,21 @@ export function registerSession(token: string, user: any) {
 router.post("/login", async (req, res) => {
   const { email, password, phone } = req.body;
 
-  if (email !== ADMIN_EMAIL || password !== ADMIN_PASS) {
+  // Check email
+  if (email !== ADMIN_EMAIL) {
+    await logAdminLogin(req, email, "FAILED_PASSWORD", phone);
+    await sendAlert(
+      "🚫 Advancia: Failed Admin Login",
+      `Email: ${email}\nTime: ${new Date().toISOString()}\nIP: ${
+        req.headers["x-forwarded-for"] || req.socket.remoteAddress
+      }`
+    );
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  // Verify password using bcrypt
+  const passwordValid = await bcrypt.compare(password, ADMIN_PASS);
+  if (!passwordValid) {
     // Log failed password attempt
     await logAdminLogin(req, email, "FAILED_PASSWORD", phone);
 
