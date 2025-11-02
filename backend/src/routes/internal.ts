@@ -38,18 +38,34 @@ router.post("/seed-admin", async (req, res) => {
     // Create admin user with proper defaults
     const passwordHash = await bcrypt.hash("Admin123!", 10);
 
+    const emailVerifiedColumn = await prisma.$queryRaw<
+      Array<{ exists: boolean }>
+    >`SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'users'
+        AND column_name = 'emailVerified'
+    ) AS "exists"`;
+
+    const adminData: Record<string, unknown> = {
+      email: "admin@advanciapay.com",
+      username: "admin",
+      passwordHash,
+      firstName: "System",
+      lastName: "Admin",
+      role: "ADMIN",
+      active: true,
+      termsAccepted: true,
+      termsAcceptedAt: new Date(),
+    };
+
+    if (emailVerifiedColumn?.[0]?.exists) {
+      adminData.emailVerified = true;
+      adminData.emailVerifiedAt = new Date();
+    }
+
     const admin = await prisma.user.create({
-      data: {
-        email: "admin@advanciapay.com",
-        username: "admin",
-        passwordHash,
-        firstName: "System",
-        lastName: "Admin",
-        role: "ADMIN",
-        active: true,
-        termsAccepted: true,
-        termsAcceptedAt: new Date(),
-      },
+      data: adminData as any,
     });
 
     res.json({
