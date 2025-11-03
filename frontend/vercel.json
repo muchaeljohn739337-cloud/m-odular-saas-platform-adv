@@ -3,8 +3,8 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "functions": {
-    "src/pages/api/**/*.js": {
-      "runtime": "nodejs18.x"
+    "src/app/api/**/*.ts": {
+      "runtime": "nodejs20.x"
     }
   },
   "crons": [
