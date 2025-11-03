@@ -88,6 +88,8 @@ function getAllowedOrigins(): string[] {
     set.add("https://advanciapayledger.com");
     set.add("https://www.advanciapayledger.com");
     set.add("https://admin.advanciapayledger.com");
+    // Add specific Vercel deployment domains
+    set.add("https://frontend-kappa-murex-46.vercel.app");
   }
 
   // Add Vercel preview/production domains

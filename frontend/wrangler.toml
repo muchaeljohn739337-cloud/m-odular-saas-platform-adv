@@ -1,0 +1,38 @@
+name = "modular-saas-platform"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "npm run build"
+cwd = "."
+
+[build.upload]
+format = "modules"
+
+# KV Namespaces for data storage
+kv_namespaces = [
+  {
+    binding = "ADVANCIA_DATA",
+    id = "3bdece1ca0824daeaaecaccfd220895c"
+  }
+]
+
+# Environment variables (set via wrangler secret put)
+# These should NOT be committed to version control
+# Example: wrangler secret put DATABASE_URL
+# Example: wrangler secret put JWT_SECRET
+
+# Pages configuration
+pages_build_output_dir = "out"
+
+# Development settings
+[dev]
+port = 3000
+local_protocol = "http"
+
+# Environment-specific overrides
+[env.production]
+# Production-specific settings here
+
+[env.preview]
+# Preview/staging environment settings here

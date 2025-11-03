@@ -4,6 +4,8 @@ import express from "express";
 import http from "http";
 import jwt from "jsonwebtoken";
 import { Server as SocketIOServer } from "socket.io";
+import agentRoutes from "./agents/routes";
+import { getAgentScheduler } from "./agents/scheduler";
 import app from "./app";
 import { config } from "./config";
 import { activityLogger } from "./middleware/activityLogger";
@@ -21,6 +23,7 @@ import authAdminRouter, {
 import chatRouter, { setChatSocketIO } from "./routes/chat";
 import consultationRouter from "./routes/consultation";
 import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
+import filesRouter from "./routes/files";
 import healthRouter from "./routes/health";
 import healthReadingsRouter from "./routes/health-readings";
 import internalRouter from "./routes/internal";
@@ -49,8 +52,6 @@ import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import { setSocketIO as setNotificationSocket } from "./services/notificationService";
 import { initSentry } from "./utils/sentry";
-import agentRoutes from "./agents/routes";
-import { getAgentScheduler } from "./agents/scheduler";
 // Load environment variables
 dotenv.config();
 
@@ -67,11 +68,7 @@ app.set("trust proxy", 1);
 // Configure CORS with allowed origins
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (config.allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
-    },
+    origin: config.allowedOrigins,
     credentials: true,
   })
 );
@@ -121,6 +118,7 @@ app.use("/api/health-readings", healthReadingsRouter);
 app.use("/api/rpa", rpaRouter);
 app.use("/api/agents", agentRoutes);
 app.use("/api/internal", internalRouter);
+app.use("/api/files", filesRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -228,14 +226,14 @@ server.listen(PORT, () => {
 });
 
 // Graceful shutdown for agents
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: stopping agent scheduler...');
+process.on("SIGTERM", () => {
+  console.log("SIGTERM signal received: stopping agent scheduler...");
   agentScheduler.stop();
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT signal received: stopping agent scheduler...');
+process.on("SIGINT", () => {
+  console.log("SIGINT signal received: stopping agent scheduler...");
   agentScheduler.stop();
   process.exit(0);
 });

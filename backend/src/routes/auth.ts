@@ -153,12 +153,10 @@ router.post("/login", validateApiKey, async (req, res) => {
     }
 
     if (!user.active) {
-      return res
-        .status(403)
-        .json({
-          error: "Account pending admin approval.",
-          status: "pending_approval",
-        });
+      return res.status(403).json({
+        error: "Account pending admin approval.",
+        status: "pending_approval",
+      });
     }
 
     // Update last login (best effort)
@@ -642,11 +640,9 @@ router.post("/forgot-password", otpLimiter, async (req, res) => {
       if (cnt === 1) await redis.expire(countKey, maxAttemptsWindow);
       if (cnt > maxRequestsPerWindow) {
         await redis.set(lockKey, "1", "EX", 30 * 60); // 30 min lockout
-        return res
-          .status(429)
-          .json({
-            error: "Too many password reset requests. Try again later.",
-          });
+        return res.status(429).json({
+          error: "Too many password reset requests. Try again later.",
+        });
       }
       await redis.setex(key, ttlSeconds, resetToken);
     } else {
@@ -658,11 +654,9 @@ router.post("/forgot-password", otpLimiter, async (req, res) => {
       }
       entry.count += 1;
       if (entry.count > maxRequestsPerWindow) {
-        return res
-          .status(429)
-          .json({
-            error: "Too many password reset requests. Try again later.",
-          });
+        return res.status(429).json({
+          error: "Too many password reset requests. Try again later.",
+        });
       }
       mem.set(key, {
         ...entry,
@@ -878,5 +872,29 @@ async function sendPasswordResetEmail(email: string, token: string) {
 }
 
 // Password reset routes removed - use Redis-based implementation
+
+/**
+ * GET /api/auth/error
+ * Handle authentication error callbacks
+ * Used by frontend auth flow for OAuth errors, NextAuth errors, etc.
+ */
+router.get("/error", (req, res) => {
+  const { error, error_description, code, message } = req.query;
+
+  // Log the error for debugging
+  console.error("Authentication error:", {
+    error: error || code,
+    description: error_description || message,
+    query: req.query,
+  });
+
+  // Return standardized error response
+  res.status(400).json({
+    success: false,
+    error: error || code || "authentication_error",
+    message: error_description || message || "Authentication failed",
+    details: req.query,
+  });
+});
 
 export default router;
