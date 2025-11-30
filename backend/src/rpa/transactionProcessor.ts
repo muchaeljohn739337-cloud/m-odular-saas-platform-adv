@@ -4,7 +4,7 @@
 
 import prisma from "../prismaClient";
 import config from "./config";
-import { Decimal } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
 
 interface ValidationResult {
   isValid: boolean;

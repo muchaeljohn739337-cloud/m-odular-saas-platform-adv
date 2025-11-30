@@ -1,10 +1,10 @@
+import type { Decimal } from "@prisma/client/runtime/library";
 import { Router } from "express";
-import { Decimal } from "@prisma/client";
+import { Server } from "socket.io";
+import Stripe from "stripe";
+import { config } from "../config";
 import { authenticateToken } from "../middleware/auth";
 import prisma from "../prismaClient";
-import { config } from "../config";
-import Stripe from "stripe";
-import { Server } from "socket.io";
 
 const router = Router();
 
@@ -48,8 +48,15 @@ router.post("/purchase", authenticateToken as any, async (req: any, res) => {
     const { cryptoType, usdAmount } = req.body;
 
     // Validate inputs
-    if (!cryptoType || !["BTC", "ETH", "USDT", "TRUMP"].includes(cryptoType.toUpperCase())) {
-      return res.status(400).json({ error: "Invalid crypto type. Must be BTC, ETH, USDT, or TRUMP" });
+    if (
+      !cryptoType ||
+      !["BTC", "ETH", "USDT", "TRUMP"].includes(cryptoType.toUpperCase())
+    ) {
+      return res
+        .status(400)
+        .json({
+          error: "Invalid crypto type. Must be BTC, ETH, USDT, or TRUMP",
+        });
     }
 
     const usd = parseFloat(usdAmount);
@@ -83,11 +90,13 @@ router.post("/purchase", authenticateToken as any, async (req: any, res) => {
     const exchangeRate = prices[cryptoType.toUpperCase()] || 1;
     const processingFee = usd * 0.025; // 2.5% fee
     const totalUsd = usd + processingFee;
-    const cryptoAmount = (usd / exchangeRate);
+    const cryptoAmount = usd / exchangeRate;
 
     // Get admin address from settings (or use default)
     const adminSettings = await prisma.adminSettings.findFirst();
-    const adminAddress = adminSettings?.cryptoAdminAddress || "0x0000000000000000000000000000000000000000";
+    const adminAddress =
+      adminSettings?.cryptoAdminAddress ||
+      "0x0000000000000000000000000000000000000000";
 
     // Create crypto order
     const order = await prisma.cryptoOrder.create({
@@ -151,7 +160,9 @@ router.post("/purchase", authenticateToken as any, async (req: any, res) => {
     });
   } catch (error: any) {
     console.error("Crypto purchase error:", error);
-    return res.status(500).json({ error: error.message || "Failed to create crypto order" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to create crypto order" });
   }
 });
 
@@ -191,4 +202,3 @@ router.get("/orders", authenticateToken as any, async (req: any, res) => {
 });
 
 export default router;
-

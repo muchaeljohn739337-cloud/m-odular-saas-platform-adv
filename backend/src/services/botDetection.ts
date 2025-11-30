@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
 import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";

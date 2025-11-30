@@ -1,12 +1,11 @@
-import { Router, Response } from "express";
-import prisma from "../prismaClient";
+import type { Decimal } from "@prisma/client/runtime/library";
+import { Response, Router } from "express";
 import {
   authenticateToken,
-  requireAdmin,
   AuthRequest,
+  requireAdmin,
 } from "../middleware/auth";
-import { analyzeCashOutEligibility } from "../services/aiAnalyticsService";
-import { Decimal } from "@prisma/client";
+import prisma from "../prismaClient";
 
 const router = Router();
 
@@ -70,7 +69,7 @@ router.post(
         return res.status(404).json({ error: "Withdrawal request not found" });
       }
 
-      if (withdrawal.status !== 'PENDING') {
+      if (withdrawal.status !== "PENDING") {
         return res.status(400).json({
           error: `Cannot auto-approve withdrawal with status: ${withdrawal.status}`,
         });
@@ -538,4 +537,3 @@ async function performKYCVerification(
 }
 
 export default router;
-

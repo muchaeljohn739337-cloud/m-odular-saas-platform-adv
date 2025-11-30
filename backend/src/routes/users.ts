@@ -1,11 +1,11 @@
 import { Router } from "express";
-import prisma from "../prismaClient";
+import type { Server as IOServer } from "socket.io";
 import {
   authenticateToken,
-  requireAdmin,
   logAdminAction,
+  requireAdmin,
 } from "../middleware/auth";
-import type { Server as IOServer } from "socket.io";
+import prisma from "../prismaClient";
 
 const router = Router();
 
@@ -202,7 +202,7 @@ router.post(
               amount: amt,
               type: "credit",
               description: description || "Admin bulk credit",
-              status: "completed",
+              status: "COMPLETED",
             })),
           });
         });

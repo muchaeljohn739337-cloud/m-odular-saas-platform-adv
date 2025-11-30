@@ -1,7 +1,7 @@
+import type { Decimal } from "@prisma/client/runtime/library";
 import { Router } from "express";
-import prisma from "../prismaClient";
 import { authenticateToken } from "../middleware/auth";
-import { Decimal } from "@prisma/client";
+import prisma from "../prismaClient";
 
 const router = Router();
 
@@ -74,7 +74,7 @@ router.get("/history/:userId", authenticateToken as any, async (req, res) => {
     const { startDate, endDate, limit, offset } = req.query;
 
     const where: any = { userId };
-    
+
     if (startDate || endDate) {
       where.recordedAt = {};
       if (startDate) where.recordedAt.gte = new Date(startDate as string);
@@ -95,7 +95,7 @@ router.get("/history/:userId", authenticateToken as any, async (req, res) => {
     ]);
 
     res.json({
-      readings: readings.map(r => ({
+      readings: readings.map((r) => ({
         ...r,
         sleepHours: r.sleepHours?.toString() || null,
         weight: r.weight?.toString() || null,
@@ -176,12 +176,22 @@ router.get("/stats/:userId", authenticateToken as any, async (req, res) => {
       };
     };
 
-    const heartRates = readings.filter(r => r.heartRate).map(r => r.heartRate!);
-    const steps = readings.filter(r => r.steps).map(r => r.steps!);
-    const sleepHours = readings.filter(r => r.sleepHours).map(r => Number(r.sleepHours));
-    const weights = readings.filter(r => r.weight).map(r => Number(r.weight));
-    const temps = readings.filter(r => r.temperature).map(r => Number(r.temperature));
-    const oxygenLevels = readings.filter(r => r.oxygenLevel).map(r => r.oxygenLevel!);
+    const heartRates = readings
+      .filter((r) => r.heartRate)
+      .map((r) => r.heartRate!);
+    const steps = readings.filter((r) => r.steps).map((r) => r.steps!);
+    const sleepHours = readings
+      .filter((r) => r.sleepHours)
+      .map((r) => Number(r.sleepHours));
+    const weights = readings
+      .filter((r) => r.weight)
+      .map((r) => Number(r.weight));
+    const temps = readings
+      .filter((r) => r.temperature)
+      .map((r) => Number(r.temperature));
+    const oxygenLevels = readings
+      .filter((r) => r.oxygenLevel)
+      .map((r) => r.oxygenLevel!);
 
     res.json({
       period: `Last ${daysBack} days`,

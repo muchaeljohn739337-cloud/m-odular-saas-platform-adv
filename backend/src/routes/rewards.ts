@@ -1,7 +1,7 @@
+import type { Decimal } from "@prisma/client/runtime/library";
 import { Router } from "express";
-import prisma from "../prismaClient";
 import { authenticateToken } from "../middleware/auth";
-import { Decimal } from "@prisma/client";
+import prisma from "../prismaClient";
 
 const router = Router();
 
@@ -9,32 +9,33 @@ router.get("/:userId", authenticateToken as any, async (req, res) => {
   try {
     const { userId } = req.params;
     const { status, type } = req.query;
-    
+
     const where: any = { userId };
     if (status) where.status = status as string;
     if (type) where.type = type as string;
-    
+
     const rewards = await prisma.reward.findMany({
       where,
       orderBy: { createdAt: "desc" },
     });
-    
+
     const total = rewards.reduce((sum, r) => sum.add(r.amount), new Decimal(0));
-    
+
     res.json({
-      rewards: rewards.map(r => ({
+      rewards: rewards.map((r) => ({
         ...r,
         amount: r.amount.toString(),
       })),
       summary: {
         total: total.toString(),
-        pending: rewards.filter(r => r.status === 'PENDING').length,
-        claimed: rewards.filter(r => r.status === 'CLAIMED').length,
-        expired: rewards.filter(r => r.status === 'EXPIRED').length,
+        pending: rewards.filter((r) => r.status === "PENDING").length,
+        claimed: rewards.filter((r) => r.status === "CLAIMED").length,
+        expired: rewards.filter((r) => r.status === "EXPIRED").length,
       },
     });
   } catch (error: any) {
-    console.error("[REWARDS] Error fetching rewards:", error);    res.status(500).json({ error: "Failed to fetch rewards" });
+    console.error("[REWARDS] Error fetching rewards:", error);
+    res.status(500).json({ error: "Failed to fetch rewards" });
   }
 });
 
@@ -42,23 +43,25 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
   try {
     const { rewardId } = req.params;
     const { userId } = req.body;
-    
+
     const reward = await prisma.reward.findUnique({
       where: { id: rewardId },
     });
-    
+
     if (!reward) {
       return res.status(404).json({ error: "Reward not found" });
     }
-    
+
     if (reward.userId !== userId) {
       return res.status(403).json({ error: "Unauthorized" });
     }
-    
-    if (reward.status !== 'PENDING') {
-      return res.status(400).json({ error: `Reward is ${reward.status}, cannot claim` });
+
+    if (reward.status !== "PENDING") {
+      return res
+        .status(400)
+        .json({ error: `Reward is ${reward.status}, cannot claim` });
     }
-    
+
     if (reward.expiresAt && new Date() > reward.expiresAt) {
       await prisma.reward.update({
         where: { id: rewardId },
@@ -66,7 +69,7 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
       });
       return res.status(400).json({ error: "Reward has expired" });
     }
-    
+
     const result = await prisma.$transaction(async (tx) => {
       const claimedReward = await tx.reward.update({
         where: { id: rewardId },
@@ -75,17 +78,17 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
           claimedAt: new Date(),
         },
       });
-      
+
       let wallet = await tx.tokenWallet.findUnique({
         where: { userId },
       });
-      
+
       if (!wallet) {
         wallet = await tx.tokenWallet.create({
           data: { userId },
         });
       }
-      
+
       await tx.tokenWallet.update({
         where: { id: wallet.id },
         data: {
@@ -93,7 +96,7 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
           lifetimeEarned: { increment: reward.amount },
         },
       });
-      
+
       await tx.tokenTransaction.create({
         data: {
           walletId: wallet.id,
@@ -108,10 +111,10 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
           }),
         },
       });
-      
+
       return claimedReward;
     });
-    
+
     res.json({
       success: true,
       reward: {
@@ -129,11 +132,11 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
 router.get("/tier/:userId", authenticateToken as any, async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     let tier = await prisma.userTier.findUnique({
       where: { userId },
     });
-    
+
     if (!tier) {
       tier = await prisma.userTier.create({
         data: {
@@ -143,7 +146,7 @@ router.get("/tier/:userId", authenticateToken as any, async (req, res) => {
         },
       });
     }
-    
+
     const tierThresholds = {
       bronze: { next: "silver", pointsNeeded: 1000 },
       silver: { next: "gold", pointsNeeded: 5000 },
@@ -151,19 +154,22 @@ router.get("/tier/:userId", authenticateToken as any, async (req, res) => {
       platinum: { next: "diamond", pointsNeeded: 50000 },
       diamond: { next: null, pointsNeeded: null },
     };
-    
-    const currentTierInfo = tierThresholds[tier.currentTier as keyof typeof tierThresholds];
-    const nextTierProgress = currentTierInfo.pointsNeeded 
-      ? (tier.points / currentTierInfo.pointsNeeded) * 100 
+
+    const currentTierInfo =
+      tierThresholds[tier.currentTier as keyof typeof tierThresholds];
+    const nextTierProgress = currentTierInfo.pointsNeeded
+      ? (tier.points / currentTierInfo.pointsNeeded) * 100
       : 100;
-    
+
     res.json({
       tier: {
         ...tier,
         lifetimeRewards: tier.lifetimeRewards.toString(),
       },
       nextTier: currentTierInfo.next,
-      pointsToNextTier: currentTierInfo.pointsNeeded ? currentTierInfo.pointsNeeded - tier.points : 0,
+      pointsToNextTier: currentTierInfo.pointsNeeded
+        ? currentTierInfo.pointsNeeded - tier.points
+        : 0,
       progress: Math.min(nextTierProgress, 100),
     });
   } catch (error: any) {
@@ -175,31 +181,31 @@ router.get("/tier/:userId", authenticateToken as any, async (req, res) => {
 router.post("/tier/points", authenticateToken as any, async (req, res) => {
   try {
     const { userId, points } = req.body;
-    
+
     if (!userId || points === undefined) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-    
+
     let tier = await prisma.userTier.findUnique({
       where: { userId },
     });
-    
+
     if (!tier) {
       tier = await prisma.userTier.create({
         data: { userId, points: 0 },
       });
     }
-    
+
     const newPoints = tier.points + points;
-    
+
     let newTier = "bronze";
     if (newPoints >= 50000) newTier = "diamond";
     else if (newPoints >= 15000) newTier = "platinum";
     else if (newPoints >= 5000) newTier = "gold";
     else if (newPoints >= 1000) newTier = "silver";
-    
+
     const tierChanged = newTier !== tier.currentTier;
-    
+
     const updatedTier = await prisma.userTier.update({
       where: { userId },
       data: {
@@ -208,15 +214,20 @@ router.post("/tier/points", authenticateToken as any, async (req, res) => {
         currentTier: newTier,
       },
     });
-    
+
     if (tierChanged) {
       const bonusAmount = new Decimal(
-        newTier === "diamond" ? 1000 :
-        newTier === "platinum" ? 500 :
-        newTier === "gold" ? 200 :
-        newTier === "silver" ? 50 : 0
+        newTier === "diamond"
+          ? 1000
+          : newTier === "platinum"
+          ? 500
+          : newTier === "gold"
+          ? 200
+          : newTier === "silver"
+          ? 50
+          : 0
       );
-      
+
       if (bonusAmount.gt(0)) {
         await prisma.reward.create({
           data: {
@@ -230,7 +241,7 @@ router.post("/tier/points", authenticateToken as any, async (req, res) => {
         });
       }
     }
-    
+
     res.json({
       success: true,
       tier: {
@@ -238,8 +249,8 @@ router.post("/tier/points", authenticateToken as any, async (req, res) => {
         lifetimeRewards: updatedTier.lifetimeRewards.toString(),
       },
       tierChanged,
-      message: tierChanged 
-        ? `Congratulations! You've reached ${newTier.toUpperCase()} tier!` 
+      message: tierChanged
+        ? `Congratulations! You've reached ${newTier.toUpperCase()} tier!`
         : `${points} points added`,
     });
   } catch (error: any) {
@@ -248,28 +259,24 @@ router.post("/tier/points", authenticateToken as any, async (req, res) => {
   }
 });
 
-
 // Get pending rewards for a user
 router.get("/pending/:userId", authenticateToken as any, async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const rewards = await prisma.reward.findMany({
-      where: { 
+      where: {
         userId,
         status: "PENDING",
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } }
-        ]
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       orderBy: { createdAt: "desc" },
     });
-    
+
     const total = rewards.reduce((sum, r) => sum.add(r.amount), new Decimal(0));
-    
+
     res.json({
-      rewards: rewards.map(r => ({
+      rewards: rewards.map((r) => ({
         ...r,
         amount: r.amount.toString(),
       })),
@@ -288,29 +295,31 @@ router.get("/pending/:userId", authenticateToken as any, async (req, res) => {
 router.get("/leaderboard", async (req, res) => {
   try {
     const limit = Math.min(100, Number(req.query.limit) || 10);
-    
+
     const leaderboard = await prisma.userTier.findMany({
       orderBy: { points: "desc" },
       take: limit,
     });
-    
+
     // Get user details for formatted response
-    const formatted = await Promise.all(leaderboard.map(async (entry, index) => {
-      const user = await prisma.user.findUnique({
-        where: { id: entry.userId },
-        select: { email: true, firstName: true, lastName: true }
-      });
-      
-      return {
-        rank: index + 1,
-        userId: entry.userId,
-        userName: user?.firstName || user?.email || "Anonymous",
-        points: entry.points,
-        tier: entry.currentTier,
-        lifetimePoints: entry.lifetimePoints,
-      };
-    }));
-    
+    const formatted = await Promise.all(
+      leaderboard.map(async (entry, index) => {
+        const user = await prisma.user.findUnique({
+          where: { id: entry.userId },
+          select: { email: true, firstName: true, lastName: true },
+        });
+
+        return {
+          rank: index + 1,
+          userId: entry.userId,
+          userName: user?.firstName || user?.email || "Anonymous",
+          points: entry.points,
+          tier: entry.currentTier,
+          lifetimePoints: entry.lifetimePoints,
+        };
+      })
+    );
+
     res.json({
       leaderboard: formatted,
       count: formatted.length,

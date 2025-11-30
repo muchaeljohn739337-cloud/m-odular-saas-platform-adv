@@ -2,7 +2,7 @@
 // Ensures platform compliance with regulations, enforces policies
 // Runs every 6 hours
 
-import { Decimal } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class CompliancePolicyAgent extends BaseAgent {

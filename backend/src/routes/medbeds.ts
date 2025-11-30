@@ -1,9 +1,9 @@
+import type { Decimal } from "@prisma/client/runtime/library";
 import { Router } from "express";
-import { authenticateToken, requireAdmin } from "../middleware/auth";
-import prisma from "../prismaClient";
 import type { Server as IOServer } from "socket.io";
 import Stripe from "stripe";
-import { Decimal } from "@prisma/client";
+import { authenticateToken, requireAdmin } from "../middleware/auth";
+import prisma from "../prismaClient";
 
 const router = Router();
 let ioRef: IOServer | null = null;
@@ -148,7 +148,7 @@ router.post(
             duration,
             cost,
             paymentMethod: "stripe",
-            paymentstatus: "PENDING",
+            paymentStatus: "PENDING",
             status: "scheduled",
             notes,
           },

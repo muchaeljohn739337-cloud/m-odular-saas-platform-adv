@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
 import { Router } from "express";
 import { Server as SocketServer } from "socket.io";
 import { authenticateToken } from "../middleware/auth";

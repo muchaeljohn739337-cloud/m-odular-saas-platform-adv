@@ -2,7 +2,7 @@
 // Monitors for suspicious activity, security threats, fraud patterns
 // Runs every 5 minutes
 
-import { Decimal } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class SecurityFraudAgent extends BaseAgent {

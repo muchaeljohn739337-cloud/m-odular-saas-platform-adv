@@ -2,7 +2,7 @@
 // Generates daily reports and insights for admins
 // Runs daily at 2 AM
 
-import { Decimal } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class AdminInsightAgent extends BaseAgent {
@@ -62,10 +62,10 @@ export class AdminInsightAgent extends BaseAgent {
       );
 
       const successfulTxs = transactions.filter(
-        (tx) => tx.status === 'COMPLETED'
+        (tx) => tx.status === "COMPLETED"
       ).length;
       const failedTxs = transactions.filter(
-        (tx) => tx.status === 'FAILED'
+        (tx) => tx.status === "FAILED"
       ).length;
       const successRate =
         transactions.length > 0

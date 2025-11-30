@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
 import prisma from "../prismaClient";
 import { getBotRiskScore } from "./botDetection";
 

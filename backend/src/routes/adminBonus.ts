@@ -1,11 +1,11 @@
-import { Router, Response } from "express";
-import prisma from "../prismaClient";
+import { Response, Router } from "express";
 import {
   authenticateToken,
-  requireAdmin,
+  AuthRequest,
   logAdminAction,
+  requireAdmin,
 } from "../middleware/auth";
-import { AuthRequest } from "../middleware/auth";
+import prisma from "../prismaClient";
 
 const router = Router();
 
@@ -353,7 +353,7 @@ router.post(
         bonus: {
           type: bonusType,
           amount: bonusAmount,
-          },
+        },
         wallet: wallet
           ? {
               balance: wallet.balance.toString(),
