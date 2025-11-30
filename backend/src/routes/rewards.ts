@@ -1,7 +1,7 @@
 import { Router } from "express";
 import prisma from "../prismaClient";
 import { authenticateToken } from "../middleware/auth";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 
 const router = Router();
 
@@ -28,9 +28,9 @@ router.get("/:userId", authenticateToken as any, async (req, res) => {
       })),
       summary: {
         total: total.toString(),
-        pending: rewards.filter(r => r.status === "pending").length,
-        claimed: rewards.filter(r => r.status === "claimed").length,
-        expired: rewards.filter(r => r.status === "expired").length,
+        pending: rewards.filter(r => r.status === 'PENDING').length,
+        claimed: rewards.filter(r => r.status === 'CLAIMED').length,
+        expired: rewards.filter(r => r.status === 'EXPIRED').length,
       },
     });
   } catch (error: any) {
@@ -55,14 +55,14 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
     
-    if (reward.status !== "pending") {
+    if (reward.status !== 'PENDING') {
       return res.status(400).json({ error: `Reward is ${reward.status}, cannot claim` });
     }
     
     if (reward.expiresAt && new Date() > reward.expiresAt) {
       await prisma.reward.update({
         where: { id: rewardId },
-        data: { status: "expired" },
+        data: { status: "EXPIRED" },
       });
       return res.status(400).json({ error: "Reward has expired" });
     }
@@ -71,7 +71,7 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
       const claimedReward = await tx.reward.update({
         where: { id: rewardId },
         data: {
-          status: "claimed",
+          status: "CLAIMED",
           claimedAt: new Date(),
         },
       });
@@ -99,7 +99,7 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
           walletId: wallet.id,
           amount: reward.amount,
           type: "earn",
-          status: "completed",
+          status: "COMPLETED",
           description: `Claimed reward: ${reward.description}`,
           metadata: JSON.stringify({
             rewardId: reward.id,
@@ -225,7 +225,7 @@ router.post("/tier/points", authenticateToken as any, async (req, res) => {
             amount: bonusAmount,
             title: `${newTier.toUpperCase()} Tier Achieved!`,
             description: `Congratulations! You've reached ${newTier.toUpperCase()} tier!`,
-            status: "pending",
+            status: "PENDING",
           },
         });
       }
@@ -257,7 +257,7 @@ router.get("/pending/:userId", authenticateToken as any, async (req, res) => {
     const rewards = await prisma.reward.findMany({
       where: { 
         userId,
-        status: "pending",
+        status: "PENDING",
         OR: [
           { expiresAt: null },
           { expiresAt: { gt: new Date() } }

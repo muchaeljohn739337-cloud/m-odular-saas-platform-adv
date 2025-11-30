@@ -97,7 +97,7 @@ router.post(
           cryptoAmount: amountNum,
           usdEquivalent: balanceType.toUpperCase() === "USD" ? amountNum : 0, // Can be calculated if needed
           withdrawalAddress: withdrawalAddress || "",
-          status: "pending",
+          status: "PENDING",
         },
       });
 
@@ -119,7 +119,7 @@ router.post(
           type: "withdrawal",
           category: "withdrawal_request",
           description: `Withdrawal request for ${amountNum} ${balanceType.toUpperCase()}`,
-          status: "pending",
+          status: "PENDING",
         },
       });
 
@@ -148,7 +148,7 @@ router.post(
           id: withdrawal.id,
           balanceType: balanceType.toUpperCase(),
           amount: amountNum,
-          status: "pending",
+          status: "PENDING",
           createdAt: withdrawal.createdAt,
         },
       });
@@ -288,7 +288,7 @@ router.patch(
         return res.status(404).json({ error: "Withdrawal request not found" });
       }
 
-      if (withdrawal.status !== "pending") {
+      if (withdrawal.status !== 'PENDING') {
         return res.status(400).json({
           error: `Cannot process withdrawal with status: ${withdrawal.status}`,
         });
@@ -308,7 +308,7 @@ router.patch(
         const updatedWithdrawal = await prisma.cryptoWithdrawal.update({
           where: { id },
           data: {
-            status: "completed",
+            status: "COMPLETED",
             adminApprovedBy: req.user!.userId,
             adminNotes: adminNotes || "Approved by admin",
             txHash: txHash || null,
@@ -324,10 +324,10 @@ router.patch(
             userId: withdrawal.userId,
             type: "withdrawal",
             amount: withdrawal.cryptoAmount,
-            status: "pending",
+            status: "PENDING",
           },
           data: {
-            status: "completed",
+            status: "COMPLETED",
             description: `Withdrawal approved: ${withdrawal.cryptoAmount} ${withdrawal.cryptoType}`,
           },
         });
@@ -383,7 +383,7 @@ router.patch(
         const updatedWithdrawal = await prisma.cryptoWithdrawal.update({
           where: { id },
           data: {
-            status: "rejected",
+            status: "REJECTED",
             adminApprovedBy: req.user!.userId,
             adminNotes: adminNotes || "Rejected by admin",
             rejectedAt: new Date(),
@@ -396,10 +396,10 @@ router.patch(
             userId: withdrawal.userId,
             type: "withdrawal",
             amount: withdrawal.cryptoAmount,
-            status: "pending",
+            status: "PENDING",
           },
           data: {
-            status: "failed",
+            status: "FAILED",
             description: `Withdrawal rejected: ${withdrawal.cryptoAmount} ${
               withdrawal.cryptoType
             }. Reason: ${adminNotes || "Admin decision"}`,

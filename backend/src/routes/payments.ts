@@ -145,7 +145,7 @@ router.post('/admin/refund/:paymentId',
               type: 'debit',
               amount: (Number(payment.amount) / 100).toString(),
               description: `Refund - Payment ${payment.id}`,
-              status: 'completed'
+              status: "COMPLETED"
             }
           });
         });
@@ -214,7 +214,7 @@ export const handleStripeWebhook = async (req: any, res: any) => {
               type: 'credit',
               amount: (Number(session.amount_total) / 100).toString(),
               description: `Stripe payment - Session ${session.id}`,
-              status: 'completed'
+              status: "COMPLETED"
             }
           });
         });

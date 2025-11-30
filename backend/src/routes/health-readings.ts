@@ -1,7 +1,7 @@
 import { Router } from "express";
 import prisma from "../prismaClient";
 import { authenticateToken } from "../middleware/auth";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 
 const router = Router();
 

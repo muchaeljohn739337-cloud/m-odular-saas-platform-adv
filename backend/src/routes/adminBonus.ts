@@ -111,7 +111,7 @@ router.post(
                   walletId: wallet.id,
                   amount: bonusAmount,
                   type: "bonus",
-                  status: "completed",
+                  status: "COMPLETED",
                   description: description || `Admin bulk bonus: ${bonusType}`,
                   metadata: JSON.stringify({
                     adminId: req.user?.userId,
@@ -301,7 +301,7 @@ router.post(
             walletId: wallet.id,
             amount: bonusAmount,
             type: "bonus",
-            status: "completed",
+            status: "COMPLETED",
             description: description || `Admin bonus: ${bonusType}`,
           },
         });

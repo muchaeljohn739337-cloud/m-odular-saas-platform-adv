@@ -3,7 +3,7 @@
  * Converts Prisma types (Decimal, Date) to JSON-safe formats
  */
 
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client';
 
 /**
  * Convert Decimal to number

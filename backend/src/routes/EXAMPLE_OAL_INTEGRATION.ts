@@ -239,7 +239,7 @@ router.post(
           .json({ success: false, message: "Audit log not found" });
       }
 
-      if (auditLog.status !== "PENDING") {
+      if (auditLog.status !== 'PENDING') {
         return res.status(400).json({
           success: false,
           message: "This request has already been processed",

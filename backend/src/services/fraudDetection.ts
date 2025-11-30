@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 import prisma from "../prismaClient";
 import { getBotRiskScore } from "./botDetection";
 
@@ -52,7 +52,7 @@ export async function assessFraudRisk(
     factors.push({ type: "large_amount", value: amount });
   }
 
-  let status = "approved";
+  let status = "APPROVED";
   if (riskScore >= 70) {
     status = "pending";
   } else if (riskScore >= 50) {

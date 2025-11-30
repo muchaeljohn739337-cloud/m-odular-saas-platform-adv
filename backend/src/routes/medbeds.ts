@@ -3,7 +3,7 @@ import { authenticateToken, requireAdmin } from "../middleware/auth";
 import prisma from "../prismaClient";
 import type { Server as IOServer } from "socket.io";
 import Stripe from "stripe";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 
 const router = Router();
 let ioRef: IOServer | null = null;
@@ -81,7 +81,7 @@ router.post(
               type: "debit",
               category: "medbeds_booking",
               description: `Med Beds - ${chamberName} (${duration} min)`,
-              status: "completed",
+              status: "COMPLETED",
             },
           });
 
@@ -148,7 +148,7 @@ router.post(
             duration,
             cost,
             paymentMethod: "stripe",
-            paymentStatus: "pending",
+            paymentstatus: "PENDING",
             status: "scheduled",
             notes,
           },

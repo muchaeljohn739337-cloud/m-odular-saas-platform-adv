@@ -39,7 +39,7 @@ export class TransactionAuditAgent extends BaseAgent {
 
         // Check for stuck pending transactions (> 30 minutes)
         if (
-          tx.status === "PENDING" &&
+          tx.status === 'PENDING' &&
           tx.createdAt < new Date(Date.now() - 30 * 60 * 1000)
         ) {
           anomalies.push({

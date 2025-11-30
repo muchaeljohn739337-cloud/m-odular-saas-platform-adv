@@ -4,7 +4,7 @@
 
 import prisma from "../prismaClient";
 import config from "./config";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 
 interface ValidationResult {
   isValid: boolean;
@@ -155,7 +155,7 @@ class TransactionProcessor {
         await prisma.transaction.update({
           where: { id: transactionId },
           data: {
-            status: "failed",
+            status: "FAILED",
             description: `Failed: ${validation.errors.join(", ")}`,
           },
         });
@@ -184,7 +184,7 @@ class TransactionProcessor {
       await prisma.transaction.update({
         where: { id: transactionId },
         data: {
-          status: "completed",
+          status: "COMPLETED",
         },
       });
 
@@ -203,7 +203,7 @@ class TransactionProcessor {
       await prisma.transaction
         .update({
           where: { id: transactionId },
-          data: { status: "failed" },
+          data: { status: "FAILED" },
         })
         .catch(() => {});
 
@@ -345,7 +345,7 @@ class TransactionProcessor {
       console.log(`[RPA] Starting batch transaction processing...`);
 
       const pendingTransactions = await prisma.transaction.findMany({
-        where: { status: "pending" },
+        where: { status: "PENDING" },
         take: this.config.batchSize,
         orderBy: { createdAt: "asc" },
       });

@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 
 /**
  * Type guard to check if a value is a Prisma Decimal instance.

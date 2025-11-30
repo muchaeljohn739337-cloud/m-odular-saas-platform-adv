@@ -62,7 +62,7 @@ export const recordTransaction = async ({
       type: parsed.type,
       description: undefined,
       category: undefined,
-      status: "completed",
+      status: "COMPLETED",
     },
   });
 

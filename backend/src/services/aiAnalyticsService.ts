@@ -226,7 +226,7 @@ export async function analyzeCashOutEligibility(
     const pendingWithdrawals = await prisma.cryptoWithdrawal.findMany({
       where: {
         userId,
-        status: "pending",
+        status: "PENDING",
       },
     });
 
@@ -799,7 +799,7 @@ export async function generateMarketInsights() {
     const activeLoanCount =
       loanStats.find((s) => s.status === "active")?._count || 0;
     const completedLoanCount =
-      loanStats.find((s) => s.status === "completed")?._count || 0;
+      loanStats.find((s) => s.status === 'COMPLETED')?._count || 0;
     const loanRepaymentRate =
       completedLoanCount > 0
         ? (

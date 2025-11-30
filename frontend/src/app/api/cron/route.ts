@@ -1,20 +1,12 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  // Only allow POST requests
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
+export async function POST(req: NextRequest) {
   // Verify cron secret for security
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.get("authorization");
   const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
 
   if (!authHeader || authHeader !== expectedAuth) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -60,7 +52,7 @@ export default async function handler(
     // - Process pending transactions
     // - Update analytics data
 
-    res.status(200).json({
+    return NextResponse.json({
       message: "Hello Cron!",
       timestamp: new Date().toISOString(),
       status: "success",
@@ -68,10 +60,21 @@ export default async function handler(
     });
   } catch (error) {
     console.error("❌ Cron job error:", error);
-    res.status(500).json({
-      error: "Cron job failed",
-      timestamp: new Date().toISOString(),
-      details: error instanceof Error ? error.message : String(error),
-    });
+    return NextResponse.json(
+      {
+        error: "Cron job failed",
+        timestamp: new Date().toISOString(),
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
+}
+
+// Allow GET for health checks
+export async function GET() {
+  return NextResponse.json({
+    message: "Cron endpoint available. Use POST with Bearer token.",
+    status: "ready",
+  });
 }

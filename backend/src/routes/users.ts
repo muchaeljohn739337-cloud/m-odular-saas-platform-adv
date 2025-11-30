@@ -117,7 +117,7 @@ router.post(
           walletId: wallet.id,
           amount: amount,
           type: "bonus",
-          status: "completed",
+          status: "COMPLETED",
           description: "Admin balance adjustment",
         },
       });
@@ -380,7 +380,7 @@ router.post(
           description:
             description ||
             `Admin added ${amountNum} ${balanceType.toUpperCase()} to balance`,
-          status: "completed",
+          status: "COMPLETED",
         },
       });
 

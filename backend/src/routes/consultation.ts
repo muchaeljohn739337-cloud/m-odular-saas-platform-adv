@@ -189,7 +189,7 @@ router.patch("/:id", authenticateToken, async (req, res) => {
         ...(data.status === "ACTIVE" && !consultation
           ? { startedAt: new Date() }
           : {}),
-        ...(data.status === "COMPLETED" ? { completedAt: new Date() } : {}),
+        ...(data.status === 'COMPLETED' ? { completedAt: new Date() } : {}),
       },
     });
 

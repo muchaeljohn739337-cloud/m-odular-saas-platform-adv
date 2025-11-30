@@ -1,4 +1,4 @@
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 import { Router } from "express";
 import { Server as SocketServer } from "socket.io";
 import { authenticateToken } from "../middleware/auth";
@@ -131,7 +131,7 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
           walletId: fromWallet.id,
           amount: transferAmount.neg(),
           type: "transfer",
-          status: "completed",
+          status: "COMPLETED",
           description: description || `Transfer to ${toUserId}`,
           toAddress: toUserId,
           metadata: JSON.stringify({
@@ -146,7 +146,7 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
           walletId: toWallet.id,
           amount: transferAmount,
           type: "transfer",
-          status: "completed",
+          status: "COMPLETED",
           description: description || `Transfer from ${fromUserId}`,
           fromAddress: fromUserId,
           metadata: JSON.stringify({
@@ -234,7 +234,7 @@ router.post("/withdraw", authenticateToken as any, async (req, res) => {
           walletId: wallet.id,
           amount: withdrawAmount.neg(),
           type: "withdraw",
-          status: "pending",
+          status: "PENDING",
           description: `Withdrawal to ${toAddress.substring(0, 10)}...`,
           toAddress: toAddress,
           metadata: JSON.stringify({
@@ -253,7 +253,7 @@ router.post("/withdraw", authenticateToken as any, async (req, res) => {
         amount: withdrawAmount.toString(),
         toAddress,
         transactionId: result.id,
-        status: "pending",
+        status: "PENDING",
       });
     }
 
@@ -262,7 +262,7 @@ router.post("/withdraw", authenticateToken as any, async (req, res) => {
       transactionId: result.id,
       amount: withdrawAmount.toString(),
       toAddress,
-      status: "pending",
+      status: "PENDING",
       message: "Withdrawal initiated. Processing...",
     });
   } catch (error: any) {
@@ -316,7 +316,7 @@ router.post("/cashout", authenticateToken as any, async (req, res) => {
           walletId: wallet.id,
           amount: cashoutAmount.neg(),
           type: "cashout",
-          status: "completed",
+          status: "COMPLETED",
           description: `Cashed out ${cashoutAmount.toString()} tokens for $${usdValue.toString()}`,
           metadata: JSON.stringify({
             usdValue: usdValue.toString(),

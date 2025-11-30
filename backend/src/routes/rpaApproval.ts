@@ -6,7 +6,7 @@ import {
   AuthRequest,
 } from "../middleware/auth";
 import { analyzeCashOutEligibility } from "../services/aiAnalyticsService";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client";
 
 const router = Router();
 
@@ -70,7 +70,7 @@ router.post(
         return res.status(404).json({ error: "Withdrawal request not found" });
       }
 
-      if (withdrawal.status !== "pending") {
+      if (withdrawal.status !== 'PENDING') {
         return res.status(400).json({
           error: `Cannot auto-approve withdrawal with status: ${withdrawal.status}`,
         });
@@ -94,7 +94,7 @@ router.post(
         const updated = await prisma.cryptoWithdrawal.update({
           where: { id },
           data: {
-            status: "approved",
+            status: "APPROVED",
             approvedAt: new Date(),
             adminNotes: adminNotes || "Auto-approved by RPA (low risk)",
           },
@@ -185,7 +185,7 @@ router.post(
 
       // Get all pending withdrawals
       const pendingWithdrawals = await prisma.cryptoWithdrawal.findMany({
-        where: { status: "pending" },
+        where: { status: "PENDING" },
         include: {
           user: {
             select: {
@@ -225,7 +225,7 @@ router.post(
               await prisma.cryptoWithdrawal.update({
                 where: { id: withdrawal.id },
                 data: {
-                  status: "approved",
+                  status: "APPROVED",
                   approvedAt: new Date(),
                   adminNotes: `Auto-approved by RPA batch (risk: ${riskAssessment.score})`,
                 },

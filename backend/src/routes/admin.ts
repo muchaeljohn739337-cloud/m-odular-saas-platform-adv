@@ -668,7 +668,7 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
         amount: Number(amount),
         type: "ADMIN_ADJUSTMENT",
         description: `Admin adjusted ${currencyUpper} by ${amount}`,
-        status: "completed",
+        status: "COMPLETED",
       },
     });
 

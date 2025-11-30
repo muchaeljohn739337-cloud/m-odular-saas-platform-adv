@@ -85,7 +85,7 @@ export class DeployOrchestratorAgent extends BaseAgent {
 
       const failedTxRate =
         recentTxs.length > 0
-          ? (recentTxs.filter((tx) => tx.status === "FAILED").length /
+          ? (recentTxs.filter((tx) => tx.status === 'FAILED').length /
               recentTxs.length) *
             100
           : 0;
