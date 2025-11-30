@@ -1,4 +1,4 @@
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
 import * as fs from "fs";
 import * as path from "path";
 import prisma from "../prismaClient";
@@ -49,7 +49,8 @@ export async function trainBotDetectionModel(
       let prediction = 0;
       for (const [key, value] of Object.entries(features)) {
         if (weights[key]) {
-          const numValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
+          const numValue =
+            typeof value === "boolean" ? (value ? 1 : 0) : (value as number);
           prediction += numValue * weights[key];
         }
       }

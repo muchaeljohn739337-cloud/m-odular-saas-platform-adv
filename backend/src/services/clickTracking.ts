@@ -1,3 +1,4 @@
+import { Decimal } from "decimal.js";
 import { Request } from "express";
 import prisma from "../prismaClient";
 import { detectBot } from "./botDetection";
@@ -21,9 +22,7 @@ export async function trackClick(
       userAgent,
       isRobot: botResult.isBot,
       confidence: botResult.confidence
-        ? new (
-            await import("@prisma/client/runtime/library")
-          ).Decimal(botResult.confidence)
+        ? new Decimal(botResult.confidence)
         : null,
       metadata: metadata || {},
     },

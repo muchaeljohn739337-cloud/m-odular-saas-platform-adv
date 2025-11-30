@@ -1,4 +1,4 @@
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
 import { Router } from "express";
 import { Server } from "socket.io";
 import Stripe from "stripe";
@@ -52,11 +52,9 @@ router.post("/purchase", authenticateToken as any, async (req: any, res) => {
       !cryptoType ||
       !["BTC", "ETH", "USDT", "TRUMP"].includes(cryptoType.toUpperCase())
     ) {
-      return res
-        .status(400)
-        .json({
-          error: "Invalid crypto type. Must be BTC, ETH, USDT, or TRUMP",
-        });
+      return res.status(400).json({
+        error: "Invalid crypto type. Must be BTC, ETH, USDT, or TRUMP",
+      });
     }
 
     const usd = parseFloat(usdAmount);
@@ -93,10 +91,8 @@ router.post("/purchase", authenticateToken as any, async (req: any, res) => {
     const cryptoAmount = usd / exchangeRate;
 
     // Get admin address from settings (or use default)
-    const adminSettings = await prisma.adminSettings.findFirst();
-    const adminAddress =
-      adminSettings?.cryptoAdminAddress ||
-      "0x0000000000000000000000000000000000000000";
+    // Note: cryptoAdminAddress field doesn't exist in schema, using fallback
+    const adminAddress = "0x0000000000000000000000000000000000000000";
 
     // Create crypto order
     const order = await prisma.cryptoOrder.create({
