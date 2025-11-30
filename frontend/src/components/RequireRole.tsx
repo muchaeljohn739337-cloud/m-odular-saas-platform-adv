@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface RequireRoleProps {
   roles?: string[];
@@ -16,7 +16,7 @@ export default function RequireRole({
   roles = ["USER"],
   children,
   fallback = null,
-}: RequireRoleProps) {
+}: RequireRoleProps): JSX.Element | null {
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -31,7 +31,8 @@ export default function RequireRole({
       }
 
       try {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
         const response = await fetch(`${apiUrl}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -65,10 +66,12 @@ export default function RequireRole({
   }, [roles, router]);
 
   if (loading) {
-    return fallback || (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
+    return (
+      (fallback as JSX.Element) ?? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        </div>
+      )
     );
   }
 
@@ -76,6 +79,5 @@ export default function RequireRole({
     return null;
   }
 
-  return <>{children}</>;
+  return (<>{children}</>) as JSX.Element;
 }
-
