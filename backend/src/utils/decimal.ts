@@ -1,4 +1,4 @@
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 
 /**
  * Type guard to check if a value is a Prisma Decimal instance.

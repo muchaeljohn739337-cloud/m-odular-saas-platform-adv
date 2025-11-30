@@ -2,7 +2,7 @@
 // Generates daily reports and insights for admins
 // Runs daily at 2 AM
 
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class AdminInsightAgent extends BaseAgent {

@@ -1,4 +1,4 @@
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import prisma from "../prismaClient";
 import { getBotRiskScore } from "./botDetection";
 

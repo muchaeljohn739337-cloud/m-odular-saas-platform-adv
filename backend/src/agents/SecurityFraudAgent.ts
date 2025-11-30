@@ -2,7 +2,7 @@
 // Monitors for suspicious activity, security threats, fraud patterns
 // Runs every 5 minutes
 
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class SecurityFraudAgent extends BaseAgent {

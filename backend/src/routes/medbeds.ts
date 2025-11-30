@@ -1,4 +1,4 @@
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { Router } from "express";
 import type { Server as IOServer } from "socket.io";
 import Stripe from "stripe";

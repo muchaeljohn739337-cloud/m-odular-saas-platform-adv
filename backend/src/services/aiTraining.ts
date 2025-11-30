@@ -1,4 +1,4 @@
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import * as fs from "fs";
 import * as path from "path";
 import prisma from "../prismaClient";

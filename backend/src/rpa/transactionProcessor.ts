@@ -2,7 +2,7 @@
 // Automatically validates and processes pending transactions
 // Implements fraud detection and compliance checks
 
-import type { Decimal } from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import prisma from "../prismaClient";
 import config from "./config";
 
