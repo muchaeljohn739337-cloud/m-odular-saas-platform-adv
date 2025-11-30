@@ -19,7 +19,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      node-version: 20
+      node-version: "20"
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -55,7 +55,7 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: TypeScript build check
         run: npx tsc --noEmit
       - name: Build
