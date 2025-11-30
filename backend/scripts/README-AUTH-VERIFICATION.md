@@ -5,7 +5,9 @@ This directory contains verification scripts to validate the admin logging and u
 ## Quick Start
 
 ```bash
+
 # Run static code analysis
+
 cd backend
 npx ts-node scripts/verify-auth-static.ts
 ```
@@ -125,11 +127,14 @@ Admin Logging:
 ### Script fails to run
 
 ```bash
+
 # Install dependencies
+
 cd backend
 npm install
 
 # Make sure TypeScript is available
+
 npm install -D typescript ts-node @types/node
 ```
 

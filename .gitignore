@@ -181,3 +181,24 @@ DEPLOYMENT_*.md
 backend/create-admin-*.sql
 backend/scripts/create-admin-*.ts
 backend/scripts/generate-admin-sql.ts
+
+# ============================================================
+# PRIVATE REPO SPECIFIC
+# ============================================================
+# Personal notes and local configs
+*.local
+*.private
+.env.production.local
+personal-notes/
+
+# Contributor files (not needed for private repos)
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+.github/ISSUE_TEMPLATE/
+.github/PULL_REQUEST_TEMPLATE.md
+
+# Backup files
+*.backup
+*.bak
+*.old
+

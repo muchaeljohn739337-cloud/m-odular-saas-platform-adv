@@ -14,6 +14,7 @@ Real-time transaction processing backend with WebSocket support and Prisma ORM.
 ## Quick Start
 
 ### 1. Install Dependencies
+
 ```powershell
 npm install
 ```
@@ -24,7 +25,9 @@ npm install
 
 **Quick Docker Setup (Recommended):**
 ```powershell
+
 # Start PostgreSQL container
+
 docker run --name advancia-postgres `
   -e POSTGRES_USER=dev_user `
   -e POSTGRES_PASSWORD=dev_password `
@@ -33,13 +36,17 @@ docker run --name advancia-postgres `
   -d postgres:14-alpine
 
 # Run database migration
+
 npx prisma migrate dev --name init
 ```
 
 **Alternative: SQLite (Quick Development)**
 ```powershell
+
 # Edit prisma/schema.prisma - change provider to "sqlite"
+
 # Then run:
+
 npx prisma migrate dev --name init
 ```
 
@@ -51,30 +58,38 @@ DATABASE_URL="postgresql://dev_user:dev_password@localhost:5432/advancia_ledger?
 PORT=4000
 FRONTEND_URL="http://localhost:3000"
 NODE_ENV=development
+
 # Stripe (optional but required for payments route)
+
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 ```
 
 ### 4. Start Development Server
+
 ```powershell
 npm run dev
 ```
 
-Server starts on `http://localhost:4000`
+Server starts on `[Link](http://localhost:4000`)
 
 ### 5. Verify Setup
+
 ```powershell
+
 # Test health endpoint
+
 curl http://localhost:4000/health
 
 # Open database GUI
+
 npx prisma studio
 ```
 
 ## API Endpoints
 
 ### Health Check
+
 ```http
 GET /health
 ```
@@ -90,6 +105,7 @@ Returns server status and uptime.
 ```
 
 ### Create Transaction
+
 ```http
 POST /api/transaction
 Content-Type: application/json
@@ -116,6 +132,7 @@ Content-Type: application/json
 ```
 
 ### Get Recent Transactions
+
 ```http
 GET /api/transactions/recent/:userId
 ```
@@ -137,6 +154,7 @@ Returns the last 10 transactions for a user.
 ```
 
 ### Get All User Transactions
+
 ```http
 GET /api/transactions/user/:userId
 ```
@@ -144,6 +162,7 @@ GET /api/transactions/user/:userId
 Returns all transactions for a user.
 
 ### Get User Balance
+
 ```http
 GET /api/transactions/balance/:userId
 ```
@@ -157,6 +176,7 @@ GET /api/transactions/balance/:userId
 ```
 
 ### Create Stripe Checkout Session
+
 ```http
 POST /api/payments/checkout-session
 Content-Type: application/json
@@ -182,6 +202,7 @@ Content-Type: application/json
 > Requires `STRIPE_SECRET_KEY` to be present. Returns 503 if payments are disabled.
 
 ### Save Recovery QR Snapshot
+
 ```http
 POST /api/recovery/qr
 Content-Type: application/json
@@ -226,23 +247,28 @@ socket.on('global-transaction', (transaction) => {
 The backend uses Prisma ORM with the following models:
 
 ### User
+
 - Authentication and profile management
 - Relations to transactions and debit cards
 
 ### Transaction
+
 - Financial transaction records
 - Decimal precision for amounts
 - Status tracking (pending, completed, failed)
 
 ### DebitCard
+
 - Virtual/physical card management
 - Balance and daily limit tracking
 
 ### Session
+
 - User session management
 - Token-based authentication
 
 ### AuditLog
+
 - Compliance and activity tracking
 - JSON storage for flexible logging
 
@@ -251,6 +277,7 @@ See `prisma/schema.prisma` for full schema definition.
 ## Development
 
 ### Build Project
+
 ```powershell
 npm run build
 ```
@@ -258,6 +285,7 @@ npm run build
 Compiles TypeScript to `dist/` folder.
 
 ### Start Production
+
 ```powershell
 npm start
 ```
@@ -265,17 +293,23 @@ npm start
 Runs compiled JavaScript from `dist/`.
 
 ### Prisma Commands
+
 ```powershell
+
 # Generate Prisma Client (after schema changes)
+
 npm run prisma:generate
 
 # Create migration
+
 npm run prisma:migrate
 
 # Open Prisma Studio
+
 npm run prisma:studio
 
 # Reset database (⚠️ deletes all data)
+
 npx prisma migrate reset
 ```
 
@@ -302,17 +336,22 @@ backend/
 ## Environment Variables
 
 ```env
+
 # Database
+
 DATABASE_URL="postgresql://user:password@localhost:5432/advancia_ledger"
 
 # Server
+
 PORT=4000
 NODE_ENV=development
 
 # Frontend CORS
+
 FRONTEND_URL="http://localhost:3000"
 
 # Optional: JWT & Session
+
 JWT_SECRET="your-secret-key"
 SESSION_SECRET="your-session-secret"
 ```
@@ -322,7 +361,9 @@ SESSION_SECRET="your-session-secret"
 Use the automated test suite:
 
 ```powershell
+
 # From project root
+
 .\START-HEALTH-TEST.bat
 ```
 
@@ -335,6 +376,7 @@ This will:
 ## Troubleshooting
 
 ### Database Connection Failed
+
 ```
 Error: P1000: Authentication failed
 ```
@@ -346,20 +388,25 @@ Error: P1000: Authentication failed
 - See [PRISMA_SETUP.md](./PRISMA_SETUP.md) for setup help
 
 ### Port Already in Use
+
 ```
 Error: listen EADDRINUSE: address already in use :::4000
 ```
 
 **Solution:**
 ```powershell
+
 # Find process using port 4000
+
 netstat -ano | findstr :4000
 
 # Kill process (replace PID)
+
 taskkill /PID <pid> /F
 ```
 
 ### Prisma Client Not Generated
+
 ```
 Error: Cannot find module '@prisma/client'
 ```

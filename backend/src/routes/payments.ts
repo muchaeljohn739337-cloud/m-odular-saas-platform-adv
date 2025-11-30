@@ -1,9 +1,10 @@
 import { Router } from "express";
+import { Server } from "socket.io";
 import Stripe from "stripe";
 import { config } from "../config";
-import prisma from "../prismaClient";
+import { aiRateLimiter } from "../middleware/aiRateLimiter";
 import { authenticateToken, requireAdmin } from "../middleware/auth";
-import { Server } from 'socket.io';
+import prisma from "../prismaClient";
 
 const router = Router();
 
@@ -24,43 +25,57 @@ router.get("/health", (req, res) => {
 });
 
 // Create a Checkout Session, requiring auth; attach userId to metadata server-side
-router.post("/checkout-session", authenticateToken as any, async (req: any, res) => {
-  if (!stripeClient) {
-    return res.status(503).json({ error: "Stripe is not configured. Please provide STRIPE_SECRET_KEY." });
-  }
+router.post(
+  "/checkout-session",
+  authenticateToken as any,
+  aiRateLimiter("stripe"),
+  async (req: any, res) => {
+    if (!stripeClient) {
+      return res
+        .status(503)
+        .json({
+          error: "Stripe is not configured. Please provide STRIPE_SECRET_KEY.",
+        });
+    }
 
-  const { amount, currency = "usd", metadata } = req.body || {};
-  if (!amount || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
-    return res.status(400).json({ error: "A positive amount is required." });
-  }
+    const { amount, currency = "usd", metadata } = req.body || {};
+    if (!amount || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({ error: "A positive amount is required." });
+    }
 
-  try {
-    const userId = req.user?.userId;
-    const mergedMetadata = { ...(metadata ?? {}), ...(userId ? { userId } : {}) } as Record<string, string>;
-    const session = await stripeClient.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency,
-            unit_amount: Math.round(Number(amount) * 100),
-            product_data: { name: "Account Top-Up" },
+    try {
+      const userId = req.user?.userId;
+      const mergedMetadata = {
+        ...(metadata ?? {}),
+        ...(userId ? { userId } : {}),
+      } as Record<string, string>;
+      const session = await stripeClient.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency,
+              unit_amount: Math.round(Number(amount) * 100),
+              product_data: { name: "Account Top-Up" },
+            },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      metadata: mergedMetadata,
-      success_url: `${config.frontendUrl}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${config.frontendUrl}/payments/cancel`,
-    });
+        ],
+        metadata: mergedMetadata,
+        success_url: `${config.frontendUrl}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${config.frontendUrl}/payments/cancel`,
+      });
 
-    return res.json({ url: session.url, id: session.id });
-  } catch (error) {
-    console.error("Stripe checkout session error", error);
-    return res.status(500).json({ error: "Unable to create checkout session." });
+      return res.json({ url: session.url, id: session.id });
+    } catch (error) {
+      console.error("Stripe checkout session error", error);
+      return res
+        .status(500)
+        .json({ error: "Unable to create checkout session." });
+    }
   }
-});
+);
 
 // Retrieve a Checkout Session by id for the authenticated user
 router.get("/session/:id", authenticateToken as any, async (req: any, res) => {
@@ -91,41 +106,48 @@ router.get("/session/:id", authenticateToken as any, async (req: any, res) => {
 });
 
 // Admin: List payments
-router.get('/admin/payments', 
+router.get(
+  "/admin/payments",
   authenticateToken as any,
   requireAdmin as any,
   async (req: any, res) => {
-    if (!stripeClient) return res.status(503).json({ error: 'Stripe not configured' });
+    if (!stripeClient)
+      return res.status(503).json({ error: "Stripe not configured" });
 
     try {
       const { limit = 10, starting_after } = req.query;
-      
+
       const payments = await stripeClient.paymentIntents.list({
         limit: Number(limit),
-        starting_after: starting_after as string
+        starting_after: starting_after as string,
       });
 
       return res.json(payments);
     } catch (error) {
-      console.error('Admin payments list error', error);
-      return res.status(500).json({ error: 'Failed to list payments' });
+      console.error("Admin payments list error", error);
+      return res.status(500).json({ error: "Failed to list payments" });
     }
-});
+  }
+);
 
 // Admin: Refund payment
-router.post('/admin/refund/:paymentId',
+router.post(
+  "/admin/refund/:paymentId",
   authenticateToken as any,
   requireAdmin as any,
   async (req: any, res) => {
-    if (!stripeClient) return res.status(503).json({ error: 'Stripe not configured' });
+    if (!stripeClient)
+      return res.status(503).json({ error: "Stripe not configured" });
 
     try {
       const refund = await stripeClient.refunds.create({
-        payment_intent: req.params.paymentId
+        payment_intent: req.params.paymentId,
       });
 
       // Update user balance and create refund transaction
-      const payment = await stripeClient.paymentIntents.retrieve(req.params.paymentId);
+      const payment = await stripeClient.paymentIntents.retrieve(
+        req.params.paymentId
+      );
       const userId = payment.metadata?.userId;
 
       if (userId) {
@@ -134,50 +156,53 @@ router.post('/admin/refund/:paymentId',
             where: { id: userId },
             data: {
               usdBalance: {
-                decrement: Number(payment.amount) / 100
-              }
-            }
+                decrement: Number(payment.amount) / 100,
+              },
+            },
           });
 
           await tx.transaction.create({
             data: {
               userId,
-              type: 'debit',
+              type: "debit",
               amount: (Number(payment.amount) / 100).toString(),
               description: `Refund - Payment ${payment.id}`,
-              status: "COMPLETED"
-            }
+              status: "COMPLETED",
+            },
           });
         });
 
         if (io) {
-          io.to(`user-${userId}`).emit('transaction-created', {
-            type: 'DEBIT',
-            amount: payment.amount / 100
+          io.to(`user-${userId}`).emit("transaction-created", {
+            type: "DEBIT",
+            amount: payment.amount / 100,
           });
         }
       }
 
       return res.json(refund);
     } catch (error) {
-      console.error('Admin refund error', error);
-      return res.status(500).json({ error: 'Failed to process refund' });
+      console.error("Admin refund error", error);
+      return res.status(500).json({ error: "Failed to process refund" });
     }
-});
+  }
+);
 
 // Webhook handler (to be mounted before express.json in index.ts)
 export const handleStripeWebhook = async (req: any, res: any) => {
-  const sig = req.headers['stripe-signature'];
-  
+  const sig = req.headers["stripe-signature"];
+
   if (!stripeClient || !config.stripeWebhookSecret) {
-    console.warn('Stripe webhook received but Stripe is not fully configured');
-    return res.status(400).send('Webhook Error');
+    console.warn("Stripe webhook received but Stripe is not fully configured");
+    return res.status(400).send("Webhook Error");
   }
 
   try {
     const rawBody: Buffer = Buffer.isBuffer(req.body)
       ? (req.body as Buffer)
-      : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+      : Buffer.from(
+          typeof req.body === "string" ? req.body : JSON.stringify(req.body)
+        );
 
     const event = stripeClient.webhooks.constructEvent(
       rawBody,
@@ -186,13 +211,13 @@ export const handleStripeWebhook = async (req: any, res: any) => {
     );
 
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        
+
         if (!userId) {
-          console.error('No userId in session metadata', session.id);
-          return res.status(400).send('Missing userId in metadata');
+          console.error("No userId in session metadata", session.id);
+          return res.status(400).send("Missing userId in metadata");
         }
 
         // Begin transaction
@@ -202,28 +227,28 @@ export const handleStripeWebhook = async (req: any, res: any) => {
             where: { id: userId },
             data: {
               usdBalance: {
-                increment: Number(session.amount_total) / 100
-              }
-            }
+                increment: Number(session.amount_total) / 100,
+              },
+            },
           });
 
           // Record the transaction
           await tx.transaction.create({
             data: {
               userId,
-              type: 'credit',
+              type: "credit",
               amount: (Number(session.amount_total) / 100).toString(),
               description: `Stripe payment - Session ${session.id}`,
-              status: "COMPLETED"
-            }
+              status: "COMPLETED",
+            },
           });
         });
 
         // Emit socket events
         if (io) {
-          io.to(`user-${userId}`).emit('transaction-created', {
-            type: 'CREDIT',
-            amount: Number(session.amount_total || 0) / 100
+          io.to(`user-${userId}`).emit("transaction-created", {
+            type: "CREDIT",
+            amount: Number(session.amount_total || 0) / 100,
           });
         }
 
@@ -233,8 +258,8 @@ export const handleStripeWebhook = async (req: any, res: any) => {
 
     res.json({ received: true });
   } catch (err) {
-    console.error('Webhook error:', err);
-    res.status(400).send('Webhook Error');
+    console.error("Webhook error:", err);
+    res.status(400).send("Webhook Error");
   }
 };
 

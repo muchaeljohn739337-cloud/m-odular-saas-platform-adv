@@ -1,6 +1,7 @@
 # Stripe Webhook Setup Guide
 
 ## Prerequisites
+
 ✅ Stripe test keys configured in `.env`
 ✅ Backend server running on `http://localhost:4000`
 
@@ -10,11 +11,15 @@
 
 **Windows (PowerShell as Administrator):**
 ```powershell
+
 # Using Scoop (recommended)
+
 scoop install stripe
 
 # OR download directly from:
+
 # https://github.com/stripe/stripe-cli/releases/latest
+
 ```
 
 **Verify Installation:**
@@ -63,10 +68,13 @@ After adding the secret to `.env`:
 
 ```powershell
 cd backend
+
 # Kill any running processes
+
 taskkill /F /IM node.exe
 
 # Restart
+
 npm run dev
 ```
 
@@ -102,10 +110,13 @@ This will create a checkout session. To complete the payment:
 You can also trigger test events manually:
 
 ```powershell
+
 # Trigger a checkout.session.completed event
+
 stripe trigger checkout.session.completed
 
-# Trigger a payment_intent.succeeded event  
+# Trigger a payment_intent.succeeded event
+
 stripe trigger payment_intent.succeeded
 ```
 
@@ -113,7 +124,7 @@ stripe trigger payment_intent.succeeded
 
 For production, you'll need to:
 
-1. Go to https://dashboard.stripe.com/webhooks
+1. Go to [dashboard.stripe.com](https://dashboard.stripe.com/webhooks)
 2. Click "Add endpoint"
 3. Enter your production URL: `https://your-domain.com/api/payments/webhook`
 4. Select events to listen for:
@@ -126,17 +137,20 @@ For production, you'll need to:
 ## Troubleshooting
 
 ### Webhook not receiving events
+
 - ✅ Check Stripe CLI is running (`stripe listen...`)
 - ✅ Check backend is running on port 4000
 - ✅ Check `STRIPE_WEBHOOK_SECRET` is in `.env`
 - ✅ Restart backend after adding secret
 
 ### "Invalid signature" errors
+
 - The webhook secret in `.env` doesn't match the CLI output
 - Make sure you copied the entire `whsec_...` string
 - Restart the backend after updating `.env`
 
 ### Events not processing
+
 - Check backend console logs for errors
 - Verify the webhook handler in `routes/payments.ts`
 - Check database connectivity
@@ -176,10 +190,10 @@ When a `checkout.session.completed` event is received:
 | 4000 0025 0000 3155 | Requires authentication|
 | 4000 0000 0000 0002 | Declined card         |
 
-**Expiry:** Any future date  
-**CVC:** Any 3 digits  
+**Expiry:** Any future date
+**CVC:** Any 3 digits
 **ZIP:** Any valid ZIP
 
 ---
 
-**Need help?** Check the Stripe CLI docs: https://stripe.com/docs/stripe-cli
+**Need help?** Check the Stripe CLI docs: [stripe.com](https://stripe.com/docs/stripe-cli)

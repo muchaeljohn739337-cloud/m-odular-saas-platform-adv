@@ -9,6 +9,7 @@ The **RPA (Robotic Process Automation) Module** is a comprehensive automation sy
 ## 🎯 Implemented Use Cases
 
 ### 1. **Transaction Processing Automation** ✅
+
 - **Purpose**: Automatically validate and process pending transactions
 - **Features**:
   - Fraud detection with confidence scoring
@@ -20,6 +21,7 @@ The **RPA (Robotic Process Automation) Module** is a comprehensive automation sy
 - **Endpoint**: `POST /api/rpa/transaction/process`
 
 ### 2. **KYC/Identity Verification** ✅
+
 - **Purpose**: Automate document verification using OCR
 - **Features**:
   - Passport, driver's license, and national ID support
@@ -31,6 +33,7 @@ The **RPA (Robotic Process Automation) Module** is a comprehensive automation sy
 - **Endpoint**: `POST /api/rpa/kyc/verify`
 
 ### 3. **Report Generation** ✅
+
 - **Purpose**: Automatically generate and email financial reports
 - **Features**:
   - Daily balance reports
@@ -42,6 +45,7 @@ The **RPA (Robotic Process Automation) Module** is a comprehensive automation sy
 - **Endpoint**: `POST /api/rpa/report/generate`
 
 ### 4. **Email/SMS Notifications** ✅
+
 - **Purpose**: Automated notification delivery with rate limiting
 - **Features**:
   - Email via Nodemailer (Gmail/SMTP)
@@ -54,6 +58,7 @@ The **RPA (Robotic Process Automation) Module** is a comprehensive automation sy
 - **Endpoint**: `POST /api/rpa/notification/send`
 
 ### 5. **Data Backup & Sync** ✅
+
 - **Purpose**: Automated database backups with cloud sync
 - **Features**:
   - PostgreSQL pg_dump integration
@@ -62,11 +67,12 @@ The **RPA (Robotic Process Automation) Module** is a comprehensive automation sy
   - Retention policy (30 days)
   - Automatic cleanup
 - **Schedule**: Daily at 2:00 AM (configurable)
-- **Endpoints**: 
+- **Endpoints**:
   - `POST /api/rpa/backup/create`
   - `POST /api/rpa/backup/export`
 
 ### 6. **User Support Automation** ⏳
+
 - **Status**: Pending implementation
 - **Planned Features**:
   - AI-powered chatbot
@@ -79,6 +85,7 @@ The **RPA (Robotic Process Automation) Module** is a comprehensive automation sy
 ## 🏗️ Architecture
 
 ### Directory Structure
+
 ```
 backend/src/rpa/
 ├── config.ts                    # Centralized RPA configuration
@@ -120,49 +127,59 @@ backend/src/rpa/
 Add to your `.env` file:
 
 ```bash
+
 # RPA General Settings
+
 RPA_AUTO_START=false              # Auto-start on server boot
 RPA_ADMIN_EMAIL=admin@example.com
 
 # Transaction Processing
+
 RPA_TRANSACTION_ENABLED=true
 RPA_TRANSACTION_BATCH_SIZE=100
 RPA_TRANSACTION_INTERVAL="*/5 * * * *"  # Every 5 minutes
 
 # KYC Verification
+
 RPA_KYC_ENABLED=true
 RPA_KYC_OCR_PROVIDER=tesseract
 RPA_KYC_API_URL=https://api.kyc-provider.com
 RPA_KYC_API_KEY=your-api-key
 
 # Report Generation
+
 RPA_REPORTS_ENABLED=true
 RPA_REPORTS_SCHEDULE="0 8 * * *"   # Daily at 8 AM
 RPA_REPORTS_EMAIL_TO=reports@example.com
 RPA_REPORTS_PDF_ENABLED=false
 
 # Notifications
+
 RPA_NOTIFICATIONS_ENABLED=true
 RPA_EMAIL_RATE_LIMIT=10            # Emails per minute
 RPA_SMS_RATE_LIMIT=5               # SMS per minute
 
 # Twilio SMS
+
 TWILIO_ACCOUNT_SID=your-twilio-sid
 TWILIO_AUTH_TOKEN=your-twilio-token
 TWILIO_PHONE_NUMBER=+1234567890
 
 # Email (Nodemailer)
+
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 
 # Backup & Sync
+
 RPA_BACKUP_ENABLED=true
 RPA_BACKUP_SCHEDULE="0 2 * * *"    # Daily at 2 AM
 RPA_BACKUP_RETENTION_DAYS=30
 
 # AWS S3 (optional)
+
 AWS_ACCESS_KEY_ID=your-aws-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret
 AWS_S3_BUCKET=your-bucket-name
@@ -201,13 +218,17 @@ rpaScheduler.stop();
 
 **Option B: API Endpoint**
 ```bash
+
 # Start RPA scheduler
+
 curl -X POST http://localhost:5000/api/rpa/start
 
 # Check status
+
 curl http://localhost:5000/api/rpa/status
 
 # Stop RPA scheduler
+
 curl -X POST http://localhost:5000/api/rpa/stop
 ```
 
@@ -219,6 +240,7 @@ Set `RPA_AUTO_START=true` in `.env`
 ## 📡 API Reference
 
 ### Base URL
+
 ```
 http://localhost:5000/api/rpa
 ```
@@ -226,6 +248,7 @@ http://localhost:5000/api/rpa
 ### Endpoints
 
 #### 1. Health Check
+
 ```http
 GET /api/rpa/health
 ```
@@ -244,6 +267,7 @@ Returns system health status.
 ---
 
 #### 2. Get Status
+
 ```http
 GET /api/rpa/status
 ```
@@ -268,6 +292,7 @@ Returns detailed status of all RPA tasks.
 ---
 
 #### 3. Start Scheduler
+
 ```http
 POST /api/rpa/start
 ```
@@ -284,6 +309,7 @@ Starts all enabled RPA tasks.
 ---
 
 #### 4. Stop Scheduler
+
 ```http
 POST /api/rpa/stop
 ```
@@ -300,6 +326,7 @@ Stops all RPA tasks.
 ---
 
 #### 5. Run Specific Task
+
 ```http
 POST /api/rpa/task/:taskName/run
 ```
@@ -319,6 +346,7 @@ Manually trigger a specific task.
 ---
 
 #### 6. Process Transaction
+
 ```http
 POST /api/rpa/transaction/process
 Content-Type: application/json
@@ -339,6 +367,7 @@ Content-Type: application/json
 ---
 
 #### 7. Verify KYC Document
+
 ```http
 POST /api/rpa/kyc/verify
 Content-Type: application/json
@@ -370,6 +399,7 @@ Content-Type: application/json
 ---
 
 #### 8. Generate Report
+
 ```http
 POST /api/rpa/report/generate
 Content-Type: application/json
@@ -392,6 +422,7 @@ Content-Type: application/json
 ---
 
 #### 9. Send Notification
+
 ```http
 POST /api/rpa/notification/send
 Content-Type: application/json
@@ -421,6 +452,7 @@ Content-Type: application/json
 ---
 
 #### 10. Create Backup
+
 ```http
 POST /api/rpa/backup/create
 ```
@@ -438,6 +470,7 @@ POST /api/rpa/backup/create
 ---
 
 #### 11. Export Table
+
 ```http
 POST /api/rpa/backup/export
 Content-Type: application/json
@@ -461,6 +494,7 @@ Content-Type: application/json
 ## ⚙️ Configuration Details
 
 ### Cron Schedule Format
+
 ```
  ┌────────────── second (optional, 0-59)
  │ ┌──────────── minute (0-59)
@@ -484,6 +518,7 @@ Content-Type: application/json
 ## 🔍 Monitoring & Logging
 
 ### View Logs
+
 All RPA actions are logged with the `[RPA]` prefix:
 
 ```bash
@@ -494,12 +529,14 @@ All RPA actions are logged with the `[RPA]` prefix:
 ```
 
 ### Health Check
+
 Monitor RPA health with:
 ```bash
 curl http://localhost:5000/api/rpa/health
 ```
 
 ### Audit Trail
+
 All RPA actions are logged to the `audit_logs` table:
 ```typescript
 {
@@ -516,6 +553,7 @@ All RPA actions are logged to the `audit_logs` table:
 ## 🛠️ Troubleshooting
 
 ### Issue: RPA tasks not running
+
 **Solution:**
 1. Check if scheduler is started: `GET /api/rpa/status`
 2. Verify environment variables are set
@@ -523,6 +561,7 @@ All RPA actions are logged to the `audit_logs` table:
 4. Ensure `RPA_*_ENABLED=true` for desired tasks
 
 ### Issue: Email notifications failing
+
 **Solution:**
 1. Verify SMTP credentials in `.env`
 2. Check Gmail "App Password" if using Gmail
@@ -530,6 +569,7 @@ All RPA actions are logged to the `audit_logs` table:
 4. Test with: `POST /api/rpa/notification/send`
 
 ### Issue: SMS not sending
+
 **Solution:**
 1. Verify Twilio credentials
 2. Check Twilio phone number format (+1234567890)
@@ -537,6 +577,7 @@ All RPA actions are logged to the `audit_logs` table:
 4. Check rate limits (5 SMS/min default)
 
 ### Issue: Backup failing
+
 **Solution:**
 1. Ensure `pg_dump` is in PATH
 2. Verify DATABASE_URL is set
@@ -558,6 +599,7 @@ All RPA actions are logged to the `audit_logs` table:
 ## 📈 Performance
 
 ### Expected Load
+
 - **Transaction Processing**: ~100 transactions per batch (every 5 min)
 - **KYC Verification**: ~50 documents per batch (every 10 min)
 - **Notifications**: ~600 emails/hour, ~300 SMS/hour
@@ -565,6 +607,7 @@ All RPA actions are logged to the `audit_logs` table:
 - **Backups**: 1 full backup/day
 
 ### Resource Usage
+
 - **CPU**: Low (mostly I/O-bound)
 - **Memory**: ~50-100 MB per module
 - **Disk**: Depends on backup size
@@ -575,6 +618,7 @@ All RPA actions are logged to the `audit_logs` table:
 ## 🚀 Future Enhancements
 
 ### Planned Features
+
 1. ✅ Transaction Processing - **COMPLETE**
 2. ✅ KYC Verification - **COMPLETE**
 3. ✅ Report Generation - **COMPLETE**
@@ -583,6 +627,7 @@ All RPA actions are logged to the `audit_logs` table:
 6. ⏳ User Support Chatbot - **IN PROGRESS**
 
 ### Roadmap
+
 - Machine learning fraud detection
 - Real-time anomaly detection
 - Multi-language support for chatbot
@@ -592,6 +637,7 @@ All RPA actions are logged to the `audit_logs` table:
 ---
 
 ## 📚 Related Documentation
+
 - [Backend README](../README.md)
 - [Prisma Schema](../prisma/schema.prisma)
 - [API Routes](./routes.ts)
@@ -600,6 +646,7 @@ All RPA actions are logged to the `audit_logs` table:
 ---
 
 ## 🤝 Contributing
+
 When adding new RPA modules:
 1. Create a new file in `backend/src/rpa/`
 2. Export default singleton instance
@@ -611,6 +658,7 @@ When adding new RPA modules:
 ---
 
 ## 📞 Support
+
 For issues or questions about the RPA module:
 - Check logs in console
 - Review `/api/rpa/health` endpoint
@@ -619,6 +667,6 @@ For issues or questions about the RPA module:
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: January 2025  
+**Version**: 1.0.0
+**Last Updated**: January 2025
 **Status**: ✅ Production Ready (except User Support module)

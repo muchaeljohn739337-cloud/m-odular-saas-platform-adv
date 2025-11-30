@@ -52,21 +52,26 @@ Your fintech dashboard is now ready with all the features we discussed:
 ## 🚀 Quick Start
 
 ```bash
+
 # Navigate to frontend
+
 cd frontend
 
 # Install dependencies
+
 npm install
 
 # Start development server
+
 npm run dev
 ```
 
-Open **http://localhost:3000** to see your dashboard!
+Open **[Link](http://localhost:3000**) to see your dashboard!
 
 ## 📊 Data Flow
 
 ### Balance API Structure
+
 ```typescript
 {
   balance_main: 4000.00,    // Main account
@@ -77,6 +82,7 @@ Open **http://localhost:3000** to see your dashboard!
 ```
 
 ### Transaction API Structure
+
 ```typescript
 {
   id: "uuid",
@@ -105,9 +111,11 @@ The frontend automatically connects to your backend at `http://localhost:4000`:
 ## 🎯 Component Breakdown
 
 ### Dashboard.tsx
+
 Main container that orchestrates all components and manages state.
 
 ### SummaryCard.tsx
+
 - Animated counter effect
 - Gradient backgrounds
 - Hover effects
@@ -115,18 +123,21 @@ Main container that orchestrates all components and manages state.
 - Badge support
 
 ### BonusCard.tsx
+
 - Special bonus display
 - Tooltip on hover
 - Percentage display
 - Gift icon animation
 
 ### BalanceDropdown.tsx
+
 - Full-screen modal overlay
 - Detailed balance breakdown
 - Staggered item animations
 - Click outside to close
 
 ### TransactionList.tsx
+
 - Scrollable list (max 10 visible)
 - Filter dropdown
 - Color-coded transactions
@@ -136,12 +147,15 @@ Main container that orchestrates all components and manages state.
 ## 🪝 Custom Hooks
 
 ### useBalance(userId)
+
 Fetches balance data and listens for Socket.IO updates. Falls back to mock data if API fails.
 
 ### useTransactions(userId)
+
 Manages transaction list with real-time updates via Socket.IO. Includes mock data for demo.
 
 ### useSoundFeedback()
+
 Provides audio and haptic feedback:
 - `playClick()` - Button clicks
 - `playSuccess()` - Successful actions
@@ -210,6 +224,7 @@ npm run dev
 ## 🎨 Customization Tips
 
 ### Change Color Theme
+
 Edit `tailwind.config.js`:
 ```javascript
 colors: {
@@ -219,22 +234,26 @@ colors: {
 ```
 
 ### Adjust Animation Speed
+
 Modify Framer Motion `transition` props:
 ```typescript
 transition={{ duration: 0.5, delay: 0.2 }}
 ```
 
 ### Update Mock Data
+
 Edit `useBalance.ts` and `useTransactions.ts` fallback data
 
 ## 📚 Next Steps
 
 ### Immediate:
+
 - [ ] Install dependencies: `npm install`
 - [ ] Start dev server: `npm run dev`
 - [ ] Test all interactions
 
 ### Future Enhancements:
+
 - [ ] Add user authentication
 - [ ] Implement transaction creation form
 - [ ] Add date range filters
@@ -245,15 +264,18 @@ Edit `useBalance.ts` and `useTransactions.ts` fallback data
 ## 🐛 Troubleshooting
 
 ### TypeScript Errors
+
 Run `npm install` to install all dependencies including type definitions.
 
 ### Socket.IO Not Connecting
+
 Verify backend is running on port 4000:
 ```bash
 curl http://localhost:4000/health
 ```
 
 ### Tailwind Classes Not Working
+
 Ensure `globals.css` imports are correct:
 ```css
 @tailwind base;

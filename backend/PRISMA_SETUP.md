@@ -17,18 +17,24 @@
 
 **Install PostgreSQL:**
 ```powershell
+
 # Using Chocolatey
+
 choco install postgresql
 
 # Or download from: https://www.postgresql.org/download/windows/
+
 ```
 
 **Configure Database:**
 ```powershell
+
 # Start PostgreSQL service
+
 Start-Service postgresql-x64-14
 
 # Create database (using psql)
+
 psql -U postgres
 CREATE DATABASE advancia_ledger;
 CREATE USER dev_user WITH PASSWORD 'dev_password';
@@ -106,7 +112,7 @@ npx prisma migrate dev --name init
    ```typescript
    import { PrismaClient } from '@prisma/client';
    const prisma = new PrismaClient();
-   
+
    // Example: Create transaction
    const transaction = await prisma.transaction.create({
      data: {
@@ -128,22 +134,29 @@ npx prisma migrate dev --name init
 ## 📊 Prisma Commands
 
 ```powershell
+
 # Generate Prisma Client (after schema changes)
+
 npx prisma generate
 
 # Create new migration
+
 npx prisma migrate dev --name <migration-name>
 
 # Apply migrations in production
+
 npx prisma migrate deploy
 
 # Open Prisma Studio (database GUI)
+
 npx prisma studio
 
 # Reset database (⚠️ deletes all data)
+
 npx prisma migrate reset
 
 # View migration status
+
 npx prisma migrate status
 ```
 

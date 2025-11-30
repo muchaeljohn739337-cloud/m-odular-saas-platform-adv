@@ -29,12 +29,17 @@ ECONNREFUSED
 **Fix:**
 
 ```powershell
+
 # Check if PostgreSQL is running
+
 Test-NetConnection localhost -Port 5432
 
 # Start PostgreSQL
+
 net start postgresql-x64-14
+
 # OR
+
 Start-Service postgresql*
 ```
 
@@ -51,14 +56,18 @@ database "advancia_payledger" does not exist
 **Fix:**
 
 ```powershell
+
 # Connect to PostgreSQL
+
 psql -U postgres
 
 # Create the database
+
 CREATE DATABASE advancia_payledger;
 \q
 
 # Run migrations
+
 cd backend
 npx prisma migrate deploy
 ```
@@ -76,15 +85,19 @@ npm error command C:\WINDOWS\system32\cmd.exe /d /s /c tsx scripts/test-agents.t
 **Fix:**
 
 ```powershell
+
 # Option 1: Reinstall dependencies
+
 cd backend
 rm -r node_modules
 npm install
 
 # Option 2: Use node directly (simpler)
+
 node scripts/test-env.js
 
 # Option 3: Build and run compiled code
+
 npm run build
 node dist/scripts/test-agents.js
 ```
@@ -130,20 +143,26 @@ npm install
 If everything is broken, follow these steps:
 
 ```powershell
+
 # 1. Navigate to backend
+
 cd backend
 
 # 2. Clean install
+
 rm -r node_modules
 npm install
 
 # 3. Generate Prisma client
+
 npx prisma generate
 
 # 4. Check database connection
+
 node scripts/test-env.js
 
 # 5. If database test passes, run agents
+
 npm run agent:test
 ```
 
@@ -157,12 +176,15 @@ If tsx keeps failing:
 cd backend
 
 # Build the project
+
 npm run build
 
 # Run agent status check (compiled)
+
 node dist/scripts/check-agent-status.js
 
 # Or compile the test script manually
+
 npx tsc scripts/test-agents.ts --outDir dist/scripts --module commonjs --esModuleInterop
 node dist/scripts/test-agents.js
 ```
@@ -172,16 +194,21 @@ node dist/scripts/test-agents.js
 ## Quick Test Commands
 
 ```powershell
+
 # Test database only
+
 node scripts/test-env.js
 
 # Test agent status
+
 npm run agent:status
 
 # Run one agent manually
+
 npm run agent:execute -- MonitorAgent
 
 # Full test suite
+
 npm run agent:test
 ```
 
@@ -195,15 +222,19 @@ If you're still stuck, run:
 cd backend
 
 # Show environment
+
 node -e "console.log(process.env.DATABASE_URL)"
 
 # Test Prisma
+
 npx prisma validate
 
 # Check if port is open
+
 Test-NetConnection localhost -Port 5432
 
 # List agents
+
 ls src/agents/*Agent.ts
 ```
 
@@ -211,9 +242,9 @@ ls src/agents/*Agent.ts
 
 ## Success Checklist
 
-✅ PostgreSQL running on port 5432  
-✅ Database `advancia_payledger` exists  
-✅ `node_modules` folder exists  
-✅ Prisma client generated  
-✅ `node scripts/test-env.js` passes  
+✅ PostgreSQL running on port 5432
+✅ Database `advancia_payledger` exists
+✅ `node_modules` folder exists
+✅ Prisma client generated
+✅ `node scripts/test-env.js` passes
 ✅ Ready to run `npm run agent:test`

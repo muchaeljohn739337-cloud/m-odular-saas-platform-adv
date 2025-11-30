@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-11-30T12:30:43.1157981-05:00",
+  "overall_status": "unknown",
+  "backend": { "status": "unknown" },
+  "frontend": { "status": "unknown" },
+  "database": { "status": "unknown" },
+  "pm2": { "status": "unknown" },
+  "disk": { "status": "unknown" },
+  "ssl": { "status": "unknown" }
+}

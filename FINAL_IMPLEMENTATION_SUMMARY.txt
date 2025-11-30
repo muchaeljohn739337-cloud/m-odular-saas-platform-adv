@@ -121,7 +121,7 @@ OPTION 3: Production Deployment (30 minutes)
       git push origin main
 
    5. Monitor GitHub Actions:
-      https://github.com/pdtribe181-prog/-modular-saas-platform/actions
+      https://github.com/muchaeljohn739337-cloud/modular-saas-platform/actions
 
 
 🎯 WHAT RUNS AUTOMATICALLY:

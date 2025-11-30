@@ -48,6 +48,14 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
 - **Frontend production**: `https://advanciapayledger.com` (deployed on Vercel)
 - **API production**: `https://api.advanciapayledger.com` (deployed on Render)
 - **Admin subdomain**: `https://admin.advanciapayledger.com` (if configured)
+
+### Deployment instructions
+- **Full deployment guide**: See `.github/copilot-deployment-instructions.md` for comprehensive auto-deployment instructions
+- **Quick deploy**: Run `.\scripts\ADVANCIA-FULL-DEPLOY.ps1` for full stack deployment
+- **Backend only**: `cd backend && render deploy` or git push to trigger auto-deploy
+- **Frontend only**: `cd frontend && vercel --prod` or git push to trigger auto-deploy
+- **Pre-deployment checks**: Always verify tests pass, TypeScript compiles, builds succeed locally
+- **Post-deployment**: Check health endpoints, verify logs, test critical user flows
 - **Support email**: `support@advanciapayledger.com`
 - When adding new features or routes, ensure CORS allows these production domains in `backend/src/config/index.ts`.
 - Always test production URLs after deployment: `https://api.advanciapayledger.com/api/health`

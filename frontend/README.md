@@ -28,14 +28,17 @@ Modern fintech dashboard built with Next.js 14, TypeScript, Tailwind CSS, and Fr
 ## 🚀 Quick Start
 
 ```bash
+
 # Install dependencies
+
 npm install
 
 # Start development server
+
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
+Open [[Link](http://localhost:3000](http://localhost:300)0) to view the dashboard.
 
 ## 📁 Project Structure
 
@@ -207,7 +210,9 @@ Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
+
 # Optional: enable SmartSupp live chat bubble
+
 NEXT_PUBLIC_SMARTSUPP_KEY=your_smartsupp_public_key
 ```
 
@@ -229,29 +234,38 @@ const nextConfig = {
 ### Local Development
 
 ```bash
+
 # Install dependencies
+
 npm install
 
 # Start development server (port 3000)
+
 npm run dev
 
 # Start on different port (3001)
+
 npm run dev:3001
 
 # Start with turbo mode
+
 npm run dev:open
 ```
 
 ### Production Build
 
 ```bash
+
 # Build for production
+
 npm run build
 
 # Start production server
+
 npm start
 
 # Standalone deployment
+
 npm run start:standalone
 ```
 
@@ -262,13 +276,17 @@ npm run start:standalone
 Set these in your Vercel project settings:
 
 ```env
+
 # Production API URL (Render backend)
+
 NEXT_PUBLIC_API_URL=https://advancia-backend.onrender.com
 
 # Optional: SmartSupp live chat
+
 NEXT_PUBLIC_SMARTSUPP_KEY=your_smartsupp_public_key
 
 # Optional: Sentry error tracking
+
 SENTRY_DSN=your_sentry_dsn
 NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
 ```
@@ -348,10 +366,13 @@ The `vercel.json` file handles API proxying and domain redirects:
 #### Deployment Commands
 
 ```bash
+
 # Deploy to Vercel (preview)
+
 npm run deploy:check
 
 # Deploy to production
+
 npm run deploy:vercel
 ```
 

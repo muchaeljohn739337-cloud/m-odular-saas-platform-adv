@@ -177,19 +177,25 @@ model User {
 After making all schema changes, run these commands:
 
 ```powershell
+
 # Navigate to backend
+
 cd backend
 
 # Generate Prisma client with new schema
+
 npx prisma generate
 
 # Create and apply migration
+
 npx prisma migrate dev --name ledger_optimization_v1
 
 # Run consistency audit
+
 npx ts-node scripts/audit-ledger.ts
 
 # If audit passes, test the application
+
 npm run dev
 ```
 
@@ -250,10 +256,13 @@ migrations/
 If something goes wrong:
 
 ```powershell
+
 # Reset to previous migration
+
 npx prisma migrate reset
 
 # Or rollback last migration
+
 npx prisma migrate resolve --rolled-back ledger_optimization_v1
 ```
 

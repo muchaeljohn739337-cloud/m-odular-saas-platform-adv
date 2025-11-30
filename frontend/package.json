@@ -2,7 +2,13 @@
   "name": "advancia-pay-ledger-frontend",
   "version": "1.0.0",
   "description": "Advancia Pay Ledger - Modern Fintech Dashboard",
+  "author": "mucha",
+  "license": "PRIVATE",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muchaeljohn739337-cloud/modular-saas-platform.git"
+  },
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3000",
     "dev:3001": "next dev -H 127.0.0.1 -p 3001",
@@ -22,15 +28,23 @@
     "deploy:check": "vercel --prod --dry-run"
   },
   "dependencies": {
+    "@prisma/client": "^5.0.0",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
     "@sentry/nextjs": "^8.0.0",
     "@types/qrcode": "^1.5.5",
     "axios": "^1.12.2",
     "chart.js": "^4.5.1",
-    "clsx": "^2.1.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
+    "dotenv": "^16.0.0",
     "ethers": "^6.15.0",
+    "express": "^4.18.0",
     "framer-motion": "^11.0.0",
     "heroicons": "^2.2.0",
+    "jsonwebtoken": "^9.0.0",
     "lucide-react": "^0.344.0",
     "next": "^14.2.33",
     "next-auth": "^4.24.0",
@@ -41,11 +55,13 @@
     "react-hot-toast": "^2.6.0",
     "react-toastify": "^11.0.5",
     "recharts": "^3.3.0",
+    "socket.io": "^4.6.0",
     "socket.io-client": "^4.8.1",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
+    "@types/express": "^4.17.0",
     "@types/node": "^24.10.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -54,8 +70,10 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.0",
     "kill-port": "^2.0.1",
+    "nodemon": "^3.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
+    "ts-node": "^10.9.0",
     "typescript": "^5.9.0"
   },
   "pattern": {

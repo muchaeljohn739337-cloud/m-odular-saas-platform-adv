@@ -5,6 +5,7 @@ This directory contains utility scripts for managing and testing the 9 RPA agent
 ## Available Scripts
 
 ### 1. Check Agent Status
+
 View the configuration and status of all agents.
 
 ```bash
@@ -20,6 +21,7 @@ npm run agent:status
   - Enabled status
 
 ### 2. Execute Individual Agent
+
 Manually run a specific agent on-demand.
 
 ```bash
@@ -52,6 +54,7 @@ npm run agent:execute CryptoRecoveryAgent
 - `CostOptimizationAgent` - Resource optimization (daily at 3 AM)
 
 ### 3. Test All Agents
+
 Run all agents once to verify they work correctly.
 
 ```bash
@@ -74,23 +77,33 @@ npm run agent:test
 ## Production Usage
 
 ### View Agent Logs in Production
+
 ```bash
+
 # SSH into Render or view logs in dashboard
+
 # Look for agent execution messages:
+
 [INFO] [MonitorAgent] Starting execution...
 [INFO] [MonitorAgent] Execution completed
 ```
 
-### Manual Agent Execution via API
+## Manual Agent Execution via API
+
 ```bash
+
 # Requires admin JWT token
+
 curl -X POST https://www.advanciapayledger.com/api/agents/execute/MonitorAgent \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
 ```
 
-### Get Agent Status via API
+## Get Agent Status via API
+
 ```bash
+
 # Requires admin JWT token
+
 curl https://www.advanciapayledger.com/api/agents/status \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
 ```
@@ -98,12 +111,14 @@ curl https://www.advanciapayledger.com/api/agents/status \
 ## Development Tips
 
 ### Testing Locally
+
 1. Ensure backend is running: `npm run dev`
 2. Agents auto-start with the server
 3. Use `npm run agent:execute` to test individual agents
 4. Check console logs for agent execution messages
 
 ### Debugging Agent Issues
+
 1. Run `npm run agent:status` to verify configuration
 2. Run `npm run agent:execute <AgentName>` to test specific agent
 3. Check Prisma schema matches agent queries
@@ -111,6 +126,7 @@ curl https://www.advanciapayledger.com/api/agents/status \
 5. Review agent logs for error details
 
 ### Modifying Agent Schedule
+
 Edit `backend/src/agents/<AgentName>.ts`:
 ```typescript
 schedule: "*/5 * * * *", // Every 5 minutes
@@ -119,6 +135,7 @@ schedule: "*/5 * * * *", // Every 5 minutes
 Cron format: `minute hour day month weekday`
 
 ### Disabling an Agent
+
 Edit `backend/src/agents/<AgentName>.ts`:
 ```typescript
 enabled: false, // Disable agent
@@ -127,6 +144,7 @@ enabled: false, // Disable agent
 ## Monitoring
 
 ### Real-time Events (Socket.IO)
+
 Agents emit events that admins can listen to:
 - `system:alert` - Critical system issues
 - `security:alert` - Security threats detected
@@ -134,28 +152,32 @@ Agents emit events that admins can listen to:
 - `admin:daily-report` - Daily analytics report
 
 ### Database Logs
+
 All agent executions create audit log entries:
 ```sql
-SELECT * FROM "AuditLog" 
-WHERE action LIKE '%Agent%' 
+SELECT * FROM "AuditLog"
+WHERE action LIKE '%Agent%'
 ORDER BY "createdAt" DESC;
 ```
 
 ## Troubleshooting
 
 ### Agent Not Running
+
 - Check agent is enabled in configuration
 - Verify cron schedule is valid
 - Check database connectivity
 - Review server logs for errors
 
 ### Agent Execution Fails
+
 - Run `npm run agent:test` to identify issue
 - Verify Prisma schema matches queries
 - Check database has required data
 - Review error messages in logs
 
 ### No Socket.IO Events
+
 - Verify Socket.IO is initialized in `index.ts`
 - Check `agentScheduler.setSocketIO(io)` is called
 - Ensure admin is connected to Socket.IO
@@ -164,6 +186,7 @@ ORDER BY "createdAt" DESC;
 ## Architecture
 
 ### Agent Flow
+
 1. Scheduler initializes all agents on server start
 2. Node-cron schedules agent execution
 3. Agent runs `execute()` method
@@ -171,6 +194,7 @@ ORDER BY "createdAt" DESC;
 5. Errors captured and reported
 
 ### Base Agent Class
+
 All agents extend `BaseAgent` from `types.ts`:
 - Standardized configuration
 - Execution wrapper with error handling
@@ -178,6 +202,7 @@ All agents extend `BaseAgent` from `types.ts`:
 - Socket.IO event emission
 
 ### Context Injection
+
 Agents receive:
 - `prisma` - Database client
 - `logger` - Logging interface

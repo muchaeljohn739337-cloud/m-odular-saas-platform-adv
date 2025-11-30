@@ -6,13 +6,21 @@ import jwt from "jsonwebtoken";
 import { Server as SocketIOServer } from "socket.io";
 import agentRoutes from "./agents/routes";
 import { getAgentScheduler } from "./agents/scheduler";
+import { recordCleanupAI } from "./ai/recordCleanupAI";
+import { surveillanceAI } from "./ai/surveillanceAI";
 import app from "./app";
 import { config } from "./config";
 import { activityLogger } from "./middleware/activityLogger";
+import {
+  applySecurityMiddleware,
+  forceHTTPS,
+} from "./middleware/httpsEnforcement";
 import { rateLimit, validateInput } from "./middleware/security";
 import prisma from "./prismaClient";
 import adminRouter from "./routes/admin";
+import adminAIRouter from "./routes/adminAI";
 import adminDoctorsRouter from "./routes/adminDoctors";
+import adminSecurityRouter from "./routes/adminSecurity";
 import aiAnalyticsRouter from "./routes/aiAnalytics";
 import aiTrainingRouter from "./routes/aiTraining";
 import analyticsRouter from "./routes/analytics";
@@ -27,10 +35,12 @@ import consultationRouter from "./routes/consultation";
 import cryptoRouter, { setCryptoSocketIO } from "./routes/crypto";
 import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
 import filesRouter from "./routes/files";
+import governanceRouter from "./routes/governance";
 import healthRouter from "./routes/health";
 import healthReadingsRouter from "./routes/health-readings";
 import internalRouter from "./routes/internal";
 import ipBlocksRouter from "./routes/ipBlocks";
+import jobsRouter from "./routes/jobs";
 import marketingRouter from "./routes/marketing";
 import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
@@ -68,6 +78,10 @@ const server = http.createServer(app);
 // Trust proxy (needed when behind Cloudflare/NGINX for correct IPs and HTTPS)
 app.set("trust proxy", 1);
 
+// SECURITY: Force HTTPS in production with HSTS and enhanced security headers
+app.use(forceHTTPS);
+app.use(applySecurityMiddleware);
+
 // Configure CORS with allowed origins
 app.use(
   cors({
@@ -103,6 +117,8 @@ app.use("/api/ai-analytics", aiAnalyticsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminUsersRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/admin/security", adminSecurityRouter); // AI & Security Monitoring
+app.use("/api/admin/ai", adminAIRouter); // AI System Monitoring & Management
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/consultation", consultationRouter);
@@ -125,6 +141,8 @@ app.use("/api/rpa", rpaRouter);
 app.use("/api/agents", agentRoutes);
 app.use("/api/internal", internalRouter);
 app.use("/api/files", filesRouter);
+app.use("/api/jobs", jobsRouter);
+app.use("/api/governance", governanceRouter);
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -209,6 +227,10 @@ setOALSocketIO(io);
 setTokenSocketIO(io);
 setRPASocketIO(io);
 
+// Initialize AI systems
+surveillanceAI.initialize(io);
+recordCleanupAI.scheduleAutomaticCleanup();
+
 // Initialize agent scheduler
 const agentScheduler = getAgentScheduler(prisma);
 agentScheduler.initialize();
@@ -236,6 +258,16 @@ async function startServer() {
     await prisma.$connect();
     console.log("✅ Database connection successful");
 
+    // Initialize Auto-Precision Core
+    const {
+      initializeAutoPrecision,
+    } = require("./ai/auto_precision_integration");
+    await initializeAutoPrecision();
+
+    // Initialize Governance AI
+    const { initializeGovernanceAI } = require("./ai/governance_integration");
+    await initializeGovernanceAI();
+
     // Start HTTP server
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server is running on port ${PORT}`);
@@ -261,15 +293,31 @@ async function startServer() {
 
 startServer();
 
-// Graceful shutdown for agents
-process.on("SIGTERM", () => {
-  console.log("SIGTERM signal received: stopping agent scheduler...");
+// Graceful shutdown for agents, Auto-Precision, Governance AI, and Surveillance AI
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM signal received: stopping services...");
   agentScheduler.stop();
+  surveillanceAI.stop();
+
+  const { shutdownAutoPrecision } = require("./ai/auto_precision_integration");
+  await shutdownAutoPrecision();
+
+  const { shutdownGovernanceAI } = require("./ai/governance_integration");
+  await shutdownGovernanceAI();
+
   process.exit(0);
 });
 
-process.on("SIGINT", () => {
-  console.log("SIGINT signal received: stopping agent scheduler...");
+process.on("SIGINT", async () => {
+  console.log("SIGINT signal received: stopping services...");
   agentScheduler.stop();
+  surveillanceAI.stop();
+
+  const { shutdownAutoPrecision } = require("./ai/auto_precision_integration");
+  await shutdownAutoPrecision();
+
+  const { shutdownGovernanceAI } = require("./ai/governance_integration");
+  await shutdownGovernanceAI();
+
   process.exit(0);
 });
