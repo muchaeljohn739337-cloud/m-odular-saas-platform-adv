@@ -6,15 +6,9 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--inspect=9229",
-        "--loader",
-        "tsx"
-      ],
+      "runtimeArgs": ["--inspect=9229", "--loader", "tsx"],
       "cwd": "${workspaceFolder}/backend",
-      "skipFiles": [
-        "<node_internals>/"
-      ],
+      "skipFiles": ["<node_internals>/"],
       "console": "integratedTerminal",
       "env": {
         "NODE_ENV": "development",
@@ -35,9 +29,7 @@
         "dev"
       ],
       "cwd": "${workspaceFolder}/frontend",
-      "skipFiles": [
-        "<node_internals>/"
-      ],
+      "skipFiles": ["<node_internals>/"],
       "console": "integratedTerminal",
       "env": {
         "NEXT_PUBLIC_API_URL": "http://localhost:4000",
@@ -54,16 +46,10 @@
       "name": "🧠 Debug Backend (Copilot Agent)",
       "type": "node",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/"
-      ],
+      "skipFiles": ["<node_internals>/"],
       "program": "${workspaceFolder}/backend/src/index.ts",
       "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--inspect=9229",
-        "--loader",
-        "tsx"
-      ],
+      "runtimeArgs": ["--inspect=9229", "--loader", "tsx"],
       "cwd": "${workspaceFolder}/backend",
       "envFile": "${workspaceFolder}/backend/.env",
       "env": {
@@ -76,16 +62,10 @@
       "name": "Backend – Debug Prisma & API",
       "type": "node",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/"
-      ],
+      "skipFiles": ["<node_internals>/"],
       "program": "${workspaceFolder}/backend/src/index.ts",
       "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--inspect=9229",
-        "--loader",
-        "tsx"
-      ],
+      "runtimeArgs": ["--inspect=9229", "--loader", "tsx"],
       "cwd": "${workspaceFolder}/backend",
       "envFile": "${workspaceFolder}/backend/.env",
       "env": {
@@ -100,36 +80,26 @@
       "name": "⚡ Debug Frontend (Next.js)",
       "type": "node",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/"
-      ],
+      "skipFiles": ["<node_internals>/"],
       "program": "${workspaceFolder}/frontend/node_modules/next/dist/bin/next",
-      "args": [
-        "dev"
-      ],
+      "args": ["dev"],
       "env": {
         "NODE_ENV": "development",
         "NEXTAUTH_URL": "http://localhost:3000",
         "NEXT_PUBLIC_API_URL": "http://localhost:4000"
       },
-      "runtimeArgs": [
-        "--inspect=9230"
-      ],
+      "runtimeArgs": ["--inspect=9230"],
       "cwd": "${workspaceFolder}/frontend",
       "console": "integratedTerminal",
       "preLaunchTask": "Wait for Backend (4000)",
-      "outFiles": [
-        "${workspaceFolder}/frontend/.next//*.js"
-      ]
+      "outFiles": ["${workspaceFolder}/frontend/.next//*.js"]
     },
     {
       "name": "🐘 Prisma Studio",
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/backend/node_modules/.bin/prisma",
-      "args": [
-        "studio"
-      ],
+      "args": ["studio"],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",
       "env": {
@@ -141,10 +111,7 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/backend/scripts/rpaWorker.ts",
-      "runtimeArgs": [
-        "--loader",
-        "tsx"
-      ],
+      "runtimeArgs": ["--loader", "tsx"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     }

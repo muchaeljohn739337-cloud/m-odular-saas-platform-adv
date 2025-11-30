@@ -9,31 +9,27 @@ export class AgentScheduler {
   }
 
   scheduleAll(cronPattern = "*/5 * * * *") {
-    this.agents.forEach(agent => {
+    this.agents.forEach((agent) => {
       cron.schedule(cronPattern, async () => {
-        agent.metadata.status = "running";
         try {
           await agent.run();
-          agent.updateStatus("success");
         } catch (err) {
-          agent.updateStatus("error", err instanceof Error ? err.message : String(err));
+          console.error(`Agent ${agent.getName()} failed:`, err);
         }
       });
     });
   }
 
   getAgentMetadata() {
-    return this.agents.map(a => a.metadata);
+    return this.agents.map((a) => a.metadata);
   }
 
   async runAllOnce() {
     for (const agent of this.agents) {
-      agent.metadata.status = "running";
       try {
         await agent.run();
-        agent.updateStatus("success");
       } catch (err) {
-        agent.updateStatus("error", err instanceof Error ? err.message : String(err));
+        console.error(`Agent ${agent.getName()} failed:`, err);
       }
     }
   }

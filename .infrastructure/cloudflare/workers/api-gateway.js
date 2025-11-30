@@ -3,13 +3,15 @@
 // Adds security headers, CORS, and basic rate limiting
 
 const CONFIG = {
-  BACKEND_ORIGIN: "https://advancia-backend.onrender.com",
+  BACKEND_ORIGIN: "https://api.advanciapayledger.com",
   ALLOWED_ORIGINS: [
-    "https://advancia.app",
-    "https://www.advancia.app",
-    "https://admin.advancia.app",
+    "https://advanciapayledger.com",
+    "https://www.advanciapayledger.com",
+    "https://admin.advanciapayledger.com",
     "http://localhost:3000", // Development
+    "http://localhost:3001", // Development
     "http://127.0.0.1:3000", // Development
+    "http://127.0.0.1:3001", // Development
   ],
   RATE_LIMIT_REQUESTS: 100, // requests per window
   RATE_LIMIT_WINDOW: 60, // seconds

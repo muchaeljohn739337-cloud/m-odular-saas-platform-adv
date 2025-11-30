@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 
 // Simple in-memory rate limiter
 // In production, use Redis or a dedicated rate limiting service
@@ -43,7 +43,10 @@ export function rateLimit(options: RateLimitOptions) {
       res.setHeader("Retry-After", retryAfter);
       res.setHeader("X-RateLimit-Limit", maxRequests);
       res.setHeader("X-RateLimit-Remaining", 0);
-      res.setHeader("X-RateLimit-Reset", new Date(record.resetTime).toISOString());
+      res.setHeader(
+        "X-RateLimit-Reset",
+        new Date(record.resetTime).toISOString()
+      );
 
       return res.status(429).json({
         error: message || "Too many requests, please try again later.",
@@ -54,7 +57,10 @@ export function rateLimit(options: RateLimitOptions) {
     // Set rate limit headers
     res.setHeader("X-RateLimit-Limit", maxRequests);
     res.setHeader("X-RateLimit-Remaining", maxRequests - record.count);
-    res.setHeader("X-RateLimit-Reset", new Date(record.resetTime).toISOString());
+    res.setHeader(
+      "X-RateLimit-Reset",
+      new Date(record.resetTime).toISOString()
+    );
 
     next();
   };
@@ -66,14 +72,14 @@ export function rateLimit(options: RateLimitOptions) {
 setInterval(() => {
   const now = Date.now();
   const keysToDelete: string[] = [];
-  
+
   requestCounts.forEach((record, key) => {
     if (now > record.resetTime) {
       keysToDelete.push(key);
     }
   });
-  
-  keysToDelete.forEach(key => requestCounts.delete(key));
+
+  keysToDelete.forEach((key) => requestCounts.delete(key));
 }, 60000); // Clean up every minute
 
 /**
@@ -110,25 +116,28 @@ export function validateInput(req: Request, res: Response, next: NextFunction) {
 /**
  * Security headers middleware
  */
-export function securityHeaders(req: Request, res: Response, next: NextFunction) {
+export function securityHeaders(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   // Prevent clickjacking
   res.setHeader("X-Frame-Options", "DENY");
-  
+
   // Prevent MIME type sniffing
   res.setHeader("X-Content-Type-Options", "nosniff");
-  
+
   // Enable XSS protection
   res.setHeader("X-XSS-Protection", "1; mode=block");
-  
+
   // Referrer policy
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  
+
   // HTTP Strict Transport Security (force HTTPS)\n  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");\n  \n  // Remove X-Powered-By header\n  res.removeHeader("X-Powered-By");\n  \n  // Content Security Policy
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
   );
 
   next();
 }
-

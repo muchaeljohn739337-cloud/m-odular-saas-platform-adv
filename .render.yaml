@@ -2,7 +2,7 @@ services:
   # 🧠 Backend (Node API)
   - type: web
     name: advancia-backend
-    env: node
+    runtime: node
     plan: free
     buildCommand: |
       cd backend
@@ -13,7 +13,7 @@ services:
       npx prisma migrate deploy || (echo "❌ Migration failed — retrying..." && sleep 5 && npx prisma migrate deploy) || (echo "⚠ Migration failed again — rolling back" && exit 1)
       echo "🏗 Building backend..."
       npm run build
-    startCommand: node dist/server.js
+    startCommand: node dist/index.js
     healthCheckPath: /health
     autoDeploy: true
     envVars:
@@ -26,7 +26,7 @@ services:
       - key: SESSION_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: https://advanciapayledger.com
+        value: https://www.advanciapayledger.com
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -39,14 +39,16 @@ services:
         value: mailto:support@advanciapayledger.com
 
   # 💻 Frontend (Next.js Static Site)
-  - type: static
+  - type: web
     name: advancia-frontend
+    runtime: node
+    rootDir: frontend
     buildCommand: |
       cd frontend
       npm ci
       echo "🏗 Building Next.js static site..."
       npm run build
-    publishDir: frontend/out
+    startCommand: npm start
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
@@ -72,4 +74,4 @@ services:
       - key: NEXTAUTH_SECRET
         sync: false
       - key: NEXTAUTH_URL
-        value: https://advanciapayledger.com
+        value: https://www.advanciapayledger.com

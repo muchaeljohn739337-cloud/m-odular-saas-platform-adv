@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     autoDeploy: true
-    buildCommand: "cd backend && npm ci --production=false && npx prisma generate && npx prisma migrate deploy && npm run build"
+    buildCommand: "cd backend && npm ci --production=false && npm run build"
     startCommand: "cd backend && npm run start:render"
     envVars:
       - key: NODE_ENV
@@ -17,7 +17,7 @@ services:
       - key: SESSION_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: "https://advanciapayledger.com"
+        value: "https://www.advanciapayledger.com"
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -69,9 +69,9 @@ services:
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false
       - key: NEXTAUTH_URL
-        value: "https://advanciapayledger.com"
+        value: "https://www.advanciapayledger.com"
       - key: NEXTAUTH_SECRET
-        value: "changeme-please-set-real-secret"
+        sync: false
 
 databases:
   - name: advancia-db

@@ -27,6 +27,8 @@
     // TypeScript/JavaScript Settings
     "typescript.preferences.preferTypeOnlyAutoImports": true,
     "typescript.suggest.autoImports": true,
+    "typescript.tsdk": "frontend/node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
     "javascript.preferences.preferTypeOnlyAutoImports": true,
 
     // File Associations
@@ -78,7 +80,8 @@
       "**/build": true,
       "**/.next": true,
       "**/coverage": true
-    }
+    },
+    "prisma.pinToPrisma6": false
   },
   "extensions": {
     "recommendations": [

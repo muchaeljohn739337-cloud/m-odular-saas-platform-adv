@@ -6,7 +6,7 @@ services:
     region: oregon
     rootDir: backend
     autoDeploy: true
-    buildCommand: "npm ci && npx prisma migrate resolve --rolled-back 20251022094130_add_crypto_balances_to_users || true && npx prisma migrate deploy && npm run build"
+    buildCommand: "npm ci && npm run build"
     startCommand: "npm run start:render"
     envVars:
       - key: NODE_ENV
@@ -20,7 +20,7 @@ services:
       - key: SESSION_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: "https://advanciapayledger.com"
+        value: "https://www.advanciapayledger.com"
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -71,7 +71,7 @@ services:
       - key: NEXTAUTH_SECRET
         sync: false
       - key: NEXTAUTH_URL
-        value: "https://advanciapayledger.com"
+        value: "https://www.advanciapayledger.com"
     healthCheckPath: /
 
 databases:

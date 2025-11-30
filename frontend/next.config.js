@@ -1,3 +1,5 @@
+const path = require("path");
+
 const nextConfig = {
   // Only use static export for production builds (Cloudflare Pages)
   ...(process.env.CF_PAGES === "true" && { output: "export" }),
@@ -5,7 +7,8 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   experimental: {
     turbo: {
-      root: require("path").join(__dirname, ".."),
+      // Use absolute path resolution for monorepo root
+      root: path.resolve(__dirname, ".."),
     },
   },
   // Rewrites only work in dev mode, not with static export

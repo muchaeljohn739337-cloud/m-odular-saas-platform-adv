@@ -43,6 +43,15 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
 - Stripe payments webhook in `routes/payments.ts`: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
 - Ethereum gateway endpoints in `routes/ethereum.ts` (ethers v5 on backend; ethers v6 in frontend).
 
+### Production domains and URLs
+- **Primary production domain**: `https://www.advanciapayledger.com` (redirects to `https://advanciapayledger.com`)
+- **Frontend production**: `https://advanciapayledger.com` (deployed on Vercel)
+- **API production**: `https://api.advanciapayledger.com` (deployed on Render)
+- **Admin subdomain**: `https://admin.advanciapayledger.com` (if configured)
+- **Support email**: `support@advanciapayledger.com`
+- When adding new features or routes, ensure CORS allows these production domains in `backend/src/config/index.ts`.
+- Always test production URLs after deployment: `https://api.advanciapayledger.com/api/health`
+
 ### Local dev workflows (Windows PowerShell)
 - Backend: `cd backend && npm install && npm run dev` (uses ts-node-dev on `src/index.ts`, server at http://localhost:4000).
 - Frontend: `cd frontend && npm install && npm run dev` (Next.js at http://localhost:3000, expects API at http://localhost:4000).

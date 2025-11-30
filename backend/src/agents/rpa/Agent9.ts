@@ -1,12 +1,31 @@
-import { BaseAgent } from "../BaseAgent";
+import { AgentConfig, AgentResult, BaseAgent } from "../BaseAgent";
 
 export class RpaAgent9 extends BaseAgent {
-  constructor() {
-    super("RpaAgent9", "Audits system resource utilization.");
+  constructor(context: any) {
+    const config: AgentConfig = {
+      name: "RpaAgent9",
+      enabled: true,
+      schedule: "*/5 * * * *",
+      retryAttempts: 3,
+      timeout: 30000,
+      priority: "medium",
+      description: "Audits system resource utilization.",
+    };
+    super(config, context);
   }
 
-  async run() {
-    await new Promise(res => setTimeout(res, 100));
-    this.updateStatus("success", { cpu: "Normal", memory: "Normal" });
+  protected async execute(): Promise<AgentResult> {
+    await new Promise((res) => setTimeout(res, 100));
+
+    return {
+      success: true,
+      message: "System resources audited",
+      data: { cpu: "Normal", memory: "Normal" },
+      metrics: {
+        duration: 100,
+        itemsProcessed: 1,
+        errors: 0,
+      },
+    };
   }
 }

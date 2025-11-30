@@ -2,6 +2,9 @@ name = "modular-saas-platform"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Cloudflare Account Configuration
+account_id = "74ecde4d46d4b399c7295cf599d2886b"
+
 [build]
 command = "npm run build"
 cwd = "."
@@ -25,6 +28,12 @@ kv_namespaces = [
 # Pages configuration
 pages_build_output_dir = "out"
 
+# Production routes (for custom domain)
+routes = [
+  { pattern = "advanciapayledger.com/*", zone_name = "advanciapayledger.com" },
+  { pattern = "www.advanciapayledger.com/*", zone_name = "advanciapayledger.com" }
+]
+
 # Development settings
 [dev]
 port = 3000
@@ -32,7 +41,21 @@ local_protocol = "http"
 
 # Environment-specific overrides
 [env.production]
-# Production-specific settings here
+name = "modular-saas-platform"
+pages_build_output_dir = "out"
+routes = [
+  { pattern = "advanciapayledger.com/*", zone_name = "advanciapayledger.com" },
+  { pattern = "www.advanciapayledger.com/*", zone_name = "advanciapayledger.com" }
+]
+[vars]
+NEXT_PUBLIC_API_URL = "https://api.advanciapayledger.com"
+NEXT_PUBLIC_SOCKET_URL = "https://api.advanciapayledger.com"
+NODE_ENV = "production"
 
 [env.preview]
-# Preview/staging environment settings here
+name = "modular-saas-platform-preview"
+pages_build_output_dir = "out"
+[vars]
+NEXT_PUBLIC_API_URL = "https://api.advanciapayledger.com"
+NEXT_PUBLIC_SOCKET_URL = "https://api.advanciapayledger.com"
+NODE_ENV = "production"

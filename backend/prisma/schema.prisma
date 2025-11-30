@@ -4,7 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Connection URL provided via DATABASE_URL environment variable at runtime
+  // Prisma 7+ style: URL is passed when creating PrismaClient
 }
 
 model User {
@@ -40,38 +41,41 @@ model User {
 }
 
 model Transaction {
-  id          String   @id @default(uuid())
+  id          String            @id @default(uuid())
   userId      String
   amount      Decimal
   type        String
   description String?
   category    String?
-  status      String   @default("completed")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      TransactionStatus @default(COMPLETED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   @@index([userId])
   @@index([createdAt])
+  @@index([status])
+  @@index([type])
   @@map("transactions")
 }
 
 model DebitCard {
-  id             String   @id @default(uuid())
+  id             String     @id @default(uuid())
   userId         String
-  cardNumber     String   @unique
+  cardNumber     String     @unique
   cardHolderName String
   expiryMonth    Int
   expiryYear     Int
   cvv            String
-  cardType       String   @default("virtual")
-  status         String   @default("active")
-  balance        Decimal  @default(0)
-  dailyLimit     Decimal  @default(1000)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  cardType       String     @default("virtual")
+  status         CardStatus @default(ACTIVE)
+  balance        Decimal    @default(0)
+  dailyLimit     Decimal    @default(1000)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   @@index([userId])
   @@index([cardNumber])
+  @@index([status])
   @@map("debit_cards")
 }
 
@@ -139,17 +143,17 @@ model TokenWallet {
 }
 
 model TokenTransaction {
-  id          String   @id @default(uuid())
+  id          String            @id @default(uuid())
   walletId    String
   amount      Decimal
   type        String
-  status      String   @default("completed")
+  status      TransactionStatus @default(COMPLETED)
   description String?
   toAddress   String?
   fromAddress String?
   txHash      String?
   metadata    String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime          @default(now())
 
   @@index([walletId])
   @@index([createdAt])
@@ -159,17 +163,17 @@ model TokenTransaction {
 }
 
 model Reward {
-  id          String    @id @default(uuid())
+  id          String       @id @default(uuid())
   userId      String
   type        String
   amount      Decimal
-  status      String    @default("pending")
+  status      RewardStatus @default(PENDING)
   title       String
   description String
   metadata    String?
   expiresAt   DateTime?
   claimedAt   DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime     @default(now())
 
   @@index([userId])
   @@index([status])
@@ -250,7 +254,7 @@ model AdminSettings {
 }
 
 model CryptoOrder {
-  id                String    @id @default(uuid())
+  id                String      @id @default(uuid())
   userId            String
   cryptoType        String
   usdAmount         Decimal
@@ -258,7 +262,7 @@ model CryptoOrder {
   exchangeRate      Decimal
   processingFee     Decimal
   totalUsd          Decimal
-  status            String    @default("pending")
+  status            OrderStatus @default(PENDING)
   adminAddress      String
   txHash            String?
   adminNotes        String?
@@ -266,8 +270,8 @@ model CryptoOrder {
   stripeSessionId   String?
   completedAt       DateTime?
   cancelledAt       DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -277,13 +281,13 @@ model CryptoOrder {
 }
 
 model CryptoWithdrawal {
-  id                String    @id @default(uuid())
+  id                String           @id @default(uuid())
   userId            String
   cryptoType        String
   cryptoAmount      Decimal
   usdEquivalent     Decimal
   withdrawalAddress String
-  status            String    @default("pending")
+  status            WithdrawalStatus @default(PENDING)
   adminApprovedBy   String?
   adminNotes        String?
   txHash            String?
@@ -292,9 +296,9 @@ model CryptoWithdrawal {
   rejectedAt        DateTime?
   completedAt       DateTime?
   cancelledAt       DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -754,6 +758,79 @@ enum RPAExecutionStatus {
   FAILED
 }
 
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum CardStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  EXPIRED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum RewardStatus {
+  PENDING
+  CLAIMED
+  EXPIRED
+  CANCELLED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum BookingStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
 model SystemConfig {
   id        Int      @id @default(autoincrement())
   key       String   @unique
@@ -781,4 +858,100 @@ model UploadedFile {
 
   @@map("uploaded_files")
   @@index([userId, category])
+}
+
+model ClickEvent {
+  id          String   @id @default(uuid())
+  userId      String?
+  eventName   String
+  ipAddress   String
+  userAgent   String
+  isRobot     Boolean  @default(false)
+  confidence  Decimal?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventName])
+  @@index([isRobot])
+  @@index([createdAt])
+  @@map("click_events")
+}
+
+model BotDetection {
+  id          String   @id @default(uuid())
+  userId      String?
+  ipAddress   String
+  userAgent   String
+  isBot       Boolean
+  confidence  Decimal
+  riskScore   Decimal  @default(0)
+  signals     Json?
+  action      String?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([ipAddress])
+  @@index([isBot])
+  @@index([createdAt])
+  @@map("bot_detections")
+}
+
+model FraudScore {
+  id            String   @id @default(uuid())
+  userId        String
+  transactionId String?
+  score         Decimal
+  factors       Json?
+  status        String   @default("pending")
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([transactionId])
+  @@index([score])
+  @@index([status])
+  @@map("fraud_scores")
+}
+
+model AITrainingData {
+  id          String   @id @default(uuid())
+  userId      String?
+  ipAddress   String
+  userAgent   String
+  features    Json
+  label       Boolean
+  verifiedBy  String?
+  verifiedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([label])
+  @@index([verifiedBy])
+  @@index([createdAt])
+  @@map("ai_training_data")
+}
+
+model AIModel {
+  id              String   @id @default(uuid())
+  name            String
+  version         String
+  modelType       String
+  accuracy        Decimal?
+  precision       Decimal?
+  recall          Decimal?
+  f1Score         Decimal?
+  trainingSamples Int      @default(0)
+  modelPath       String?
+  isActive        Boolean  @default(false)
+  trainedBy       String?
+  trainedAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([modelType])
+  @@index([isActive])
+  @@map("ai_models")
 }

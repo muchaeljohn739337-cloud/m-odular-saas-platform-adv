@@ -14,14 +14,17 @@ import prisma from "./prismaClient";
 import adminRouter from "./routes/admin";
 import adminDoctorsRouter from "./routes/adminDoctors";
 import aiAnalyticsRouter from "./routes/aiAnalytics";
+import aiTrainingRouter from "./routes/aiTraining";
 import analyticsRouter from "./routes/analytics";
 import authRouter from "./routes/auth";
 import authAdminRouter, {
   activeSessions,
   setBroadcastSessions as setAuthBroadcast,
 } from "./routes/authAdmin";
+import botCheckRouter from "./routes/botCheck";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
 import consultationRouter from "./routes/consultation";
+import cryptoRouter, { setCryptoSocketIO } from "./routes/crypto";
 import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
 import filesRouter from "./routes/files";
 import healthRouter from "./routes/health";
@@ -91,6 +94,7 @@ app.use("/api", healthRouter);
 
 // Regular routes
 app.use("/api/payments", paymentsRouter);
+app.use("/api/crypto", cryptoRouter);
 app.use("/api/debit-card", debitCardRouter);
 app.use("/api/medbeds", medbedsRouter);
 app.use("/api/support", supportRouter);
@@ -106,6 +110,8 @@ app.use("/api/admin/doctors", adminDoctorsRouter);
 app.use("/api/system", systemRouter);
 app.use("/api/marketing", marketingRouter);
 app.use("/api/subscribers", subscribersRouter);
+app.use("/api/bot-check", botCheckRouter);
+app.use("/api/ai-training", aiTrainingRouter);
 app.use("/api/admin/security", securityLevelRouter);
 app.use("/api/admin/ip-blocks", ipBlocksRouter);
 app.use("/api/auth/admin", authAdminRouter);
@@ -194,6 +200,7 @@ setTransactionSocketIO(io);
 setAdminUsersSocketIO(io);
 setDebitCardSocketIO(io);
 setMedbedsSocketIO(io);
+setCryptoSocketIO(io);
 setChatSocketIO(io);
 setSupportSocketIO(io);
 setPaymentsSocketIO(io);
@@ -219,11 +226,40 @@ app.use(notFoundHandler);
 // Global error handler (MUST be last middleware)
 app.use(errorHandler);
 
-// Start server
-const PORT = config.port || process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Start server with error handling
+const PORT = config.port || Number(process.env.PORT) || 5000;
+
+// Test database connection before starting server
+async function startServer() {
+  try {
+    // Test database connection
+    await prisma.$connect();
+    console.log("✅ Database connection successful");
+
+    // Start HTTP server
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`   Environment: ${config.nodeEnv}`);
+      console.log(`   Frontend URL: ${config.frontendUrl}`);
+    });
+
+    server.on("error", (error: NodeJS.ErrnoException) => {
+      if (error.code === "EADDRINUSE") {
+        console.error(`❌ Port ${PORT} is already in use`);
+        process.exit(1);
+      } else {
+        console.error("❌ Server error:", error);
+        process.exit(1);
+      }
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    console.error("   Check DATABASE_URL and ensure database is accessible");
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // Graceful shutdown for agents
 process.on("SIGTERM", () => {

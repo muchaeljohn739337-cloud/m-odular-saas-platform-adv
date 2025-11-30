@@ -32,6 +32,12 @@ env:
   SMTP_PASS: ${secrets.SMTP_PASS}
   ETH_PROVIDER_URL: https://cloudflare-eth.com
 
+# Production domains
+production:
+  frontend: https://www.advanciapayledger.com
+  api: https://api.advanciapayledger.com
+  support_email: support@advanciapayledger.com
+
 features:
   - copilot-agent you want, I can add an auto-decrypt preLaunchTask so the backend debug config decrypts .env automatically when SECRETS_PASSPHRASE is set.
   - live-debug

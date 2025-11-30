@@ -1,12 +1,31 @@
-import { BaseAgent } from "../BaseAgent";
+import { AgentConfig, AgentResult, BaseAgent } from "../BaseAgent";
 
 export class RpaAgent5 extends BaseAgent {
-  constructor() {
-    super("RpaAgent5", "Monitors scheduled payout processes.");
+  constructor(context: any) {
+    const config: AgentConfig = {
+      name: "RpaAgent5",
+      enabled: true,
+      schedule: "*/5 * * * *",
+      retryAttempts: 3,
+      timeout: 30000,
+      priority: "medium",
+      description: "Monitors scheduled payout processes.",
+    };
+    super(config, context);
   }
 
-  async run() {
-    await new Promise(res => setTimeout(res, 100));
-    this.updateStatus("success", { process: "Payouts on schedule" });
+  protected async execute(): Promise<AgentResult> {
+    await new Promise((res) => setTimeout(res, 100));
+
+    return {
+      success: true,
+      message: "Payout processes monitored",
+      data: { process: "Payouts on schedule" },
+      metrics: {
+        duration: 100,
+        itemsProcessed: 1,
+        errors: 0,
+      },
+    };
   }
 }

@@ -1,3 +1,4 @@
+// @ts-ignore
 import bcrypt from "bcryptjs";
 import { timingSafeEqual } from "crypto";
 import express from "express";
@@ -18,7 +19,13 @@ const REFRESH_SECRET = process.env.REFRESH_SECRET || "refresh_secret_key";
 async function verifyAdminPassword(candidate: string) {
   if (ADMIN_PASS_IS_HASHED) {
     try {
-      return await bcrypt.compare(candidate, ADMIN_PASS);
+      // Try to use bcrypt if available
+      if (bcrypt && typeof bcrypt.compare === "function") {
+        return await bcrypt.compare(candidate, ADMIN_PASS);
+      } else {
+        console.error("bcrypt not available, cannot verify hashed password");
+        return false;
+      }
     } catch (error) {
       console.error("Failed to verify hashed admin password", error);
       return false;

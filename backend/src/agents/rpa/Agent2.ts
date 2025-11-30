@@ -1,12 +1,31 @@
-import { BaseAgent } from "../BaseAgent";
+import { AgentConfig, AgentResult, BaseAgent } from "../BaseAgent";
 
 export class RpaAgent2 extends BaseAgent {
-  constructor() {
-    super("RpaAgent2", "Monitors transaction queue depth.");
+  constructor(context: any) {
+    const config: AgentConfig = {
+      name: "RpaAgent2",
+      enabled: true,
+      schedule: "*/5 * * * *",
+      retryAttempts: 3,
+      timeout: 30000,
+      priority: "medium",
+      description: "Monitors transaction queue depth.",
+    };
+    super(config, context);
   }
 
-  async run() {
-    await new Promise(res => setTimeout(res, 100));
-    this.updateStatus("success", { queueDepth: 3 });
+  protected async execute(): Promise<AgentResult> {
+    await new Promise((res) => setTimeout(res, 100));
+
+    return {
+      success: true,
+      message: "Transaction queue monitored",
+      data: { queueDepth: 3 },
+      metrics: {
+        duration: 100,
+        itemsProcessed: 1,
+        errors: 0,
+      },
+    };
   }
 }

@@ -35,15 +35,32 @@ export interface AgentResult {
   };
 }
 
+export interface AgentMetadata {
+  status: "idle" | "running" | "success" | "error";
+  lastError?: string;
+  runCount: number;
+  successCount: number;
+  errorCount: number;
+  averageDuration: number;
+}
+
 export abstract class BaseAgent {
   protected readonly config: AgentConfig;
   protected readonly context: AgentContext;
   private lastRunResult: AgentResult | null = null;
   private lastRunAt: Date | null = null;
+  public readonly metadata: AgentMetadata;
 
   constructor(config: AgentConfig, context: AgentContext) {
     this.config = config;
     this.context = context;
+    this.metadata = {
+      status: "idle",
+      runCount: 0,
+      successCount: 0,
+      errorCount: 0,
+      averageDuration: 0,
+    };
   }
 
   getConfig(): AgentConfig {
@@ -62,10 +79,27 @@ export abstract class BaseAgent {
     return this.lastRunAt;
   }
 
+  updateStatus(
+    status: "idle" | "running" | "success" | "error",
+    error?: string
+  ): void {
+    this.metadata.status = status;
+    if (error) {
+      this.metadata.lastError = error;
+    }
+    if (status === "error") {
+      this.metadata.errorCount++;
+    } else if (status === "success") {
+      this.metadata.successCount++;
+    }
+  }
+
   protected abstract execute(): Promise<AgentResult>;
 
   async run(): Promise<AgentResult> {
     const startTime = Date.now();
+    this.metadata.status = "running";
+    this.metadata.runCount++;
 
     try {
       this.context.logger.info(`[${this.config.name}] Starting execution`);
@@ -73,6 +107,12 @@ export abstract class BaseAgent {
       const result = await this.execute();
       const duration = Date.now() - startTime;
       const completedAt = new Date();
+
+      // Update average duration
+      const totalRuns = this.metadata.runCount;
+      this.metadata.averageDuration =
+        (this.metadata.averageDuration * (totalRuns - 1) + duration) /
+        totalRuns;
 
       const normalizedResult: AgentResult = {
         ...result,
@@ -90,14 +130,16 @@ export abstract class BaseAgent {
 
       this.lastRunResult = normalizedResult;
       this.lastRunAt = completedAt;
+      this.updateStatus("success");
 
       return normalizedResult;
     } catch (error) {
+      const duration = Date.now() - startTime;
       const failureResult: AgentResult = {
         success: false,
         message: error instanceof Error ? error.message : "Unknown error",
         metrics: {
-          duration: Date.now() - startTime,
+          duration,
           itemsProcessed: 0,
           errors: 1,
         },
@@ -106,6 +148,10 @@ export abstract class BaseAgent {
       this.context.logger.error(`[${this.config.name}] Failed`, error);
       this.lastRunResult = failureResult;
       this.lastRunAt = new Date();
+      this.updateStatus(
+        "error",
+        error instanceof Error ? error.message : String(error)
+      );
 
       return failureResult;
     }
