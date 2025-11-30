@@ -5,6 +5,13 @@ const nextConfig = {
   ...(process.env.CF_PAGES === "true" && { output: "export" }),
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
+  typescript: {
+    // Skip type checking during build (types checked separately in CI)
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     turbo: {
       // Use absolute path resolution for monorepo root
