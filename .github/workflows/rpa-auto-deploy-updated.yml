@@ -2,10 +2,10 @@ name: Advancia RPA Auto Deploy & Self-Heal
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   schedule:
-    - cron: "0 */4 * * *"  # Health check every 4 hours
-  workflow_dispatch:  # Manual trigger
+    - cron: "0 */4 * * *" # Health check every 4 hours
+  workflow_dispatch: # Manual trigger
 
 permissions:
   contents: read
@@ -16,45 +16,45 @@ jobs:
     name: Build, Deploy & Health Check
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: package-lock.json
-      
+
       - name: 📦 Install Dependencies
         run: npm ci
-      
+
       - name: 🧩 Generate Prisma Client
         working-directory: ./backend
         run: npm run prisma:generate
-      
+
       - name: 🔍 TypeScript Check - Backend
         working-directory: ./backend
         run: npx tsc --noEmit
         continue-on-error: true
-      
+
       - name: 🔍 TypeScript Check - Frontend
         working-directory: ./frontend
         run: npx tsc --noEmit
         continue-on-error: true
-      
+
       - name: 🧱 Build Backend
         working-directory: ./backend
         run: npm run build
-      
+
       - name: 🧱 Build Frontend
         working-directory: ./frontend
         run: npm run build
-      
+
       - name: 🚀 Trigger Render Deployment
         if: success()
         env:
@@ -67,11 +67,11 @@ jobs:
             -H "Authorization: Bearer $RENDER_API_KEY" \
             -H "Content-Type: application/json" \
             -d '{"clearCache": false}')
-          
+
           DEPLOY_ID=$(echo $DEPLOY_RESPONSE | jq -r '.id')
           echo "✅ Deploy triggered - ID: $DEPLOY_ID"
           echo "DEPLOY_ID=$DEPLOY_ID" >> $GITHUB_ENV
-      
+
       - name: ⏳ Monitor Deployment
         if: success()
         env:
@@ -94,10 +94,10 @@ jobs:
               exit 1
             fi
           done
-          
+
           echo "⏱️ Monitoring timeout"
           exit 1
-      
+
       - name: 🏥 Production Health Check
         if: success()
         env:
@@ -105,7 +105,7 @@ jobs:
         run: |
           echo "🏥 Checking production health..."
           sleep 30  # Wait for services to stabilize
-          
+
           for i in {1..10}; do
             if curl -f -s "$BACKEND_URL/api/health" > /dev/null; then
               echo "✅ Backend is healthy!"
@@ -114,10 +114,10 @@ jobs:
             echo "⏳ Waiting for backend... attempt $i/10"
             sleep 30
           done
-          
+
           echo "❌ Backend health check failed"
           exit 1
-      
+
       - name: 🌐 Purge Cloudflare Cache
         if: success()
         env:
@@ -128,17 +128,17 @@ jobs:
             echo "⚠️ Cloudflare credentials not set - skipping cache purge"
             exit 0
           fi
-          
+
           echo "🌐 Purging Cloudflare cache..."
-          
+
           PURGE_RESPONSE=$(curl -X POST \
             "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"files": ["https://advanciapayledger.com/*", "https://api.advanciapayledger.com/*"]}')
-          
+
           SUCCESS=$(echo $PURGE_RESPONSE | jq -r '.success')
-          
+
           if [ "$SUCCESS" = "true" ]; then
             PURGE_ID=$(echo $PURGE_RESPONSE | jq -r '.result.id // "N/A"')
             echo "✅ Cloudflare cache purged successfully"
@@ -148,7 +148,7 @@ jobs:
             echo $PURGE_RESPONSE | jq '.errors'
             exit 0  # Don't fail the whole deployment if cache purge fails
           fi
-      
+
       - name: ✅ Success Notification
         if: success()
         run: |
@@ -160,7 +160,7 @@ jobs:
           echo "CDN: Cache purged (Cloudflare)"
           echo "Time: $(date)"
           echo "Commit: ${{ github.sha }}"
-      
+
       - name: 🚨 Failure - Create Issue
         if: failure()
         uses: actions/github-script@v7
@@ -169,16 +169,16 @@ jobs:
             const title = `🚨 Deployment Failed - ${new Date().toISOString()}`;
             const body = `
             ## Deployment Failure Report
-            
+
             **Workflow:** ${context.workflow}
             **Run ID:** ${context.runId}
             **Commit:** ${context.sha.substring(0, 7)}
             **Branch:** ${context.ref}
             **Actor:** @${context.actor}
-            
+
             ### Logs
             [View workflow logs](${context.payload.repository.html_url}/actions/runs/${context.runId})
-            
+
             ### What to check
             - [ ] TypeScript compilation errors
             - [ ] Prisma migration status
@@ -186,11 +186,11 @@ jobs:
             - [ ] Render deployment logs
             - [ ] Production health endpoint status
             - [ ] Environment variables (secrets)
-            
+
             ### Auto-created by GitHub Actions
             This issue was automatically created because deployment failed.
             `;
-            
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -198,7 +198,7 @@ jobs:
               body: body,
               labels: ['deployment', 'automated', 'urgent']
             });
-      
+
       - name: 🧹 Log Maintenance (Scheduled Only)
         if: github.event_name == 'schedule'
         run: |
