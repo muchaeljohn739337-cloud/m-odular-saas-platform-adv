@@ -5,13 +5,27 @@ import { logger } from "../utils/logger";
 
 const prisma = new PrismaClient();
 
-// Redis connection
-const connection = new Redis({
-  host: process.env.REDIS_HOST || "localhost",
-  port: parseInt(process.env.REDIS_PORT || "6379"),
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-});
+// Redis connection (optional - only if REDIS_HOST/REDIS_URL is set)
+let connection: Redis | null = null;
+
+// Completely disable Redis for local development without Redis server
+// if (process.env.REDIS_HOST || process.env.REDIS_URL) {
+//   connection = new Redis({
+//     host: process.env.REDIS_HOST || "localhost",
+//     port: parseInt(process.env.REDIS_PORT || "6379"),
+//     maxRetriesPerRequest: null,
+//     enableReadyCheck: false,
+//     retryStrategy: () => null, // Don't retry on connection failure
+//   });
+
+//   connection.on("error", (err) => {
+//     console.warn("⚠️  Redis connection error in AI queue:", err.message);
+//   });
+// } else {
+console.warn(
+  "⚠️  Redis not configured for AI queue system. Queue features will be disabled."
+);
+// }
 
 // Queue names
 export enum QueueName {
@@ -31,52 +45,65 @@ export enum TaskPriority {
   BACKGROUND = 10,
 }
 
-// Queue configurations
-const queueConfig = {
-  connection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: "exponential",
-      delay: 2000,
+// Queue configurations (only if Redis is available)
+let queueConfig: any = null;
+let queues: any = null;
+let queueEvents: any = null;
+
+if (connection) {
+  queueConfig = {
+    connection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 2000,
+      },
+      removeOnComplete: 100, // Keep last 100 completed jobs
+      removeOnFail: 500, // Keep last 500 failed jobs for debugging
     },
-    removeOnComplete: 100, // Keep last 100 completed jobs
-    removeOnFail: 500, // Keep last 500 failed jobs for debugging
-  },
-};
+  };
 
-// Create queues
-export const queues = {
-  workflow: new Queue(QueueName.AI_WORKFLOW, queueConfig),
-  task: new Queue(QueueName.AI_TASK, queueConfig),
-  monitoring: new Queue(QueueName.AI_MONITORING, queueConfig),
-  report: new Queue(QueueName.AI_REPORT, queueConfig),
-  codeSuggestion: new Queue(QueueName.AI_CODE_SUGGESTION, queueConfig),
-};
+  // Create queues
+  queues = {
+    workflow: new Queue(QueueName.AI_WORKFLOW, queueConfig),
+    task: new Queue(QueueName.AI_TASK, queueConfig),
+    monitoring: new Queue(QueueName.AI_MONITORING, queueConfig),
+    report: new Queue(QueueName.AI_REPORT, queueConfig),
+    codeSuggestion: new Queue(QueueName.AI_CODE_SUGGESTION, queueConfig),
+  };
 
-// Queue events for monitoring
-const queueEvents = {
-  workflow: new QueueEvents(QueueName.AI_WORKFLOW, { connection }),
-  task: new QueueEvents(QueueName.AI_TASK, { connection }),
-  monitoring: new QueueEvents(QueueName.AI_MONITORING, { connection }),
-  report: new QueueEvents(QueueName.AI_REPORT, { connection }),
-  codeSuggestion: new QueueEvents(QueueName.AI_CODE_SUGGESTION, { connection }),
-};
+  // Queue events for monitoring
+  queueEvents = {
+    workflow: new QueueEvents(QueueName.AI_WORKFLOW, { connection }),
+    task: new QueueEvents(QueueName.AI_TASK, { connection }),
+    monitoring: new QueueEvents(QueueName.AI_MONITORING, { connection }),
+    report: new QueueEvents(QueueName.AI_REPORT, { connection }),
+    codeSuggestion: new QueueEvents(QueueName.AI_CODE_SUGGESTION, {
+      connection,
+    }),
+  };
 
-// Listen to queue events
-Object.entries(queueEvents).forEach(([name, events]) => {
-  events.on("completed", ({ jobId }) => {
-    logger.info(`Job completed in ${name}: ${jobId}`);
+  // Listen to queue events
+  Object.entries(queueEvents).forEach(([name, events]) => {
+    events.on("completed", ({ jobId }) => {
+      logger.info(`Job completed in ${name}: ${jobId}`);
+    });
+
+    events.on("failed", ({ jobId, failedReason }) => {
+      logger.error(`Job failed in ${name}: ${jobId} - ${failedReason}`);
+    });
+
+    events.on("progress", ({ jobId, data }) => {
+      logger.debug(
+        `Job progress in ${name}: ${jobId} - ${JSON.stringify(data)}`
+      );
+    });
   });
+}
 
-  events.on("failed", ({ jobId, failedReason }) => {
-    logger.error(`Job failed in ${name}: ${jobId} - ${failedReason}`);
-  });
-
-  events.on("progress", ({ jobId, data }) => {
-    logger.debug(`Job progress in ${name}: ${jobId} - ${JSON.stringify(data)}`);
-  });
-});
+// Export queues (will be null if Redis not available)
+export { queues };
 
 // Job data interfaces
 export interface WorkflowJobData {
@@ -130,7 +157,11 @@ export class AIQueueManager {
         pattern: string; // cron pattern
       };
     }
-  ): Promise<Job<WorkflowJobData>> {
+  ): Promise<Job<WorkflowJobData> | null> {
+    if (!queues) {
+      logger.warn("Queue system not available (Redis not configured)");
+      return null;
+    }
     return queues.workflow.add("execute-workflow", data, {
       priority: options?.priority || TaskPriority.MEDIUM,
       delay: options?.delay,
@@ -147,7 +178,11 @@ export class AIQueueManager {
       priority?: TaskPriority;
       delay?: number;
     }
-  ): Promise<Job<TaskJobData>> {
+  ): Promise<Job<TaskJobData> | null> {
+    if (!queues) {
+      logger.warn("Queue system not available (Redis not configured)");
+      return null;
+    }
     return queues.task.add("execute-task", data, {
       priority: options?.priority || data.priority || TaskPriority.MEDIUM,
       delay: options?.delay,
@@ -164,7 +199,11 @@ export class AIQueueManager {
         pattern: string;
       };
     }
-  ): Promise<Job<MonitoringJobData>> {
+  ): Promise<Job<MonitoringJobData> | null> {
+    if (!queues) {
+      logger.warn("Queue system not available (Redis not configured)");
+      return null;
+    }
     return queues.monitoring.add("run-monitoring", data, {
       priority: TaskPriority.HIGH,
       repeat: options?.repeat,
@@ -182,7 +221,11 @@ export class AIQueueManager {
         pattern: string;
       };
     }
-  ): Promise<Job<ReportJobData>> {
+  ): Promise<Job<ReportJobData> | null> {
+    if (!queues) {
+      logger.warn("Queue system not available (Redis not configured)");
+      return null;
+    }
     return queues.report.add("generate-report", data, {
       priority: TaskPriority.LOW,
       delay: options?.delay,
@@ -195,7 +238,11 @@ export class AIQueueManager {
    */
   static async scheduleCodeSuggestion(
     data: CodeSuggestionJobData
-  ): Promise<Job<CodeSuggestionJobData>> {
+  ): Promise<Job<CodeSuggestionJobData> | null> {
+    if (!queues) {
+      logger.warn("Queue system not available (Redis not configured)");
+      return null;
+    }
     return queues.codeSuggestion.add("analyze-code", data, {
       priority: TaskPriority.MEDIUM,
     });
@@ -205,6 +252,10 @@ export class AIQueueManager {
    * Get queue statistics
    */
   static async getQueueStats(queueName: QueueName) {
+    if (!queues) {
+      logger.warn("Queue system not available (Redis not configured)");
+      return null;
+    }
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (!queue) {
       throw new Error(`Queue not found: ${queueName}`);

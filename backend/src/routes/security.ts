@@ -1,6 +1,10 @@
-import { Request, Response, Router } from "express";
+import { Response, Router } from "express";
 import { getSecurity } from "../ai";
-import { authenticateToken, requireAdmin } from "../middleware/auth";
+import {
+  authenticateToken,
+  requireAdmin,
+  AuthRequest,
+} from "../middleware/auth";
 
 const router = Router();
 
@@ -12,7 +16,7 @@ router.use(requireAdmin);
  * GET /api/admin/security/status
  * Get unified security system status
  */
-router.get("/status", async (req: Request, res: Response) => {
+router.get("/status", async (req: AuthRequest, res: Response) => {
   try {
     const security = getSecurity();
     const status = security.getUnifiedStatus();
@@ -27,7 +31,7 @@ router.get("/status", async (req: Request, res: Response) => {
  * GET /api/admin/security/forensic-report
  * Get comprehensive forensic analysis
  */
-router.get("/forensic-report", async (req: Request, res: Response) => {
+router.get("/forensic-report", async (req: AuthRequest, res: Response) => {
   try {
     const security = getSecurity();
     const report = await security.getForensicReport();
@@ -42,7 +46,7 @@ router.get("/forensic-report", async (req: Request, res: Response) => {
  * GET /api/admin/security/approvals
  * List pending approvals (optionally filter by status)
  */
-router.get("/approvals", async (req: Request, res: Response) => {
+router.get("/approvals", async (req: AuthRequest, res: Response) => {
   try {
     const { status = "PENDING" } = req.query;
 
@@ -73,7 +77,7 @@ router.get("/approvals", async (req: Request, res: Response) => {
  * GET /api/admin/security/approvals/:id
  * Get specific approval details
  */
-router.get("/approvals/:id", async (req: Request, res: Response) => {
+router.get("/approvals/:id", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -106,7 +110,7 @@ router.get("/approvals/:id", async (req: Request, res: Response) => {
  * POST /api/admin/security/approvals/:id
  * Approve or reject an operation
  */
-router.post("/approvals/:id", async (req: Request, res: Response) => {
+router.post("/approvals/:id", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { approved, reason } = req.body;
@@ -138,55 +142,58 @@ router.post("/approvals/:id", async (req: Request, res: Response) => {
  * POST /api/admin/security/disable-protect-mode
  * Emergency disable of protect mode
  */
-router.post("/disable-protect-mode", async (req: Request, res: Response) => {
-  try {
-    const security = getSecurity();
-    const antiDetect = security.antiDetectLayer;
+router.post(
+  "/disable-protect-mode",
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const security = getSecurity();
+      const antiDetect = security.antiDetectLayer;
 
-    if (!antiDetect.protectMode) {
-      return res.status(400).json({ error: "Protect mode is not active" });
-    }
+      if (!antiDetect.protectMode) {
+        return res.status(400).json({ error: "Protect mode is not active" });
+      }
 
-    // Disable protect mode
-    antiDetect.protectMode = false;
-    antiDetect.frozenEndpoints.clear();
+      // Disable protect mode
+      antiDetect.protectMode = false;
+      antiDetect.frozenEndpoints.clear();
 
-    // Log the action
-    const { prisma } = require("../ai");
-    await prisma.auditTrail.create({
-      data: {
-        event_type: "PROTECT_MODE_DISABLED",
-        layer: "UNIFIED",
-        admin_id: req.user.id,
-        action: "DISABLE_PROTECT_MODE",
-        ip_address: req.ip,
-        user_agent: req.get("user-agent"),
-        success: true,
-        forensic_data: {
-          admin_email: req.user.email,
-          reason: req.body.reason || "Manual override by admin",
+      // Log the action
+      const { prisma } = require("../ai");
+      await prisma.auditTrail.create({
+        data: {
+          event_type: "PROTECT_MODE_DISABLED",
+          layer: "UNIFIED",
+          admin_id: req.user.id,
+          action: "DISABLE_PROTECT_MODE",
+          ip_address: req.ip,
+          user_agent: req.get("user-agent"),
+          success: true,
+          forensic_data: {
+            admin_email: req.user.email,
+            reason: req.body.reason || "Manual override by admin",
+          },
         },
-      },
-    });
+      });
 
-    console.log(`⚠️ Protect mode DISABLED by admin ${req.user.email}`);
+      console.log(`⚠️ Protect mode DISABLED by admin ${req.user.email}`);
 
-    res.json({
-      success: true,
-      message: "Protect mode disabled",
-      status: security.getUnifiedStatus(),
-    });
-  } catch (error) {
-    console.error("Error disabling protect mode:", error);
-    res.status(500).json({ error: "Failed to disable protect mode" });
+      res.json({
+        success: true,
+        message: "Protect mode disabled",
+        status: security.getUnifiedStatus(),
+      });
+    } catch (error) {
+      console.error("Error disabling protect mode:", error);
+      res.status(500).json({ error: "Failed to disable protect mode" });
+    }
   }
-});
+);
 
 /**
  * GET /api/admin/security/blocked-ips
  * List all blocked IPs
  */
-router.get("/blocked-ips", async (req: Request, res: Response) => {
+router.get("/blocked-ips", async (req: AuthRequest, res: Response) => {
   try {
     const { prisma } = require("../ai");
     const blockedIPs = await prisma.blockedIP.findMany({
@@ -209,7 +216,7 @@ router.get("/blocked-ips", async (req: Request, res: Response) => {
  * POST /api/admin/security/unblock-ip/:ip
  * Manually unblock an IP address
  */
-router.post("/unblock-ip/:ip", async (req: Request, res: Response) => {
+router.post("/unblock-ip/:ip", async (req: AuthRequest, res: Response) => {
   try {
     const { ip } = req.params;
 
@@ -267,7 +274,7 @@ router.post("/unblock-ip/:ip", async (req: Request, res: Response) => {
  * GET /api/admin/security/events
  * Get security events log
  */
-router.get("/events", async (req: Request, res: Response) => {
+router.get("/events", async (req: AuthRequest, res: Response) => {
   try {
     const { limit = "20", severity } = req.query;
 
@@ -289,7 +296,7 @@ router.get("/events", async (req: Request, res: Response) => {
  * GET /api/admin/security/audit-trail
  * Get audit trail entries
  */
-router.get("/audit-trail", async (req: Request, res: Response) => {
+router.get("/audit-trail", async (req: AuthRequest, res: Response) => {
   try {
     const { limit = "50", event_type, layer } = req.query;
 
@@ -332,7 +339,7 @@ router.get("/audit-trail", async (req: Request, res: Response) => {
  * GET /api/admin/security/honeypots
  * Get honeypot access attempts
  */
-router.get("/honeypots", async (req: Request, res: Response) => {
+router.get("/honeypots", async (req: AuthRequest, res: Response) => {
   try {
     const { limit = "50" } = req.query;
 
@@ -353,7 +360,7 @@ router.get("/honeypots", async (req: Request, res: Response) => {
  * POST /api/admin/security/rules
  * Create custom security rule
  */
-router.post("/rules", async (req: Request, res: Response) => {
+router.post("/rules", async (req: AuthRequest, res: Response) => {
   try {
     const { rule_name, layer, rule_type, pattern, action, severity } = req.body;
 
@@ -399,7 +406,7 @@ router.post("/rules", async (req: Request, res: Response) => {
  * GET /api/admin/security/rules
  * List all security rules
  */
-router.get("/rules", async (req: Request, res: Response) => {
+router.get("/rules", async (req: AuthRequest, res: Response) => {
   try {
     const { layer, enabled } = req.query;
 
@@ -425,7 +432,7 @@ router.get("/rules", async (req: Request, res: Response) => {
  * PATCH /api/admin/security/rules/:id
  * Update security rule (enable/disable or modify)
  */
-router.patch("/rules/:id", async (req: Request, res: Response) => {
+router.patch("/rules/:id", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const updates = req.body;

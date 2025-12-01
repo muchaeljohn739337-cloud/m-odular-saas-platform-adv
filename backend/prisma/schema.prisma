@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -273,7 +273,7 @@ model CryptoOrder {
   completedAt       DateTime?
   cancelledAt       DateTime?
   createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  updatedAt         DateTime    @default(now()) @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -322,7 +322,7 @@ model EthActivity {
   blockNumber       Int?
   note              String?
   createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  updatedAt         DateTime        @default(now()) @updatedAt
 
   @@index([addressNormalized])
   @@index([type])
@@ -335,7 +335,7 @@ model AdminPortfolio {
   currency  Currency @unique
   balance   Decimal  @default(0)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@map("admin_portfolios")
 }
@@ -349,7 +349,7 @@ model AdminTransfer {
   note      String?
   source    String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([currency])
   @@index([createdAt])
@@ -395,7 +395,7 @@ model SystemStatus {
   alertLevel    String   @default("none")
   metadata      String?
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 
   @@index([serviceName])
   @@index([status])
@@ -415,7 +415,7 @@ model SystemAlert {
   resolvedAt  DateTime?
   resolvedBy  String?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @default(now()) @updatedAt
 
   @@index([alertType])
   @@index([severity])
@@ -442,7 +442,7 @@ model Notification {
   pushSent    Boolean   @default(false)
   pushSentAt  DateTime?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @default(now()) @updatedAt
 
   @@index([userId])
   @@index([isRead])
@@ -543,7 +543,7 @@ model ChatSession {
   userId          String?
   status          String   @default("open")
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
   assignedAdminId String?
 
   @@map("chat_sessions")
@@ -575,7 +575,7 @@ model Doctor {
   verifiedBy     String?
   inviteCode     String
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  updatedAt      DateTime     @default(now()) @updatedAt
 
   @@map("doctors")
 }
@@ -594,7 +594,7 @@ model Consultation {
   notes        String?
   videoRoomId  String?
   createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  updatedAt    DateTime           @default(now()) @updatedAt
 
   @@map("consultations")
 }
@@ -654,7 +654,7 @@ model MedBedsBooking {
   effectiveness   Int?
   notes           String?
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -675,7 +675,7 @@ model OAL {
   createdById String
   updatedById String?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @default(now()) @updatedAt
 
   @@index([object])
   @@index([action])
@@ -688,19 +688,20 @@ model OAL {
 }
 
 model RPAExecution {
-  id          String             @id
+  id          String   @id @default(uuid())
   workflowId  String
-  status      RPAExecutionStatus @default(RUNNING)
+  workflow    RPAWorkflow @relation(fields: [workflowId], references: [id])
+  status      String   @default("RUNNING")
   trigger     Json
   steps       Json
   error       String?
-  startedAt   DateTime           @default(now())
+  startedAt   DateTime @default(now())
   completedAt DateTime?
-  RPAWorkflow RPAWorkflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
-  @@index([startedAt])
-  @@index([status])
   @@index([workflowId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("rpa_executions")
 }
 
 model RPAWorkflow {
@@ -754,12 +755,6 @@ enum OALStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-enum RPAExecutionStatus {
-  RUNNING
-  SUCCESS
-  FAILED
 }
 
 enum TransactionStatus {
@@ -857,7 +852,7 @@ model UploadedFile {
   contentType String
   metadata    Json?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 
   @@index([userId, category])
   @@map("uploaded_files")
@@ -952,7 +947,7 @@ model AIModel {
   trainedBy       String?
   trainedAt       DateTime?
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  updatedAt       DateTime  @default(now()) @updatedAt
 
   @@index([modelType])
   @@index([isActive])
@@ -1331,4 +1326,20 @@ model AIUsageMetrics {
   @@index([userId])
   @@index([date])
   @@map("ai_usage_metrics")
+}
+
+model ExchangeTransaction {
+  id              String   @id @default(uuid())
+  userId          String
+  fromCurrency    Currency
+  toCurrency      Currency
+  amount          Decimal
+  exchangeRate    Decimal
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([fromCurrency, toCurrency])
+  @@map("exchange_transactions")
 }

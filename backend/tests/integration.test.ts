@@ -6,12 +6,7 @@
  */
 
 import request from "supertest";
-<<<<<<< HEAD
-import app from "./test-app";
-import { seedTestDatabase, cleanTestDatabase } from "./seed-test-db";
-=======
 import app from "../src/testApp";
->>>>>>> ci/fix-postgres-init-and-prisma
 
 describe("Integration Tests - Core Endpoints", () => {
   let authToken: string;

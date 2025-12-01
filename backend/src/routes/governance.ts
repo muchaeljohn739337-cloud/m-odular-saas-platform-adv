@@ -360,14 +360,14 @@ router.get(
 
       // Get risk assessment if exists
       const riskAssessment = await prisma.riskAssessment.findFirst({
-        where: { transaction_id: transactionId },
-        orderBy: { assessed_at: "desc" },
+        where: { transactionId: transactionId },
+        orderBy: { assessedAt: "desc" },
       });
 
       // Get compliance alerts if any
       const alerts = await prisma.complianceAlert.findMany({
-        where: { transaction_id: transactionId },
-        orderBy: { created_at: "desc" },
+        where: { transactionId: transactionId },
+        orderBy: { createdAt: "desc" },
       });
 
       return res.status(200).json({
@@ -496,10 +496,10 @@ router.put(
         data: {
           regulators: regulators || undefined,
           requirements: requirements || undefined,
-          allowed_processors: allowed_processors || undefined,
-          restricted_countries: restricted_countries || undefined,
-          compliance_level: compliance_level || undefined,
-          last_updated: new Date(),
+          allowedProcessors: allowed_processors || undefined,
+          restrictedCountries: restricted_countries || undefined,
+          complianceLevel: compliance_level || undefined,
+          lastUpdated: new Date(),
         },
       });
 
@@ -552,9 +552,9 @@ router.put(
         where: { id: alertId },
         data: {
           status,
-          resolution_notes: resolution_notes || "",
-          resolved_at: new Date(),
-          assigned_to: (req as any).user?.id, // From authenticateToken middleware
+          resolutionNotes: resolution_notes || "",
+          resolvedAt: new Date(),
+          assignedTo: (req as any).user?.id, // From authenticateToken middleware
         },
       });
 
@@ -595,7 +595,7 @@ router.get(
           status: status ? (status as string) : "OPEN",
           severity: severity ? (severity as string) : undefined,
         },
-        orderBy: [{ severity: "desc" }, { created_at: "desc" }],
+        orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
         take: limit ? parseInt(limit as string) : 100,
       });
 

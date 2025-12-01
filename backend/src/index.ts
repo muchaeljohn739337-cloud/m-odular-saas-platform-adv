@@ -52,6 +52,7 @@ import copilotRouter, { setCopilotSocketIO } from "./routes/copilot";
 import cryptoRouter, { setCryptoSocketIO } from "./routes/crypto";
 import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
 import deploymentRouter from "./routes/deployment";
+import exchangeRouter from "./routes/exchange";
 import filesRouter from "./routes/files";
 import governanceRouter from "./routes/governance";
 import healthRouter from "./routes/health";
@@ -172,6 +173,7 @@ app.use("/api/vault", vaultRouter); // HashiCorp Vault Integration - Admin Secre
 app.use("/api/copilot", copilotRouter); // AI Copilot - LLM-Powered Code Generation & Task Automation
 app.use("/api/ai-generator", aiGeneratorRouter); // AI Generator - Text/Code/Image Generation with Multi-Model Support
 app.use("/api/ai-workflows", aiWorkflowsRouter); // AI Core - Half Brain Cell Workflows & Task Automation
+app.use("/api/exchange", exchangeRouter);
 
 const io = new SocketIOServer(server, {
   cors: {

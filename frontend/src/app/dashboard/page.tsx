@@ -3,7 +3,8 @@
 import AIInsightsWidget from "@/components/AIInsightsWidget";
 import BalanceOverview from "@/components/BalanceOverview";
 import DashboardRouteGuard from "@/components/DashboardRouteGuard";
-import QuickActions from "@/components/QuickActions";
+import QuickActionsEnhanced from "@/components/QuickActionsEnhanced";
+import RealTimeNotifications from "@/components/RealTimeNotifications";
 import RecentTransactions from "@/components/RecentTransactions";
 import { useEffect, useState } from "react";
 
@@ -83,14 +84,17 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Welcome Banner */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {getCurrentGreeting()}, {userName}! 👋
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Welcome to your dashboard. Here&apos;s an overview of your
-              account.
-            </p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {getCurrentGreeting()}, {userName}! 👋
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Welcome to your dashboard. Here&apos;s an overview of your
+                account.
+              </p>
+            </div>
+            <RealTimeNotifications />
           </div>
 
           {/* Pending Alerts */}
@@ -181,7 +185,7 @@ export default function DashboardPage() {
 
           {/* Quick Actions */}
           <div className="mb-8">
-            <QuickActions />
+            <QuickActionsEnhanced />
           </div>
 
           {/* AI Insights */}

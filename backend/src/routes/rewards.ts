@@ -1,7 +1,8 @@
 import { Decimal } from "decimal.js";
 import { Router } from "express";
 import type { Server as IOServer } from "socket.io";
-import { authenticateToken } from "../middleware/auth";
+import { logAdminAction } from "../middleware/auditLog";
+import { authenticateToken, requireAdmin } from "../middleware/auth";
 import prisma from "../prismaClient";
 
 const router = Router();
@@ -348,7 +349,8 @@ router.post(
   logAdminAction as any,
   async (req: any, res) => {
     try {
-      const { userId, amount, title, description, type, expiresInDays } = req.body;
+      const { userId, amount, title, description, type, expiresInDays } =
+        req.body;
 
       if (!userId || !amount || !title) {
         return res.status(400).json({
@@ -447,7 +449,8 @@ router.post(
   logAdminAction as any,
   async (req: any, res) => {
     try {
-      const { userIds, amount, title, description, type, expiresInDays } = req.body;
+      const { userIds, amount, title, description, type, expiresInDays } =
+        req.body;
 
       if (!Array.isArray(userIds) || userIds.length === 0) {
         return res.status(400).json({

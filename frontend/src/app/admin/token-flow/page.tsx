@@ -1,20 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import toast from "react-hot-toast";
-import { adminApi } from "@/utils/api";
 import RequireRole from "@/components/RequireRole";
+import { adminApi } from "@/utils/api";
 import {
   ArrowUpIcon,
-  ArrowDownIcon,
-  UsersIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon,
-  GiftIcon,
   BanknotesIcon,
+  ChartBarIcon,
   ClockIcon,
+  GiftIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface TokenStats {
   totalSupply: string;
@@ -47,7 +45,9 @@ export default function AdminTokenFlowPage() {
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [topHolders, setTopHolders] = useState<TopHolder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "activity" | "holders">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "activity" | "holders"
+  >("overview");
 
   // Reward sending form
   const [sendRewardForm, setSetRewardForm] = useState({
@@ -76,13 +76,17 @@ export default function AdminTokenFlowPage() {
       }
 
       // Fetch recent activities
-      const activityResponse: any = await adminApi.get("/tokens/admin/recent-activity?limit=20");
+      const activityResponse: any = await adminApi.get(
+        "/tokens/admin/recent-activity?limit=20"
+      );
       if (activityResponse.data?.activities) {
         setActivities(activityResponse.data.activities);
       }
 
       // Fetch top holders
-      const holdersResponse: any = await adminApi.get("/tokens/admin/top-holders?limit=10");
+      const holdersResponse: any = await adminApi.get(
+        "/tokens/admin/top-holders?limit=10"
+      );
       if (holdersResponse.data?.holders) {
         setTopHolders(holdersResponse.data.holders);
       }
@@ -97,7 +101,11 @@ export default function AdminTokenFlowPage() {
   const handleSendReward = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!sendRewardForm.userId || !sendRewardForm.amount || !sendRewardForm.title) {
+    if (
+      !sendRewardForm.userId ||
+      !sendRewardForm.amount ||
+      !sendRewardForm.title
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -105,7 +113,10 @@ export default function AdminTokenFlowPage() {
     setSendingReward(true);
 
     try {
-      const response: any = await adminApi.post("/rewards/admin/send", sendRewardForm);
+      const response: any = await adminApi.post(
+        "/rewards/admin/send",
+        sendRewardForm
+      );
 
       if (response.data.success) {
         toast.success(response.data.message);
@@ -148,7 +159,8 @@ export default function AdminTokenFlowPage() {
               🪙 Advancia Token Flow
             </h1>
             <p className="text-gray-300">
-              Real-time overview of token circulation, transactions, and user activity
+              Real-time overview of token circulation, transactions, and user
+              activity
             </p>
           </motion.div>
 
@@ -224,7 +236,10 @@ export default function AdminTokenFlowPage() {
                       type="text"
                       value={sendRewardForm.userId}
                       onChange={(e) =>
-                        setSetRewardForm({ ...sendRewardForm, userId: e.target.value })
+                        setSetRewardForm({
+                          ...sendRewardForm,
+                          userId: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="Enter user ID"
@@ -240,7 +255,10 @@ export default function AdminTokenFlowPage() {
                       step="0.01"
                       value={sendRewardForm.amount}
                       onChange={(e) =>
-                        setSetRewardForm({ ...sendRewardForm, amount: e.target.value })
+                        setSetRewardForm({
+                          ...sendRewardForm,
+                          amount: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="100"
@@ -255,7 +273,10 @@ export default function AdminTokenFlowPage() {
                       type="text"
                       value={sendRewardForm.title}
                       onChange={(e) =>
-                        setSetRewardForm({ ...sendRewardForm, title: e.target.value })
+                        setSetRewardForm({
+                          ...sendRewardForm,
+                          title: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="Welcome Bonus"
@@ -269,7 +290,10 @@ export default function AdminTokenFlowPage() {
                     <textarea
                       value={sendRewardForm.description}
                       onChange={(e) =>
-                        setSetRewardForm({ ...sendRewardForm, description: e.target.value })
+                        setSetRewardForm({
+                          ...sendRewardForm,
+                          description: e.target.value,
+                        })
                       }
                       rows={3}
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -359,7 +383,9 @@ export default function AdminTokenFlowPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
             >
-              <h2 className="text-2xl font-bold text-white mb-4">Recent Token Activity</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Recent Token Activity
+              </h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead className="border-b border-white/20">
@@ -373,14 +399,21 @@ export default function AdminTokenFlowPage() {
                   </thead>
                   <tbody>
                     {activities.map((activity) => (
-                      <tr key={activity.id} className="border-b border-white/10">
+                      <tr
+                        key={activity.id}
+                        className="border-b border-white/10"
+                      >
                         <td className="py-3">
                           <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm">
                             {activity.type}
                           </span>
                         </td>
-                        <td className="py-3 text-gray-300">{activity.userEmail}</td>
-                        <td className="py-3 text-white font-semibold">{activity.amount}</td>
+                        <td className="py-3 text-gray-300">
+                          {activity.userEmail}
+                        </td>
+                        <td className="py-3 text-white font-semibold">
+                          {activity.amount}
+                        </td>
                         <td className="py-3">
                           <span
                             className={`px-2 py-1 rounded-full text-xs ${
@@ -411,7 +444,9 @@ export default function AdminTokenFlowPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20"
             >
-              <h2 className="text-2xl font-bold text-white mb-4">Top Token Holders</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Top Token Holders
+              </h2>
               <div className="space-y-4">
                 {topHolders.map((holder, index) => (
                   <div
@@ -423,14 +458,18 @@ export default function AdminTokenFlowPage() {
                         #{index + 1}
                       </div>
                       <div>
-                        <div className="text-white font-medium">{holder.userEmail}</div>
+                        <div className="text-white font-medium">
+                          {holder.userEmail}
+                        </div>
                         <div className="text-gray-400 text-sm">
                           Lifetime Earned: {holder.lifetimeEarned}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-white">{holder.balance}</div>
+                      <div className="text-2xl font-bold text-white">
+                        {holder.balance}
+                      </div>
                       <div className="text-gray-400 text-sm">tokens</div>
                     </div>
                   </div>
