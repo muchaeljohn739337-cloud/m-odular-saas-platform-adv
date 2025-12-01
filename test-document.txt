@@ -1,3 +1,0 @@
-This is a test document for R2 storage integration.
-Created on: November 2, 2025
-Testing file upload functionality.
