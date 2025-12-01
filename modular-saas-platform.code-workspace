@@ -82,7 +82,8 @@
       "**/coverage": true
     },
     "prisma.pinToPrisma6": false,
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "powershell.cwd": "⚙️ Backend"
   },
   "extensions": {
     "recommendations": [
