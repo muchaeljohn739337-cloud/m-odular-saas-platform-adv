@@ -268,7 +268,7 @@ export class ReportHandler {
           createdAt: { gte: startDate, lte: endDate },
         },
         select: {
-          type: true,
+          suggestionType: true,
           accepted: true,
         },
       }),

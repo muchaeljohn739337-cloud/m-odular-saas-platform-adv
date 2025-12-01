@@ -458,3 +458,6 @@ export class AIMonitoringService {
     };
   }
 }
+
+// Export singleton instance for compatibility
+export const AIMonitoring = AIMonitoringSystem;

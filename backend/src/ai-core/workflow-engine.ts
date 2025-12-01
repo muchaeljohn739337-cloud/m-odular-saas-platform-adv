@@ -547,3 +547,6 @@ export class AIWorkflowEngine {
 
 // Export singleton instance
 export const workflowEngine = new AIWorkflowEngine();
+
+// Alias for compatibility
+export const WorkflowEngine = AIWorkflowEngine;

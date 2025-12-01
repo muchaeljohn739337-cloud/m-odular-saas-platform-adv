@@ -20,6 +20,10 @@ model User {
   emailVerified     Boolean            @default(false)
   emailVerifiedAt   DateTime?
   lastLogin         DateTime?
+  lastActive        DateTime?
+  country           String?
+  kycStatus         String?
+  isPEP             Boolean            @default(false)
   termsAccepted     Boolean            @default(false)
   termsAcceptedAt   DateTime?
   totpSecret        String?
@@ -111,11 +115,13 @@ model AuditLog {
   id             String   @id @default(uuid())
   userId         String?
   action         String
+  entity         String?
   resourceType   String
   resourceId     String
   changes        Json?
   previousValues Json?
   newValues      Json?
+  details        Json?
   metadata       Json?
   ipAddress      String?
   userAgent      String?
@@ -1069,11 +1075,14 @@ model BlockchainVerification {
   id           String    @id @default(uuid())
   manifestHash String    @map("manifest_hash")
   version      String
+  isVerified   Boolean   @default(false) @map("is_verified")
+  verifiedAt   DateTime? @map("verified_at")
   txHash       String?   @unique @map("tx_hash")
   recordId     Int?      @map("record_id")
   status       String    @default("PENDING") @map("status")
   blockchain   String    @default("polygon")
   confirmedAt  DateTime? @map("confirmed_at")
+  metadata     Json?
   createdAt    DateTime  @default(now()) @map("created_at")
 
   @@index([status])
@@ -1084,28 +1093,33 @@ model BlockchainVerification {
 
 // User Personalization & AI Suggestions
 model UserPreference {
-  userId          String   @unique @map("user_id")
-  dashboardLayout Json?    @map("dashboard_layout")
-  features        Json?
-  suggestions     Json?
-  interactionLog  Json?    @map("interaction_log")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  createdAt       DateTime @default(now()) @map("created_at")
+  userId           String   @unique @map("user_id")
+  dashboardLayout  Json?    @map("dashboard_layout")
+  features         Json?
+  suggestions      Json?
+  interactionLog   Json?    @map("interaction_log")
+  interactionCount Int      @default(0) @map("interaction_count")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@map("user_preferences")
 }
 
 model AISuggestion {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  type        String // FEATURE, WORKFLOW, OPTIMIZATION
-  content     String
-  accepted    Boolean   @default(false)
-  dismissedAt DateTime? @map("dismissed_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  suggestionType  String    @map("suggestion_type") // FEATURE, WORKFLOW, OPTIMIZATION
+  content         String
+  priority        Int       @default(5)
+  isApproved      Boolean   @default(false) @map("is_approved")
+  isDelivered     Boolean   @default(false) @map("is_delivered")
+  metadata        Json?
+  accepted        Boolean   @default(false)
+  dismissedAt     DateTime? @map("dismissed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   @@index([userId])
-  @@index([type])
+  @@index([suggestionType])
   @@index([createdAt])
   @@map("ai_suggestions")
 }
@@ -1115,6 +1129,7 @@ model MarketIntelligence {
   id         String   @id @default(uuid())
   source     String // COINGECKO, NEWS, TWITTER, REDDIT
   category   String // PRICE, SENTIMENT, NEWS, TREND
+  dataType   String?  @map("data_type")
   data       Json
   sentiment  String? // POSITIVE, NEGATIVE, NEUTRAL
   importance Int      @default(5) // 1-10
@@ -1159,7 +1174,9 @@ model ScamAddress {
 
 model SecurityPatch {
   id            String    @id @default(uuid())
+  patchId       String?   @unique @map("patch_id")
   type          String // DEPENDENCY, CODE, CONFIG
+  severity      String?
   vulnerability String
   fix           String    
   status        String    @default("PENDING") // PENDING, APPLIED, FAILED

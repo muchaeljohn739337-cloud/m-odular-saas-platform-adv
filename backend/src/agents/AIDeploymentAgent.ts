@@ -405,7 +405,7 @@ export class AIDeploymentAgent extends BaseAgent {
     // Factor 3: Pending transactions
     const pendingTransactions = await this.context.prisma.transaction.count({
       where: {
-        status: { in: ["pending", "processing"] },
+        status: { in: ["PENDING", "PROCESSING"] },
       },
     });
 

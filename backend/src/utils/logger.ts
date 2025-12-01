@@ -2,6 +2,26 @@ import { Request } from "express";
 import prisma from "../prismaClient";
 
 /**
+ * Simple logger for AI Core and agents
+ */
+export const logger = {
+  info: (message: string, metadata?: any) => {
+    console.log(`[INFO] ${message}`, metadata || "");
+  },
+  warn: (message: string, metadata?: any) => {
+    console.warn(`[WARN] ${message}`, metadata || "");
+  },
+  error: (message: string, error?: any) => {
+    console.error(`[ERROR] ${message}`, error || "");
+  },
+  debug: (message: string, metadata?: any) => {
+    if (process.env.DEBUG) {
+      console.log(`[DEBUG] ${message}`, metadata || "");
+    }
+  },
+};
+
+/**
  * Log admin login attempts for security auditing
  */
 export async function logAdminLogin(

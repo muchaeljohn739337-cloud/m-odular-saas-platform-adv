@@ -522,3 +522,6 @@ Analyze this feedback and provide learning in JSON format:
 
 // Export singleton instance
 export const aiBrain = new AIBrainCell();
+
+// Alias for compatibility
+export const AIBrain = AIBrainCell;

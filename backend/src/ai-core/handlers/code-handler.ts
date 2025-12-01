@@ -74,7 +74,7 @@ Return as JSON with structure: { issues: [{ line, severity, message, fix }] }`;
             prisma.aISuggestion.create({
               data: {
                 userId: "1",
-                type: "code-lint",
+                suggestionType: "code-lint",
                 content: `Line ${issue.line}: ${issue.message}`,
               },
             })
@@ -127,7 +127,7 @@ Return:
     await prisma.aISuggestion.create({
       data: {
         userId: "1",
-        type: "code-fix",
+        suggestionType: "code-fix",
         content: result,
       },
     });
@@ -193,7 +193,7 @@ Provide specific, actionable recommendations.`;
     await prisma.aISuggestion.create({
       data: {
         userId: "1",
-        type: "code-review",
+        suggestionType: "code-review",
         content: review,
       },
     });
@@ -240,7 +240,7 @@ Provide specific, actionable recommendations.`;
     await prisma.aISuggestion.create({
       data: {
         userId: "1",
-        type: "code-generation",
+        suggestionType: "code-generation",
         content: generatedCode,
       },
     });
