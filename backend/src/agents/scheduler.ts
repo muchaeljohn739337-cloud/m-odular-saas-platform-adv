@@ -8,14 +8,22 @@ import { AgentContext, AgentLogger, BaseAgent } from "./BaseAgent";
 
 // Import all agents
 import { AdminInsightAgent } from "./AdminInsightAgent";
+import { AIBuilderAgent } from "./AIBuilderAgent";
+import { AIDeploymentAgent } from "./AIDeploymentAgent";
+import { BlockchainVerificationAgent } from "./BlockchainVerificationAgent";
+import { BugFixAgent } from "./BugFixAgent";
 import { CompliancePolicyAgent } from "./CompliancePolicyAgent";
+import { CopilotAgent } from "./CopilotAgent";
 import { CostOptimizationAgent } from "./CostOptimizationAgent";
 import { CryptoRecoveryAgent } from "./CryptoRecoveryAgent";
 import { DeployOrchestratorAgent } from "./DeployOrchestratorAgent";
+import { MarketIntelligenceAgent } from "./MarketIntelligenceAgent";
 import { MonitorAgent } from "./MonitorAgent";
 import { SecurityFraudAgent } from "./SecurityFraudAgent";
+import { SuggestionAgent } from "./SuggestionAgent";
 import { TransactionAuditAgent } from "./TransactionAuditAgent";
 import { UserSupportAgent } from "./UserSupportAgent";
+import { VaultRotationAgent } from "./VaultRotationAgent";
 
 // Simple logger implementation
 const createLogger = (agentName: string): AgentLogger => ({
@@ -97,6 +105,24 @@ export class AgentScheduler {
     const deployOrchestratorAgent = new DeployOrchestratorAgent(
       createContext("DeployOrchestratorAgent")
     );
+    const aiDeploymentAgent = new AIDeploymentAgent(
+      createContext("AIDeploymentAgent")
+    );
+    const blockchainVerificationAgent = new BlockchainVerificationAgent(
+      createContext("BlockchainVerificationAgent")
+    );
+    const marketIntelligenceAgent = new MarketIntelligenceAgent(
+      createContext("MarketIntelligenceAgent")
+    );
+    const bugFixAgent = new BugFixAgent(createContext("BugFixAgent"));
+    const suggestionAgent = new SuggestionAgent(
+      createContext("SuggestionAgent")
+    );
+    const vaultRotationAgent = new VaultRotationAgent(
+      createContext("VaultRotationAgent")
+    );
+    const copilotAgent = new CopilotAgent(createContext("CopilotAgent"));
+    const aiBuilderAgent = new AIBuilderAgent(createContext("AIBuilderAgent"));
 
     // Store agents for manual execution
     this.agents = [
@@ -109,6 +135,14 @@ export class AgentScheduler {
       compliancePolicyAgent,
       costOptimizationAgent,
       deployOrchestratorAgent,
+      aiDeploymentAgent,
+      blockchainVerificationAgent,
+      marketIntelligenceAgent,
+      bugFixAgent,
+      suggestionAgent,
+      vaultRotationAgent,
+      copilotAgent,
+      aiBuilderAgent,
     ];
 
     // Schedule agents
@@ -121,6 +155,13 @@ export class AgentScheduler {
     this.scheduleAgent(compliancePolicyAgent);
     this.scheduleAgent(costOptimizationAgent);
     this.scheduleAgent(deployOrchestratorAgent);
+    this.scheduleAgent(aiDeploymentAgent);
+    this.scheduleAgent(blockchainVerificationAgent);
+    this.scheduleAgent(marketIntelligenceAgent);
+    this.scheduleAgent(bugFixAgent);
+    this.scheduleAgent(suggestionAgent);
+    this.scheduleAgent(vaultRotationAgent);
+    this.scheduleAgent(copilotAgent);
 
     console.log(`[AgentScheduler] ${this.agents.length} agents initialized`);
   }
@@ -130,6 +171,14 @@ export class AgentScheduler {
 
     if (!config.enabled) {
       console.log(`[AgentScheduler] ${config.name} is disabled, skipping`);
+      return;
+    }
+
+    // Skip manual agents (triggered on-demand)
+    if (config.schedule === "manual") {
+      console.log(
+        `[AgentScheduler] ${config.name} is manual, skipping schedule`
+      );
       return;
     }
 
@@ -186,6 +235,10 @@ export class AgentScheduler {
         lastRunAt: lastRunAt ? lastRunAt.toISOString() : null,
       };
     });
+  }
+
+  getAgents(): BaseAgent[] {
+    return this.agents;
   }
 
   stop(): void {

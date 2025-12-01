@@ -353,4 +353,142 @@ router.post("/cashout", authenticateToken as any, async (req, res) => {
   }
 });
 
+// ========================================
+// ADMIN ENDPOINTS - Token Statistics & Management
+// ========================================
+
+// GET /api/tokens/admin/stats - Get overall token statistics
+router.get("/admin/stats", async (req, res) => {
+  try {
+    // Get all wallets
+    const wallets = await prisma.tokenWallet.findMany({
+      select: {
+        balance: true,
+        lockedBalance: true,
+      },
+    });
+
+    const totalSupply = wallets.reduce(
+      (sum, w) => sum.add(w.balance).add(w.lockedBalance),
+      new Decimal(0)
+    );
+
+    const totalInCirculation = wallets.reduce(
+      (sum, w) => sum.add(w.balance),
+      new Decimal(0)
+    );
+
+    const totalLocked = wallets.reduce(
+      (sum, w) => sum.add(w.lockedBalance),
+      new Decimal(0)
+    );
+
+    // Get active users (users with token balance > 0)
+    const activeUsers = wallets.filter((w) => w.balance.gt(0)).length;
+
+    // Get total transactions
+    const totalTransactions = await prisma.tokenTransaction.count();
+
+    res.json({
+      totalSupply: totalSupply.toString(),
+      totalInCirculation: totalInCirculation.toString(),
+      totalLocked: totalLocked.toString(),
+      activeUsers,
+      totalTransactions,
+      conversionRate: "0.10", // 1 token = $0.10 USD
+    });
+  } catch (error: any) {
+    console.error("[TOKENS] Error fetching admin stats:", error);
+    res.status(500).json({ error: "Failed to fetch token statistics" });
+  }
+});
+
+// GET /api/tokens/admin/recent-activity - Get recent token transactions
+router.get("/admin/recent-activity", async (req, res) => {
+  try {
+    const limit = Math.min(100, Number(req.query.limit) || 20);
+
+    const transactions = await prisma.tokenTransaction.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    // Get wallet and user info for each transaction
+    const activities = await Promise.all(
+      transactions.map(async (tx) => {
+        const wallet = await prisma.tokenWallet.findUnique({
+          where: { id: tx.walletId },
+          select: { userId: true },
+        });
+
+        let userEmail = "Unknown";
+        if (wallet) {
+          const user = await prisma.user.findUnique({
+            where: { id: wallet.userId },
+            select: { email: true },
+          });
+          userEmail = user?.email || "Unknown";
+        }
+
+        return {
+          id: tx.id,
+          type: tx.type,
+          userId: wallet?.userId || "N/A",
+          userEmail,
+          amount: tx.amount.toString(),
+          status: tx.status,
+          timestamp: tx.createdAt,
+        };
+      })
+    );
+
+    res.json({
+      activities,
+      count: activities.length,
+    });
+  } catch (error: any) {
+    console.error("[TOKENS] Error fetching recent activity:", error);
+    res.status(500).json({ error: "Failed to fetch recent activity" });
+  }
+});
+
+// GET /api/tokens/admin/top-holders - Get top token holders
+router.get("/admin/top-holders", async (req, res) => {
+  try {
+    const limit = Math.min(100, Number(req.query.limit) || 10);
+
+    const wallets = await prisma.tokenWallet.findMany({
+      orderBy: { balance: "desc" },
+      take: limit,
+    });
+
+    const holders = await Promise.all(
+      wallets
+        .filter((w) => w.balance.gt(0))
+        .map(async (wallet) => {
+          const user = await prisma.user.findUnique({
+            where: { id: wallet.userId },
+            select: { email: true, username: true },
+          });
+
+          return {
+            userId: wallet.userId,
+            userEmail: user?.email || "Unknown",
+            username: user?.username || "N/A",
+            balance: wallet.balance.toString(),
+            lifetimeEarned: wallet.lifetimeEarned.toString(),
+          };
+        })
+    );
+
+    res.json({
+      holders,
+      count: holders.length,
+    });
+  } catch (error: any) {
+    console.error("[TOKENS] Error fetching top holders:", error);
+    res.status(500).json({ error: "Failed to fetch top holders" });
+  }
+});
+
 export default router;

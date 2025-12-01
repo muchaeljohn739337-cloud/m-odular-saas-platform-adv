@@ -9,5 +9,6 @@
 
   // ESLint
   "eslint.enable": true,
-  "eslint.workingDirectories": ["."]
+  "eslint.workingDirectories": ["."],
+  "prisma.pinToPrisma6": true
 }

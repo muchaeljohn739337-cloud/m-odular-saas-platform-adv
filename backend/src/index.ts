@@ -6,6 +6,12 @@ import jwt from "jsonwebtoken";
 import { Server as SocketIOServer } from "socket.io";
 import agentRoutes from "./agents/routes";
 import { getAgentScheduler } from "./agents/scheduler";
+import { autoRemember } from "./ai/autoRemember";
+import {
+  initializeMultiBrainAgent,
+  multiBrainAgent,
+} from "./ai/prisma/multiBrainAgent";
+import { initializePrismaSolver } from "./ai/prisma/prismaSolverCore";
 import { recordCleanupAI } from "./ai/recordCleanupAI";
 import { surveillanceAI } from "./ai/surveillanceAI";
 import app from "./app";
@@ -22,6 +28,7 @@ import adminAIRouter from "./routes/adminAI";
 import adminDoctorsRouter from "./routes/adminDoctors";
 import adminSecurityRouter from "./routes/adminSecurity";
 import aiAnalyticsRouter from "./routes/aiAnalytics";
+import aiSolverRouter from "./routes/aiSolver";
 import aiTrainingRouter from "./routes/aiTraining";
 import analyticsRouter from "./routes/analytics";
 import authRouter from "./routes/auth";
@@ -31,9 +38,20 @@ import authAdminRouter, {
 } from "./routes/authAdmin";
 import botCheckRouter from "./routes/botCheck";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
+import web3AuthRouter from "./routes/web3-auth";
+// AI system imports for initialization
+import { aiCore } from "./ai-core";
+import { copilotService } from "./ai/copilot/CopilotService";
+import aiGeneratorRouter, {
+  setAIGeneratorSocketIO,
+} from "./routes/ai-generator";
+import aiWorkflowsRouter from "./routes/ai-workflows";
+import aiWorkersRouter, { setAIWorkersSocketIO } from "./routes/aiWorkers";
 import consultationRouter from "./routes/consultation";
+import copilotRouter, { setCopilotSocketIO } from "./routes/copilot";
 import cryptoRouter, { setCryptoSocketIO } from "./routes/crypto";
 import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
+import deploymentRouter from "./routes/deployment";
 import filesRouter from "./routes/files";
 import governanceRouter from "./routes/governance";
 import healthRouter from "./routes/health";
@@ -41,6 +59,7 @@ import healthReadingsRouter from "./routes/health-readings";
 import internalRouter from "./routes/internal";
 import ipBlocksRouter from "./routes/ipBlocks";
 import jobsRouter from "./routes/jobs";
+import markdownFixerRouter from "./routes/markdownFixer";
 import marketingRouter from "./routes/marketing";
 import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
@@ -48,7 +67,7 @@ import paymentsRouter, {
   handleStripeWebhook,
   setPaymentsSocketIO,
 } from "./routes/payments";
-import rewardsRouter from "./routes/rewards";
+import rewardsRouter, { setRewardSocketIO } from "./routes/rewards";
 import rpaRouter, { setRPASocketIO } from "./routes/rpa";
 import securityLevelRouter from "./routes/securityLevel";
 import sessionsRouter, {
@@ -62,6 +81,7 @@ import transactionsRouter, {
   setTransactionSocketIO,
 } from "./routes/transactions";
 import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
+import vaultRouter, { setVaultSocketIO } from "./routes/vault";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
 import { setSocketIO as setNotificationSocket } from "./services/notificationService";
 import { initSentry } from "./utils/sentry";
@@ -115,10 +135,13 @@ app.use("/api/support", supportRouter);
 app.use("/api/admin/analytics", analyticsRouter);
 app.use("/api/ai-analytics", aiAnalyticsRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/auth/web3", web3AuthRouter); // Web3 Wallet Authentication (SIWE)
 app.use("/api/admin", adminUsersRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/admin/security", adminSecurityRouter); // AI & Security Monitoring
 app.use("/api/admin/ai", adminAIRouter); // AI System Monitoring & Management
+app.use("/api/markdown-fixer", markdownFixerRouter); // AI-Powered Markdown Auto-Fixer
+app.use("/api/ai-solver", aiSolverRouter); // Prisma AI Solver & Multi-Brain Agent
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/consultation", consultationRouter);
@@ -143,6 +166,12 @@ app.use("/api/internal", internalRouter);
 app.use("/api/files", filesRouter);
 app.use("/api/jobs", jobsRouter);
 app.use("/api/governance", governanceRouter);
+app.use("/api/ai-workers", aiWorkersRouter); // AI Worker Management System
+app.use("/api/deployment", deploymentRouter); // AI Deployment Agent - Manual Trigger & Status
+app.use("/api/vault", vaultRouter); // HashiCorp Vault Integration - Admin Secret Management
+app.use("/api/copilot", copilotRouter); // AI Copilot - LLM-Powered Code Generation & Task Automation
+app.use("/api/ai-generator", aiGeneratorRouter); // AI Generator - Text/Code/Image Generation with Multi-Model Support
+app.use("/api/ai-workflows", aiWorkflowsRouter); // AI Core - Half Brain Cell Workflows & Task Automation
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -219,6 +248,7 @@ setAdminUsersSocketIO(io);
 setDebitCardSocketIO(io);
 setMedbedsSocketIO(io);
 setCryptoSocketIO(io);
+setRewardSocketIO(io);
 setChatSocketIO(io);
 setSupportSocketIO(io);
 setPaymentsSocketIO(io);
@@ -226,6 +256,10 @@ setWithdrawalSocketIO(io);
 setOALSocketIO(io);
 setTokenSocketIO(io);
 setRPASocketIO(io);
+setAIWorkersSocketIO(io); // AI Workers real-time monitoring
+setVaultSocketIO(io); // Vault secret management real-time audit
+setCopilotSocketIO(io); // AI Copilot real-time streaming
+setAIGeneratorSocketIO(io); // AI Generator real-time generation events
 
 // Initialize AI systems
 surveillanceAI.initialize(io);
@@ -267,6 +301,31 @@ async function startServer() {
     // Initialize Governance AI
     const { initializeGovernanceAI } = require("./ai/governance_integration");
     await initializeGovernanceAI();
+
+    // Register all AI workers with the registry
+    const { registerAllWorkers } = require("./ai/aiWorkerRegistry");
+    registerAllWorkers();
+    console.log("✅ AI Worker Registry initialized with all workers");
+
+    // Initialize AI Generator models
+    const { initializeClients } = require("./ai-engine/models");
+    await initializeClients();
+    console.log("✅ AI Generator models initialized");
+
+    // Initialize AI Copilot
+    copilotService.initialize().catch((err) => {
+      console.error("⚠️  Failed to initialize Copilot:", err);
+    });
+
+    // Initialize AI Core - Half Brain Cell System
+    if (process.env.AI_ENABLED !== "false") {
+      try {
+        await aiCore.initialize();
+        console.log("✅ AI Core (Half Brain Cell) system initialized");
+      } catch (err) {
+        console.error("⚠️  Failed to initialize AI Core:", err);
+      }
+    }
 
     // Start HTTP server
     server.listen(PORT, "0.0.0.0", () => {
@@ -319,5 +378,18 @@ process.on("SIGINT", async () => {
   const { shutdownGovernanceAI } = require("./ai/governance_integration");
   await shutdownGovernanceAI();
 
+  // Shutdown Prisma AI Solver and Multi-Brain Agent
+  await multiBrainAgent.shutdown();
+  await autoRemember.disconnect();
+
+  // Shutdown AI Core system
+  if (aiCore.isInitialized()) {
+    await aiCore.shutdown();
+  }
+
   process.exit(0);
 });
+
+// Initialize Prisma AI Solver and Multi-Brain Agent
+initializePrismaSolver().catch(console.error);
+initializeMultiBrainAgent().catch(console.error);

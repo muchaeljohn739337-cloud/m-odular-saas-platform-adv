@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import DashboardRouteGuard from "@/components/DashboardRouteGuard";
+import AIInsightsWidget from "@/components/AIInsightsWidget";
 import BalanceOverview from "@/components/BalanceOverview";
+import DashboardRouteGuard from "@/components/DashboardRouteGuard";
 import QuickActions from "@/components/QuickActions";
 import RecentTransactions from "@/components/RecentTransactions";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("User");
@@ -45,17 +46,24 @@ export default function DashboardPage() {
       });
       if (ordersResponse.ok) {
         const orders = await ordersResponse.json();
-        const pending = orders.filter((o: { status: string }) => o.status === "PENDING").length;
+        const pending = orders.filter(
+          (o: { status: string }) => o.status === "PENDING"
+        ).length;
         setPendingOrders(pending);
       }
 
       // Fetch pending withdrawals
-      const withdrawalsResponse = await fetch(`/api/crypto/withdrawals/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const withdrawalsResponse = await fetch(
+        `/api/crypto/withdrawals/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (withdrawalsResponse.ok) {
         const withdrawals = await withdrawalsResponse.json();
-        const pending = withdrawals.filter((w: { status: string }) => w.status === "PENDING").length;
+        const pending = withdrawals.filter(
+          (w: { status: string }) => w.status === "PENDING"
+        ).length;
         setPendingWithdrawals(pending);
       }
     } catch (error) {
@@ -80,7 +88,8 @@ export default function DashboardPage() {
               {getCurrentGreeting()}, {userName}! 👋
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Welcome to your dashboard. Here&apos;s an overview of your account.
+              Welcome to your dashboard. Here&apos;s an overview of your
+              account.
             </p>
           </div>
 
@@ -110,7 +119,8 @@ export default function DashboardPage() {
                         Pending Crypto Orders
                       </h3>
                       <p className="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
-                        You have {pendingOrders} crypto purchase {pendingOrders === 1 ? "order" : "orders"} awaiting
+                        You have {pendingOrders} crypto purchase{" "}
+                        {pendingOrders === 1 ? "order" : "orders"} awaiting
                         admin approval.
                       </p>
                       <a
@@ -147,7 +157,8 @@ export default function DashboardPage() {
                         Pending Withdrawals
                       </h3>
                       <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                        You have {pendingWithdrawals} withdrawal {pendingWithdrawals === 1 ? "request" : "requests"}{" "}
+                        You have {pendingWithdrawals} withdrawal{" "}
+                        {pendingWithdrawals === 1 ? "request" : "requests"}{" "}
                         being processed.
                       </p>
                       <a
@@ -171,6 +182,11 @@ export default function DashboardPage() {
           {/* Quick Actions */}
           <div className="mb-8">
             <QuickActions />
+          </div>
+
+          {/* AI Insights */}
+          <div className="mb-8">
+            <AIInsightsWidget />
           </div>
 
           {/* Recent Transactions */}
@@ -201,15 +217,20 @@ export default function DashboardPage() {
                   Need Help?
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  If you have questions about crypto trading, withdrawals, or your account, our support team is here
-                  to help.
+                  If you have questions about crypto trading, withdrawals, or
+                  your account, our support team is here to help.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <a
                     href="/support"
                     className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -223,7 +244,12 @@ export default function DashboardPage() {
                     href="/faq"
                     className="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"

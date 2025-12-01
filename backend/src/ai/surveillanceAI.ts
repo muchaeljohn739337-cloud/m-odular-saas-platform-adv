@@ -309,10 +309,15 @@ class SurveillanceAI {
         });
 
         // Alert Guardian AI
-        await guardianAI.alertAdmin("Stuck jobs detected", {
-          count: stuckJobs.length,
-          jobs: stuckJobs,
-        });
+        await guardianAI.logAction(
+          "surveillance-ai",
+          "stuck_jobs_detected",
+          "Stuck jobs detected",
+          {
+            count: stuckJobs.length,
+            jobs: stuckJobs,
+          }
+        );
       }
 
       // Check for high failure rate
@@ -372,10 +377,15 @@ class SurveillanceAI {
         });
 
         // Alert Guardian AI
-        await guardianAI.alertAdmin("Suspicious login activity detected", {
-          failedAttempts: recentFailedLogins,
-          timeWindow: "15 minutes",
-        });
+        await guardianAI.logAction(
+          "surveillance-ai",
+          "suspicious_login_activity",
+          "Suspicious login activity detected",
+          {
+            failedAttempts: recentFailedLogins,
+            timeWindow: "15 minutes",
+          }
+        );
       }
 
       // Check for unauthorized access attempts
@@ -433,9 +443,14 @@ class SurveillanceAI {
       });
 
       // Alert Guardian AI
-      await guardianAI.alertAdmin("Database connection lost", {
-        timestamp: new Date(),
-      });
+      await guardianAI.logAction(
+        "surveillance-ai",
+        "anomaly",
+        "Database connection lost",
+        {
+          timestamp: new Date(),
+        }
+      );
     }
 
     // Anomaly 4: All workers busy

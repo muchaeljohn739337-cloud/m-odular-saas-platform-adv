@@ -170,5 +170,251 @@
   },
   "[dockerfile]": {
     "editor.defaultFormatter": "ms-azuretools.vscode-containers"
-  }
+  },
+
+  // ==========================================
+  // AI AGENT & COPILOT CONFIGURATION
+  // ==========================================
+
+  // GitHub Copilot Settings
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": false,
+    "markdown": true,
+    "typescript": true,
+    "javascript": true,
+    "prisma": true
+  },
+  "github.copilot.advanced": {
+    "debug.overrideEngine": "gpt-4",
+    "debug.testOverrideProxyUrl": "",
+    "debug.filterLogCategories": []
+  },
+  "github.copilot.chat.localeOverride": "auto",
+  "github.copilot.inlineSuggest.enable": true,
+
+  // AI-Powered Code Analysis
+  "errorLens.enabled": true,
+  "errorLens.enabledDiagnosticLevels": ["error", "warning", "info", "hint"],
+  "errorLens.followCursor": "activeLine",
+  "errorLens.messageTemplate": "$message - $source",
+
+  // REST Client for AI API Testing
+  "rest-client.environmentVariables": {
+    "$shared": {
+      "apiUrl": "http://localhost:4000"
+    },
+    "local": {
+      "apiUrl": "http://localhost:4000"
+    },
+    "production": {
+      "apiUrl": "https://api.advanciapayledger.com"
+    }
+  },
+  "rest-client.previewResponseInUntitledDocument": true,
+  "rest-client.defaultHeaders": {
+    "Content-Type": "application/json"
+  },
+
+  // Prisma Language Server
+  "prisma.fileWatcher": true,
+  "prisma.trace.server": "messages",
+
+  // AI Agent Development Snippets
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "off",
+    "strings": "on"
+  },
+  "editor.suggestSelection": "first",
+  "editor.parameterHints.enabled": true,
+  "editor.suggest.snippetsPreventQuickSuggestions": false,
+
+  // Code Intelligence for AI Workers
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "javascript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "javascript.inlayHints.parameterNames.enabled": "all",
+
+  // AI Task & TODO Management
+  "todo-tree.general.tags": [
+    "TODO",
+    "FIXME",
+    "BUG",
+    "HACK",
+    "NOTE",
+    "AI:",
+    "AGENT:",
+    "RAG:",
+    "LLM:",
+    "OPTIMIZE:"
+  ],
+  "todo-tree.highlights.customHighlight": {
+    "AI:": {
+      "icon": "hubot",
+      "foreground": "#00BFFF",
+      "iconColour": "#00BFFF"
+    },
+    "AGENT:": {
+      "icon": "robot",
+      "foreground": "#FFD700",
+      "iconColour": "#FFD700"
+    },
+    "RAG:": {
+      "icon": "database",
+      "foreground": "#9370DB",
+      "iconColour": "#9370DB"
+    },
+    "LLM:": {
+      "icon": "brain",
+      "foreground": "#FF6347",
+      "iconColour": "#FF6347"
+    },
+    "OPTIMIZE:": {
+      "icon": "zap",
+      "foreground": "#32CD32",
+      "iconColour": "#32CD32"
+    }
+  },
+
+  // AI Agent Workspace Organization
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.turbo": true,
+    "**/coverage": true
+  },
+
+  // AI Model File Watching (ChromaDB, embeddings)
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/dist/**": true,
+    "**/.next/**": true,
+    "**/data/chromadb/**": true,
+    "**/backups/**": true
+  },
+
+  // AI-Optimized Terminal
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.env.windows": {
+    "NODE_ENV": "development"
+  },
+
+  // Better Comments for AI Agent Documentation
+  "better-comments.tags": [
+    {
+      "tag": "!",
+      "color": "#FF2D00",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "?",
+      "color": "#3498DB",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "//",
+      "color": "#474747",
+      "strikethrough": true,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "todo",
+      "color": "#FF8C00",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "*",
+      "color": "#98C379",
+      "strikethrough": false,
+      "underline": false,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
+      "tag": "AI:",
+      "color": "#00BFFF",
+      "strikethrough": false,
+      "underline": true,
+      "backgroundColor": "transparent",
+      "bold": true,
+      "italic": false
+    },
+    {
+      "tag": "AGENT:",
+      "color": "#FFD700",
+      "strikethrough": false,
+      "underline": true,
+      "backgroundColor": "transparent",
+      "bold": true,
+      "italic": false
+    }
+  ],
+
+  // Path Intellisense for AI Agent Imports
+  "path-intellisense.mappings": {
+    "@": "${workspaceFolder}/frontend/src",
+    "~": "${workspaceFolder}/backend/src"
+  },
+
+  // Import Cost Analysis for AI Dependencies
+  "importCost.largePackageColor": "#d44e40",
+  "importCost.mediumPackageColor": "#d8a024",
+  "importCost.smallPackageColor": "#6cc24a",
+  "importCost.typescriptExtensions": ["\\.tsx?$"],
+  "importCost.javascriptExtensions": ["\\.jsx?$"],
+
+  // Markdown for AI Documentation
+  "markdown.preview.fontSize": 14,
+  "markdown.extension.toc.levels": "2..6",
+  "markdown.extension.print.absoluteImgPath": false,
+
+  // Code Spell Checker (ignore AI/tech terms)
+  "cSpell.words": [
+    "advancia",
+    "chromadb",
+    "copilot",
+    "openai",
+    "langchain",
+    "pinecone",
+    "vectorstore",
+    "embeddings",
+    "ioredis",
+    "prisma",
+    "socketio",
+    "totp",
+    "vapid",
+    "ethers",
+    "hardhat",
+    "solidity",
+    "cryptocurrency",
+    "blockchain",
+    "metamask",
+    "wagmi",
+    "viem",
+    "trpc"
+  ]
 }

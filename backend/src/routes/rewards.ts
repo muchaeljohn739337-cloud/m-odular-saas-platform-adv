@@ -1,9 +1,15 @@
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
 import { Router } from "express";
+import type { Server as IOServer } from "socket.io";
 import { authenticateToken } from "../middleware/auth";
 import prisma from "../prismaClient";
 
 const router = Router();
+
+let ioRef: IOServer | null = null;
+export function setRewardSocketIO(io: IOServer) {
+  ioRef = io;
+}
 
 router.get("/:userId", authenticateToken as any, async (req, res) => {
   try {
@@ -329,5 +335,277 @@ router.get("/leaderboard", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
 });
+
+// ========================================
+// ADMIN ENDPOINTS - Reward Management
+// ========================================
+
+// POST /api/rewards/admin/send - Admin sends reward to a user
+router.post(
+  "/admin/send",
+  authenticateToken as any,
+  requireAdmin as any,
+  logAdminAction as any,
+  async (req: any, res) => {
+    try {
+      const { userId, amount, title, description, type, expiresInDays } = req.body;
+
+      if (!userId || !amount || !title) {
+        return res.status(400).json({
+          error: "Missing required fields: userId, amount, title",
+        });
+      }
+
+      const rewardAmount = new Decimal(amount);
+      if (rewardAmount.lte(0)) {
+        return res.status(400).json({
+          error: "Amount must be positive",
+        });
+      }
+
+      // Verify user exists
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, username: true },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Calculate expiry date if specified
+      let expiresAt: Date | null = null;
+      if (expiresInDays && expiresInDays > 0) {
+        expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+      }
+
+      // Create reward
+      const reward = await prisma.reward.create({
+        data: {
+          userId,
+          type: type || "admin_bonus",
+          amount: rewardAmount,
+          title,
+          description: description || `Reward from admin`,
+          status: "PENDING",
+          expiresAt,
+        },
+      });
+
+      // Notify user via socket
+      if (ioRef) {
+        ioRef.to(`user-${userId}`).emit("reward-received", {
+          rewardId: reward.id,
+          amount: rewardAmount.toString(),
+          title,
+          description: description || "",
+        });
+      }
+
+      // Log audit
+      await prisma.auditLog.create({
+        data: {
+          userId: req.user.userId,
+          action: "send_reward",
+          resourceType: "reward",
+          resourceId: reward.id,
+          metadata: JSON.stringify({
+            recipientId: userId,
+            recipientEmail: user.email,
+            amount: rewardAmount.toString(),
+            title,
+            type: type || "admin_bonus",
+          }),
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: `Reward sent to ${user.email}`,
+        reward: {
+          id: reward.id,
+          amount: rewardAmount.toString(),
+          userId,
+          userEmail: user.email,
+          title,
+          status: reward.status,
+        },
+      });
+    } catch (error: any) {
+      console.error("[REWARDS] Error sending admin reward:", error);
+      return res.status(500).json({ error: "Failed to send reward" });
+    }
+  }
+);
+
+// POST /api/rewards/admin/bulk-send - Admin sends rewards to multiple users
+router.post(
+  "/admin/bulk-send",
+  authenticateToken as any,
+  requireAdmin as any,
+  logAdminAction as any,
+  async (req: any, res) => {
+    try {
+      const { userIds, amount, title, description, type, expiresInDays } = req.body;
+
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        return res.status(400).json({
+          error: "userIds must be a non-empty array",
+        });
+      }
+
+      if (!amount || !title) {
+        return res.status(400).json({
+          error: "Missing required fields: amount, title",
+        });
+      }
+
+      const rewardAmount = new Decimal(amount);
+      if (rewardAmount.lte(0)) {
+        return res.status(400).json({
+          error: "Amount must be positive",
+        });
+      }
+
+      // Verify users exist
+      const users = await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, email: true, username: true },
+      });
+
+      if (users.length === 0) {
+        return res.status(404).json({ error: "No valid users found" });
+      }
+
+      // Calculate expiry date
+      let expiresAt: Date | null = null;
+      if (expiresInDays && expiresInDays > 0) {
+        expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+      }
+
+      // Create rewards for all users
+      const rewards = await Promise.all(
+        users.map((user) =>
+          prisma.reward.create({
+            data: {
+              userId: user.id,
+              type: type || "admin_bulk_bonus",
+              amount: rewardAmount,
+              title,
+              description: description || `Bulk reward from admin`,
+              status: "PENDING",
+              expiresAt,
+            },
+          })
+        )
+      );
+
+      // Notify all users via socket
+      if (ioRef) {
+        for (const user of users) {
+          ioRef.to(`user-${user.id}`).emit("reward-received", {
+            rewardId: rewards.find((r) => r.userId === user.id)?.id,
+            amount: rewardAmount.toString(),
+            title,
+            description: description || "",
+          });
+        }
+      }
+
+      // Log audit
+      await prisma.auditLog.create({
+        data: {
+          userId: req.user.userId,
+          action: "bulk_send_rewards",
+          resourceType: "reward",
+          resourceId: "bulk",
+          metadata: JSON.stringify({
+            recipientCount: users.length,
+            recipientIds: users.map((u) => u.id),
+            amount: rewardAmount.toString(),
+            title,
+            type: type || "admin_bulk_bonus",
+            totalValue: rewardAmount.mul(users.length).toString(),
+          }),
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: `Rewards sent to ${users.length} users`,
+        summary: {
+          totalRecipients: users.length,
+          amountPerUser: rewardAmount.toString(),
+          totalValue: rewardAmount.mul(users.length).toString(),
+          recipients: users.map((u) => ({
+            id: u.id,
+            email: u.email,
+          })),
+        },
+      });
+    } catch (error: any) {
+      console.error("[REWARDS] Error bulk sending rewards:", error);
+      return res.status(500).json({ error: "Failed to send bulk rewards" });
+    }
+  }
+);
+
+// GET /api/rewards/admin/statistics - Get reward statistics
+router.get(
+  "/admin/statistics",
+  authenticateToken as any,
+  requireAdmin as any,
+  async (req: any, res) => {
+    try {
+      const [totalRewards, pendingRewards, claimedRewards, expiredRewards] =
+        await Promise.all([
+          prisma.reward.count(),
+          prisma.reward.count({ where: { status: "PENDING" } }),
+          prisma.reward.count({ where: { status: "CLAIMED" } }),
+          prisma.reward.count({ where: { status: "EXPIRED" } }),
+        ]);
+
+      const rewardsData = await prisma.reward.findMany({
+        select: { amount: true, status: true },
+      });
+
+      const totalValue = rewardsData.reduce(
+        (sum, r) => sum.add(r.amount),
+        new Decimal(0)
+      );
+
+      const claimedValue = rewardsData
+        .filter((r) => r.status === "CLAIMED")
+        .reduce((sum, r) => sum.add(r.amount), new Decimal(0));
+
+      const pendingValue = rewardsData
+        .filter((r) => r.status === "PENDING")
+        .reduce((sum, r) => sum.add(r.amount), new Decimal(0));
+
+      return res.json({
+        totals: {
+          rewards: totalRewards,
+          pending: pendingRewards,
+          claimed: claimedRewards,
+          expired: expiredRewards,
+        },
+        values: {
+          total: totalValue.toString(),
+          claimed: claimedValue.toString(),
+          pending: pendingValue.toString(),
+          claimRate:
+            totalRewards > 0
+              ? ((claimedRewards / totalRewards) * 100).toFixed(2)
+              : "0.00",
+        },
+      });
+    } catch (error: any) {
+      console.error("[REWARDS] Error fetching statistics:", error);
+      return res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  }
+);
 
 export default router;

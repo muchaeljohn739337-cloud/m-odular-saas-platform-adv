@@ -34,16 +34,6 @@
       "source": "/www",
       "destination": "/",
       "permanent": true
-    },
-    {
-      "source": "https://www.advanciapayledger.com/:path*",
-      "destination": "https://advanciapayledger.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "https://www.advanciapayledger.com",
-      "destination": "https://advanciapayledger.com",
-      "permanent": true
     }
   ],
   "headers": [

@@ -323,11 +323,16 @@ class TaskOrchestratorAI {
         );
 
         // Alert admin
-        await guardianAI.alertAdmin(`Task ${task.id} failed permanently`, {
-          taskId: task.id,
-          error: task.error,
-          retries: task.retryCount,
-        });
+        await guardianAI.logAction(
+          "task-orchestrator",
+          "task_permanent_failure",
+          `Task ${task.id} failed permanently`,
+          {
+            taskId: task.id,
+            error: task.error,
+            retries: task.retryCount,
+          }
+        );
       }
 
       // Update database

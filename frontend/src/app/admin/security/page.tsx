@@ -1,5 +1,6 @@
 "use client";
 
+import { AIThreatMonitor } from "@/components/admin/AISecurityWidgets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -234,6 +235,9 @@ export default function SecurityDashboard() {
           </Badge>
         </div>
       </div>
+
+      {/* AI-Powered Threat Intelligence */}
+      <AIThreatMonitor />
 
       {/* Protect Mode Alert */}
       {status.protect_mode && (

@@ -1,20 +1,24 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import {
+  AIRevenueForecast,
+  AISmartMetrics,
+} from "@/components/admin/AIAnalyticsWidgets";
 import RequireRole from "@/components/RequireRole";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
   ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler,
 } from "chart.js";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
+import { useCallback, useEffect, useState } from "react";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 
 // Register Chart.js components
 ChartJS.register(
@@ -79,7 +83,9 @@ interface RevenueData {
 export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<PlatformSummary | null>(null);
-  const [transactions, setTransactions] = useState<TransactionData | null>(null);
+  const [transactions, setTransactions] = useState<TransactionData | null>(
+    null
+  );
   const [users, setUsers] = useState<UserData | null>(null);
   const [revenue, setRevenue] = useState<RevenueData | null>(null);
   const [days, setDays] = useState(30);
@@ -91,40 +97,48 @@ export default function AnalyticsDashboard() {
 
     try {
       const token = localStorage.getItem("token");
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-      const [summaryRes, transactionsRes, usersRes, revenueRes] = await Promise.all([
-        fetch(`${apiUrl}/api/analytics/summary`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${apiUrl}/api/analytics/transactions?days=${days}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${apiUrl}/api/analytics/users?days=${days}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${apiUrl}/api/analytics/revenue?days=${days}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+      const [summaryRes, transactionsRes, usersRes, revenueRes] =
+        await Promise.all([
+          fetch(`${apiUrl}/api/analytics/summary`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${apiUrl}/api/analytics/transactions?days=${days}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${apiUrl}/api/analytics/users?days=${days}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${apiUrl}/api/analytics/revenue?days=${days}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-      if (!summaryRes.ok || !transactionsRes.ok || !usersRes.ok || !revenueRes.ok) {
+      if (
+        !summaryRes.ok ||
+        !transactionsRes.ok ||
+        !usersRes.ok ||
+        !revenueRes.ok
+      ) {
         throw new Error("Failed to fetch analytics");
       }
 
-      const [summaryData, transactionsData, usersData, revenueData] = await Promise.all([
-        summaryRes.json(),
-        transactionsRes.json(),
-        usersRes.json(),
-        revenueRes.json(),
-      ]);
+      const [summaryData, transactionsData, usersData, revenueData] =
+        await Promise.all([
+          summaryRes.json(),
+          transactionsRes.json(),
+          usersRes.json(),
+          revenueRes.json(),
+        ]);
 
       setSummary(summaryData);
       setTransactions(transactionsData);
       setUsers(usersData);
       setRevenue(revenueData);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load analytics";
+      const message =
+        err instanceof Error ? err.message : "Failed to load analytics";
       setError(message);
     } finally {
       setLoading(false);
@@ -150,7 +164,9 @@ export default function AnalyticsDashboard() {
       <RequireRole roles={["ADMIN"]}>
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-            <h2 className="text-red-800 dark:text-red-200 font-semibold mb-2">Error</h2>
+            <h2 className="text-red-800 dark:text-red-200 font-semibold mb-2">
+              Error
+            </h2>
             <p className="text-red-700 dark:text-red-300">{error}</p>
             <button
               onClick={fetchAnalytics}
@@ -184,13 +200,21 @@ export default function AnalyticsDashboard() {
             </select>
           </div>
 
+          {/* AI-Powered Analytics Widgets */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <AIRevenueForecast />
+            <AISmartMetrics />
+          </div>
+
           {/* Summary Cards */}
           {summary && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Total Users
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {summary.totalUsers.toLocaleString()}
                     </p>
@@ -219,7 +243,9 @@ export default function AnalyticsDashboard() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Active Users</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Active Users
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {summary.activeUsers.toLocaleString()}
                     </p>
@@ -248,7 +274,9 @@ export default function AnalyticsDashboard() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Transactions</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Transactions
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {summary.totalTransactions.toLocaleString()}
                     </p>
@@ -277,7 +305,9 @@ export default function AnalyticsDashboard() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Volume</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Total Volume
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       ${summary.totalVolume.toLocaleString()}
                     </p>
@@ -316,7 +346,10 @@ export default function AnalyticsDashboard() {
                 <Line
                   data={{
                     labels: transactions.dates.map((d) =>
-                      new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                      new Date(d).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })
                     ),
                     datasets: [
                       {
@@ -335,7 +368,8 @@ export default function AnalyticsDashboard() {
                       legend: { display: false },
                       tooltip: {
                         callbacks: {
-                          label: (context) => `$${(context.parsed.y ?? 0).toLocaleString()}`,
+                          label: (context) =>
+                            `$${(context.parsed.y ?? 0).toLocaleString()}`,
                         },
                       },
                     },
@@ -350,8 +384,8 @@ export default function AnalyticsDashboard() {
                   }}
                 />
                 <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                  Total: ${transactions.summary.totalVolume.toLocaleString()} • Average: $
-                  {transactions.summary.avgVolume.toFixed(2)}
+                  Total: ${transactions.summary.totalVolume.toLocaleString()} •
+                  Average: ${transactions.summary.avgVolume.toFixed(2)}
                 </div>
               </div>
             )}
@@ -365,7 +399,10 @@ export default function AnalyticsDashboard() {
                 <Line
                   data={{
                     labels: users.dates.map((d) =>
-                      new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                      new Date(d).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })
                     ),
                     datasets: [
                       {
@@ -406,7 +443,10 @@ export default function AnalyticsDashboard() {
                 <Bar
                   data={{
                     labels: transactions.dates.map((d) =>
-                      new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                      new Date(d).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })
                     ),
                     datasets: [
                       {
@@ -429,7 +469,8 @@ export default function AnalyticsDashboard() {
                   }}
                 />
                 <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                  Total transactions: {transactions.summary.totalCount.toLocaleString()}
+                  Total transactions:{" "}
+                  {transactions.summary.totalCount.toLocaleString()}
                 </div>
               </div>
             )}
@@ -468,7 +509,9 @@ export default function AnalyticsDashboard() {
                           tooltip: {
                             callbacks: {
                               label: (context) =>
-                                `${context.label}: ${context.parsed.toLocaleString()}`,
+                                `${
+                                  context.label
+                                }: ${context.parsed.toLocaleString()}`,
                             },
                           },
                         },
@@ -477,7 +520,8 @@ export default function AnalyticsDashboard() {
                   </div>
                 </div>
                 <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
-                  Total revenue: ${revenue.summary.totalRevenue.toLocaleString()}
+                  Total revenue: $
+                  {revenue.summary.totalRevenue.toLocaleString()}
                 </div>
               </div>
             )}

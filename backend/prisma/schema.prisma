@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -35,6 +36,8 @@ model User {
   cryptoWithdrawals CryptoWithdrawal[]
   medBedsBookings   MedBedsBooking[]
   uploadedFiles     UploadedFile[]
+  aiGenerations     AIGeneration[]
+  aiUsageMetrics    AIUsageMetrics[]
 
   @@map("users")
 }
@@ -1285,4 +1288,47 @@ model CodebaseIndex {
   @@index([filePath])
   @@index([lastIndexed])
   @@map("codebase_index")
+}
+
+// ============================================
+// AI GENERATOR MODELS
+// ============================================
+
+model AIGeneration {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String // "text", "code", "image"
+  model          String
+  prompt         String
+  output         String?
+  imageUrl       String?
+  metadata       String? // JSON string
+  status         String    @default("pending") // "pending", "completed", "failed"
+  error          String?
+  createdAt      DateTime  @default(now())
+  lastRotated    DateTime?
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("ai_generations")
+}
+
+model AIUsageMetrics {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime @default(now())
+  textGenerations   Int      @default(0)
+  codeGenerations   Int      @default(0)
+  imageGenerations  Int      @default(0)
+  tokensUsed        Int      @default(0)
+  costUSD           Decimal  @default(0)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("ai_usage_metrics")
 }

@@ -6,6 +6,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import SilentModeProvider from "@/components/SilentModeProvider";
 import SystemFeedbackBanner from "@/components/SystemFeedbackBanner";
+import { AIBrainProvider } from "@/lib/ai-brain";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
@@ -44,12 +45,14 @@ export default function RootLayout({
         <ErrorBoundary>
           <ScrollToTop />
           <AuthProvider>
-            <SilentModeProvider />
-            <SystemFeedbackBanner />
-            <LiveSupportScript />
-            <ServiceWorkerRegistration />
-            {children}
-            <ChatbotWidget />
+            <AIBrainProvider>
+              <SilentModeProvider />
+              <SystemFeedbackBanner />
+              <LiveSupportScript />
+              <ServiceWorkerRegistration />
+              {children}
+              <ChatbotWidget />
+            </AIBrainProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>
