@@ -82,9 +82,8 @@ export class AIMonitoringService {
       data: {
         name: rule.name,
         type: rule.type,
-        condition: JSON.stringify(rule.condition),
+        condition: JSON.stringify({ ...rule.condition, action: rule.action }),
         threshold: rule.threshold,
-        action: rule.action,
         severity: rule.severity,
         enabled: rule.enabled !== false,
       },
@@ -160,7 +159,7 @@ export class AIMonitoringService {
     // Update last check time
     await prisma.aIMonitoringRule.update({
       where: { id: rule.id },
-      data: { lastCheckedAt: new Date() },
+      data: { lastCheck: new Date() },
     });
   }
 

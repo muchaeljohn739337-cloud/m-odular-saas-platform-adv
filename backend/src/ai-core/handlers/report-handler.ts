@@ -21,18 +21,14 @@ export class ReportHandler {
       if (taskData.recipients && taskData.recipients.length > 0) {
         await emailHandler.handle({
           to: taskData.recipients,
-          subject: `${
-            taskData.reportType
-          } Report - ${new Date().toLocaleDateString()}`,
+          subject: `${taskData.reportType} Report - ${new Date().toLocaleDateString()}`,
           template: report.html,
           context: report.data,
         });
       }
 
       // Store report (logging skipped - no AITaskLog model)
-      console.log(
-        `Generated ${taskData.reportType} report with ${report.dataPoints} data points`
-      );
+      console.log(`Generated ${taskData.reportType} report with ${report.dataPoints} data points`);
 
       return {
         success: true,
@@ -49,8 +45,7 @@ export class ReportHandler {
     const { reportType, dateRange } = taskData;
 
     const endDate = dateRange?.end || new Date();
-    const startDate =
-      dateRange?.start || new Date(endDate.getTime() - 24 * 3600000);
+    const startDate = dateRange?.start || new Date(endDate.getTime() - 24 * 3600000);
 
     let data: any = {};
     let dataPoints = 0;
@@ -78,8 +73,7 @@ export class ReportHandler {
     // Generate AI summary
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a data analyst providing executive summaries of reports.",
+      systemPrompt: "You are a data analyst providing executive summaries of reports.",
       userPrompt: `Analyze this ${reportType} report data and provide executive summary with key insights:\n${JSON.stringify(
         data,
         null,
@@ -103,10 +97,7 @@ export class ReportHandler {
     };
   }
 
-  private async generateUsageReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
+  private async generateUsageReport(startDate: Date, endDate: Date): Promise<any> {
     const [users, workflows, auditLogs] = await Promise.all([
       prisma.users.count({
         where: {
@@ -146,10 +137,7 @@ export class ReportHandler {
     };
   }
 
-  private async generatePerformanceReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
+  private async generatePerformanceReport(startDate: Date, endDate: Date): Promise<any> {
     const tasks = await prisma.rPAWorkflow.findMany({
       where: {
         createdAt: { gte: startDate, lte: endDate },
@@ -167,10 +155,7 @@ export class ReportHandler {
 
     const durations = executionTimes.map((e: any) => e.duration);
     const avgExecutionTime =
-      durations.length > 0
-        ? durations.reduce((a: number, b: number) => a + b, 0) /
-          durations.length
-        : 0;
+      durations.length > 0 ? durations.reduce((a: number, b: number) => a + b, 0) / durations.length : 0;
 
     return {
       period: { start: startDate, end: endDate },
@@ -188,10 +173,7 @@ export class ReportHandler {
     };
   }
 
-  private async generateSecurityReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
+  private async generateSecurityReport(startDate: Date, endDate: Date): Promise<any> {
     const [securityLogs, failedWorkflows, errorLogs] = await Promise.all([
       prisma.audit_logs.findMany({
         where: {
@@ -226,10 +208,7 @@ export class ReportHandler {
     };
   }
 
-  private async generateBusinessReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
+  private async generateBusinessReport(startDate: Date, endDate: Date): Promise<any> {
     const [users, subscriptions] = await Promise.all([
       prisma.users.count({
         where: {
@@ -241,7 +220,7 @@ export class ReportHandler {
           createdAt: { gte: startDate, lte: endDate },
         },
         select: {
-          user_id: true,
+          userId: true,
         },
       }),
     ]);
@@ -258,17 +237,14 @@ export class ReportHandler {
     };
   }
 
-  private async generateAIActivityReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
+  private async generateAIActivityReport(startDate: Date, endDate: Date): Promise<any> {
     const [suggestions, workflows, auditLogs] = await Promise.all([
       prisma.ai_suggestions.findMany({
         where: {
-          createdAt: { gte: startDate, lte: endDate },
+          created_at: { gte: startDate, lte: endDate },
         },
         select: {
-          suggestionType: true,
+          type: true,
           accepted: true,
         },
       }),
@@ -286,8 +262,7 @@ export class ReportHandler {
     ]);
 
     const acceptedCount = suggestions.filter((s: any) => s.accepted).length;
-    const acceptanceRate =
-      suggestions.length > 0 ? (acceptedCount / suggestions.length) * 100 : 0;
+    const acceptanceRate = suggestions.length > 0 ? (acceptedCount / suggestions.length) * 100 : 0;
 
     return {
       period: { start: startDate, end: endDate },
@@ -326,12 +301,7 @@ export class ReportHandler {
     return count;
   }
 
-  private generateHTML(
-    reportType: string,
-    data: any,
-    startDate: Date,
-    endDate: Date
-  ): string {
+  private generateHTML(reportType: string, data: any, startDate: Date, endDate: Date): string {
     return `
 <!DOCTYPE html>
 <html>
@@ -378,11 +348,7 @@ export class ReportHandler {
             <div class="metric-label">${prefix}${key}</div>
           </div>
         `;
-      } else if (
-        typeof value === "object" &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
+      } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
         html += this.generateMetricsHTML(value, `${prefix}${key} - `);
       }
     }

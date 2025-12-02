@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import "dotenv/config";
 import prisma from "../src/prismaClient";
 
@@ -12,15 +13,16 @@ async function main() {
   const firstName = "System";
   const lastName = "Admin";
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.users.findUnique({ where: { email } });
   if (existing) {
     console.log(`ℹ Admin already exists: ${email}`);
     return;
   }
 
   const hash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
+  const user = await prisma.users.create({
     data: {
+      id: crypto.randomUUID(),
       email,
       username,
       passwordHash: hash,
@@ -30,6 +32,7 @@ async function main() {
       active: true,
       termsAccepted: true,
       termsAcceptedAt: new Date(),
+      updatedAt: new Date(),
     },
   });
   console.log(`✅ Admin created: ${user.email} (password: ${password})`);

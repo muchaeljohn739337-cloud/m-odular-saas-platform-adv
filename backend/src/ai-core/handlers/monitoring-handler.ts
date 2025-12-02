@@ -42,7 +42,7 @@ export class MonitoringHandler {
           gte: timeRange,
         },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 100,
     });
 
@@ -63,8 +63,7 @@ export class MonitoringHandler {
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are an error analysis assistant. Identify patterns and root causes.",
+      systemPrompt: "You are an error analysis assistant. Identify patterns and root causes.",
       userPrompt: JSON.stringify(errorSummary, null, 2),
       temperature: 0.3,
       maxTokens: 800,
@@ -77,9 +76,7 @@ export class MonitoringHandler {
       console.log("Alert: Error spike detected", {
         type: "error-spike",
         severity: errors.length > threshold * 2 ? "CRITICAL" : "HIGH",
-        message: `Error spike detected: ${errors.length} errors in ${
-          taskData.timeRange || "1h"
-        }`,
+        message: `Error spike detected: ${errors.length} errors in ${taskData.timeRange || "1h"}`,
         errorCount: errors.length,
         analysis,
         topErrors: errors.slice(0, 5),
@@ -118,32 +115,23 @@ export class MonitoringHandler {
     const completed = tasks.filter((t: any) => t.enabled === true);
     const failed = tasks.filter((t: any) => t.enabled === false);
 
-    const executionTimes = completed.map(
-      (t) => t.updatedAt.getTime() - t.createdAt.getTime()
-    );
+    const executionTimes = completed.map((t) => t.updatedAt.getTime() - t.createdAt.getTime());
 
     const avgExecutionTime =
-      executionTimes.length > 0
-        ? executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length
-        : 0;
+      executionTimes.length > 0 ? executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length : 0;
 
     const maxExecutionTime = Math.max(...executionTimes, 0);
-    const successRate =
-      tasks.length > 0 ? (completed.length / tasks.length) * 100 : 100;
+    const successRate = tasks.length > 0 ? (completed.length / tasks.length) * 100 : 100;
 
     // Check thresholds
     const slowThreshold = taskData.threshold || 30000; // 30 seconds
-    const slowTasks = completed.filter(
-      (t) => t.updatedAt.getTime() - t.createdAt.getTime() > slowThreshold
-    );
+    const slowTasks = completed.filter((t) => t.updatedAt.getTime() - t.createdAt.getTime() > slowThreshold);
 
     if (slowTasks.length > 0 || successRate < 90) {
       console.log("Alert: Performance degradation", {
         type: "performance-degradation",
         severity: successRate < 80 ? "HIGH" : "MEDIUM",
-        message: `Performance issues detected: ${
-          slowTasks.length
-        } slow tasks, ${successRate.toFixed(1)}% success rate`,
+        message: `Performance issues detected: ${slowTasks.length} slow tasks, ${successRate.toFixed(1)}% success rate`,
         avgExecutionTime,
         maxExecutionTime,
         successRate,
@@ -195,8 +183,7 @@ export class MonitoringHandler {
     if (suspiciousLogs.length > 0) {
       const aiResponse = await aiBrain.analyze({
         model: "gpt-3.5-turbo",
-        systemPrompt:
-          "You are a security analysis assistant. Identify potential threats.",
+        systemPrompt: "You are a security analysis assistant. Identify potential threats.",
         userPrompt: `Analyze these logs for security concerns:\n${JSON.stringify(
           suspiciousLogs.map((l: any) => l.action),
           null,
@@ -257,13 +244,8 @@ export class MonitoringHandler {
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a usage analytics assistant. Provide actionable insights.",
-      userPrompt: `Analyze this usage data and provide insights:\n${JSON.stringify(
-        usageData,
-        null,
-        2
-      )}`,
+      systemPrompt: "You are a usage analytics assistant. Provide actionable insights.",
+      userPrompt: `Analyze this usage data and provide insights:\n${JSON.stringify(usageData, null, 2)}`,
       temperature: 0.5,
       maxTokens: 500,
     });

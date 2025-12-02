@@ -459,8 +459,8 @@ export class N8NWorkflowManager {
           data: {
             workflowId: localWorkflow.id,
             status: execution.status === "success" ? "completed" : execution.status === "error" ? "failed" : "running",
-            input: JSON.stringify({ n8nExecutionId: execution.id }),
-            output: execution.data ? JSON.stringify(execution.data.resultData) : null,
+            triggeredBy: `n8n:${execution.id}`,
+            triggerData: JSON.stringify({ n8nExecutionId: execution.id, resultData: execution.data?.resultData }),
             startedAt: new Date(execution.startedAt),
             completedAt: execution.stoppedAt ? new Date(execution.stoppedAt) : undefined,
             error: execution.data?.resultData?.error?.message,

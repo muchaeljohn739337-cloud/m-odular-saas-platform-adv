@@ -5,6 +5,15 @@
  * Uses Cloudflare KV for nonce storage and rate limiting.
  */
 
+// Cloudflare Worker types
+interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  get(key: string, type: "text"): Promise<string | null>;
+  get(key: string, type: "json"): Promise<any>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
 interface Env {
   WEB3_NONCES: KVNamespace;
   RATE_LIMITS: KVNamespace;
@@ -21,17 +30,14 @@ interface NonceData {
 /**
  * Verify Ethereum signature using Web Crypto API
  */
-async function verifySignature(
-  message: string,
-  signature: string,
-  expectedAddress: string
-): Promise<boolean> {
+async function verifySignature(message: string, signature: string, expectedAddress: string): Promise<boolean> {
   try {
     // Remove 0x prefix if present
     const sig = signature.startsWith("0x") ? signature.slice(2) : signature;
 
     // Parse signature components (r, s, v)
     if (sig.length !== 130) {
+      // eslint-disable-next-line no-console
       console.error("Invalid signature length");
       return false;
     }
@@ -46,12 +52,14 @@ async function verifySignature(
 
     // Hash the message
     const msgBuffer = new TextEncoder().encode(prefixedMessage);
-    const msgHash = await crypto.subtle.digest("SHA-256", msgBuffer);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _msgHash = await crypto.subtle.digest("SHA-256", msgBuffer);
 
     // Note: Full ECDSA verification requires secp256k1 library
     // This is a simplified version for demonstration
     // In production, use a proper library or proxy to backend
 
+    // eslint-disable-next-line no-console
     console.log("Signature verification attempted:", {
       address: expectedAddress,
       r: r.slice(0, 10) + "...",
@@ -62,6 +70,7 @@ async function verifySignature(
     // For now, proxy to backend for full verification
     return true; // Placeholder - implement full verification or proxy
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Signature verification error:", error);
     return false;
   }
@@ -73,18 +82,13 @@ async function verifySignature(
 function generateNonce(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-    ""
-  );
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /**
  * Check rate limiting
  */
-async function checkRateLimit(
-  env: Env,
-  walletAddress: string
-): Promise<boolean> {
+async function checkRateLimit(env: Env, walletAddress: string): Promise<boolean> {
   const key = `ratelimit:${walletAddress.toLowerCase()}`;
   const now = Date.now();
   const windowMs = 60 * 1000; // 1 minute
@@ -124,11 +128,7 @@ function corsHeaders(origin?: string) {
  * Main request handler
  */
 export default {
-  async fetch(
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext
-  ): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin");
 
@@ -146,31 +146,25 @@ export default {
         const { walletAddress } = body;
 
         if (!walletAddress) {
-          return new Response(
-            JSON.stringify({ error: "Wallet address required" }),
-            {
-              status: 400,
-              headers: {
-                "Content-Type": "application/json",
-                ...corsHeaders(origin || undefined),
-              },
-            }
-          );
+          return new Response(JSON.stringify({ error: "Wallet address required" }), {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders(origin || undefined),
+            },
+          });
         }
 
         // Rate limiting
         const allowed = await checkRateLimit(env, walletAddress);
         if (!allowed) {
-          return new Response(
-            JSON.stringify({ error: "Rate limit exceeded" }),
-            {
-              status: 429,
-              headers: {
-                "Content-Type": "application/json",
-                ...corsHeaders(origin || undefined),
-              },
-            }
-          );
+          return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+            status: 429,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders(origin || undefined),
+            },
+          });
         }
 
         // Generate nonce
@@ -184,13 +178,9 @@ export default {
           attempts: 0,
         };
 
-        await env.WEB3_NONCES.put(
-          `nonce:${walletAddress.toLowerCase()}`,
-          JSON.stringify(nonceData),
-          {
-            expirationTtl: 300, // 5 minutes
-          }
-        );
+        await env.WEB3_NONCES.put(`nonce:${walletAddress.toLowerCase()}`, JSON.stringify(nonceData), {
+          expirationTtl: 300, // 5 minutes
+        });
 
         // Create SIWE message
         const domain = url.hostname;
@@ -231,36 +221,27 @@ Issued At: ${new Date().toISOString()}`;
         const { walletAddress, signature, message } = body;
 
         if (!walletAddress || !signature || !message) {
-          return new Response(
-            JSON.stringify({ error: "Missing required fields" }),
-            {
-              status: 400,
-              headers: {
-                "Content-Type": "application/json",
-                ...corsHeaders(origin || undefined),
-              },
-            }
-          );
+          return new Response(JSON.stringify({ error: "Missing required fields" }), {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders(origin || undefined),
+            },
+          });
         }
 
         // Validate nonce from KV
         const key = `nonce:${walletAddress.toLowerCase()}`;
-        const stored = (await env.WEB3_NONCES.get(
-          key,
-          "json"
-        )) as NonceData | null;
+        const stored = (await env.WEB3_NONCES.get(key, "json")) as NonceData | null;
 
         if (!stored) {
-          return new Response(
-            JSON.stringify({ error: "Nonce not found or expired" }),
-            {
-              status: 401,
-              headers: {
-                "Content-Type": "application/json",
-                ...corsHeaders(origin || undefined),
-              },
-            }
-          );
+          return new Response(JSON.stringify({ error: "Nonce not found or expired" }), {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders(origin || undefined),
+            },
+          });
         }
 
         // Check expiration
@@ -288,16 +269,13 @@ Issued At: ${new Date().toISOString()}`;
         }
 
         // Proxy to backend for full signature verification
-        const backendResponse = await fetch(
-          `${env.BACKEND_URL}/api/auth/web3/verify`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ walletAddress, signature, message }),
-          }
-        );
+        const backendResponse = await fetch(`${env.BACKEND_URL}/api/auth/web3/verify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ walletAddress, signature, message }),
+        });
 
         // Delete nonce after verification attempt
         await env.WEB3_NONCES.delete(key);

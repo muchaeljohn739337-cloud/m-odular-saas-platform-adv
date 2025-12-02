@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { randomUUID } from "crypto";
 import { aiBrain } from "../brain";
 
 const prisma = new PrismaClient();
@@ -56,8 +57,7 @@ Return as JSON with structure: { issues: [{ line, severity, message, fix }] }`;
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a code linting assistant. Analyze code for issues and return JSON.",
+      systemPrompt: "You are a code linting assistant. Analyze code for issues and return JSON.",
       userPrompt: prompt,
       temperature: 0.3,
       maxTokens: 1000,
@@ -73,10 +73,9 @@ Return as JSON with structure: { issues: [{ line, severity, message, fix }] }`;
           result.issues.slice(0, 10).map((issue: any) =>
             prisma.ai_suggestions.create({
               data: {
-                id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
-                updatedAt: new Date(),
+                id: randomUUID(),
                 user_id: "1",
-                suggestionType: "code-lint",
+                type: "code-lint",
                 content: `Line ${issue.line}: ${issue.message}`,
               },
             })
@@ -117,8 +116,7 @@ Return:
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a code fixing assistant. Fix issues and explain changes.",
+      systemPrompt: "You are a code fixing assistant. Fix issues and explain changes.",
       userPrompt: prompt,
       temperature: 0.4,
       maxTokens: 1500,
@@ -128,10 +126,9 @@ Return:
     // Store suggestion
     await prisma.ai_suggestions.create({
       data: {
-        id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
-        updatedAt: new Date(),
+        id: randomUUID(),
         user_id: "1",
-        suggestionType: "code-fix",
+        type: "code-fix",
         content: result,
       },
     });
@@ -148,8 +145,7 @@ Return:
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a code analysis assistant. Analyze the code structure and quality.",
+      systemPrompt: "You are a code analysis assistant. Analyze the code structure and quality.",
       userPrompt: `Analyze this code:\n\n${code}`,
       temperature: 0.3,
       maxTokens: 800,
@@ -185,8 +181,7 @@ Provide specific, actionable recommendations.`;
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a code review assistant. Provide comprehensive code reviews.",
+      systemPrompt: "You are a code review assistant. Provide comprehensive code reviews.",
       userPrompt: prompt,
       temperature: 0.5,
       maxTokens: 1200,
@@ -196,10 +191,9 @@ Provide specific, actionable recommendations.`;
     // Store as suggestion
     await prisma.ai_suggestions.create({
       data: {
-        id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
-        updatedAt: new Date(),
+        id: randomUUID(),
         user_id: "1",
-        suggestionType: "code-review",
+        type: "code-review",
         content: review,
       },
     });
@@ -234,8 +228,7 @@ Provide specific, actionable recommendations.`;
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a code generation assistant. Generate production-ready code.",
+      systemPrompt: "You are a code generation assistant. Generate production-ready code.",
       userPrompt: fullPrompt,
       temperature: 0.6,
       maxTokens: 2000,
@@ -245,10 +238,9 @@ Provide specific, actionable recommendations.`;
     // Store as suggestion
     await prisma.ai_suggestions.create({
       data: {
-        id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
-        updatedAt: new Date(),
+        id: randomUUID(),
         user_id: "1",
-        suggestionType: "code-generation",
+        type: "code-generation",
         content: generatedCode,
       },
     });
@@ -281,8 +273,7 @@ Provide specific, actionable recommendations.`;
 
     const aiResponse = await aiBrain.analyze({
       model: "gpt-3.5-turbo",
-      systemPrompt:
-        "You are a code refactoring assistant. Suggest improvements for code quality.",
+      systemPrompt: "You are a code refactoring assistant. Suggest improvements for code quality.",
       userPrompt: prompt,
       temperature: 0.5,
       maxTokens: 1000,

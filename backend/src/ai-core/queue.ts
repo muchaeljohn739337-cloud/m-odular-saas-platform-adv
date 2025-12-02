@@ -59,10 +59,14 @@ export enum TaskPriority {
   BACKGROUND = 10,
 }
 
+// Type definitions for queue objects
+type QueueMap = Record<string, Queue>;
+type QueueEventsMap = Record<string, QueueEvents>;
+
 // Queue configurations (only if Redis is available)
 let queueConfig: any = null;
-let queues: any = null;
-let queueEvents: any = null;
+let queues: QueueMap | null = null;
+let queueEvents: QueueEventsMap | null = null;
 
 if (connection) {
   queueConfig = {
@@ -99,7 +103,7 @@ if (connection) {
   };
 
   // Listen to queue events
-  Object.entries(queueEvents).forEach(([name, events]: [string, QueueEvents]) => {
+  Object.entries(queueEvents as QueueEventsMap).forEach(([name, events]) => {
     events.on("completed", ({ jobId }: { jobId: string }) => {
       logger.info(`Job completed in ${name}: ${jobId}`);
     });
@@ -266,7 +270,7 @@ export class AIQueueManager {
       logger.warn("Queue system not available (Redis not configured)");
       return null;
     }
-    const queue = Object.values(queues).find((q: Queue) => q.name === queueName) as Queue | undefined;
+    const queue = Object.values(queues).find((q) => q.name === queueName);
     if (!queue) {
       throw new Error(`Queue not found: ${queueName}`);
     }
@@ -297,7 +301,7 @@ export class AIQueueManager {
       return [];
     }
     const stats = await Promise.all(
-      Object.entries(queues).map(async ([name, queue]: [string, Queue]) => ({
+      Object.entries(queues).map(async ([name, queue]) => ({
         name,
         queueName: queue.name,
         stats: await this.getQueueStats(queue.name as QueueName),
@@ -311,6 +315,7 @@ export class AIQueueManager {
    * Pause a queue
    */
   static async pauseQueue(queueName: QueueName) {
+    if (!queues) return;
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (queue) {
       await queue.pause();
@@ -322,6 +327,7 @@ export class AIQueueManager {
    * Resume a queue
    */
   static async resumeQueue(queueName: QueueName) {
+    if (!queues) return;
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (queue) {
       await queue.resume();
@@ -335,8 +341,9 @@ export class AIQueueManager {
   static async cleanQueue(
     queueName: QueueName,
     grace: number = 3600000, // 1 hour
-    status: TaskStatusEnum.COMPLETED | TaskStatusEnum.FAILED = TaskStatusEnum.COMPLETED
+    status: "completed" | "failed" = "completed"
   ) {
+    if (!queues) return;
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (queue) {
       await queue.clean(grace, 1000, status);
@@ -348,6 +355,7 @@ export class AIQueueManager {
    * Drain queue (remove all jobs)
    */
   static async drainQueue(queueName: QueueName) {
+    if (!queues) return;
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (queue) {
       await queue.drain();
@@ -359,6 +367,7 @@ export class AIQueueManager {
    * Get job by ID
    */
   static async getJob(queueName: QueueName, jobId: string) {
+    if (!queues) return null;
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (queue) {
       return queue.getJob(jobId);
@@ -387,6 +396,67 @@ export class AIQueueManager {
       logger.info(`Job removed: ${queueName}/${jobId}`);
     }
   }
+
+  /**
+   * Get job status by ID
+   */
+  static async getJobStatus(queueName: QueueName, jobId: string) {
+    const job = await this.getJob(queueName, jobId);
+    if (!job) return null;
+
+    const state = await job.getState();
+    return {
+      id: job.id,
+      name: job.name,
+      state,
+      progress: job.progress,
+      data: job.data,
+      returnvalue: job.returnvalue,
+      failedReason: job.failedReason,
+      attemptsMade: job.attemptsMade,
+      timestamp: job.timestamp,
+      finishedOn: job.finishedOn,
+      processedOn: job.processedOn,
+    };
+  }
+
+  /**
+   * Cancel a job (remove if waiting/delayed, fail if active)
+   */
+  static async cancelJob(queueName: QueueName, jobId: string) {
+    const job = await this.getJob(queueName, jobId);
+    if (!job) {
+      throw new Error(`Job not found: ${queueName}/${jobId}`);
+    }
+
+    const state = await job.getState();
+    if (state === "waiting" || state === "delayed") {
+      await job.remove();
+      logger.info(`Job cancelled (removed): ${queueName}/${jobId}`);
+    } else if (state === "active") {
+      await job.moveToFailed(new Error("Job cancelled by user"), "cancelled");
+      logger.info(`Job cancelled (failed): ${queueName}/${jobId}`);
+    } else {
+      throw new Error(`Cannot cancel job in state: ${state}`);
+    }
+  }
+
+  /**
+   * Get queue metrics for monitoring
+   */
+  static async getQueueMetrics() {
+    const stats = await this.getAllQueueStats();
+    return {
+      timestamp: new Date().toISOString(),
+      queues: stats,
+      summary: {
+        totalWaiting: stats.reduce((sum, q) => sum + (q.stats?.waiting || 0), 0),
+        totalActive: stats.reduce((sum, q) => sum + (q.stats?.active || 0), 0),
+        totalCompleted: stats.reduce((sum, q) => sum + (q.stats?.completed || 0), 0),
+        totalFailed: stats.reduce((sum, q) => sum + (q.stats?.failed || 0), 0),
+      },
+    };
+  }
 }
 
 // Health check
@@ -397,6 +467,9 @@ export async function checkQueuesHealth(): Promise<{
 }> {
   try {
     // Check Redis connection
+    if (!connection) {
+      return { healthy: false, redis: false, queues: {} };
+    }
     const redisHealth = await connection.ping();
 
     // Check each queue
@@ -421,12 +494,19 @@ export async function checkQueuesHealth(): Promise<{
 export async function closeQueues() {
   logger.info("Closing AI queues...");
 
-  await Promise.all([
-    ...Object.values(queues).map((q) => q.close()),
-    ...Object.values(queueEvents).map((e) => e.close()),
-    connection.quit(),
-  ]);
+  const promises: Promise<any>[] = [];
 
+  if (queues) {
+    promises.push(...Object.values(queues).map((q) => q.close()));
+  }
+  if (queueEvents) {
+    promises.push(...Object.values(queueEvents).map((e) => e.close()));
+  }
+  if (connection) {
+    promises.push(connection.quit());
+  }
+
+  await Promise.all(promises);
   logger.info("All queues closed");
 }
 
@@ -459,6 +539,9 @@ export class TaskQueue {
 
     // Test Redis connection
     try {
+      if (!connection) {
+        throw new Error("Redis connection not configured");
+      }
       await connection.ping();
       logger.info("✓ Redis connection established");
     } catch (error) {
@@ -500,9 +583,9 @@ export class TaskQueue {
     priority?: number;
     requiresApproval?: boolean;
   }) {
-    const task = await prisma.ai_tasks.create({
+    const task = await prisma.aITask.create({
       data: {
-        workflowId: params.workflowId,
+        workflowId: params.workflowId || "", // Required field
         taskType: params.type,
         priority: params.priority || 5,
         status: params.requiresApproval ? "awaiting_approval" : "pending",
@@ -529,7 +612,7 @@ export class TaskQueue {
    * Retry a failed task
    */
   async retryTask(taskId: string) {
-    const task = await prisma.ai_tasks.findUnique({
+    const task = await prisma.aITask.findUnique({
       where: { id: taskId },
     });
 
@@ -542,11 +625,11 @@ export class TaskQueue {
     }
 
     // Update task status
-    const updatedTask = await prisma.ai_tasks.update({
+    const updatedTask = await prisma.aITask.update({
       where: { id: taskId },
       data: {
         status: TaskStatusEnum.PENDING,
-        result: null,
+        output: null,
         error: null,
       },
     });

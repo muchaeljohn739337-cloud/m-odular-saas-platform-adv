@@ -91,7 +91,7 @@ async function example3_IdentifierWhitelisting() {
     const tableName = sanitizeIdentifier(userInputTable, allowedTables);
     console.log("Table name validated:", tableName);
   } catch (error) {
-    console.log("✅ Invalid table name rejected:", error.message);
+    console.log("✅ Invalid table name rejected:", (error as Error).message);
   }
 
   // Test with valid input
@@ -140,7 +140,7 @@ async function example5_OrderByProtection() {
     const orderBy = sanitizeOrderBy(maliciousSort, allowedColumns);
     console.log("Order by validated:", orderBy);
   } catch (error) {
-    console.log("✅ Invalid ORDER BY rejected:", error.message);
+    console.log("✅ Invalid ORDER BY rejected:", (error as Error).message);
   }
 
   // Test with valid input

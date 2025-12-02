@@ -21,7 +21,7 @@ const router = Router();
 
 // All routes require admin authentication
 router.use(authenticateToken);
-router.use(allowRoles(["ADMIN"]));
+router.use(allowRoles("ADMIN"));
 
 /**
  * ═══════════════════════════════════════════════════════════════
@@ -69,9 +69,7 @@ router.post("/cleanup/run", async (req, res) => {
 
     res.json({
       success: true,
-      message: dryRun
-        ? "Dry run completed - no records deleted"
-        : "Cleanup completed successfully",
+      message: dryRun ? "Dry run completed - no records deleted" : "Cleanup completed successfully",
       result,
     });
   } catch (error: any) {
@@ -116,8 +114,8 @@ router.get("/tasks/queue", (req, res) => {
       queue: {
         pending: stats.pendingTasks,
         running: stats.runningTasks,
-        completed: stats.completedTasks,
-        failed: stats.failedTasks,
+        completed: stats.completedTasksToday,
+        failed: stats.failedTasksToday,
         totalWorkers: stats.totalWorkers,
         availableWorkers: stats.availableWorkers,
       },
@@ -330,21 +328,21 @@ router.post("/surveillance/alerts/:alertId/acknowledge", (req, res) => {
  */
 router.get("/status", async (req, res) => {
   try {
-    const [cleanupStats, taskStats, mapperStats, surveillanceDashboard] =
-      await Promise.all([
-        recordCleanupAI.getCleanupStats(),
-        Promise.resolve(taskOrchestratorAI.getStats()),
-        mapperAI.getStats(),
-        surveillanceAI.getDashboardData(),
-      ]);
+    const [cleanupStats, taskStats, mapperStats, surveillanceDashboard] = await Promise.all([
+      recordCleanupAI.getCleanupStats(),
+      Promise.resolve(taskOrchestratorAI.getStats()),
+      mapperAI.getStats(),
+      surveillanceAI.getDashboardData(),
+    ]);
 
     res.json({
       success: true,
       status: {
         overall: surveillanceDashboard.health.overall,
         cleanup: {
-          lastRun: cleanupStats.lastRun,
-          totalCleaned: cleanupStats.totalCleaned,
+          totalOldJobs: cleanupStats.oldJobsCount,
+          totalOldAuditLogs: cleanupStats.oldAuditLogsCount,
+          estimatedSpaceSavings: cleanupStats.estimatedSpaceSavings,
         },
         tasks: {
           pending: taskStats.pendingTasks,
@@ -357,7 +355,7 @@ router.get("/status", async (req, res) => {
         mapper: {
           totalWorkflows: mapperStats.totalWorkflows,
           validWorkflows: mapperStats.validWorkflows,
-          invalidWorkflows: mapperStats.invalidWorkflows,
+          orphanedRecords: mapperStats.orphanedRecords,
         },
         surveillance: {
           health: surveillanceDashboard.health,

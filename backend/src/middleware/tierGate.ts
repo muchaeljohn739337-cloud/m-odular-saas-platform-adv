@@ -85,12 +85,14 @@ interface TierLimits {
   rateLimitPerMinute: number;
 }
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    tier?: string;
-  };
+interface TierUser {
+  id: string;
+  email: string;
+  tier?: string;
+}
+
+interface AuthenticatedRequest extends Omit<Request, 'user'> {
+  user?: TierUser;
   tierLimits?: TierLimits;
   subscription?: {
     id: string;
@@ -126,11 +128,20 @@ async function getUserTier(userId: string): Promise<{ tier: string; limits: Tier
     const planName = subscription.plan.name.toLowerCase();
     const tierKey = Object.keys(TIER_HIERARCHY).find((k) => planName.includes(k)) || "free";
 
-    // Merge DB features with defaults
-    const dbFeatures = (subscription.plan.features as Record<string, any>) || {};
+    // Parse features from JSON string
+    let dbFeatures: Record<string, any> = {};
+    try {
+      dbFeatures =
+        typeof subscription.plan.features === "string"
+          ? JSON.parse(subscription.plan.features)
+          : (subscription.plan.features as Record<string, any>) || {};
+    } catch {
+      dbFeatures = {};
+    }
+
     const limits: TierLimits = {
       ...DEFAULT_TIER_LIMITS[tierKey],
-      dailyAIRequests: subscription.plan.aiRequestsLimit || DEFAULT_TIER_LIMITS[tierKey].dailyAIRequests,
+      dailyAIRequests: subscription.plan.aiRequestsPerDay || DEFAULT_TIER_LIMITS[tierKey].dailyAIRequests,
       ...dbFeatures,
     };
 

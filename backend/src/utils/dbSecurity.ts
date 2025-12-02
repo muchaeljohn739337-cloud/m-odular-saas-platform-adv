@@ -146,12 +146,19 @@ export async function safeBulkOperation<T>(
     const batch = operations.slice(i, i + batchSize);
 
     try {
+      // Use interactive transaction for regular Promises
       const batchResults = await prisma.$transaction(
-        batch.map((op) => op()),
+        async (tx) => {
+          const txResults: T[] = [];
+          for (const op of batch) {
+            txResults.push(await op());
+          }
+          return txResults;
+        },
         {
           maxWait: 5000, // 5s max wait to acquire transaction
           timeout: 30000, // 30s transaction timeout
-          isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         }
       );
 

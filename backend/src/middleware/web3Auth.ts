@@ -29,11 +29,7 @@ export function generateNonce(): string {
  * @param signature - The signature from the wallet
  * @param expectedAddress - The wallet address that should have signed
  */
-export function verifySignature(
-  message: string,
-  signature: string,
-  expectedAddress: string
-): boolean {
+export function verifySignature(message: string, signature: string, expectedAddress: string): boolean {
   try {
     // Recover the address from the signature
     const recoveredAddress = ethers.utils.verifyMessage(message, signature);
@@ -105,11 +101,7 @@ export function validateNonce(walletAddress: string, nonce: string): boolean {
 /**
  * Middleware: Authenticate Web3 wallet signature
  */
-export async function authenticateWeb3(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function authenticateWeb3(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { walletAddress, signature, message } = req.body;
 
@@ -129,9 +121,7 @@ export async function authenticateWeb3(
     // Extract nonce from message
     const nonceMatch = message.match(/Nonce: ([a-f0-9]+)/i);
     if (!nonceMatch) {
-      res
-        .status(400)
-        .json({ error: "Invalid message format: nonce not found" });
+      res.status(400).json({ error: "Invalid message format: nonce not found" });
       return;
     }
     const nonce = nonceMatch[1];
@@ -155,14 +145,17 @@ export async function authenticateWeb3(
 
     if (!user) {
       // Auto-create user for new wallet
+      const userId = crypto.randomUUID();
       user = await prisma.users.create({
         data: {
+          id: userId,
           email: `${walletAddress.toLowerCase()}@web3.local`,
           username: `user_${walletAddress.slice(2, 10)}`,
           ethWalletAddress: walletAddress.toLowerCase(),
           passwordHash: "", // No password for Web3-only accounts
           role: "USER", // Default role enum
           emailVerified: true, // Web3 wallets are verified by signature
+          updatedAt: new Date(),
         },
       });
 
@@ -284,12 +277,7 @@ export function checkNonceRateLimit(walletAddress: string): boolean {
 /**
  * Create SIWE (Sign-In with Ethereum) compliant message
  */
-export function createSIWEMessage(
-  domain: string,
-  walletAddress: string,
-  nonce: string,
-  chainId: number = 1
-): string {
+export function createSIWEMessage(domain: string, walletAddress: string, nonce: string, chainId: number = 1): string {
   const issuedAt = new Date().toISOString();
 
   return `${domain} wants you to sign in with your Ethereum account:
@@ -307,11 +295,7 @@ Issued At: ${issuedAt}`;
 /**
  * Middleware: Link Web3 wallet to existing account
  */
-export async function linkWalletToAccount(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function linkWalletToAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { userId, walletAddress, signature, message } = req.body;
 
@@ -347,9 +331,7 @@ export async function linkWalletToAccount(
     });
 
     if (existingWallet && existingWallet.id !== userId) {
-      res
-        .status(409)
-        .json({ error: "Wallet already linked to another account" });
+      res.status(409).json({ error: "Wallet already linked to another account" });
       return;
     }
 

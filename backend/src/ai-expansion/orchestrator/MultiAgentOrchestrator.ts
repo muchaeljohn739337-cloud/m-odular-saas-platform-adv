@@ -587,16 +587,18 @@ export class MultiAgentOrchestrator {
         data: {
           workflowId: workflow.id,
           status: result.status === "success" ? "completed" : "failed",
-          input: JSON.stringify({
+          triggeredBy: `agent:${agent.id}`,
+          triggerData: JSON.stringify({
             taskId: task.id,
             taskType: task.type,
             agentId: agent.id,
             agentName: agent.name,
+            output: result.output ? JSON.stringify(result.output).slice(0, 5000) : null,
+            tokensUsed: result.tokens.prompt + result.tokens.completion,
           }),
-          output: result.output ? JSON.stringify(result.output).slice(0, 10000) : null,
           startedAt: new Date(Date.now() - result.duration),
           completedAt: new Date(),
-          tokensUsed: result.tokens.prompt + result.tokens.completion,
+          duration: result.duration,
           error: result.error,
         },
       });
