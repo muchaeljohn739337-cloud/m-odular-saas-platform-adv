@@ -1,80 +1,41 @@
-name = "modular-saas-platform"
+name = "advancia-ai-connector"
+main = "functions/ai-connector.js"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 # Cloudflare Account Configuration
 account_id = "74ecde4d46d4b399c7295cf599d2886b"
 
-# Zone Configuration
-zone_id = "0bff66558872c58ed5b8b7942acc34d9"
-
-[build]
-command = "npm run build"
-cwd = "."
-
-[build.upload]
-format = "modules"
-
 # KV Namespaces for data storage
-kv_namespaces = [
-  {
-    binding = "ADVANCIA_DATA",
-    id = "3bdece1ca0824daeaaecaccfd220895c"
-  }
-]
-
-# Email Routing Configuration
-[email]
-name = "advanciapayledger.com"
-routes = [
-  { pattern = "support@advanciapayledger.com", destination = "email-worker" },
-  { pattern = "admin@advanciapayledger.com", destination = "email-worker" },
-  { pattern = "ai@advanciapayledger.com", destination = "email-worker" },
-  { pattern = "*@advanciapayledger.com", destination = "email-worker" }
-]
+[[kv_namespaces]]
+binding = "ADVANCIA_DATA"
+id = "3bdece1ca0824daeaaecaccfd220895c"
 
 # Durable Objects for AI state management
-[[durable_objects.bindings]]
-name = "AI_STATE"
-class_name = "AIStateManager"
-script_name = "ai-connector"
-
-# Environment variables (set via wrangler secret put)
-# These should NOT be committed to version control
-# Example: wrangler secret put DATABASE_URL
-# Example: wrangler secret put JWT_SECRET
-
-# Pages configuration
-pages_build_output_dir = "out"
-
-# Production routes (for custom domain)
-routes = [
-  { pattern = "advanciapayledger.com/*", zone_name = "advanciapayledger.com" },
-  { pattern = "www.advanciapayledger.com/*", zone_name = "advanciapayledger.com" }
+[durable_objects]
+bindings = [
+  { name = "AI_STATE", class_name = "AIStateManager" }
 ]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AIStateManager"]
 
 # Development settings
 [dev]
-port = 3000
+port = 8787
 local_protocol = "http"
 
-# Environment-specific overrides
+# Production environment
 [env.production]
-name = "modular-saas-platform"
-pages_build_output_dir = "out"
-routes = [
-  { pattern = "advanciapayledger.com/*", zone_name = "advanciapayledger.com" },
-  { pattern = "www.advanciapayledger.com/*", zone_name = "advanciapayledger.com" }
-]
-[vars]
-NEXT_PUBLIC_API_URL = "https://api.advanciapayledger.com"
-NEXT_PUBLIC_SOCKET_URL = "https://api.advanciapayledger.com"
+name = "advancia-ai-connector"
+
+[env.production.vars]
 NODE_ENV = "production"
 
+# Preview environment
 [env.preview]
-name = "modular-saas-platform-preview"
-pages_build_output_dir = "out"
-[vars]
-NEXT_PUBLIC_API_URL = "https://api.advanciapayledger.com"
-NEXT_PUBLIC_SOCKET_URL = "https://api.advanciapayledger.com"
-NODE_ENV = "production"
+name = "advancia-ai-connector-preview"
+
+[env.preview.vars]
+NODE_ENV = "preview"
