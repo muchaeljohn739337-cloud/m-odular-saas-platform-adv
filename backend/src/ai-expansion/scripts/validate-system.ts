@@ -234,9 +234,9 @@ class AISystemValidator {
 
     try {
       // Try to import and connect
-      const { default: prisma } = await import("../../prismaClient.js");
-      await prisma.$connect();
-      await prisma.$disconnect();
+      const prisma = (await import("../../prismaClient.js")).default;
+      await (prisma as any).$connect();
+      await (prisma as any).$disconnect();
 
       this.results.push({
         passed: true,

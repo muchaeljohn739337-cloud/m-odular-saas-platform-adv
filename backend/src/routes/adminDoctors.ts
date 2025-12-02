@@ -1,7 +1,7 @@
-import { Router, Request, Response } from "express";
-import prisma from "../prismaClient";
+import { Request, Response, Router } from "express";
 import { requireAdmin } from "../middleware/auth";
-import { DoctorStatus } from "@prisma/client";
+import prisma from "../prismaClient";
+// import { DoctorStatus } from "@prisma/client";
 
 const router = Router();
 
@@ -9,10 +9,9 @@ const router = Router();
 router.get("/doctors", requireAdmin, async (req: Request, res: Response) => {
   try {
     const { status } = req.query;
-    const where =
-      status && status !== "ALL" ? { status: status as DoctorStatus } : {};
+    const where = status && status !== "ALL" ? { status: status as string } : {};
 
-    const doctors = await prisma.doctor.findMany({
+    const doctors = await prisma.doctors.findMany({
       where,
       orderBy: { created_at: "desc" },
     });
@@ -25,62 +24,50 @@ router.get("/doctors", requireAdmin, async (req: Request, res: Response) => {
 });
 
 // Verify doctor
-router.post(
-  "/doctor/:id/verify",
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const doctor = await prisma.doctor.update({
-        where: { id: req.params.id },
-        data: {
-          status: "VERIFIED",
-          verifiedAt: new Date(),
-        },
-      });
+router.post("/doctor/:id/verify", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const doctor = await prisma.doctors.update({
+      where: { id: req.params.id },
+      data: {
+        status: "VERIFIED",
+        verifiedAt: new Date(),
+      },
+    });
 
-      res.json({ message: "Doctor verified successfully", doctor });
-    } catch (error) {
-      console.error("Error verifying doctor:", error);
-      res.status(500).json({ error: "Failed to verify doctor" });
-    }
+    res.json({ message: "Doctor verified successfully", doctor });
+  } catch (error) {
+    console.error("Error verifying doctor:", error);
+    res.status(500).json({ error: "Failed to verify doctor" });
   }
-);
+});
 
 // Suspend doctor
-router.post(
-  "/doctor/:id/suspend",
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const doctor = await prisma.doctor.update({
-        where: { id: req.params.id },
-        data: { status: "SUSPENDED" },
-      });
+router.post("/doctor/:id/suspend", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const doctor = await prisma.doctors.update({
+      where: { id: req.params.id },
+      data: { status: "SUSPENDED" },
+    });
 
-      res.json({ message: "Doctor suspended successfully", doctor });
-    } catch (error) {
-      console.error("Error suspending doctor:", error);
-      res.status(500).json({ error: "Failed to suspend doctor" });
-    }
+    res.json({ message: "Doctor suspended successfully", doctor });
+  } catch (error) {
+    console.error("Error suspending doctor:", error);
+    res.status(500).json({ error: "Failed to suspend doctor" });
   }
-);
+});
 
 // Delete doctor
-router.delete(
-  "/doctor/:id",
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      await prisma.doctor.delete({
-        where: { id: req.params.id },
-      });
+router.delete("/doctor/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    await prisma.doctors.delete({
+      where: { id: req.params.id },
+    });
 
-      res.json({ message: "Doctor deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting doctor:", error);
-      res.status(500).json({ error: "Failed to delete doctor" });
-    }
+    res.json({ message: "Doctor deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting doctor:", error);
+    res.status(500).json({ error: "Failed to delete doctor" });
   }
-);
+});
 
 export default router;

@@ -36,7 +36,7 @@ router.get("/users", authenticateToken as any, requireAdmin as any, async (req, 
       prisma.users.count({ where }),
       prisma.users.findMany({
         where,
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
         skip,
         take: pageSize,
         select: {
@@ -459,7 +459,7 @@ router.get("/users/:id", authenticateToken as any, requireAdmin as any, async (r
     // Fetch recent transactions (last 10)
     const transactions = await prisma.transactions.findMany({
       where: { userId: id },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 10,
       select: {
         id: true,
@@ -631,7 +631,7 @@ router.get("/bulk-credits/recent", authenticateToken as any, requireAdmin as any
     const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 5));
     const rows = await prisma.admin_transfers.findMany({
       where: { source: "admin:bulk-credit" },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: limit,
       select: { id: true, amount: true, note: true, createdAt: true },
     });
@@ -660,7 +660,7 @@ router.get("/bulk-credits", authenticateToken as any, requireAdmin as any, async
     const [rows, aggregates] = await prisma.$transaction([
       prisma.admin_transfers.findMany({
         where,
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
         skip,
         take: pageSize,
         select: { id: true, amount: true, note: true, createdAt: true },

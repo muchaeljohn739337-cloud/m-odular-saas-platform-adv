@@ -57,7 +57,7 @@ router.get("/history/:userId", authenticateToken as any, async (req, res) => {
     const [transactions, total] = await Promise.all([
       prisma.token_transactions.findMany({
         where: { walletId: wallet.id },
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
         take: limit,
         skip: offset,
       }),
@@ -199,9 +199,7 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
     });
   } catch (error: any) {
     console.error("[TOKENS] Error processing transfer:", error);
-    res
-      .status(500)
-      .json({ error: error.message || "Failed to process transfer" });
+    res.status(500).json({ error: error.message || "Failed to process transfer" });
   }
 });
 
@@ -285,9 +283,7 @@ router.post("/withdraw", authenticateToken as any, async (req, res) => {
     });
   } catch (error: any) {
     console.error("[TOKENS] Error processing withdrawal:", error);
-    res
-      .status(500)
-      .json({ error: error.message || "Failed to process withdrawal" });
+    res.status(500).json({ error: error.message || "Failed to process withdrawal" });
   }
 });
 
@@ -367,9 +363,7 @@ router.post("/cashout", authenticateToken as any, async (req, res) => {
     });
   } catch (error: any) {
     console.error("[TOKENS] Error processing cashout:", error);
-    res
-      .status(500)
-      .json({ error: error.message || "Failed to process cashout" });
+    res.status(500).json({ error: error.message || "Failed to process cashout" });
   }
 });
 
@@ -393,15 +387,9 @@ router.get("/admin/stats", async (req, res) => {
       new Decimal(0)
     );
 
-    const totalInCirculation = wallets.reduce(
-      (sum: Decimal, w: any) => sum.add(w.balance),
-      new Decimal(0)
-    );
+    const totalInCirculation = wallets.reduce((sum: Decimal, w: any) => sum.add(w.balance), new Decimal(0));
 
-    const totalLocked = wallets.reduce(
-      (sum: Decimal, w: any) => sum.add(w.lockedBalance),
-      new Decimal(0)
-    );
+    const totalLocked = wallets.reduce((sum: Decimal, w: any) => sum.add(w.lockedBalance), new Decimal(0));
 
     // Get active users (users with token balance > 0)
     const activeUsers = wallets.filter((w: any) => w.balance.gt(0)).length;
@@ -429,7 +417,7 @@ router.get("/admin/recent-activity", async (req, res) => {
     const limit = Math.min(100, Number(req.query.limit) || 20);
 
     const transactions = await prisma.token_transactions.findMany({
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: limit,
     });
 

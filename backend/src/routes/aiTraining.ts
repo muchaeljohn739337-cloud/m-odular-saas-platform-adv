@@ -1,11 +1,7 @@
 import express from "express";
 import { requireAdmin } from "../middleware/adminAuth";
 import prisma from "../prismaClient";
-import {
-  getTrainingStats,
-  trainBotDetectionModel,
-  verifyTrainingData,
-} from "../services/aiTraining";
+import { getTrainingStats, trainBotDetectionModel, verifyTrainingData } from "../services/aiTraining";
 
 const router = express.Router();
 
@@ -30,14 +26,14 @@ router.get("/data", requireAdmin as any, async (req, res) => {
       where.verifiedBy = null;
     }
 
-    const data = await prisma.aITrainingData.findMany({
+    const data = await prisma.ai_training_data.findMany({
       where,
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit),
       orderBy: { created_at: "desc" },
     });
 
-    const total = await prisma.aITrainingData.count({ where });
+    const total = await prisma.ai_training_data.count({ where });
 
     res.json({
       data,
@@ -93,7 +89,7 @@ router.post("/train", requireAdmin as any, async (req, res) => {
 
 router.get("/models", requireAdmin as any, async (req, res) => {
   try {
-    const models = await prisma.aIModel.findMany({
+    const models = await prisma.ai_models.findMany({
       where: { modelType: "bot_detection" },
       orderBy: { created_at: "desc" },
     });
@@ -109,12 +105,12 @@ router.post("/models/:id/activate", requireAdmin as any, async (req, res) => {
   try {
     const { id } = req.params;
 
-    await prisma.aIModel.updateMany({
+    await prisma.ai_models.updateMany({
       where: { modelType: "bot_detection" },
       data: { isActive: false },
     });
 
-    await prisma.aIModel.update({
+    await prisma.ai_models.update({
       where: { id },
       data: { isActive: true },
     });

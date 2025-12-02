@@ -1,11 +1,6 @@
-import { Response, Router } from "express";
 import crypto from "crypto";
-import {
-  authenticateToken,
-  AuthRequest,
-  logAdminAction,
-  requireAdmin,
-} from "../middleware/auth";
+import { Response, Router } from "express";
+import { authenticateToken, AuthRequest, logAdminAction, requireAdmin } from "../middleware/auth";
 import prisma from "../prismaClient";
 
 const router = Router();
@@ -40,13 +35,9 @@ router.post(
         });
       }
 
-      if (
-        !bonusType ||
-        !["TRUMP_COIN", "MEDBED_CREDIT", "USD", "TOKEN"].includes(bonusType)
-      ) {
+      if (!bonusType || !["TRUMP_COIN", "MEDBED_CREDIT", "USD", "TOKEN"].includes(bonusType)) {
         return res.status(400).json({
-          error:
-            "Invalid bonusType. Must be TRUMP_COIN, MEDBED_CREDIT, USD, or TOKEN",
+          error: "Invalid bonusType. Must be TRUMP_COIN, MEDBED_CREDIT, USD, or TOKEN",
         });
       }
 
@@ -232,29 +223,22 @@ router.post(
   logAdminAction as any,
   async (req: AuthRequest, res: Response) => {
     try {
-      const { userId, bonusType, amount, currency, description, autoApprove } =
-        req.body;
+      const { userId, bonusType, amount, currency, description, autoApprove } = req.body;
 
       // Validation
       if (!userId) {
         return res.status(400).json({ error: "userId is required" });
       }
 
-      if (
-        !bonusType ||
-        !["TRUMP_COIN", "MEDBED_CREDIT", "USD", "TOKEN"].includes(bonusType)
-      ) {
+      if (!bonusType || !["TRUMP_COIN", "MEDBED_CREDIT", "USD", "TOKEN"].includes(bonusType)) {
         return res.status(400).json({
-          error:
-            "Invalid bonusType. Must be TRUMP_COIN, MEDBED_CREDIT, USD, or TOKEN",
+          error: "Invalid bonusType. Must be TRUMP_COIN, MEDBED_CREDIT, USD, or TOKEN",
         });
       }
 
       const bonusAmount = parseFloat(amount);
       if (isNaN(bonusAmount) || bonusAmount <= 0) {
-        return res
-          .status(400)
-          .json({ error: "Amount must be a positive number" });
+        return res.status(400).json({ error: "Amount must be a positive number" });
       }
 
       // Get user
@@ -274,9 +258,7 @@ router.post(
       }
 
       if (!user.active) {
-        return res
-          .status(400)
-          .json({ error: "Cannot award bonus to inactive user" });
+        return res.status(400).json({ error: "Cannot award bonus to inactive user" });
       }
 
       // Award bonus based on type
@@ -382,72 +364,56 @@ router.post(
 
 // GET /api/admin/bonus/history
 // Get bonus assignment history with pagination
-router.get(
-  "/history",
-  authenticateToken as any,
-  requireAdmin as any,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      const page = Math.max(1, Number(req.query.page) || 1);
-      const pageSize = Math.max(
-        1,
-        Math.min(100, Number(req.query.pageSize) || 20)
-      );
-      const skip = (page - 1) * pageSize;
+router.get("/history", authenticateToken as any, requireAdmin as any, async (req: AuthRequest, res: Response) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 20));
+    const skip = (page - 1) * pageSize;
 
-      const [transfers, total] = await Promise.all([
-        prisma.adminTransfer.findMany({
-          where: {
-            source: {
-              in: [
-                "admin:bulk-bonus",
-                "admin_bulk_bonus",
-                "admin_medbed_bonus",
-              ],
-            },
+    const [transfers, total] = await Promise.all([
+      prisma.admin_transfers.findMany({
+        where: {
+          source: {
+            in: ["admin:bulk-bonus", "admin_bulk_bonus", "admin_medbed_bonus"],
           },
-          orderBy: { created_at: "desc" },
-          skip,
-          take: pageSize,
-          select: {
-            id: true,
-            adminId: true,
-            currency: true,
-            amount: true,
-            note: true,
-            createdAt: true,
+        },
+        orderBy: { created_at: "desc" },
+        skip,
+        take: pageSize,
+        select: {
+          id: true,
+          adminId: true,
+          currency: true,
+          amount: true,
+          note: true,
+          createdAt: true,
+        },
+      }),
+      prisma.admin_transfers.count({
+        where: {
+          source: {
+            in: ["admin:bulk-bonus", "admin_bulk_bonus", "admin_medbed_bonus"],
           },
-        }),
-        prisma.adminTransfer.count({
-          where: {
-            source: {
-              in: [
-                "admin:bulk-bonus",
-                "admin_bulk_bonus",
-                "admin_medbed_bonus",
-              ],
-            },
-          },
-        }),
-      ]);
+        },
+      }),
+    ]);
 
-      return res.json({
-        items: transfers.map((t) => ({
-          ...t,
-          amount: t.amount.toString(),
-        })),
-        total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
-      });
-    } catch (error) {
-      console.error("Error fetching bonus history:", error);
-      return res.status(500).json({
-        error: "Failed to fetch bonus history",
-      });
-    }
+    return res.json({
+      items: transfers.map((t) => ({
+        ...t,
+        amount: t.amount.toString(),
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    });
+  } catch (error) {
+    console.error("Error fetching bonus history:", error);
+    return res.status(500).json({
+      error: "Failed to fetch bonus history",
+    });
   }
-);
+});
 
 export default router;

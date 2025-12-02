@@ -1,10 +1,6 @@
 import express from "express";
 import { adminAuth } from "../middleware/adminAuth";
-import {
-  authenticateToken,
-  logAdminAction,
-  requireAdmin,
-} from "../middleware/auth";
+import { authenticateToken, logAdminAction, requireAdmin } from "../middleware/auth";
 import prisma from "../prismaClient";
 
 const router = express.Router();
@@ -15,14 +11,11 @@ router.get("/doctors", adminAuth, async (req, res) => {
     const { status } = req.query;
 
     const where: any = {};
-    if (
-      status &&
-      ["PENDING", "VERIFIED", "SUSPENDED"].includes(status as string)
-    ) {
+    if (status && ["PENDING", "VERIFIED", "SUSPENDED"].includes(status as string)) {
       where.status = status;
     }
 
-    const doctors = await prisma.doctor.findMany({
+    const doctors = await prisma.doctors.findMany({
       where,
       select: {
         id: true,
@@ -38,7 +31,7 @@ router.get("/doctors", adminAuth, async (req, res) => {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     return res.json({
@@ -56,7 +49,7 @@ router.get("/doctor/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await prisma.doctor.findUnique({
+    const doctor = await prisma.doctors.findUnique({
       where: { id },
     });
 
@@ -65,7 +58,7 @@ router.get("/doctor/:id", adminAuth, async (req, res) => {
     }
 
     // Fetch consultations separately since relation is not defined in schema
-    const consultations = await prisma.consultation.findMany({
+    const consultations = await prisma.consultations.findMany({
       where: { doctorId: id },
       select: {
         id: true,
@@ -73,7 +66,7 @@ router.get("/doctor/:id", adminAuth, async (req, res) => {
         scheduledAt: true,
         patientId: true,
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 10,
     });
 
@@ -98,7 +91,7 @@ router.post("/doctor/:id/verify", adminAuth, async (req, res) => {
     const { id } = req.params;
     const { adminId } = req.body || {};
 
-    const doctor = await prisma.doctor.findUnique({
+    const doctor = await prisma.doctors.findUnique({
       where: { id },
       select: { id: true, status: true },
     });
@@ -111,7 +104,7 @@ router.post("/doctor/:id/verify", adminAuth, async (req, res) => {
       return res.status(400).json({ error: "Doctor is already verified" });
     }
 
-    const updated = await prisma.doctor.update({
+    const updated = await prisma.doctors.update({
       where: { id },
       data: {
         status: "VERIFIED",
@@ -145,7 +138,7 @@ router.post("/doctor/:id/suspend", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await prisma.doctor.findUnique({
+    const doctor = await prisma.doctors.findUnique({
       where: { id },
       select: { id: true, status: true },
     });
@@ -154,7 +147,7 @@ router.post("/doctor/:id/suspend", adminAuth, async (req, res) => {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    const updated = await prisma.doctor.update({
+    const updated = await prisma.doctors.update({
       where: { id },
       data: { status: "SUSPENDED" },
       select: {
@@ -182,7 +175,7 @@ router.delete("/doctor/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doctor = await prisma.doctor.findUnique({
+    const doctor = await prisma.doctors.findUnique({
       where: { id },
       select: { id: true },
     });
@@ -191,7 +184,7 @@ router.delete("/doctor/:id", adminAuth, async (req, res) => {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    await prisma.doctor.delete({
+    await prisma.doctors.delete({
       where: { id },
     });
 
@@ -203,303 +196,266 @@ router.delete("/doctor/:id", adminAuth, async (req, res) => {
 });
 
 // GET /api/admin/settings - Get current admin settings
-router.get(
-  "/settings",
-  authenticateToken as any,
-  requireAdmin as any,
-  async (req, res) => {
-    try {
-      // Get or create settings (there should only be one row)
-      let settings = await prisma.adminSettings.findFirst();
+router.get("/settings", authenticateToken as any, requireAdmin as any, async (req, res) => {
+  try {
+    // Get or create settings (there should only be one row)
+    let settings = await prisma.admin_settings.findFirst();
 
-      if (!settings) {
-        // Create default settings if none exist
-        settings = await prisma.adminSettings.create({
-          data: {
-            processingFeePercent: 2.5,
-            minPurchaseAmount: 10,
-            debitCardPriceUSD: 1000,
-          },
-        });
-      }
-
-      return res.json({
-        id: settings.id,
-        crypto: {
-          btcAddress: settings.btcAddress || "",
-          ethAddress: settings.ethAddress || "",
-          usdtAddress: settings.usdtAddress || "",
-          ltcAddress: settings.ltcAddress || "",
-          otherAddresses: settings.otherAddresses || "",
+    if (!settings) {
+      // Create default settings if none exist
+      settings = await prisma.admin_settings.create({
+        data: {
+          id: (await import("crypto")).randomUUID(),
+          processingFeePercent: 2.5,
+          minPurchaseAmount: 10,
+          debitCardPriceUSD: 1000,
+          updatedAt: new Date(),
         },
-        exchangeRates: {
-          btc: settings.exchangeRateBtc?.toString() || "0",
-          eth: settings.exchangeRateEth?.toString() || "0",
-          usdt: settings.exchangeRateUsdt?.toString() || "0",
-        },
-        fees: {
-          processingFeePercent:
-            settings.processingFeePercent?.toString() || "2.5",
-          minPurchaseAmount: settings.minPurchaseAmount?.toString() || "10",
-          debitCardPriceUSD: settings.debitCardPriceUSD?.toString() || "1000",
-        },
-        system: {
-          maintenanceMode: false,
-          rateLimitPerMinute: 100,
-          maxFileUploadMB: 10,
-        },
-        updatedAt: settings.updatedAt,
-        createdAt: settings.createdAt,
       });
-    } catch (err) {
-      console.error("Error fetching admin settings:", err);
-      return res.status(500).json({ error: "Failed to fetch settings" });
     }
+
+    return res.json({
+      id: settings.id,
+      crypto: {
+        btcAddress: settings.btcAddress || "",
+        ethAddress: settings.ethAddress || "",
+        usdtAddress: settings.usdtAddress || "",
+        ltcAddress: settings.ltcAddress || "",
+        otherAddresses: settings.otherAddresses || "",
+      },
+      exchangeRates: {
+        btc: settings.exchangeRateBtc?.toString() || "0",
+        eth: settings.exchangeRateEth?.toString() || "0",
+        usdt: settings.exchangeRateUsdt?.toString() || "0",
+      },
+      fees: {
+        processingFeePercent: settings.processingFeePercent?.toString() || "2.5",
+        minPurchaseAmount: settings.minPurchaseAmount?.toString() || "10",
+        debitCardPriceUSD: settings.debitCardPriceUSD?.toString() || "1000",
+      },
+      system: {
+        maintenanceMode: false,
+        rateLimitPerMinute: 100,
+        maxFileUploadMB: 10,
+      },
+      updatedAt: settings.updatedAt,
+      createdAt: settings.createdAt,
+    });
+  } catch (err) {
+    console.error("Error fetching admin settings:", err);
+    return res.status(500).json({ error: "Failed to fetch settings" });
   }
-);
+});
 
 // PATCH /api/admin/settings - Update admin settings
-router.patch(
-  "/settings",
-  authenticateToken as any,
-  requireAdmin as any,
-  logAdminAction as any,
-  async (req, res) => {
-    try {
-      const { crypto, exchangeRates, fees } = req.body;
+router.patch("/settings", authenticateToken as any, requireAdmin as any, logAdminAction as any, async (req, res) => {
+  try {
+    const { crypto, exchangeRates, fees } = req.body;
 
-      // Get existing settings or create new
-      let settings = await prisma.adminSettings.findFirst();
+    // Get existing settings or create new
+    let settings = await prisma.admin_settings.findFirst();
 
-      if (!settings) {
-        settings = await prisma.adminSettings.create({
-          data: {
-            processingFeePercent: 2.5,
-            minPurchaseAmount: 10,
-            debitCardPriceUSD: 1000,
-          },
-        });
-      }
-
-      // Build update data
-      const updateData: any = {};
-
-      if (crypto) {
-        if (crypto.btcAddress !== undefined)
-          updateData.btcAddress = crypto.btcAddress;
-        if (crypto.ethAddress !== undefined)
-          updateData.ethAddress = crypto.ethAddress;
-        if (crypto.usdtAddress !== undefined)
-          updateData.usdtAddress = crypto.usdtAddress;
-        if (crypto.ltcAddress !== undefined)
-          updateData.ltcAddress = crypto.ltcAddress;
-        if (crypto.otherAddresses !== undefined)
-          updateData.otherAddresses = crypto.otherAddresses;
-      }
-
-      if (exchangeRates) {
-        if (exchangeRates.btc !== undefined)
-          updateData.exchangeRateBtc = parseFloat(exchangeRates.btc);
-        if (exchangeRates.eth !== undefined)
-          updateData.exchangeRateEth = parseFloat(exchangeRates.eth);
-        if (exchangeRates.usdt !== undefined)
-          updateData.exchangeRateUsdt = parseFloat(exchangeRates.usdt);
-      }
-
-      if (fees) {
-        if (fees.processingFeePercent !== undefined) {
-          updateData.processingFeePercent = parseFloat(
-            fees.processingFeePercent
-          );
-        }
-        if (fees.minPurchaseAmount !== undefined) {
-          updateData.minPurchaseAmount = parseFloat(fees.minPurchaseAmount);
-        }
-        if (fees.debitCardPriceUSD !== undefined) {
-          updateData.debitCardPriceUSD = parseFloat(fees.debitCardPriceUSD);
-        }
-      }
-
-      // Update settings
-      const updated = await prisma.adminSettings.update({
-        where: { id: settings.id },
-        data: updateData,
-      });
-
-      return res.json({
-        message: "Settings updated successfully",
-        settings: {
-          id: updated.id,
-          crypto: {
-            btcAddress: updated.btcAddress || "",
-            ethAddress: updated.ethAddress || "",
-            usdtAddress: updated.usdtAddress || "",
-            ltcAddress: updated.ltcAddress || "",
-            otherAddresses: updated.otherAddresses || "",
-          },
-          exchangeRates: {
-            btc: updated.exchangeRateBtc?.toString() || "0",
-            eth: updated.exchangeRateEth?.toString() || "0",
-            usdt: updated.exchangeRateUsdt?.toString() || "0",
-          },
-          fees: {
-            processingFeePercent:
-              updated.processingFeePercent?.toString() || "2.5",
-            minPurchaseAmount: updated.minPurchaseAmount?.toString() || "10",
-            debitCardPriceUSD: updated.debitCardPriceUSD?.toString() || "1000",
-          },
-          updatedAt: updated.updatedAt,
+    if (!settings) {
+      settings = await prisma.admin_settings.create({
+        data: {
+          id: (await import("crypto")).randomUUID(),
+          processingFeePercent: 2.5,
+          minPurchaseAmount: 10,
+          debitCardPriceUSD: 1000,
+          updatedAt: new Date(),
         },
       });
-    } catch (err) {
-      console.error("Error updating admin settings:", err);
-      return res.status(500).json({ error: "Failed to update settings" });
     }
+
+    // Build update data
+    const updateData: any = {};
+
+    if (crypto) {
+      if (crypto.btcAddress !== undefined) updateData.btcAddress = crypto.btcAddress;
+      if (crypto.ethAddress !== undefined) updateData.ethAddress = crypto.ethAddress;
+      if (crypto.usdtAddress !== undefined) updateData.usdtAddress = crypto.usdtAddress;
+      if (crypto.ltcAddress !== undefined) updateData.ltcAddress = crypto.ltcAddress;
+      if (crypto.otherAddresses !== undefined) updateData.otherAddresses = crypto.otherAddresses;
+    }
+
+    if (exchangeRates) {
+      if (exchangeRates.btc !== undefined) updateData.exchangeRateBtc = parseFloat(exchangeRates.btc);
+      if (exchangeRates.eth !== undefined) updateData.exchangeRateEth = parseFloat(exchangeRates.eth);
+      if (exchangeRates.usdt !== undefined) updateData.exchangeRateUsdt = parseFloat(exchangeRates.usdt);
+    }
+
+    if (fees) {
+      if (fees.processingFeePercent !== undefined) {
+        updateData.processingFeePercent = parseFloat(fees.processingFeePercent);
+      }
+      if (fees.minPurchaseAmount !== undefined) {
+        updateData.minPurchaseAmount = parseFloat(fees.minPurchaseAmount);
+      }
+      if (fees.debitCardPriceUSD !== undefined) {
+        updateData.debitCardPriceUSD = parseFloat(fees.debitCardPriceUSD);
+      }
+    }
+
+    // Update settings
+    const updated = await prisma.admin_settings.update({
+      where: { id: settings.id },
+      data: updateData,
+    });
+
+    return res.json({
+      message: "Settings updated successfully",
+      settings: {
+        id: updated.id,
+        crypto: {
+          btcAddress: updated.btcAddress || "",
+          ethAddress: updated.ethAddress || "",
+          usdtAddress: updated.usdtAddress || "",
+          ltcAddress: updated.ltcAddress || "",
+          otherAddresses: updated.otherAddresses || "",
+        },
+        exchangeRates: {
+          btc: updated.exchangeRateBtc?.toString() || "0",
+          eth: updated.exchangeRateEth?.toString() || "0",
+          usdt: updated.exchangeRateUsdt?.toString() || "0",
+        },
+        fees: {
+          processingFeePercent: updated.processingFeePercent?.toString() || "2.5",
+          minPurchaseAmount: updated.minPurchaseAmount?.toString() || "10",
+          debitCardPriceUSD: updated.debitCardPriceUSD?.toString() || "1000",
+        },
+        updatedAt: updated.updatedAt,
+      },
+    });
+  } catch (err) {
+    console.error("Error updating admin settings:", err);
+    return res.status(500).json({ error: "Failed to update settings" });
   }
-);
+});
 
 // GET /api/admin/analytics/overview - Get high-level analytics
-router.get(
-  "/analytics/overview",
-  authenticateToken as any,
-  requireAdmin as any,
-  async (req, res) => {
-    try {
-      const { startDate, endDate } = req.query;
+router.get("/analytics/overview", authenticateToken as any, requireAdmin as any, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
 
-      const dateFilter: any = {};
-      if (startDate) dateFilter.gte = new Date(String(startDate));
-      if (endDate) dateFilter.lte = new Date(String(endDate));
+    const dateFilter: any = {};
+    if (startDate) dateFilter.gte = new Date(String(startDate));
+    if (endDate) dateFilter.lte = new Date(String(endDate));
 
-      const whereDate =
-        Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
+    const whereDate = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
 
-      // User statistics
-      const [totalUsers, activeUsers, newUsersThisMonth] = await Promise.all([
-        prisma.users.count(),
-        prisma.users.count({ where: { active: true } }),
-        prisma.users.count({
-          where: {
-            createdAt: {
-              gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-            },
+    // User statistics
+    const [totalUsers, activeUsers, newUsersThisMonth] = await Promise.all([
+      prisma.users.count(),
+      prisma.users.count({ where: { active: true } }),
+      prisma.users.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
           },
-        }),
-      ]);
-
-      // Transaction statistics
-      const transactions = await prisma.transactions.aggregate({
-        where: whereDate,
-        _count: true,
-        _sum: { amount: true },
-      });
-
-      // Token wallet statistics
-      const tokenStats = await prisma.token_wallets.aggregate({
-        _sum: { balance: true, lifetimeEarned: true },
-      });
-
-      return res.json({
-        users: {
-          total: totalUsers,
-          active: activeUsers,
-          newThisMonth: newUsersThisMonth,
-          suspendedCount: totalUsers - activeUsers,
         },
-        transactions: {
-          total: transactions._count || 0,
-          volume: transactions._sum?.amount?.toString() || "0",
-        },
-        tokens: {
-          totalBalance: tokenStats._sum?.balance?.toString() || "0",
-          totalEarned: tokenStats._sum?.lifetimeEarned?.toString() || "0",
-        },
-      });
-    } catch (err) {
-      console.error("Error fetching analytics overview:", err);
-      return res.status(500).json({ error: "Failed to fetch analytics" });
-    }
+      }),
+    ]);
+
+    // Transaction statistics
+    const transactions = await prisma.transactions.aggregate({
+      where: whereDate,
+      _count: true,
+      _sum: { amount: true },
+    });
+
+    // Token wallet statistics
+    const tokenStats = await prisma.token_wallets.aggregate({
+      _sum: { balance: true, lifetimeEarned: true },
+    });
+
+    return res.json({
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        newThisMonth: newUsersThisMonth,
+        suspendedCount: totalUsers - activeUsers,
+      },
+      transactions: {
+        total: transactions._count || 0,
+        volume: transactions._sum?.amount?.toString() || "0",
+      },
+      tokens: {
+        totalBalance: tokenStats._sum?.balance?.toString() || "0",
+        totalEarned: tokenStats._sum?.lifetimeEarned?.toString() || "0",
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching analytics overview:", err);
+    return res.status(500).json({ error: "Failed to fetch analytics" });
   }
-);
+});
 
 // GET /api/admin/analytics/user-growth - Get user growth over time
-router.get(
-  "/analytics/user-growth",
-  authenticateToken as any,
-  requireAdmin as any,
-  async (req, res) => {
-    try {
-      const { days = "30" } = req.query;
-      const daysNum = Math.min(365, Math.max(1, Number(days)));
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - daysNum);
+router.get("/analytics/user-growth", authenticateToken as any, requireAdmin as any, async (req, res) => {
+  try {
+    const { days = "30" } = req.query;
+    const daysNum = Math.min(365, Math.max(1, Number(days)));
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysNum);
 
-      // Group users by day
-      const users = await prisma.users.findMany({
-        where: { createdAt: { gte: startDate } },
-        select: { created_at: true },
-        orderBy: { created_at: "asc" },
-      });
+    // Group users by day
+    const users = await prisma.users.findMany({
+      where: { createdAt: { gte: startDate } },
+      select: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
 
-      // Aggregate by day
-      const dailyCounts: Record<string, number> = {};
-      users.forEach((user) => {
-        const day = user.createdAt.toISOString().split("T")[0];
-        dailyCounts[day] = (dailyCounts[day] || 0) + 1;
-      });
+    // Aggregate by day
+    const dailyCounts: Record<string, number> = {};
+    users.forEach((user) => {
+      const day = user.createdAt.toISOString().split("T")[0];
+      dailyCounts[day] = (dailyCounts[day] || 0) + 1;
+    });
 
-      const data = Object.entries(dailyCounts).map(([date, count]) => ({
-        date,
-        count,
-      }));
+    const data = Object.entries(dailyCounts).map(([date, count]) => ({
+      date,
+      count,
+    }));
 
-      return res.json({ data });
-    } catch (err) {
-      console.error("Error fetching user growth:", err);
-      return res.status(500).json({ error: "Failed to fetch user growth" });
-    }
+    return res.json({ data });
+  } catch (err) {
+    console.error("Error fetching user growth:", err);
+    return res.status(500).json({ error: "Failed to fetch user growth" });
   }
-);
+});
 
 // GET /api/admin/analytics/transaction-volume - Get transaction volume over time
-router.get(
-  "/analytics/transaction-volume",
-  authenticateToken as any,
-  requireAdmin as any,
-  async (req, res) => {
-    try {
-      const { days = "30" } = req.query;
-      const daysNum = Math.min(365, Math.max(1, Number(days)));
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - daysNum);
+router.get("/analytics/transaction-volume", authenticateToken as any, requireAdmin as any, async (req, res) => {
+  try {
+    const { days = "30" } = req.query;
+    const daysNum = Math.min(365, Math.max(1, Number(days)));
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysNum);
 
-      const transactions = await prisma.transactions.findMany({
-        where: { createdAt: { gte: startDate } },
-        select: { created_at: true, amount: true },
-        orderBy: { created_at: "asc" },
-      });
+    const transactions = await prisma.transactions.findMany({
+      where: { createdAt: { gte: startDate } },
+      select: { createdAt: true, amount: true },
+      orderBy: { createdAt: "asc" },
+    });
 
-      // Aggregate by day
-      const dailyVolume: Record<string, number> = {};
-      transactions.forEach((tx) => {
-        const day = tx.createdAt.toISOString().split("T")[0];
-        dailyVolume[day] = (dailyVolume[day] || 0) + Number(tx.amount || 0);
-      });
+    // Aggregate by day
+    const dailyVolume: Record<string, number> = {};
+    transactions.forEach((tx) => {
+      const day = tx.createdAt.toISOString().split("T")[0];
+      dailyVolume[day] = (dailyVolume[day] || 0) + Number(tx.amount || 0);
+    });
 
-      const data = Object.entries(dailyVolume).map(([date, volume]) => ({
-        date,
-        volume,
-      }));
+    const data = Object.entries(dailyVolume).map(([date, volume]) => ({
+      date,
+      volume,
+    }));
 
-      return res.json({ data });
-    } catch (err) {
-      console.error("Error fetching transaction volume:", err);
-      return res
-        .status(500)
-        .json({ error: "Failed to fetch transaction volume" });
-    }
+    return res.json({ data });
+  } catch (err) {
+    console.error("Error fetching transaction volume:", err);
+    return res.status(500).json({ error: "Failed to fetch transaction volume" });
   }
-);
+});
 
 // GET /api/admin/stats - Get admin dashboard statistics
 router.get("/stats", adminAuth, async (req, res) => {
@@ -589,10 +545,7 @@ router.get("/stats", adminAuth, async (req, res) => {
             amount: activity.amount.toString(),
             status: activity.status,
             createdAt: activity.createdAt,
-            user: user
-              ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-                user.email
-              : "Unknown",
+            user: user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email : "Unknown",
           };
         }),
       },
@@ -607,7 +560,7 @@ router.get("/stats", adminAuth, async (req, res) => {
 router.get("/transactions", adminAuth, async (req, res) => {
   try {
     const transactions = await prisma.transactions.findMany({
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 1000,
       select: {
         id: true,
@@ -641,9 +594,7 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
     const currencyUpper = currency.toUpperCase();
 
     if (!validCurrencies.includes(currencyUpper)) {
-      return res
-        .status(400)
-        .json({ error: `Invalid currency: ${currencyUpper}` });
+      return res.status(400).json({ error: `Invalid currency: ${currencyUpper}` });
     }
 
     const user = await prisma.users.findUnique({ where: { id: userId } });
@@ -664,11 +615,13 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
 
     await prisma.transactions.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         userId,
         amount: Number(amount),
         type: "ADMIN_ADJUSTMENT",
         description: `Admin adjusted ${currencyUpper} by ${amount}`,
         status: "COMPLETED",
+        updatedAt: new Date(),
       },
     });
 
@@ -679,81 +632,50 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
   }
 });
 
-// GET /api/admin/transactions - Get transaction history
-router.get("/transactions", adminAuth, async (req, res) => {
-  try {
-    const transactions = await prisma.transactions.findMany({
-      orderBy: { created_at: "desc" },
-      take: 1000,
-      select: {
-        id: true,
-        userId: true,
-        amount: true,
-        type: true,
-        description: true,
-        status: true,
-        createdAt: true,
-      },
-    });
-
-    return res.json(transactions);
-  } catch (err) {
-    console.error("Transaction fetch error:", err);
-    return res.status(500).json({ error: "Failed to load transactions" });
-  }
-});
-
 // ✨ NEW ENDPOINTS: Registration Approval System
 
 // GET /api/admin/users/pending-approvals - List pending user registrations
-router.get(
-  "/users/pending-approvals",
-  authenticateToken as any,
-  requireAdmin as any,
-  async (req, res) => {
-    try {
-      const { page = "1", limit = "20" } = req.query;
-      const pageNum = Math.max(1, Number(page));
-      const limitNum = Math.min(100, Math.max(1, Number(limit)));
-      const skip = (pageNum - 1) * limitNum;
+router.get("/users/pending-approvals", authenticateToken as any, requireAdmin as any, async (req, res) => {
+  try {
+    const { page = "1", limit = "20" } = req.query;
+    const pageNum = Math.max(1, Number(page));
+    const limitNum = Math.min(100, Math.max(1, Number(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
-      // Get pending users (where active = false)
-      const [pendingUsers, totalCount] = await Promise.all([
-        prisma.users.findMany({
-          where: { active: false },
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-          orderBy: { created_at: "asc" },
-          skip,
-          take: limitNum,
-        }),
-        prisma.users.count({ where: { active: false } }),
-      ]);
-
-      return res.json({
-        message: "Pending user registrations retrieved successfully",
-        data: pendingUsers,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total: totalCount,
-          pages: Math.ceil(totalCount / limitNum),
+    // Get pending users (where active = false)
+    const [pendingUsers, totalCount] = await Promise.all([
+      prisma.users.findMany({
+        where: { active: false },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          createdAt: true,
+          updatedAt: true,
         },
-      });
-    } catch (err) {
-      console.error("Error fetching pending approvals:", err);
-      return res
-        .status(500)
-        .json({ error: "Failed to fetch pending approvals" });
-    }
+        orderBy: { createdAt: "asc" },
+        skip,
+        take: limitNum,
+      }),
+      prisma.users.count({ where: { active: false } }),
+    ]);
+
+    return res.json({
+      message: "Pending user registrations retrieved successfully",
+      data: pendingUsers,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limitNum),
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching pending approvals:", err);
+    return res.status(500).json({ error: "Failed to fetch pending approvals" });
   }
-);
+});
 
 // POST /api/admin/users/approve-registration - Approve or reject a registration
 router.post(
@@ -768,8 +690,7 @@ router.post(
 
       if (!userId || !action || !["approve", "reject"].includes(action)) {
         return res.status(400).json({
-          error:
-            "Invalid request. userId and action (approve/reject) required.",
+          error: "Invalid request. userId and action (approve/reject) required.",
         });
       }
 
@@ -839,15 +760,9 @@ router.post(
       const { userIds, action } = req.body;
       const adminId = (req as any).user?.userId;
 
-      if (
-        !Array.isArray(userIds) ||
-        userIds.length === 0 ||
-        !action ||
-        !["approve", "reject"].includes(action)
-      ) {
+      if (!Array.isArray(userIds) || userIds.length === 0 || !action || !["approve", "reject"].includes(action)) {
         return res.status(400).json({
-          error:
-            "Invalid request. userIds (array) and action (approve/reject) required.",
+          error: "Invalid request. userIds (array) and action (approve/reject) required.",
         });
       }
 
@@ -894,9 +809,7 @@ router.post(
             results.rejected++;
             results.processed++;
           } catch (err) {
-            results.errors.push(
-              `Failed to reject ${user.email}: ${String(err)}`
-            );
+            results.errors.push(`Failed to reject ${user.email}: ${String(err)}`);
           }
         }
       }
@@ -915,7 +828,7 @@ router.post(
 // GET /api/admin/config/silent-mode - Get silent mode status
 router.get("/config/silent-mode", async (req, res) => {
   try {
-    const config = await prisma.systemConfig.findUnique({
+    const config = await prisma.system_config.findUnique({
       where: { key: "silentMode" },
     });
 
@@ -933,10 +846,10 @@ router.post("/config/silent-mode", adminAuth, async (req, res) => {
   try {
     const { silentMode } = req.body;
 
-    const config = await prisma.systemConfig.upsert({
+    const config = await prisma.system_config.upsert({
       where: { key: "silentMode" },
-      update: { value: silentMode ? "true" : "false" },
-      create: { key: "silentMode", value: silentMode ? "true" : "false" },
+      update: { value: silentMode ? "true" : "false", updatedAt: new Date() },
+      create: { key: "silentMode", value: silentMode ? "true" : "false", updatedAt: new Date() },
     });
 
     return res.json({

@@ -209,7 +209,7 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
     }
 
     // Check if doctor already exists
-    const existing = await prisma.doctor.findFirst({
+    const existing = await prisma.doctors.findFirst({
       where: { email: data.email },
       select: { id: true },
     });
@@ -218,7 +218,7 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
     }
 
     // Check license number uniqueness
-    const existingLicense = await prisma.doctor.findFirst({
+    const existingLicense = await prisma.doctors.findFirst({
       where: { licenseNumber: data.licenseNumber },
       select: { id: true },
     });
@@ -230,7 +230,7 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
     const passwordHash = await bcrypt.hash(data.password, 10);
 
     // Create doctor (status: PENDING by default)
-    const doctor = await prisma.doctor.create({
+    const doctor = await prisma.doctors.create({
       data: {
         email: data.email,
         passwordHash,
@@ -297,7 +297,7 @@ router.post("/login-doctor", validateApiKey, async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const doctor = await prisma.doctor.findFirst({
+    const doctor = await prisma.doctors.findFirst({
       where: { email },
       select: {
         id: true,

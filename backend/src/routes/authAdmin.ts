@@ -72,11 +72,7 @@ function generateTokens(basePayload: any) {
   const accessToken = jwt.sign({ ...basePayload, type: "access" }, JWT_SECRET, {
     expiresIn: "1d",
   });
-  const refreshToken = jwt.sign(
-    { ...basePayload, type: "refresh" },
-    REFRESH_SECRET,
-    { expiresIn: "7d" }
-  );
+  const refreshToken = jwt.sign({ ...basePayload, type: "refresh" }, REFRESH_SECRET, { expiresIn: "7d" });
   return { accessToken, refreshToken };
 }
 
@@ -217,8 +213,7 @@ router.post("/verify-otp", async (req, res) => {
   if (!adminUser) {
     return res.status(500).json({
       error: "No admin user found in database",
-      message:
-        "Seed or create an ADMIN user to enable admin API access (e.g., npm run db:seed)",
+      message: "Seed or create an ADMIN user to enable admin API access (e.g., npm run db:seed)",
     });
   }
 
@@ -250,9 +245,7 @@ router.post("/verify-otp", async (req, res) => {
 router.get("/dev/get-otp", (req, res) => {
   try {
     if (process.env.NODE_ENV !== "development") {
-      return res
-        .status(403)
-        .json({ error: "Forbidden in non-development env" });
+      return res.status(403).json({ error: "Forbidden in non-development env" });
     }
     const email = (req.query.email as string) || "";
     if (!email) return res.status(400).json({ error: "email required" });
@@ -268,8 +261,8 @@ router.get("/dev/get-otp", (req, res) => {
 // GET /api/auth/admin/logs - Get admin login history
 router.get("/logs", async (req, res) => {
   try {
-    const logs = await prisma.adminLoginLog.findMany({
-      orderBy: { created_at: "desc" },
+    const logs = await prisma.admin_login_logs.findMany({
+      orderBy: { createdAt: "desc" },
       take: 100, // Last 100 login attempts
     });
 

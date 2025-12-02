@@ -23,10 +23,7 @@ async function loadMLModel() {
   if (modelLoaded && mlModel) return mlModel;
 
   try {
-    const modelPath = path.join(
-      __dirname,
-      "../../models/bot_detection_model.json"
-    );
+    const modelPath = path.join(__dirname, "../../models/bot_detection_model.json");
     if (fs.existsSync(modelPath)) {
       const modelData = fs.readFileSync(modelPath, "utf-8");
       mlModel = JSON.parse(modelData);
@@ -41,10 +38,7 @@ async function loadMLModel() {
   return null;
 }
 
-async function extractFeatures(
-  req: Request,
-  userId?: string
-): Promise<MLFeatures> {
+async function extractFeatures(req: Request, userId?: string): Promise<MLFeatures> {
   const userAgent = req.headers["user-agent"] || "";
   const ipAddress = req.ip || req.socket.remoteAddress || "unknown";
 
@@ -259,7 +253,7 @@ export async function detectBot(
 export async function getBotRiskScore(userId: string): Promise<number> {
   const recent = await prisma.bot_detections.findFirst({
     where: { userId },
-    orderBy: { created_at: "desc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return recent ? Number(recent.riskScore) : 0;

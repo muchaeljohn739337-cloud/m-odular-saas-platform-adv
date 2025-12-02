@@ -113,7 +113,7 @@ export async function getOALLogs(filters: {
 
   return await prisma.oal_audit_log.findMany({
     where,
-    orderBy: { created_at: "desc" },
+    orderBy: { createdAt: "desc" },
     take: limit,
     skip: offset,
   });
@@ -220,7 +220,7 @@ export async function getOALLogsWithCount(filters: {
   const [items, count] = await Promise.all([
     prisma.oal_audit_log.findMany({
       where,
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: limit,
       skip: offset,
     }),
@@ -235,6 +235,6 @@ export async function getOALLogsWithCount(filters: {
  */
 export async function getAllOALLogsForExport() {
   return await prisma.oal_audit_log.findMany({
-    orderBy: { created_at: "desc" },
+    orderBy: { createdAt: "desc" },
   });
 }

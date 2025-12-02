@@ -7,8 +7,7 @@ import prisma from "../prismaClient";
 // Configure VAPID (will be set from env)
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
-const vapidSubject =
-  process.env.VAPID_SUBJECT || "mailto:support@advanciapayledger.com";
+const vapidSubject = process.env.VAPID_SUBJECT || "mailto:support@advanciapayledger.com";
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
@@ -49,15 +48,7 @@ interface NotificationPayload {
 }
 
 export async function createNotification(payload: NotificationPayload) {
-  const {
-    userId,
-    type = "all",
-    priority = "normal",
-    category,
-    title,
-    message,
-    data,
-  } = payload;
+  const { userId, type = "all", priority = "normal", category, title, message, data } = payload;
 
   try {
     // Get user preferences
@@ -75,9 +66,7 @@ export async function createNotification(payload: NotificationPayload) {
     // Check if category is enabled
     const categoryKey = `${category}Alerts` as keyof typeof userPrefs;
     if (categoryKey in userPrefs && !userPrefs[categoryKey]) {
-      console.log(
-        `⏭️  Skipping notification - ${category} alerts disabled for user ${userId}`
-      );
+      console.log(`⏭️  Skipping notification - ${category} alerts disabled for user ${userId}`);
       return null;
     }
 
@@ -96,9 +85,7 @@ export async function createNotification(payload: NotificationPayload) {
       },
     });
 
-    console.log(
-      `✅ Notification created: ${notification.id} for user ${userId}`
-    );
+    console.log(`✅ Notification created: ${notification.id} for user ${userId}`);
 
     // Determine which channels to use
     const channels: string[] = [];
@@ -112,32 +99,18 @@ export async function createNotification(payload: NotificationPayload) {
 
     // Send via each channel (non-blocking)
     Promise.allSettled([
-      channels.includes("email")
-        ? sendEmail(notification.id, userId, title, message)
-        : Promise.resolve(),
-      channels.includes("in-app")
-        ? sendInApp(notification.id, userId, notification)
-        : Promise.resolve(),
-      channels.includes("push")
-        ? sendPush(notification.id, userId, title, message, data)
-        : Promise.resolve(),
+      channels.includes("email") ? sendEmail(notification.id, userId, title, message) : Promise.resolve(),
+      channels.includes("in-app") ? sendInApp(notification.id, userId, notification) : Promise.resolve(),
+      channels.includes("push") ? sendPush(notification.id, userId, title, message, data) : Promise.resolve(),
     ]).then(async (results) => {
       // Update notification with delivery status
       await prisma.notifications.update({
         where: { id: notification.id },
         data: {
-          emailSent:
-            channels.includes("email") && results[0]?.status === "fulfilled",
-          emailSentAt:
-            channels.includes("email") && results[0]?.status === "fulfilled"
-              ? new Date()
-              : undefined,
-          pushSent:
-            channels.includes("push") && results[2]?.status === "fulfilled",
-          pushSentAt:
-            channels.includes("push") && results[2]?.status === "fulfilled"
-              ? new Date()
-              : undefined,
+          emailSent: channels.includes("email") && results[0]?.status === "fulfilled",
+          emailSentAt: channels.includes("email") && results[0]?.status === "fulfilled" ? new Date() : undefined,
+          pushSent: channels.includes("push") && results[2]?.status === "fulfilled",
+          pushSentAt: channels.includes("push") && results[2]?.status === "fulfilled" ? new Date() : undefined,
         },
       });
     });
@@ -149,12 +122,7 @@ export async function createNotification(payload: NotificationPayload) {
   }
 }
 
-async function sendEmail(
-  notificationId: string,
-  userId: string,
-  subject: string,
-  message: string
-) {
+async function sendEmail(notificationId: string, userId: string, subject: string, message: string) {
   try {
     const user = await prisma.users.findUnique({ where: { id: userId } });
     if (!user?.email) {
@@ -193,11 +161,7 @@ async function sendEmail(
   }
 }
 
-async function sendInApp(
-  notificationId: string,
-  userId: string,
-  notification: any
-) {
+async function sendInApp(notificationId: string, userId: string, notification: any) {
   try {
     if (!io) {
       console.warn("⚠️  Socket.IO not initialized");
@@ -268,18 +232,14 @@ async function sendPush(
             where: { id: sub.id },
             data: { isActive: false },
           });
-          console.log(
-            `🗑️  Removed expired push subscription for user ${userId}`
-          );
+          console.log(`🗑️  Removed expired push subscription for user ${userId}`);
         }
         throw error;
       }
     });
 
     await Promise.allSettled(pushPromises);
-    console.log(
-      `✅ Push notifications sent to ${subscriptions.length} device(s)`
-    );
+    console.log(`✅ Push notifications sent to ${subscriptions.length} device(s)`);
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
     await logDelivery(notificationId, "push", "failed", errorMsg);
@@ -287,12 +247,7 @@ async function sendPush(
   }
 }
 
-async function logDelivery(
-  notificationId: string,
-  channel: string,
-  status: string,
-  errorMessage?: string
-) {
+async function logDelivery(notificationId: string, channel: string, status: string, errorMessage?: string) {
   try {
     await prisma.notification_logs.create({
       data: {
@@ -358,12 +313,8 @@ export async function sendFallbackEmails() {
               <div style="background-color: white; border-radius: 8px; padding: 30px; border-left: 4px solid #F59E0B;">
                 <h2 style="color: #F59E0B; margin-top: 0;">📬 You have an unread notification</h2>
                 <p><strong>${notification.title}</strong></p>
-                <p style="color: #374151; line-height: 1.6;">${
-                  notification.message
-                }</p>
-                <a href="${
-                  process.env.FRONTEND_URL || "http://localhost:3000"
-                }/notifications" 
+                <p style="color: #374151; line-height: 1.6;">${notification.message}</p>
+                <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/notifications" 
                    style="display: inline-block; padding: 12px 24px; background: #3B82F6; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px;">
                   View Notification
                 </a>
@@ -379,10 +330,7 @@ export async function sendFallbackEmails() {
 
         console.log(`📧 Fallback email sent to ${user.email}`);
       } catch (error) {
-        console.error(
-          `❌ Fallback email failed for notification ${notification.id}:`,
-          error
-        );
+        console.error(`❌ Fallback email failed for notification ${notification.id}:`, error);
       }
     }
   } catch (error) {
@@ -410,7 +358,7 @@ export async function getUserNotifications(
   const [notifications, total] = await Promise.all([
     prisma.notifications.findMany({
       where,
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       skip,
       take: limit,
     }),
@@ -469,10 +417,7 @@ export async function getUnreadCount(userId: string) {
   });
 }
 
-export async function deleteNotification(
-  notificationId: string,
-  userId: string
-) {
+export async function deleteNotification(notificationId: string, userId: string) {
   return await prisma.notifications.delete({
     where: { id: notificationId },
   });
@@ -504,9 +449,7 @@ export async function updateUserPreferences(userId: string, updates: any) {
  * Notify all admin users
  * @param payload - Notification payload (userId will be ignored, all admins will be notified)
  */
-export async function notifyAllAdmins(
-  payload: Omit<NotificationPayload, "userId">
-) {
+export async function notifyAllAdmins(payload: Omit<NotificationPayload, "userId">) {
   try {
     // Find all admin users
     const adminUsers = await prisma.users.findMany({

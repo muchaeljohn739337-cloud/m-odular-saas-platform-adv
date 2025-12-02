@@ -37,14 +37,14 @@ export async function analyzeTrumpCoinWallet(userId: string) {
     // Get crypto orders (trump coin or any crypto purchases)
     const cryptoOrders = await prisma.crypto_orders.findMany({
       where: { userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 50,
     });
 
     // Get crypto withdrawals
     const cryptoWithdrawals = await prisma.crypto_withdrawals.findMany({
       where: { userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 20,
     });
 
@@ -86,14 +86,11 @@ export async function analyzeTrumpCoinWallet(userId: string) {
         status: withdrawal.status,
         createdAt: withdrawal.createdAt,
       })),
-      accountAge: Math.floor(
-        (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-      ),
+      accountAge: Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)),
     };
 
     // Generate rule-based wallet analysis
-    const totalValue =
-      totalCryptoValueUSD + parseFloat(user.usdBalance.toString());
+    const totalValue = totalCryptoValueUSD + parseFloat(user.usdBalance.toString());
     const hasMultipleCryptos = [
       parseFloat(user.btcBalance.toString()) > 0,
       parseFloat(user.ethBalance.toString()) > 0,
@@ -160,12 +157,7 @@ ${
             eth: parseFloat(user.ethBalance.toString()) > 0,
             usdt: parseFloat(user.usdtBalance.toString()) > 0,
           },
-          activityLevel:
-            cryptoOrders.length > 10
-              ? "high"
-              : cryptoOrders.length > 3
-              ? "medium"
-              : "low",
+          activityLevel: cryptoOrders.length > 10 ? "high" : cryptoOrders.length > 3 ? "medium" : "low",
           accountAge: walletData.accountAge,
         },
       },
@@ -185,10 +177,7 @@ ${
  * Analyze Cash Out Eligibility
  * Replaces: supabase.from('transactions').select('*').eq('user_id', userId)
  */
-export async function analyzeCashOutEligibility(
-  userId: string,
-  requestedAmount: number
-) {
+export async function analyzeCashOutEligibility(userId: string, requestedAmount: number) {
   try {
     // Get user with balances
     const user = await prisma.users.findUnique({
@@ -218,7 +207,7 @@ export async function analyzeCashOutEligibility(
     // Get recent transactions
     const transactions = await prisma.transactions.findMany({
       where: { userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 50,
     });
 
@@ -241,16 +230,11 @@ export async function analyzeCashOutEligibility(
     // Calculate eligibility factors
     const availableBalance = parseFloat(user.usdBalance.toString());
     const hasEnoughBalance = availableBalance >= requestedAmount;
-    const accountAgeInDays = Math.floor(
-      (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const accountAgeInDays = Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
     const isAccountOldEnough = accountAgeInDays >= 7; // Minimum 7 days
     const hasPendingWithdrawals = pendingWithdrawals.length > 0;
     const hasActiveLoans = activeLoans.length > 0;
-    const totalLoanDebt = activeLoans.reduce(
-      (sum, loan) => sum + parseFloat(loan.remainingBalance.toString()),
-      0
-    );
+    const totalLoanDebt = activeLoans.reduce((sum, loan) => sum + parseFloat(loan.remainingBalance.toString()), 0);
 
     // Transaction velocity check (fraud detection)
     const last24HoursTransactions = transactions.filter(
@@ -275,9 +259,7 @@ export async function analyzeCashOutEligibility(
       suspiciousActivity,
       totpEnabled: user.totpEnabled,
       accountActive: user.active,
-      recentTransactionTypes: last24HoursTransactions
-        .slice(0, 10)
-        .map((tx) => tx.type),
+      recentTransactionTypes: last24HoursTransactions.slice(0, 10).map((tx) => tx.type),
     };
 
     // Generate rule-based eligibility analysis
@@ -288,31 +270,23 @@ export async function analyzeCashOutEligibility(
     if (!hasEnoughBalance) {
       eligibilityScore -= 50;
       reasons.push(
-        `Insufficient balance: You have $${availableBalance.toFixed(
-          2
-        )}, need $${requestedAmount.toFixed(2)}`
+        `Insufficient balance: You have $${availableBalance.toFixed(2)}, need $${requestedAmount.toFixed(2)}`
       );
     }
 
     if (!isAccountOldEnough) {
       eligibilityScore -= 30;
-      reasons.push(
-        `Account too new: ${accountAgeInDays} days old (minimum 7 days required)`
-      );
+      reasons.push(`Account too new: ${accountAgeInDays} days old (minimum 7 days required)`);
     }
 
     if (hasPendingWithdrawals) {
       eligibilityScore -= 20;
-      reasons.push(
-        `${pendingWithdrawals.length} pending withdrawal(s) must complete first`
-      );
+      reasons.push(`${pendingWithdrawals.length} pending withdrawal(s) must complete first`);
     }
 
     if (suspiciousActivity) {
       eligibilityScore -= 40;
-      reasons.push(
-        `Unusual activity: ${last24HoursTransactions.length} transactions in last 24 hours`
-      );
+      reasons.push(`Unusual activity: ${last24HoursTransactions.length} transactions in last 24 hours`);
     }
 
     if (!user.active) {
@@ -321,23 +295,15 @@ export async function analyzeCashOutEligibility(
     }
 
     if (hasActiveLoans) {
-      warnings.push(
-        `Active loan debt: $${totalLoanDebt.toFixed(
-          2
-        )} - consider payment obligations`
-      );
+      warnings.push(`Active loan debt: $${totalLoanDebt.toFixed(2)} - consider payment obligations`);
     }
 
     if (!user.totpEnabled) {
-      warnings.push(
-        "Two-factor authentication not enabled - recommended for withdrawals"
-      );
+      warnings.push("Two-factor authentication not enabled - recommended for withdrawals");
     }
 
     if (requestedAmount > availableBalance * 0.8) {
-      warnings.push(
-        "Withdrawing >80% of balance - consider maintaining reserves"
-      );
+      warnings.push("Withdrawing >80% of balance - consider maintaining reserves");
     }
 
     const isEligible = eligibilityScore >= 70;
@@ -351,17 +317,9 @@ Available Balance: $${availableBalance.toFixed(2)}
 Eligibility Score: ${eligibilityScore}/100
 Status: ${isEligible ? "✓ APPROVED" : "✗ DENIED"}
 
-${
-  reasons.length > 0
-    ? `Reasons:\n${reasons.map((r) => `- ${r}`).join("\n")}`
-    : "All primary checks passed"
-}
+${reasons.length > 0 ? `Reasons:\n${reasons.map((r) => `- ${r}`).join("\n")}` : "All primary checks passed"}
 
-${
-  warnings.length > 0
-    ? `\nWarnings:\n${warnings.map((w) => `- ${w}`).join("\n")}`
-    : ""
-}
+${warnings.length > 0 ? `\nWarnings:\n${warnings.map((w) => `- ${w}`).join("\n")}` : ""}
 
 Account Overview:
 - Account Age: ${accountAgeInDays} days
@@ -432,28 +390,28 @@ export async function generateProductRecommendations(userId: string) {
     // Get user's transaction history
     const transactions = await prisma.transactions.findMany({
       where: { userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 100,
     });
 
     // Get crypto orders
     const cryptoOrders = await prisma.crypto_orders.findMany({
       where: { userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 20,
     });
 
     // Get loans
     const loans = await prisma.loans.findMany({
       where: { userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 10,
     });
 
     // Get MedBeds bookings
     const medBedsBookings = await prisma.medbeds_bookings.findMany({
       where: { userId },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 10,
     });
 
@@ -484,9 +442,7 @@ export async function generateProductRecommendations(userId: string) {
         medBeds: medBedsBookings.length > 0,
       },
       tier: userTier?.currentTier || "bronze",
-      accountAgeInDays: Math.floor(
-        (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-      ),
+      accountAgeInDays: Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)),
     };
 
     // Define available services/products
@@ -543,8 +499,7 @@ export async function generateProductRecommendations(userId: string) {
       recommendations.push({
         product: "Crypto Trading Platform",
         priority: "medium",
-        reason:
-          "Start trading BTC, ETH, and USDT with competitive rates and low fees.",
+        reason: "Start trading BTC, ETH, and USDT with competitive rates and low fees.",
         relevance: 60,
       });
     }
@@ -572,8 +527,7 @@ export async function generateProductRecommendations(userId: string) {
       recommendations.push({
         product: "Personal Loan",
         priority: "medium",
-        reason:
-          "Need quick funds? Get approved for a personal loan with flexible repayment terms.",
+        reason: "Need quick funds? Get approved for a personal loan with flexible repayment terms.",
         relevance: 70,
       });
     }
@@ -594,25 +548,18 @@ export async function generateProductRecommendations(userId: string) {
     }
 
     // Tier upgrade recommendations
-    if (
-      userProfile.tier === "bronze" &&
-      (cryptoOrders.length > 10 || transactions.length > 20)
-    ) {
+    if (userProfile.tier === "bronze" && (cryptoOrders.length > 10 || transactions.length > 20)) {
       recommendations.push({
         product: "Silver Tier Upgrade",
         priority: "high",
-        reason:
-          "You're highly active! Upgrade to Silver tier for reduced fees and exclusive benefits.",
+        reason: "You're highly active! Upgrade to Silver tier for reduced fees and exclusive benefits.",
         relevance: 88,
       });
     }
 
     // Sort by relevance and take top 5
     const topRecommendations = recommendations
-      .sort(
-        (a: { relevance: number }, b: { relevance: number }) =>
-          b.relevance - a.relevance
-      )
+      .sort((a: { relevance: number }, b: { relevance: number }) => b.relevance - a.relevance)
       .slice(0, 5);
 
     const recommendationsText = topRecommendations
@@ -676,7 +623,7 @@ export async function generateMarketInsights() {
 
     // Get recent crypto orders
     const recentCryptoOrders = await prisma.crypto_orders.findMany({
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 100,
       select: {
         cryptoType: true,
@@ -698,7 +645,7 @@ export async function generateMarketInsights() {
 
     // Get recent transactions
     const recentTransactions = await prisma.transactions.findMany({
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 50,
       select: {
         type: true,
@@ -729,8 +676,7 @@ export async function generateMarketInsights() {
 
     // Calculate market metrics
     const totalCryptoVolume = cryptoOrderStats.reduce(
-      (sum: number, stat: { _sum: { usdAmount?: any } }) =>
-        sum + parseFloat(stat._sum.usdAmount?.toString() || "0"),
+      (sum: number, stat: { _sum: { usdAmount?: any } }) => sum + parseFloat(stat._sum.usdAmount?.toString() || "0"),
       0
     );
 
@@ -776,9 +722,7 @@ export async function generateMarketInsights() {
     };
 
     // Generate rule-based market insights
-    const activePercentage = parseFloat(
-      ((activeUsers / totalUsers) * 100).toFixed(2)
-    );
+    const activePercentage = parseFloat(((activeUsers / totalUsers) * 100).toFixed(2));
 
     let userGrowthTrend = "Stable";
     if (activePercentage > 75) userGrowthTrend = "Excellent";
@@ -788,32 +732,20 @@ export async function generateMarketInsights() {
     const topCrypto =
       cryptoOrderStats.length > 0
         ? cryptoOrderStats.sort(
-            (a: { _count?: number }, b: { _count?: number }) =>
-              (b._count || 0) - (a._count || 0)
+            (a: { _count?: number }, b: { _count?: number }) => (b._count || 0) - (a._count || 0)
           )[0]
         : null;
 
-    const avgOrderValue =
-      cryptoOrderStats.length > 0
-        ? totalCryptoVolume / recentCryptoOrders.length
-        : 0;
+    const avgOrderValue = cryptoOrderStats.length > 0 ? totalCryptoVolume / recentCryptoOrders.length : 0;
 
     let marketSentiment = "Neutral";
-    if (recentCryptoOrders.length > 50 && avgOrderValue > 500)
-      marketSentiment = "Bullish";
+    if (recentCryptoOrders.length > 50 && avgOrderValue > 500) marketSentiment = "Bullish";
     else if (recentCryptoOrders.length < 20) marketSentiment = "Bearish";
 
-    const activeLoanCount =
-      loanStats.find((s: any) => s.status === "active")?._count || 0;
-    const completedLoanCount =
-      loanStats.find((s: any) => s.status === "COMPLETED")?._count || 0;
+    const activeLoanCount = loanStats.find((s: any) => s.status === "active")?._count || 0;
+    const completedLoanCount = loanStats.find((s: any) => s.status === "COMPLETED")?._count || 0;
     const loanRepaymentRate =
-      completedLoanCount > 0
-        ? (
-            (completedLoanCount / (completedLoanCount + activeLoanCount)) *
-            100
-          ).toFixed(1)
-        : 0;
+      completedLoanCount > 0 ? ((completedLoanCount / (completedLoanCount + activeLoanCount)) * 100).toFixed(1) : 0;
 
     const insights = `
 Platform Market Insights - ${new Date().toLocaleDateString()}
@@ -826,11 +758,7 @@ USER METRICS:
 ✓ Growth Trend: ${userGrowthTrend}
 
 CRYPTO TRADING ACTIVITY:
-${
-  topCrypto
-    ? `• Most Popular: ${topCrypto.cryptoType} (${topCrypto._count} orders)`
-    : "• No recent crypto activity"
-}
+${topCrypto ? `• Most Popular: ${topCrypto.cryptoType} (${topCrypto._count} orders)` : "• No recent crypto activity"}
 • Total Volume (Last 100): $${totalCryptoVolume.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -841,18 +769,13 @@ ${
 
 TRANSACTIONS:
 • Recent Transaction Count: ${recentTransactions.length}
-• Transaction Types: ${
-      [...new Set(recentTransactions.map((tx: any) => tx.type))].join(", ") ||
-      "None"
-    }
+• Transaction Types: ${[...new Set(recentTransactions.map((tx: any) => tx.type))].join(", ") || "None"}
 
 LENDING SERVICES:
 ${loanStats
   .map(
     (stat: any) =>
-      `• ${stat.status}: ${stat._count} loans ($${parseFloat(
-        stat._sum.amount?.toString() || "0"
-      ).toLocaleString()})`
+      `• ${stat.status}: ${stat._count} loans ($${parseFloat(stat._sum.amount?.toString() || "0").toLocaleString()})`
   )
   .join("\n")}
 • Repayment Success Rate: ${loanRepaymentRate}%
@@ -863,9 +786,7 @@ ${
     ? medBedsStats
         .map(
           (stat: any) =>
-            `• ${stat.chamberType} (${stat.status}): ${
-              stat._count
-            } bookings ($${parseFloat(
+            `• ${stat.chamberType} (${stat.status}): ${stat._count} bookings ($${parseFloat(
               stat._sum.cost?.toString() || "0"
             ).toLocaleString()} revenue)`
         )
@@ -906,11 +827,7 @@ RECOMMENDATIONS:
         ? "Increase crypto trading volume through promotional offers"
         : "Crypto volume is strong - explore new trading pairs"
     }
-3. ${
-      loanStats.length === 0
-        ? "Launch loan products to diversify revenue"
-        : "Monitor loan repayment rates closely"
-    }
+3. ${loanStats.length === 0 ? "Launch loan products to diversify revenue" : "Monitor loan repayment rates closely"}
 4. ${
       medBedsStats.length === 0
         ? "Promote MedBeds services through targeted marketing"

@@ -1,7 +1,7 @@
 import express from "express";
-import prisma from "../prismaClient";
-import { authenticateToken } from "../middleware/auth";
 import { z } from "zod";
+import { authenticateToken } from "../middleware/auth";
+import prisma from "../prismaClient";
 
 const router = express.Router();
 
@@ -35,7 +35,7 @@ router.get("/", authenticateToken, async (req, res) => {
       where.doctorId = doctorId;
     }
 
-    const consultations = await prisma.consultation.findMany({
+    const consultations = await prisma.consultations.findMany({
       where,
       select: {
         id: true,
@@ -70,7 +70,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
     const userId = getUserId(req);
     const doctorId = getDoctorId(req);
 
-    const consultation = await prisma.consultation.findUnique({
+    const consultation = await prisma.consultations.findUnique({
       where: { id },
     });
 
@@ -79,10 +79,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
     }
 
     // Verify access
-    if (
-      consultation.patientId !== userId &&
-      consultation.doctorId !== doctorId
-    ) {
+    if (consultation.patientId !== userId && consultation.doctorId !== doctorId) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -104,15 +101,13 @@ router.post("/", authenticateToken, async (req, res) => {
   try {
     const userId = getUserId(req);
     if (!userId) {
-      return res
-        .status(401)
-        .json({ error: "Only patients can create consultations" });
+      return res.status(401).json({ error: "Only patients can create consultations" });
     }
 
     const data = createConsultationSchema.parse(req.body);
 
     // Verify doctor exists and is verified
-    const doctor = await prisma.doctor.findUnique({
+    const doctor = await prisma.doctors.findUnique({
       where: { id: data.doctorId },
       select: { id: true, status: true },
     });
@@ -125,7 +120,7 @@ router.post("/", authenticateToken, async (req, res) => {
       return res.status(400).json({ error: "Doctor is not verified" });
     }
 
-    const consultation = await prisma.consultation.create({
+    const consultation = await prisma.consultations.create({
       data: {
         patientId: userId,
         doctorId: data.doctorId,
@@ -162,12 +157,10 @@ router.patch("/:id", authenticateToken, async (req, res) => {
     const doctorId = getDoctorId(req);
 
     if (!doctorId) {
-      return res
-        .status(403)
-        .json({ error: "Only doctors can update consultations" });
+      return res.status(403).json({ error: "Only doctors can update consultations" });
     }
 
-    const consultation = await prisma.consultation.findUnique({
+    const consultation = await prisma.consultations.findUnique({
       where: { id },
       select: { id: true, doctorId: true },
     });
@@ -182,14 +175,12 @@ router.patch("/:id", authenticateToken, async (req, res) => {
 
     const data = updateConsultationSchema.parse(req.body);
 
-    const updated = await prisma.consultation.update({
+    const updated = await prisma.consultations.update({
       where: { id },
       data: {
         ...data,
-        ...(data.status === "ACTIVE" && !consultation
-          ? { startedAt: new Date() }
-          : {}),
-        ...(data.status === 'COMPLETED' ? { completedAt: new Date() } : {}),
+        ...(data.status === "ACTIVE" && !consultation ? { startedAt: new Date() } : {}),
+        ...(data.status === "COMPLETED" ? { completedAt: new Date() } : {}),
       },
     });
 
@@ -229,7 +220,7 @@ router.post("/message", authenticateToken, async (req, res) => {
     const data = sendMessageSchema.parse(req.body);
 
     // Verify consultation exists and user has access
-    const consultation = await prisma.consultation.findUnique({
+    const consultation = await prisma.consultations.findUnique({
       where: { id: data.consultationId },
       select: { id: true, patientId: true, doctorId: true },
     });
@@ -238,14 +229,11 @@ router.post("/message", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Consultation not found" });
     }
 
-    if (
-      consultation.patientId !== userId &&
-      consultation.doctorId !== doctorId
-    ) {
+    if (consultation.patientId !== userId && consultation.doctorId !== doctorId) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    const message = await prisma.consultationMessage.create({
+    const message = await prisma.consultation_messages.create({
       data: {
         consultationId: data.consultationId,
         senderType: userId ? "patient" : "doctor",
@@ -279,7 +267,7 @@ router.get("/video/:consultationId", authenticateToken, async (req, res) => {
     const userId = getUserId(req);
     const doctorId = getDoctorId(req);
 
-    const consultation = await prisma.consultation.findUnique({
+    const consultation = await prisma.consultations.findUnique({
       where: { id: consultationId },
       select: {
         id: true,
@@ -294,10 +282,7 @@ router.get("/video/:consultationId", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Consultation not found" });
     }
 
-    if (
-      consultation.patientId !== userId &&
-      consultation.doctorId !== doctorId
-    ) {
+    if (consultation.patientId !== userId && consultation.doctorId !== doctorId) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -305,7 +290,7 @@ router.get("/video/:consultationId", authenticateToken, async (req, res) => {
     let roomId = consultation.videoRoomId;
     if (!roomId) {
       roomId = `advancia-consultation-${consultationId}`;
-      await prisma.consultation.update({
+      await prisma.consultations.update({
         where: { id: consultationId },
         data: { videoRoomId: roomId },
       });

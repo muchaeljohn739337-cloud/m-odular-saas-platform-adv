@@ -40,7 +40,7 @@ export class ChatbotSupport {
     try {
       const transactions = await prisma.transactions.findMany({
         where: { userId },
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
         take: limit,
         select: {
           id: true,
@@ -98,9 +98,7 @@ export class ChatbotSupport {
       return {
         verified: isVerified,
         status: isVerified ? "Verified" : "Pending",
-        accountAge: Math.floor(
-          (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-        ),
+        accountAge: Math.floor((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)),
       };
     } catch (error) {
       console.error("[Chatbot] Error fetching KYC status:", error);
@@ -115,7 +113,7 @@ export class ChatbotSupport {
     try {
       const orders = await prisma.crypto_orders.findMany({
         where: { userId },
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
         take: limit,
         select: {
           id: true,
@@ -202,8 +200,7 @@ export class ChatbotSupport {
     }
 
     return {
-      reply:
-        "I'm not sure about that. Let me connect you with a human agent, or you can browse our FAQ section.",
+      reply: "I'm not sure about that. Let me connect you with a human agent, or you can browse our FAQ section.",
       suggestions: ["Talk to human", "View FAQ", "Main menu"],
     };
   }
@@ -245,9 +242,7 @@ export class ChatbotSupport {
     try {
       const { userId, message, action } = payload;
 
-      console.log(
-        `[Chatbot] Processing webhook - Action: ${action}, User: ${userId}`
-      );
+      console.log(`[Chatbot] Processing webhook - Action: ${action}, User: ${userId}`);
 
       switch (action) {
         case "get_balance":
@@ -311,12 +306,7 @@ export class ChatbotSupport {
       return {
         totalInteractions: interactions,
         supportTickets,
-        automationRate:
-          interactions > 0
-            ? (((interactions - supportTickets) / interactions) * 100).toFixed(
-                1
-              )
-            : 0,
+        automationRate: interactions > 0 ? (((interactions - supportTickets) / interactions) * 100).toFixed(1) : 0,
       };
     } catch (error) {
       console.error("[Chatbot] Error fetching analytics:", error);

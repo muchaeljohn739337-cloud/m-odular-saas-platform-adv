@@ -96,9 +96,7 @@ class TransactionProcessor {
       });
 
       const dailyLimit = 10000; // $10,000 daily limit
-      const dailySum = dailyTransactions._sum.amount
-        ? Number(dailyTransactions._sum.amount)
-        : 0;
+      const dailySum = dailyTransactions._sum.amount ? Number(dailyTransactions._sum.amount) : 0;
 
       if (dailySum + amountNum > dailyLimit) {
         result.warnings.push("Transaction exceeds daily limit");
@@ -106,9 +104,7 @@ class TransactionProcessor {
       }
 
       // Validation Rule 5: Fraud detection based on patterns
-      const fraudIndicators = await this.detectFraudPatterns(
-        transaction.userId
-      );
+      const fraudIndicators = await this.detectFraudPatterns(transaction.userId);
       if (fraudIndicators > 3) {
         result.warnings.push("Multiple fraud indicators detected");
         result.fraudScore = fraudIndicators * 0.2;
@@ -124,10 +120,7 @@ class TransactionProcessor {
 
       return result;
     } catch (error) {
-      console.error(
-        `[RPA] Validation error for transaction ${transactionId}:`,
-        error
-      );
+      console.error(`[RPA] Validation error for transaction ${transactionId}:`, error);
       return {
         isValid: false,
         confidence: 0,
@@ -146,10 +139,7 @@ class TransactionProcessor {
       const validation = await this.validateTransaction(transactionId);
 
       if (!validation.isValid) {
-        console.log(
-          `[RPA] Transaction ${transactionId} failed validation:`,
-          validation.errors
-        );
+        console.log(`[RPA] Transaction ${transactionId} failed validation:`, validation.errors);
 
         // Update transaction status to failed
         await prisma.transactions.update({
@@ -194,10 +184,7 @@ class TransactionProcessor {
       console.log(`[RPA] Successfully processed transaction ${transactionId}`);
       return true;
     } catch (error) {
-      console.error(
-        `[RPA] Error processing transaction ${transactionId}:`,
-        error
-      );
+      console.error(`[RPA] Error processing transaction ${transactionId}:`, error);
 
       // Mark transaction as failed
       await prisma.transactions
@@ -296,13 +283,10 @@ class TransactionProcessor {
     });
 
     const credits =
-      creditDebitPairs.find(
-        (g: { type: string; _count?: { type?: number } }) => g.type === "credit"
-      )?._count?.type || 0;
+      creditDebitPairs.find((g: { type: string; _count?: { type?: number } }) => g.type === "credit")?._count?.type ||
+      0;
     const debits =
-      creditDebitPairs.find(
-        (g: { type: string; _count?: { type?: number } }) => g.type === "debit"
-      )?._count?.type || 0;
+      creditDebitPairs.find((g: { type: string; _count?: { type?: number } }) => g.type === "debit")?._count?.type || 0;
 
     if (Math.min(credits, debits) > 3) {
       indicators++;
@@ -314,11 +298,7 @@ class TransactionProcessor {
   /**
    * Log transaction processing to audit trail
    */
-  private async logTransaction(
-    transaction_id: string,
-    action: string,
-    validation: ValidationResult
-  ): Promise<void> {
+  private async logTransaction(transaction_id: string, action: string, validation: ValidationResult): Promise<void> {
     try {
       await prisma.audit_logs.create({
         data: {
@@ -352,12 +332,10 @@ class TransactionProcessor {
       const pendingTransactions = await prisma.transactions.findMany({
         where: { status: "PENDING" },
         take: this.config.batchSize,
-        orderBy: { created_at: "asc" },
+        orderBy: { createdAt: "asc" },
       });
 
-      console.log(
-        `[RPA] Found ${pendingTransactions.length} pending transactions`
-      );
+      console.log(`[RPA] Found ${pendingTransactions.length} pending transactions`);
 
       for (const transaction of pendingTransactions) {
         await this.processTransaction(transaction.id);

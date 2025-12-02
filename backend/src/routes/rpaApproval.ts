@@ -1,11 +1,7 @@
 import crypto from "crypto";
 import { Decimal } from "decimal.js";
 import { Response, Router } from "express";
-import {
-  authenticateToken,
-  AuthRequest,
-  requireAdmin,
-} from "../middleware/auth";
+import { authenticateToken, AuthRequest, requireAdmin } from "../middleware/auth";
 import prisma from "../prismaClient";
 
 const router = Router();
@@ -121,9 +117,7 @@ router.post(
           },
         });
 
-        console.log(
-          `✅ [RPA] Auto-approved withdrawal ${id} (risk score: ${riskAssessment.score})`
-        );
+        console.log(`✅ [RPA] Auto-approved withdrawal ${id} (risk score: ${riskAssessment.score})`);
 
         return res.json({
           success: true,
@@ -155,9 +149,7 @@ router.post(
         },
       });
 
-      console.warn(
-        `⚠️  [RPA] Withdrawal ${id} flagged for review (risk score: ${riskAssessment.score})`
-      );
+      console.warn(`⚠️  [RPA] Withdrawal ${id} flagged for review (risk score: ${riskAssessment.score})`);
 
       return res.json({
         success: true,
@@ -204,7 +196,7 @@ router.post(
             },
           },
         },
-        orderBy: { created_at: "asc" },
+        orderBy: { createdAt: "asc" },
       });
 
       const results = {
@@ -220,10 +212,7 @@ router.post(
         try {
           const riskAssessment = await assessWithdrawalRisk(withdrawal);
 
-          if (
-            riskAssessment.score <= maxRiskScore &&
-            riskAssessment.autoApprove
-          ) {
+          if (riskAssessment.score <= maxRiskScore && riskAssessment.autoApprove) {
             if (!dryRun) {
               await prisma.crypto_withdrawals.update({
                 where: { id: withdrawal.id },
@@ -236,8 +225,7 @@ router.post(
 
               await prisma.audit_logs.create({
                 data: {
-                  id:
-                    (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+                  id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
                   userId: "system",
                   action: "WITHDRAWAL_BATCH_AUTO_APPROVED",
                   resourceType: "CryptoWithdrawal",
@@ -275,10 +263,7 @@ router.post(
           }
         } catch (error) {
           results.errors++;
-          console.error(
-            `[RPA] Error processing withdrawal ${withdrawal.id}:`,
-            error
-          );
+          console.error(`[RPA] Error processing withdrawal ${withdrawal.id}:`, error);
         }
       }
 
@@ -286,9 +271,7 @@ router.post(
         success: true,
         dryRun,
         results,
-        message: dryRun
-          ? "Dry run complete - no changes made"
-          : `Processed ${results.total} withdrawals`,
+        message: dryRun ? "Dry run complete - no changes made" : `Processed ${results.total} withdrawals`,
       });
     } catch (error) {
       console.error("[RPA] Batch auto-approval error:", error);
@@ -308,23 +291,12 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const { userId } = req.params;
-      const {
-        documentType,
-        documentPath,
-        confidenceThreshold = 0.95,
-      } = req.body;
+      const { documentType, documentPath, confidenceThreshold = 0.95 } = req.body;
 
       // Simulate KYC verification (in production, call external API)
-      const kycScore = await performKYCVerification(
-        userId,
-        documentType,
-        documentPath
-      );
+      const kycScore = await performKYCVerification(userId, documentType, documentPath);
 
-      if (
-        kycScore.confidence >= confidenceThreshold &&
-        !kycScore.flags.length
-      ) {
+      if (kycScore.confidence >= confidenceThreshold && !kycScore.flags.length) {
         // Auto-verify user
         await prisma.users.update({
           where: { id: userId },
@@ -352,9 +324,7 @@ router.post(
           },
         });
 
-        console.log(
-          `✅ [RPA] Auto-verified KYC for user ${userId} (confidence: ${kycScore.confidence})`
-        );
+        console.log(`✅ [RPA] Auto-verified KYC for user ${userId} (confidence: ${kycScore.confidence})`);
 
         return res.json({
           success: true,
@@ -382,9 +352,7 @@ router.post(
         },
       });
 
-      console.warn(
-        `⚠️  [RPA] KYC for user ${userId} flagged for review (confidence: ${kycScore.confidence})`
-      );
+      console.warn(`⚠️  [RPA] KYC for user ${userId} flagged for review (confidence: ${kycScore.confidence})`);
 
       return res.json({
         success: true,
@@ -409,9 +377,7 @@ async function assessWithdrawalRisk(withdrawal: any): Promise<RiskAssessment> {
   const { user, amount, cryptoType, createdAt } = withdrawal;
 
   // Factor 1: Account age
-  const accountAgeDays = Math.floor(
-    (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const accountAgeDays = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24));
 
   if (accountAgeDays < 7) {
     score += 30;
@@ -426,10 +392,10 @@ async function assessWithdrawalRisk(withdrawal: any): Promise<RiskAssessment> {
     cryptoType === "USD"
       ? "usdBalance"
       : cryptoType === "BTC"
-      ? "btcBalance"
-      : cryptoType === "ETH"
-      ? "ethBalance"
-      : "usdtBalance";
+        ? "btcBalance"
+        : cryptoType === "ETH"
+          ? "ethBalance"
+          : "usdtBalance";
 
   const currentBalance = new Decimal(user[balanceField]);
   const withdrawalAmount = new Decimal(amount);
@@ -507,11 +473,7 @@ async function assessWithdrawalRisk(withdrawal: any): Promise<RiskAssessment> {
 }
 
 // Helper: Perform KYC verification (simulated)
-async function performKYCVerification(
-  userId: string,
-  documentType: string,
-  documentPath: string
-): Promise<KYCScore> {
+async function performKYCVerification(userId: string, documentType: string, documentPath: string): Promise<KYCScore> {
   // In production, integrate with Onfido, Jumio, or Trulioo API
   // For now, simulate verification
 

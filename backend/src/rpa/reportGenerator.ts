@@ -50,13 +50,8 @@ export class ReportGenerator {
   /**
    * Generate Balance Report
    */
-  async generateBalanceReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<ReportData> {
-    console.log(
-      `📊 Generating balance report from ${startDate.toISOString()} to ${endDate.toISOString()}...`
-    );
+  async generateBalanceReport(startDate: Date, endDate: Date): Promise<ReportData> {
+    console.log(`📊 Generating balance report from ${startDate.toISOString()} to ${endDate.toISOString()}...`);
 
     const sections: ReportSection[] = [];
 
@@ -95,12 +90,9 @@ export class ReportGenerator {
         totalWallets: tokenBalances._count.id,
         totalBalance: tokenBalances._sum.balance?.toString() || "0",
         totalLocked: tokenBalances._sum.lockedBalance?.toString() || "0",
-        totalLifetimeEarned:
-          tokenBalances._sum.lifetimeEarned?.toString() || "0",
+        totalLifetimeEarned: tokenBalances._sum.lifetimeEarned?.toString() || "0",
       },
-      summary: `Total tokens in circulation: ${
-        tokenBalances._sum.balance?.toString() || "0"
-      }`,
+      summary: `Total tokens in circulation: ${tokenBalances._sum.balance?.toString() || "0"}`,
     });
 
     // Section 3: Transaction summary
@@ -118,17 +110,11 @@ export class ReportGenerator {
 
     sections.push({
       title: "Transaction Summary",
-      data: transactions.map(
-        (t: {
-          type: string;
-          _count: { id: number };
-          _sum: { amount?: any };
-        }) => ({
-          type: t.type,
-          count: t._count.id,
-          totalAmount: t._sum.amount?.toString() || "0",
-        })
-      ),
+      data: transactions.map((t: { type: string; _count: { id: number }; _sum: { amount?: any } }) => ({
+        type: t.type,
+        count: t._count.id,
+        totalAmount: t._sum.amount?.toString() || "0",
+      })),
       summary: `Total transactions in period: ${transactions.reduce(
         (sum: number, t: { _count: { id: number } }) => sum + t._count.id,
         0
@@ -148,10 +134,7 @@ export class ReportGenerator {
   /**
    * Generate Crypto Orders Report
    */
-  async generateCryptoRecoveryReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<ReportData> {
+  async generateCryptoRecoveryReport(startDate: Date, endDate: Date): Promise<ReportData> {
     console.log(`🔐 Generating crypto orders report...`);
 
     const sections: ReportSection[] = [];
@@ -173,7 +156,7 @@ export class ReportGenerator {
         status: true,
         createdAt: true,
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 100,
     });
 
@@ -215,12 +198,10 @@ export class ReportGenerator {
 
     sections.push({
       title: "Order Status Breakdown",
-      data: statusBreakdown.map(
-        (s: { status: string; _count: { id: number } }) => ({
-          status: s.status,
-          count: s._count.id,
-        })
-      ),
+      data: statusBreakdown.map((s: { status: string; _count: { id: number } }) => ({
+        status: s.status,
+        count: s._count.id,
+      })),
     });
 
     const report: ReportData = {
@@ -236,10 +217,7 @@ export class ReportGenerator {
   /**
    * Generate Admin Actions Report
    */
-  async generateAdminActionsReport(
-    startDate: Date,
-    endDate: Date
-  ): Promise<ReportData> {
+  async generateAdminActionsReport(startDate: Date, endDate: Date): Promise<ReportData> {
     console.log(`👤 Generating admin actions report...`);
 
     const sections: ReportSection[] = [];
@@ -261,17 +239,14 @@ export class ReportGenerator {
           lte: endDate,
         },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 100, // Limit to latest 100 actions
     });
 
     sections.push({
       title: "Admin Actions",
       data: adminLogs.map((log) => ({
-        admin:
-          adminUsers.find(
-            (u: { id: string; email: string }) => u.id === (log.userId ?? "")
-          )?.email || "Unknown",
+        admin: adminUsers.find((u: { id: string; email: string }) => u.id === (log.userId ?? ""))?.email || "Unknown",
         action: log.action,
         resource: log.resourceType,
         timestamp: log.createdAt,
@@ -295,12 +270,10 @@ export class ReportGenerator {
 
     sections.push({
       title: "Action Type Breakdown",
-      data: actionBreakdown.map(
-        (a: { action: string; _count: { id: number } }) => ({
-          action: a.action,
-          count: a._count.id,
-        })
-      ),
+      data: actionBreakdown.map((a: { action: string; _count: { id: number } }) => ({
+        action: a.action,
+        count: a._count.id,
+      })),
     });
 
     const report: ReportData = {
@@ -386,20 +359,14 @@ export class ReportGenerator {
   /**
    * Save report to file
    */
-  private async saveReport(
-    report: ReportData,
-    format: string = "html"
-  ): Promise<string> {
+  private async saveReport(report: ReportData, format: string = "html"): Promise<string> {
     const storageDir = rpaConfig.reportGeneration.storageLocation;
 
     // Ensure directory exists
     await fs.mkdir(storageDir, { recursive: true });
 
     const timestamp = new Date().toISOString().replace(/:/g, "-").split(".")[0];
-    const filename = `${report.title.replace(
-      /\s+/g,
-      "_"
-    )}_${timestamp}.${format}`;
+    const filename = `${report.title.replace(/\s+/g, "_")}_${timestamp}.${format}`;
     const filepath = path.join(storageDir, filename);
 
     let content: string;
@@ -421,10 +388,7 @@ export class ReportGenerator {
   /**
    * Email report to recipients
    */
-  private async emailReport(
-    report: ReportData,
-    filepath: string
-  ): Promise<void> {
+  private async emailReport(report: ReportData, filepath: string): Promise<void> {
     if (!this.transporter) {
       console.warn("⚠️  Email transporter not initialized, skipping email...");
       return;
@@ -461,11 +425,7 @@ export class ReportGenerator {
   /**
    * Generate and distribute a report
    */
-  async generateAndDistribute(
-    reportType: string,
-    startDate?: Date,
-    endDate?: Date
-  ): Promise<void> {
+  async generateAndDistribute(reportType: string, startDate?: Date, endDate?: Date): Promise<void> {
     try {
       const end = endDate || new Date();
       const start = startDate || new Date(end.getTime() - 24 * 60 * 60 * 1000); // Default: last 24 hours
@@ -487,10 +447,7 @@ export class ReportGenerator {
       }
 
       // Save report
-      const filepath = await this.saveReport(
-        report,
-        rpaConfig.reportGeneration.outputFormat
-      );
+      const filepath = await this.saveReport(report, rpaConfig.reportGeneration.outputFormat);
 
       // Email report
       await this.emailReport(report, filepath);

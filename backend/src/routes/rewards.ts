@@ -24,13 +24,10 @@ router.get("/:userId", authenticateToken as any, async (req, res) => {
 
     const rewards = await prisma.rewards.findMany({
       where,
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
-    const total = rewards.reduce(
-      (sum: Decimal, r: any) => sum.add(r.amount),
-      new Decimal(0)
-    );
+    const total = rewards.reduce((sum: Decimal, r: any) => sum.add(r.amount), new Decimal(0));
 
     res.json({
       rewards: rewards.map((r: any) => ({
@@ -68,9 +65,7 @@ router.post("/claim/:rewardId", authenticateToken as any, async (req, res) => {
     }
 
     if (reward.status !== "PENDING") {
-      return res
-        .status(400)
-        .json({ error: `Reward is ${reward.status}, cannot claim` });
+      return res.status(400).json({ error: `Reward is ${reward.status}, cannot claim` });
     }
 
     if (reward.expiresAt && new Date() > reward.expiresAt) {
@@ -168,11 +163,8 @@ router.get("/tier/:userId", authenticateToken as any, async (req, res) => {
       diamond: { next: null, pointsNeeded: null },
     };
 
-    const currentTierInfo =
-      tierThresholds[tier.currentTier as keyof typeof tierThresholds];
-    const nextTierProgress = currentTierInfo.pointsNeeded
-      ? (tier.points / currentTierInfo.pointsNeeded) * 100
-      : 100;
+    const currentTierInfo = tierThresholds[tier.currentTier as keyof typeof tierThresholds];
+    const nextTierProgress = currentTierInfo.pointsNeeded ? (tier.points / currentTierInfo.pointsNeeded) * 100 : 100;
 
     res.json({
       tier: {
@@ -180,9 +172,7 @@ router.get("/tier/:userId", authenticateToken as any, async (req, res) => {
         lifetimeRewards: tier.lifetimeRewards.toString(),
       },
       nextTier: currentTierInfo.next,
-      pointsToNextTier: currentTierInfo.pointsNeeded
-        ? currentTierInfo.pointsNeeded - tier.points
-        : 0,
+      pointsToNextTier: currentTierInfo.pointsNeeded ? currentTierInfo.pointsNeeded - tier.points : 0,
       progress: Math.min(nextTierProgress, 100),
     });
   } catch (error: any) {
@@ -238,12 +228,12 @@ router.post("/tier/points", authenticateToken as any, async (req, res) => {
         newTier === "diamond"
           ? 1000
           : newTier === "platinum"
-          ? 500
-          : newTier === "gold"
-          ? 200
-          : newTier === "silver"
-          ? 50
-          : 0
+            ? 500
+            : newTier === "gold"
+              ? 200
+              : newTier === "silver"
+                ? 50
+                : 0
       );
 
       if (bonusAmount.gt(0)) {
@@ -289,13 +279,10 @@ router.get("/pending/:userId", authenticateToken as any, async (req, res) => {
         status: "PENDING",
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
-    const total = rewards.reduce(
-      (sum: Decimal, r: any) => sum.add(r.amount),
-      new Decimal(0)
-    );
+    const total = rewards.reduce((sum: Decimal, r: any) => sum.add(r.amount), new Decimal(0));
 
     res.json({
       rewards: rewards.map((r) => ({
@@ -364,8 +351,7 @@ router.post(
   logAdminAction as any,
   async (req: any, res) => {
     try {
-      const { userId, amount, title, description, type, expiresInDays } =
-        req.body;
+      const { userId, amount, title, description, type, expiresInDays } = req.body;
 
       if (!userId || !amount || !title) {
         return res.status(400).json({
@@ -466,8 +452,7 @@ router.post(
   logAdminAction as any,
   async (req: any, res) => {
     try {
-      const { userIds, amount, title, description, type, expiresInDays } =
-        req.body;
+      const { userIds, amount, title, description, type, expiresInDays } = req.body;
 
       if (!Array.isArray(userIds) || userIds.length === 0) {
         return res.status(400).json({
@@ -575,59 +560,47 @@ router.post(
 );
 
 // GET /api/rewards/admin/statistics - Get reward statistics
-router.get(
-  "/admin/statistics",
-  authenticateToken as any,
-  requireAdmin as any,
-  async (req: any, res) => {
-    try {
-      const [totalRewards, pendingRewards, claimedRewards, expiredRewards] =
-        await Promise.all([
-          prisma.rewards.count(),
-          prisma.rewards.count({ where: { status: "PENDING" } }),
-          prisma.rewards.count({ where: { status: "CLAIMED" } }),
-          prisma.rewards.count({ where: { status: "EXPIRED" } }),
-        ]);
+router.get("/admin/statistics", authenticateToken as any, requireAdmin as any, async (req: any, res) => {
+  try {
+    const [totalRewards, pendingRewards, claimedRewards, expiredRewards] = await Promise.all([
+      prisma.rewards.count(),
+      prisma.rewards.count({ where: { status: "PENDING" } }),
+      prisma.rewards.count({ where: { status: "CLAIMED" } }),
+      prisma.rewards.count({ where: { status: "EXPIRED" } }),
+    ]);
 
-      const rewardsData = await prisma.rewards.findMany({
-        select: { amount: true, status: true },
-      });
+    const rewardsData = await prisma.rewards.findMany({
+      select: { amount: true, status: true },
+    });
 
-      const totalValue = rewardsData.reduce(
-        (sum: Decimal, r: any) => sum.add(r.amount),
-        new Decimal(0)
-      );
+    const totalValue = rewardsData.reduce((sum: Decimal, r: any) => sum.add(r.amount), new Decimal(0));
 
-      const claimedValue = rewardsData
-        .filter((r: any) => r.status === "CLAIMED")
-        .reduce((sum: Decimal, r: any) => sum.add(r.amount), new Decimal(0));
+    const claimedValue = rewardsData
+      .filter((r: any) => r.status === "CLAIMED")
+      .reduce((sum: Decimal, r: any) => sum.add(r.amount), new Decimal(0));
 
-      const pendingValue = rewardsData
-        .filter((r: any) => r.status === "PENDING")
-        .reduce((sum: Decimal, r: any) => sum.add(r.amount), new Decimal(0));
+    const pendingValue = rewardsData
+      .filter((r: any) => r.status === "PENDING")
+      .reduce((sum: Decimal, r: any) => sum.add(r.amount), new Decimal(0));
 
-      return res.json({
-        totals: {
-          rewards: totalRewards,
-          pending: pendingRewards,
-          claimed: claimedRewards,
-          expired: expiredRewards,
-        },
-        values: {
-          total: totalValue.toString(),
-          claimed: claimedValue.toString(),
-          pending: pendingValue.toString(),
-          claimRate:
-            totalRewards > 0
-              ? ((claimedRewards / totalRewards) * 100).toFixed(2)
-              : "0.00",
-        },
-      });
-    } catch (error: any) {
-      console.error("[REWARDS] Error fetching statistics:", error);
-      return res.status(500).json({ error: "Failed to fetch statistics" });
-    }
+    return res.json({
+      totals: {
+        rewards: totalRewards,
+        pending: pendingRewards,
+        claimed: claimedRewards,
+        expired: expiredRewards,
+      },
+      values: {
+        total: totalValue.toString(),
+        claimed: claimedValue.toString(),
+        pending: pendingValue.toString(),
+        claimRate: totalRewards > 0 ? ((claimedRewards / totalRewards) * 100).toFixed(2) : "0.00",
+      },
+    });
+  } catch (error: any) {
+    console.error("[REWARDS] Error fetching statistics:", error);
+    return res.status(500).json({ error: "Failed to fetch statistics" });
   }
-);
+});
 
 export default router;

@@ -21,7 +21,7 @@ export async function trainBotDetectionModel(
         verifiedBy: { not: null },
       },
       take: 10000,
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     if (trainingData.length < 100) {
@@ -50,8 +50,7 @@ export async function trainBotDetectionModel(
       let prediction = 0;
       for (const [key, value] of Object.entries(features)) {
         if (weights[key]) {
-          const numValue =
-            typeof value === "boolean" ? (value ? 1 : 0) : (value as number);
+          const numValue = typeof value === "boolean" ? (value ? 1 : 0) : (value as number);
           prediction += numValue * weights[key];
         }
       }
@@ -128,11 +127,7 @@ export async function trainBotDetectionModel(
   }
 }
 
-export async function verifyTrainingData(
-  dataId: string,
-  label: boolean,
-  adminId: string
-) {
+export async function verifyTrainingData(dataId: string, label: boolean, adminId: string) {
   await prisma.ai_training_data.update({
     where: { id: dataId },
     data: {

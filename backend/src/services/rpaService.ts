@@ -48,11 +48,7 @@ export async function createWorkflow(data: RPAWorkflowData) {
   });
 }
 
-export async function getWorkflows(filters: {
-  status?: string;
-  limit?: number;
-  offset?: number;
-}) {
+export async function getWorkflows(filters: { status?: string; limit?: number; offset?: number }) {
   const where: Record<string, any> = {};
   if (filters.status) where.status = filters.status;
 
@@ -64,7 +60,7 @@ export async function getWorkflows(filters: {
           select: { RPAExecution: true },
         },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: filters.limit,
       skip: filters.offset,
     }),
@@ -111,17 +107,12 @@ export async function getWorkflowById(id: string) {
   };
 }
 
-export async function updateWorkflow(
-  id: string,
-  data: Partial<RPAWorkflowData>
-) {
+export async function updateWorkflow(id: string, data: Partial<RPAWorkflowData>) {
   const updateData: Record<string, any> = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.description !== undefined) updateData.description = data.description;
-  if (data.trigger !== undefined)
-    updateData.trigger = (data.trigger as unknown) ?? {};
-  if (data.actions !== undefined)
-    updateData.actions = (data.actions as unknown) ?? [];
+  if (data.trigger !== undefined) updateData.trigger = (data.trigger as unknown) ?? {};
+  if (data.actions !== undefined) updateData.actions = (data.actions as unknown) ?? [];
   if (data.enabled !== undefined) updateData.enabled = data.enabled;
   updateData.updatedAt = new Date();
 
@@ -171,9 +162,7 @@ export async function executeWorkflow(data: RPAExecutionData) {
   executeWorkflowSteps(
     executionId,
     data.workflowId,
-    Array.isArray(workflow.actions)
-      ? (workflow.actions as unknown as WorkflowAction[])
-      : []
+    Array.isArray(workflow.actions) ? (workflow.actions as unknown as WorkflowAction[]) : []
   ).catch(async (error: Error) => {
     await prisma.rPAExecution.update({
       where: { id: executionId },
@@ -193,11 +182,7 @@ export async function executeWorkflow(data: RPAExecutionData) {
   return execution;
 }
 
-async function executeWorkflowSteps(
-  executionId: string,
-  workflowId: string,
-  actions: WorkflowAction[]
-) {
+async function executeWorkflowSteps(executionId: string, workflowId: string, actions: WorkflowAction[]) {
   const steps: ExecutionStep[] = [];
 
   try {
@@ -282,9 +267,7 @@ async function executeAction(action: WorkflowAction): Promise<any> {
       return { sent: true, type: action.params.type };
 
     case "delay":
-      await new Promise((resolve) =>
-        setTimeout(resolve, action.params.milliseconds || 1000)
-      );
+      await new Promise((resolve) => setTimeout(resolve, action.params.milliseconds || 1000));
       return { delayed: action.params.milliseconds || 1000 };
 
     default:
@@ -311,19 +294,13 @@ export async function checkOALTriggers(oalLog: Record<string, any>) {
           logId: oalLog?.id,
         },
       }).catch((error: Error) => {
-        console.error(
-          `[RPA] Failed to execute workflow ${workflow.id} for OAL trigger:`,
-          error
-        );
+        console.error(`[RPA] Failed to execute workflow ${workflow.id} for OAL trigger:`, error);
       });
     }
   }
 }
 
-function shouldTriggerWorkflow(
-  workflow: any,
-  oalLog: Record<string, any>
-): boolean {
+function shouldTriggerWorkflow(workflow: any, oalLog: Record<string, any>): boolean {
   // Simplified trigger logic - customize based on your needs
   // You might want to add a 'triggerConfig' JSON field to RPAWorkflow
   return workflow.name.toLowerCase().includes("oal");

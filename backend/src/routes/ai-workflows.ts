@@ -1,4 +1,5 @@
-import { PrismaClient, TaskStatus, WorkflowStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+// TaskStatus, WorkflowStatus removed - not exported from @prisma/client
 import { Request, Response, Router } from "express";
 import { body, validationResult } from "express-validator";
 import { AIMonitoring } from "../ai-core/monitoring";
@@ -46,77 +47,67 @@ const requireAdmin = async (req: Request, res: Response, next: Function) => {
 };
 
 // Get all workflows
-router.get(
-  "/workflows",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { status, type, limit = "50", offset = "0" } = req.query;
+router.get("/workflows", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { status, type, limit = "50", offset = "0" } = req.query;
 
-      const where: any = {};
-      if (status) where.status = status;
-      if (type) where.type = type;
+    const where: any = {};
+    if (status) where.status = status;
+    if (type) where.type = type;
 
-      const workflows = await prisma.aIWorkflow.findMany({
-        where,
-        include: {
-          tasks: {
-            orderBy: { created_at: "desc" },
-            take: 5,
-          },
+    const workflows = await prisma.aIWorkflow.findMany({
+      where,
+      include: {
+        tasks: {
+          orderBy: { createdAt: "desc" },
+          take: 5,
         },
-        orderBy: { created_at: "desc" },
-        take: parseInt(limit as string),
-        skip: parseInt(offset as string),
-      });
+      },
+      orderBy: { createdAt: "desc" },
+      take: parseInt(limit as string),
+      skip: parseInt(offset as string),
+    });
 
-      const total = await prisma.aIWorkflow.count({ where });
+    const total = await prisma.aIWorkflow.count({ where });
 
-      res.json({
-        workflows,
-        pagination: {
-          total,
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching workflows:", error);
-      res.status(500).json({ error: "Failed to fetch workflows" });
-    }
+    res.json({
+      workflows,
+      pagination: {
+        total,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching workflows:", error);
+    res.status(500).json({ error: "Failed to fetch workflows" });
   }
-);
+});
 
 // Get workflow by ID
-router.get(
-  "/workflows/:id",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
+router.get("/workflows/:id", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-      const workflow = await prisma.aIWorkflow.findUnique({
-        where: { id },
-        include: {
-          tasks: {
-            orderBy: { created_at: "desc" },
-          },
+    const workflow = await prisma.aIWorkflow.findUnique({
+      where: { id },
+      include: {
+        tasks: {
+          orderBy: { createdAt: "desc" },
         },
-      });
+      },
+    });
 
-      if (!workflow) {
-        return res.status(404).json({ error: "Workflow not found" });
-      }
-
-      res.json(workflow);
-    } catch (error) {
-      console.error("Error fetching workflow:", error);
-      res.status(500).json({ error: "Failed to fetch workflow" });
+    if (!workflow) {
+      return res.status(404).json({ error: "Workflow not found" });
     }
+
+    res.json(workflow);
+  } catch (error) {
+    console.error("Error fetching workflow:", error);
+    res.status(500).json({ error: "Failed to fetch workflow" });
   }
-);
+});
 
 // Create workflow
 router.post(
@@ -195,12 +186,7 @@ router.post(
       const { approved, feedback } = req.body;
       const userId = (req as any).user?.userId;
 
-      const workflow = await getWorkflowEngine().approveWorkflow(
-        id,
-        userId,
-        approved,
-        feedback
-      );
+      const workflow = await getWorkflowEngine().approveWorkflow(id, userId, approved, feedback);
 
       res.json(workflow);
     } catch (error) {
@@ -211,81 +197,65 @@ router.post(
 );
 
 // Get all tasks
-router.get(
-  "/tasks",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const {
-        status,
-        type,
-        workflowId,
-        limit = "50",
-        offset = "0",
-      } = req.query;
+router.get("/tasks", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { status, type, workflowId, limit = "50", offset = "0" } = req.query;
 
-      const where: any = {};
-      if (status) where.status = status;
-      if (type) where.type = type;
-      if (workflowId) where.workflowId = workflowId;
+    const where: any = {};
+    if (status) where.status = status;
+    if (type) where.type = type;
+    if (workflowId) where.workflowId = workflowId;
 
-      const tasks = await prisma.aITask.findMany({
-        where,
-        include: {
-          workflow: {
-            select: { id: true, name: true, type: true },
-          },
+    const tasks = await prisma.aITask.findMany({
+      where,
+      include: {
+        workflow: {
+          select: { id: true, name: true, type: true },
         },
-        orderBy: { created_at: "desc" },
-        take: parseInt(limit as string),
-        skip: parseInt(offset as string),
-      });
+      },
+      orderBy: { createdAt: "desc" },
+      take: parseInt(limit as string),
+      skip: parseInt(offset as string),
+    });
 
-      const total = await prisma.aITask.count({ where });
+    const total = await prisma.aITask.count({ where });
 
-      res.json({
-        tasks,
-        pagination: {
-          total,
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      res.status(500).json({ error: "Failed to fetch tasks" });
-    }
+    res.json({
+      tasks,
+      pagination: {
+        total,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    res.status(500).json({ error: "Failed to fetch tasks" });
   }
-);
+});
 
 // Get task by ID
-router.get(
-  "/tasks/:id",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
+router.get("/tasks/:id", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-      const task = await prisma.aITask.findUnique({
-        where: { id },
-        include: {
-          workflow: true,
-        },
-      });
+    const task = await prisma.aITask.findUnique({
+      where: { id },
+      include: {
+        workflow: true,
+      },
+    });
 
-      if (!task) {
-        return res.status(404).json({ error: "Task not found" });
-      }
-
-      res.json(task);
-    } catch (error) {
-      console.error("Error fetching task:", error);
-      res.status(500).json({ error: "Failed to fetch task" });
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
     }
+
+    res.json(task);
+  } catch (error) {
+    console.error("Error fetching task:", error);
+    res.status(500).json({ error: "Failed to fetch task" });
   }
-);
+});
 
 // Create task
 router.post(
@@ -306,13 +276,7 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const {
-        workflowId,
-        type,
-        data,
-        priority = 5,
-        requiresApproval = true,
-      } = req.body;
+      const { workflowId, type, data, priority = 5, requiresApproval = true } = req.body;
 
       const task = await getTaskQueue().addTask({
         workflowId,
@@ -331,85 +295,65 @@ router.post(
 );
 
 // Retry failed task
-router.post(
-  "/tasks/:id/retry",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
+router.post("/tasks/:id/retry", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-      const task = await getTaskQueue().retryTask(id);
+    const task = await getTaskQueue().retryTask(id);
 
-      res.json(task);
-    } catch (error) {
-      console.error("Error retrying task:", error);
-      res.status(500).json({ error: "Failed to retry task" });
-    }
+    res.json(task);
+  } catch (error) {
+    console.error("Error retrying task:", error);
+    res.status(500).json({ error: "Failed to retry task" });
   }
-);
+});
 
 // Get monitoring metrics
-router.get(
-  "/monitoring/metrics",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { timeRange = "24h" } = req.query;
+router.get("/monitoring/metrics", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { timeRange = "24h" } = req.query;
 
-      const metrics = await getMonitoring().getMetrics(timeRange as string);
+    const metrics = await getMonitoring().getMetrics(timeRange as string);
 
-      res.json(metrics);
-    } catch (error) {
-      console.error("Error fetching metrics:", error);
-      res.status(500).json({ error: "Failed to fetch metrics" });
-    }
+    res.json(metrics);
+  } catch (error) {
+    console.error("Error fetching metrics:", error);
+    res.status(500).json({ error: "Failed to fetch metrics" });
   }
-);
+});
 
 // Get system health
-router.get(
-  "/monitoring/health",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const health = await getMonitoring().checkSystemHealth();
+router.get("/monitoring/health", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const health = await getMonitoring().checkSystemHealth();
 
-      res.json(health);
-    } catch (error) {
-      console.error("Error checking health:", error);
-      res.status(500).json({ error: "Failed to check system health" });
-    }
+    res.json(health);
+  } catch (error) {
+    console.error("Error checking health:", error);
+    res.status(500).json({ error: "Failed to check system health" });
   }
-);
+});
 
 // Get alerts
-router.get(
-  "/monitoring/alerts",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { severity, limit = "50" } = req.query;
+router.get("/monitoring/alerts", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { severity, limit = "50" } = req.query;
 
-      const where: any = { resolved: false };
-      if (severity) where.severity = severity;
+    const where: any = { resolved: false };
+    if (severity) where.severity = severity;
 
-      const alerts = await prisma.aIAlert.findMany({
-        where,
-        orderBy: { created_at: "desc" },
-        take: parseInt(limit as string),
-      });
+    const alerts = await prisma.aIAlert.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: parseInt(limit as string),
+    });
 
-      res.json(alerts);
-    } catch (error) {
-      console.error("Error fetching alerts:", error);
-      res.status(500).json({ error: "Failed to fetch alerts" });
-    }
+    res.json(alerts);
+  } catch (error) {
+    console.error("Error fetching alerts:", error);
+    res.status(500).json({ error: "Failed to fetch alerts" });
   }
-);
+});
 
 // Resolve alert
 router.post(
@@ -434,84 +378,64 @@ router.post(
 );
 
 // Get AI suggestions
-router.get(
-  "/suggestions",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { type, limit = "20" } = req.query;
+router.get("/suggestions", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { type, limit = "20" } = req.query;
 
-      const where: any = {};
-      if (type) where.type = type;
+    const where: any = {};
+    if (type) where.type = type;
 
-      const suggestions = await prisma.ai_suggestions.findMany({
-        where,
-        orderBy: { confidence: "desc" },
-        take: parseInt(limit as string),
-      });
+    const suggestions = await prisma.ai_suggestions.findMany({
+      where,
+      orderBy: { confidence: "desc" },
+      take: parseInt(limit as string),
+    });
 
-      res.json(suggestions);
-    } catch (error) {
-      console.error("Error fetching suggestions:", error);
-      res.status(500).json({ error: "Failed to fetch suggestions" });
-    }
+    res.json(suggestions);
+  } catch (error) {
+    console.error("Error fetching suggestions:", error);
+    res.status(500).json({ error: "Failed to fetch suggestions" });
   }
-);
+});
 
 // Apply suggestion
-router.post(
-  "/suggestions/:id/apply",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const userId = (req as any).user?.userId;
+router.post("/suggestions/:id/apply", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.userId;
 
-      const suggestion = await prisma.ai_suggestions.findUnique({
-        where: { id },
-      });
+    const suggestion = await prisma.ai_suggestions.findUnique({
+      where: { id },
+    });
 
-      if (!suggestion) {
-        return res.status(404).json({ error: "Suggestion not found" });
-      }
-
-      // Apply the suggestion based on type
-      // This would be implemented based on your specific use cases
-
-      const updated = await prisma.ai_suggestions.update({
-        where: { id },
-        data: {
-          applied: true,
-          appliedAt: new Date(),
-          appliedBy: userId,
-        },
-      });
-
-      res.json(updated);
-    } catch (error) {
-      console.error("Error applying suggestion:", error);
-      res.status(500).json({ error: "Failed to apply suggestion" });
+    if (!suggestion) {
+      return res.status(404).json({ error: "Suggestion not found" });
     }
+
+    // Apply the suggestion based on type
+    // This would be implemented based on your specific use cases
+
+    const updated = await prisma.ai_suggestions.update({
+      where: { id },
+      data: {
+        applied: true,
+        appliedAt: new Date(),
+        appliedBy: userId,
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error applying suggestion:", error);
+    res.status(500).json({ error: "Failed to apply suggestion" });
   }
-);
+});
 
 // Dashboard stats
-router.get(
-  "/dashboard/stats",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const [
-        totalWorkflows,
-        activeWorkflows,
-        pendingTasks,
-        completedTasks,
-        failedTasks,
-        activeAlerts,
-      ] = await Promise.all([
+router.get("/dashboard/stats", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const [totalWorkflows, activeWorkflows, pendingTasks, completedTasks, failedTasks, activeAlerts] =
+      await Promise.all([
         prisma.aIWorkflow.count(),
         prisma.aIWorkflow.count({ where: { status: WorkflowStatus.RUNNING } }),
         prisma.aITask.count({ where: { status: TaskStatus.PENDING } }),
@@ -520,25 +444,24 @@ router.get(
         prisma.aIAlert.count({ where: { resolved: false } }),
       ]);
 
-      res.json({
-        workflows: {
-          total: totalWorkflows,
-          active: activeWorkflows,
-        },
-        tasks: {
-          pending: pendingTasks,
-          completed: completedTasks,
-          failed: failedTasks,
-        },
-        alerts: {
-          active: activeAlerts,
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-      res.status(500).json({ error: "Failed to fetch dashboard stats" });
-    }
+    res.json({
+      workflows: {
+        total: totalWorkflows,
+        active: activeWorkflows,
+      },
+      tasks: {
+        pending: pendingTasks,
+        completed: completedTasks,
+        failed: failedTasks,
+      },
+      alerts: {
+        active: activeAlerts,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    res.status(500).json({ error: "Failed to fetch dashboard stats" });
   }
-);
+});
 
 export default router;

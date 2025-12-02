@@ -7,12 +7,7 @@ import { Request, Response, Router } from "express";
 import { Server as SocketIOServer } from "socket.io";
 import { z } from "zod";
 import { GenerationType, ImageSize, RATE_LIMITS } from "../ai-engine/ai.config";
-import {
-  aiGenerate,
-  getGeneration,
-  getUserGenerations,
-  getUserMetrics,
-} from "../ai-engine/generator";
+import { aiGenerate, getGeneration, getUserGenerations, getUserMetrics } from "../ai-engine/generator";
 import { authenticateToken, requireAdmin } from "../middleware/auth";
 import prisma from "../prismaClient";
 
@@ -76,15 +71,12 @@ async function validateCaptcha(token: string): Promise<boolean> {
 /**
  * Check rate limits for user
  */
-async function checkRateLimit(
-  userId: string,
-  isAdmin: boolean
-): Promise<{ allowed: boolean; reason?: string }> {
+async function checkRateLimit(userId: string, isAdmin: boolean): Promise<{ allowed: boolean; reason?: string }> {
   const limits = isAdmin ? RATE_LIMITS.admin : RATE_LIMITS.free;
 
   // Check hourly request limit
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  const recentGenerations = await prisma.aIGeneration.count({
+  const recentGenerations = await prisma.ai_generations.count({
     where: {
       userId,
       createdAt: { gte: oneHourAgo },
@@ -102,7 +94,7 @@ async function checkRateLimit(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const todayMetrics = await prisma.aIUsageMetrics.findUnique({
+  const todayMetrics = await prisma.ai_usage_metrics.findUnique({
     where: {
       userId_date: {
         userId,
@@ -124,12 +116,7 @@ async function checkRateLimit(
 /**
  * Create audit log entry
  */
-async function createAuditLog(
-  userId: string,
-  action: string,
-  metadata: any,
-  req: Request
-) {
+async function createAuditLog(userId: string, action: string, metadata: any, req: Request) {
   try {
     await prisma.audit_logs.create({
       data: {
@@ -214,12 +201,7 @@ router.post("/text", authenticateToken, async (req: any, res: Response) => {
     }
 
     // Create audit log
-    await createAuditLog(
-      userId,
-      "AI_TEXT_GENERATION",
-      { generationId, model, promptLength: prompt.length },
-      req
-    );
+    await createAuditLog(userId, "AI_TEXT_GENERATION", { generationId, model, promptLength: prompt.length }, req);
 
     res.status(200).json({
       success: true,
@@ -263,8 +245,7 @@ router.post("/code", authenticateToken, async (req: any, res: Response) => {
       });
     }
 
-    const { prompt, model, language, framework, captchaToken, metadata } =
-      validation.data;
+    const { prompt, model, language, framework, captchaToken, metadata } = validation.data;
     const userId = req.user.id;
     const isAdmin = req.user.role === "ADMIN";
 
@@ -320,12 +301,7 @@ router.post("/code", authenticateToken, async (req: any, res: Response) => {
     }
 
     // Create audit log
-    await createAuditLog(
-      userId,
-      "AI_CODE_GENERATION",
-      { generationId, model, language, framework },
-      req
-    );
+    await createAuditLog(userId, "AI_CODE_GENERATION", { generationId, model, language, framework }, req);
 
     res.status(200).json({
       success: true,
@@ -424,12 +400,7 @@ router.post("/image", authenticateToken, async (req: any, res: Response) => {
     }
 
     // Create audit log
-    await createAuditLog(
-      userId,
-      "AI_IMAGE_GENERATION",
-      { generationId, size },
-      req
-    );
+    await createAuditLog(userId, "AI_IMAGE_GENERATION", { generationId, size }, req);
 
     res.status(200).json({
       success: true,
@@ -470,7 +441,7 @@ router.get("/history", authenticateToken, async (req: any, res: Response) => {
     const type = req.query.type as GenerationType | undefined;
 
     const generations = await getUserGenerations(userId, limit, offset, type);
-    const total = await prisma.aIGeneration.count({
+    const total = await prisma.ai_generations.count({
       where: {
         userId,
         type: type || undefined,
@@ -484,8 +455,7 @@ router.get("/history", authenticateToken, async (req: any, res: Response) => {
           id: g.id,
           type: g.type,
           model: g.model,
-          prompt:
-            g.prompt.substring(0, 100) + (g.prompt.length > 100 ? "..." : ""),
+          prompt: g.prompt.substring(0, 100) + (g.prompt.length > 100 ? "..." : ""),
           status: g.status,
           createdAt: g.createdAt,
           hasOutput: !!g.output || !!g.imageUrl,
@@ -511,197 +481,162 @@ router.get("/history", authenticateToken, async (req: any, res: Response) => {
  * GET /api/ai-generator/metrics
  * Get usage metrics (admin only with MFA)
  */
-router.get(
-  "/metrics",
-  authenticateToken,
-  requireAdmin,
-  async (req: any, res: Response) => {
-    try {
-      const mfaToken = req.query.mfaToken as string;
+router.get("/metrics", authenticateToken, requireAdmin, async (req: any, res: Response) => {
+  try {
+    const mfaToken = req.query.mfaToken as string;
 
-      // TODO: Verify MFA token with VaultService or TOTP validation
-      if (!mfaToken || mfaToken.length !== 6) {
-        return res.status(403).json({
-          success: false,
-          error: "MFA token required",
-        });
-      }
-
-      const days = parseInt(req.query.days as string) || 30;
-      const userId = (req.query.userId as string) || req.user.id;
-
-      const metrics = await getUserMetrics(userId, days);
-
-      const summary = metrics.reduce(
-        (acc, m) => ({
-          totalGenerations:
-            acc.totalGenerations +
-            m.textGenerations +
-            m.codeGenerations +
-            m.imageGenerations,
-          totalTokens: acc.totalTokens + m.tokensUsed,
-          totalCost: acc.totalCost + parseFloat(m.costUSD.toString()),
-        }),
-        { totalGenerations: 0, totalTokens: 0, totalCost: 0 }
-      );
-
-      res.status(200).json({
-        success: true,
-        data: {
-          metrics,
-          summary,
-          period: `${days} days`,
-        },
-      });
-    } catch (error) {
-      console.error("[AI Generator] Metrics fetch error:", error);
-      res.status(500).json({
+    // TODO: Verify MFA token with VaultService or TOTP validation
+    if (!mfaToken || mfaToken.length !== 6) {
+      return res.status(403).json({
         success: false,
-        error: "Failed to fetch metrics",
+        error: "MFA token required",
       });
     }
+
+    const days = parseInt(req.query.days as string) || 30;
+    const userId = (req.query.userId as string) || req.user.id;
+
+    const metrics = await getUserMetrics(userId, days);
+
+    const summary = metrics.reduce(
+      (acc, m) => ({
+        totalGenerations: acc.totalGenerations + m.textGenerations + m.codeGenerations + m.imageGenerations,
+        totalTokens: acc.totalTokens + m.tokensUsed,
+        totalCost: acc.totalCost + parseFloat(m.costUSD.toString()),
+      }),
+      { totalGenerations: 0, totalTokens: 0, totalCost: 0 }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        metrics,
+        summary,
+        period: `${days} days`,
+      },
+    });
+  } catch (error) {
+    console.error("[AI Generator] Metrics fetch error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch metrics",
+    });
   }
-);
+});
 
 /**
  * DELETE /api/ai-generator/:id
  * Delete a generation (admin only with MFA)
  */
-router.delete(
-  "/:id",
-  authenticateToken,
-  requireAdmin,
-  async (req: any, res: Response) => {
-    try {
-      const mfaToken = req.query.mfaToken as string;
+router.delete("/:id", authenticateToken, requireAdmin, async (req: any, res: Response) => {
+  try {
+    const mfaToken = req.query.mfaToken as string;
 
-      // TODO: Verify MFA token
-      if (!mfaToken || mfaToken.length !== 6) {
-        return res.status(403).json({
-          success: false,
-          error: "MFA token required",
-        });
-      }
-
-      const { id } = req.params;
-      const userId = req.user.id;
-
-      const generation = await prisma.aIGeneration.findUnique({
-        where: { id },
-      });
-
-      if (!generation) {
-        return res.status(404).json({
-          success: false,
-          error: "Generation not found",
-        });
-      }
-
-      await prisma.aIGeneration.delete({
-        where: { id },
-      });
-
-      // Create audit log
-      await createAuditLog(
-        userId,
-        "AI_GENERATION_DELETED",
-        { generationId: id },
-        req
-      );
-
-      res.status(200).json({
-        success: true,
-        message: "Generation deleted successfully",
-      });
-    } catch (error) {
-      console.error("[AI Generator] Delete error:", error);
-      res.status(500).json({
+    // TODO: Verify MFA token
+    if (!mfaToken || mfaToken.length !== 6) {
+      return res.status(403).json({
         success: false,
-        error: "Failed to delete generation",
+        error: "MFA token required",
       });
     }
+
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const generation = await prisma.ai_generations.findUnique({
+      where: { id },
+    });
+
+    if (!generation) {
+      return res.status(404).json({
+        success: false,
+        error: "Generation not found",
+      });
+    }
+
+    await prisma.ai_generations.delete({
+      where: { id },
+    });
+
+    // Create audit log
+    await createAuditLog(userId, "AI_GENERATION_DELETED", { generationId: id }, req);
+
+    res.status(200).json({
+      success: true,
+      message: "Generation deleted successfully",
+    });
+  } catch (error) {
+    console.error("[AI Generator] Delete error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete generation",
+    });
   }
-);
+});
 
 /**
  * POST /api/ai-generator/build-project
  * Trigger AI Builder Agent (admin only with MFA)
  */
-router.post(
-  "/build-project",
-  authenticateToken,
-  requireAdmin,
-  async (req: any, res: Response) => {
-    try {
-      const validation = BuildProjectSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid input",
-          metadata: validation.error.errors,
-        });
-      }
-
-      const { projectName, description, technologies, features, mfaToken } =
-        validation.data;
-      const userId = req.user.id;
-
-      // TODO: Verify MFA token
-      if (!mfaToken || mfaToken.length !== 6) {
-        return res.status(403).json({
-          success: false,
-          error: "MFA token required",
-        });
-      }
-
-      // Import scheduler to access AIBuilderAgent
-      const { getAgentScheduler } = await import("../agents/scheduler");
-      const scheduler = getAgentScheduler(prisma);
-      const agents = scheduler.getAgents();
-      const builderAgent = agents.find(
-        (a) => a.constructor.name === "AIBuilderAgent"
-      );
-
-      if (!builderAgent) {
-        return res.status(503).json({
-          success: false,
-          error: "AI Builder Agent not available",
-        });
-      }
-
-      // Trigger build (AIBuilderAgent must have triggerBuild method)
-      const buildResult = await (builderAgent as any).triggerBuild({
-        projectName,
-        description,
-        technologies,
-        features: features || [],
-        userId,
-      });
-
-      // Create audit log
-      await createAuditLog(
-        userId,
-        "AI_PROJECT_BUILD",
-        { projectName, technologies },
-        req
-      );
-
-      res.status(200).json({
-        success: true,
-        message: "Project build started",
-        data: buildResult,
-      });
-    } catch (error) {
-      console.error("[AI Generator] Build project error:", error);
-      res.status(500).json({
+router.post("/build-project", authenticateToken, requireAdmin, async (req: any, res: Response) => {
+  try {
+    const validation = BuildProjectSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to start project build",
+        error: "Invalid input",
+        metadata: validation.error.errors,
       });
     }
+
+    const { projectName, description, technologies, features, mfaToken } = validation.data;
+    const userId = req.user.id;
+
+    // TODO: Verify MFA token
+    if (!mfaToken || mfaToken.length !== 6) {
+      return res.status(403).json({
+        success: false,
+        error: "MFA token required",
+      });
+    }
+
+    // Import scheduler to access AIBuilderAgent
+    const { getAgentScheduler } = await import("../agents/scheduler");
+    const scheduler = getAgentScheduler(prisma);
+    const agents = scheduler.getAgents();
+    const builderAgent = agents.find((a) => a.constructor.name === "AIBuilderAgent");
+
+    if (!builderAgent) {
+      return res.status(503).json({
+        success: false,
+        error: "AI Builder Agent not available",
+      });
+    }
+
+    // Trigger build (AIBuilderAgent must have triggerBuild method)
+    const buildResult = await (builderAgent as any).triggerBuild({
+      projectName,
+      description,
+      technologies,
+      features: features || [],
+      userId,
+    });
+
+    // Create audit log
+    await createAuditLog(userId, "AI_PROJECT_BUILD", { projectName, technologies }, req);
+
+    res.status(200).json({
+      success: true,
+      message: "Project build started",
+      data: buildResult,
+    });
+  } catch (error) {
+    console.error("[AI Generator] Build project error:", error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to start project build",
+    });
   }
-);
+});
 
 export default router;
