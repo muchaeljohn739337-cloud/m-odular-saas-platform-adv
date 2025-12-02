@@ -56,17 +56,14 @@ class AutoRememberSystem {
       this.memoryCache.get(entry.category)!.push(fullEntry);
 
       // Store to file system (append mode)
-      const categoryFile = path.join(
-        this.memoryPath,
-        `${entry.category}.jsonl`
-      );
+      const categoryFile = path.join(this.memoryPath, `${entry.category}.jsonl`);
       fs.appendFileSync(categoryFile, JSON.stringify(fullEntry) + "\n");
 
       // Also store in database if AuditLog model exists
       try {
         await prisma.audit_logs.create({
           data: {
-          id: crypto.randomUUID(),
+            id: crypto.randomUUID(),
             userId: "system",
             action: `auto_remember_${entry.category}`,
             ipAddress: "internal",
@@ -76,9 +73,7 @@ class AutoRememberSystem {
         });
       } catch (dbError) {
         // Database might not be available, continue with file storage
-        console.log(
-          "Auto-Remember: Database storage unavailable, using file system only"
-        );
+        console.log("Auto-Remember: Database storage unavailable, using file system only");
       }
     } catch (error) {
       console.error("Failed to store memory:", error);
@@ -94,10 +89,7 @@ class AutoRememberSystem {
 
       // If category specified, query that file
       if (query.category) {
-        const categoryFile = path.join(
-          this.memoryPath,
-          `${query.category}.jsonl`
-        );
+        const categoryFile = path.join(this.memoryPath, `${query.category}.jsonl`);
 
         if (fs.existsSync(categoryFile)) {
           const lines = fs
@@ -110,10 +102,8 @@ class AutoRememberSystem {
               const entry = JSON.parse(line);
 
               // Filter by date if specified
-              if (query.fromDate && new Date(entry.timestamp) < query.fromDate)
-                continue;
-              if (query.toDate && new Date(entry.timestamp) > query.toDate)
-                continue;
+              if (query.fromDate && new Date(entry.timestamp) < query.fromDate) continue;
+              if (query.toDate && new Date(entry.timestamp) > query.toDate) continue;
 
               results.push(entry);
             } catch (parseError) {
@@ -123,9 +113,7 @@ class AutoRememberSystem {
         }
       } else {
         // Query all categories
-        const files = fs
-          .readdirSync(this.memoryPath)
-          .filter((f) => f.endsWith(".jsonl"));
+        const files = fs.readdirSync(this.memoryPath).filter((f) => f.endsWith(".jsonl"));
 
         for (const file of files) {
           const filePath = path.join(this.memoryPath, file);
@@ -139,10 +127,8 @@ class AutoRememberSystem {
               const entry = JSON.parse(line);
 
               // Filter by date if specified
-              if (query.fromDate && new Date(entry.timestamp) < query.fromDate)
-                continue;
-              if (query.toDate && new Date(entry.timestamp) > query.toDate)
-                continue;
+              if (query.fromDate && new Date(entry.timestamp) < query.fromDate) continue;
+              if (query.toDate && new Date(entry.timestamp) > query.toDate) continue;
 
               results.push(entry);
             } catch (parseError) {
@@ -175,9 +161,7 @@ class AutoRememberSystem {
     categoryCounts: Record<string, number>;
   }> {
     try {
-      const files = fs
-        .readdirSync(this.memoryPath)
-        .filter((f) => f.endsWith(".jsonl"));
+      const files = fs.readdirSync(this.memoryPath).filter((f) => f.endsWith(".jsonl"));
       const categories = files.map((f) => f.replace(".jsonl", ""));
       const categoryCounts: Record<string, number> = {};
 
@@ -237,9 +221,7 @@ class AutoRememberSystem {
 
       let deletedCount = 0;
 
-      const files = fs
-        .readdirSync(this.memoryPath)
-        .filter((f) => f.endsWith(".jsonl"));
+      const files = fs.readdirSync(this.memoryPath).filter((f) => f.endsWith(".jsonl"));
 
       for (const file of files) {
         const filePath = path.join(this.memoryPath, file);
@@ -289,16 +271,11 @@ class AutoRememberSystem {
         memories,
       };
 
-      const exportPath = path.join(
-        this.memoryPath,
-        `export_${category || "all"}_${Date.now()}.json`
-      );
+      const exportPath = path.join(this.memoryPath, `export_${category || "all"}_${Date.now()}.json`);
 
       fs.writeFileSync(exportPath, JSON.stringify(exportData, null, 2));
 
-      console.log(
-        `📦 Auto-Remember: Exported ${memories.length} memories to ${exportPath}`
-      );
+      console.log(`📦 Auto-Remember: Exported ${memories.length} memories to ${exportPath}`);
       return exportData;
     } catch (error) {
       console.error("Failed to export memories:", error);

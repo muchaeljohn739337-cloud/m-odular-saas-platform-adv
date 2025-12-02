@@ -5,12 +5,7 @@
 
 import { Decimal } from "@prisma/client/runtime/library";
 import prisma from "../prismaClient";
-import {
-  GenerationType,
-  ImageSize,
-  MODEL_CONFIGS,
-  SupportedModel,
-} from "./ai.config";
+import { GenerationType, ImageSize, MODEL_CONFIGS, SupportedModel } from "./ai.config";
 import { anthropicClient, openaiClient } from "./models";
 
 interface GenerateOptions {
@@ -35,11 +30,7 @@ interface GenerateResult {
 /**
  * Retry with exponential backoff
  */
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries = 3,
-  baseDelay = 1000
-): Promise<T> {
+async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3, baseDelay = 1000): Promise<T> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -49,9 +40,7 @@ async function retryWithBackoff<T>(
       lastError = error as Error;
       if (attempt < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, attempt);
-        console.log(
-          `[AI Generator] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`
-        );
+        console.log(`[AI Generator] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -76,9 +65,7 @@ async function generateWithOpenAI(
   const config = MODEL_CONFIGS[model];
   const systemPrompt =
     type === "code"
-      ? `You are an expert software engineer. Generate production-ready ${
-          metadata?.language || "code"
-        } code${
+      ? `You are an expert software engineer. Generate production-ready ${metadata?.language || "code"} code${
           metadata?.framework ? ` using ${metadata.framework}` : ""
         }. Include comments and follow best practices.`
       : "You are a helpful AI assistant. Provide clear, accurate, and well-structured responses.";
@@ -115,17 +102,12 @@ async function generateWithAnthropic(
   const config = MODEL_CONFIGS[model];
   const systemPrompt =
     type === "code"
-      ? `You are an expert software engineer. Generate production-ready ${
-          metadata?.language || "code"
-        } code${
+      ? `You are an expert software engineer. Generate production-ready ${metadata?.language || "code"} code${
           metadata?.framework ? ` using ${metadata.framework}` : ""
         }. Include comments and follow best practices.`
       : "You are a helpful AI assistant. Provide clear, accurate, and well-structured responses.";
 
-  const anthropicModel =
-    model === "claude-3-opus"
-      ? "claude-3-opus-20240229"
-      : "claude-3-sonnet-20240229";
+  const anthropicModel = model === "claude-3-opus" ? "claude-3-opus-20240229" : "claude-3-sonnet-20240229";
 
   const response = await anthropicClient.messages.create({
     model: anthropicModel,
@@ -170,26 +152,19 @@ async function generateImage(
  * Main AI generation function with database tracking
  */
 export async function aiGenerate(options: GenerateOptions): Promise<string> {
-  const {
-    userId,
-    type,
-    model,
-    prompt,
-    metadata,
-    imageSize,
-    language,
-    framework,
-  } = options;
+  const { userId, type, model, prompt, metadata, imageSize, language, framework } = options;
 
   // Create generation record
   const generation = await prisma.ai_generations.create({
     data: {
+      id: (await import("crypto")).randomUUID(),
       userId,
       type,
       model,
       prompt,
       metadata: metadata ? JSON.stringify(metadata) : null,
       status: "pending",
+      updatedAt: new Date(),
     },
   });
 
@@ -198,9 +173,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
 
     if (type === "image") {
       // Image generation
-      const { imageUrl, tokensUsed } = await retryWithBackoff(() =>
-        generateImage(prompt, imageSize)
-      );
+      const { imageUrl, tokensUsed } = await retryWithBackoff(() => generateImage(prompt, imageSize));
       result = {
         imageUrl,
         tokensUsed,
@@ -254,6 +227,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
         },
       },
       create: {
+        id: (await import("crypto")).randomUUID(),
         userId,
         date: today,
         textGenerations: type === "text" ? 1 : 0,
@@ -261,6 +235,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
         imageGenerations: type === "image" ? 1 : 0,
         tokensUsed: result.tokensUsed,
         costUSD: new Decimal(result.cost),
+        updatedAt: new Date(),
       },
       update: {
         textGenerations: type === "text" ? { increment: 1 } : undefined,
@@ -298,18 +273,13 @@ export async function getGeneration(generationId: string) {
 /**
  * Get user's generation history
  */
-export async function getUserGenerations(
-  userId: string,
-  limit = 50,
-  offset = 0,
-  type?: GenerationType
-) {
+export async function getUserGenerations(userId: string, limit = 50, offset = 0, type?: GenerationType) {
   return await prisma.ai_generations.findMany({
     where: {
       userId,
       type: type || undefined,
     },
-    orderBy: { created_at: "desc" },
+    orderBy: { createdAt: "desc" },
     take: limit,
     skip: offset,
   });

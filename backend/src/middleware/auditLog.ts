@@ -4,11 +4,7 @@ import prisma from "../prismaClient";
 /**
  * Middleware to log admin actions to the audit log
  */
-export async function logAdminAction(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function logAdminAction(req: Request, res: Response, next: NextFunction) {
   try {
     const user = (req as any).user;
     if (!user) {
@@ -18,7 +14,7 @@ export async function logAdminAction(
     // Log the admin action
     await prisma.audit_logs.create({
       data: {
-          id: crypto.randomUUID(),
+        id: crypto.randomUUID(),
         userId: user.id,
         action: `${req.method} ${req.path}`,
         metadata: JSON.stringify({

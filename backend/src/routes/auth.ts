@@ -53,6 +53,7 @@ router.post("/register", validateApiKey, async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.users.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         email,
         username: username || email.split("@")[0],
         passwordHash,
@@ -62,6 +63,7 @@ router.post("/register", validateApiKey, async (req, res) => {
         termsAcceptedAt: new Date(),
         active: false, // pending admin approval
         emailVerified: true,
+        updatedAt: new Date(),
       },
     });
 
@@ -748,7 +750,6 @@ router.get("/me", authenticateToken, async (req: any, res) => {
         username: true,
         firstName: true,
         lastName: true,
-        phone: true,
         role: true,
         active: true,
         createdAt: true,
@@ -777,12 +778,12 @@ router.put("/me", authenticateToken, async (req: any, res) => {
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    const { firstName, lastName, phone, username } = req.body;
+    const { firstName, lastName, username } = req.body;
 
     // Validate input - at least one field must be provided
-    if (!firstName && !lastName && !phone && !username) {
+    if (!firstName && !lastName && !username) {
       return res.status(400).json({
-        error: "At least one field must be provided: firstName, lastName, phone, username",
+        error: "At least one field must be provided: firstName, lastName, username",
       });
     }
 
@@ -803,7 +804,6 @@ router.put("/me", authenticateToken, async (req: any, res) => {
     const updateData: Record<string, string> = {};
     if (firstName !== undefined) updateData.firstName = String(firstName).trim();
     if (lastName !== undefined) updateData.lastName = String(lastName).trim();
-    if (phone !== undefined) updateData.phone = String(phone).trim();
     if (username !== undefined) updateData.username = String(username).trim();
 
     // Validate field lengths
@@ -816,9 +816,6 @@ router.put("/me", authenticateToken, async (req: any, res) => {
     if (updateData.username && (updateData.username.length < 3 || updateData.username.length > 30)) {
       return res.status(400).json({ error: "Username must be between 3 and 30 characters" });
     }
-    if (updateData.phone && updateData.phone.length > 20) {
-      return res.status(400).json({ error: "Phone number must be 20 characters or less" });
-    }
 
     const updatedUser = await prisma.users.update({
       where: { id: userId },
@@ -829,7 +826,6 @@ router.put("/me", authenticateToken, async (req: any, res) => {
         username: true,
         firstName: true,
         lastName: true,
-        phone: true,
         role: true,
         active: true,
         createdAt: true,

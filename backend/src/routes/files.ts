@@ -68,6 +68,7 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req: Req
     // Save file record to database
     const fileRecord = await prisma.uploaded_files.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         userId: user.id,
         category,
         filename: file.originalname,
@@ -75,6 +76,7 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req: Req
         url: fileMetadata.url,
         size: fileMetadata.size,
         contentType: fileMetadata.contentType,
+        updatedAt: new Date(),
       },
     });
 

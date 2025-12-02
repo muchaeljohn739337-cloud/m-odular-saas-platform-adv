@@ -53,9 +53,7 @@ class RecordCleanupAI {
   /**
    * Main cleanup orchestrator - runs all cleanup tasks
    */
-  async cleanAllOldRecords(
-    customConfig?: Partial<CleanupConfig>
-  ): Promise<CleanupResult> {
+  async cleanAllOldRecords(customConfig?: Partial<CleanupConfig>): Promise<CleanupResult> {
     const config = { ...this.config, ...customConfig };
     console.log("🧹 Record Cleanup AI - Starting automated cleanup...");
     console.log(`   Dry Run: ${config.dryRun ? "YES (no deletions)" : "NO"}`);
@@ -100,26 +98,17 @@ class RecordCleanupAI {
       await this.cleanOrphanedRecords(config);
 
       // 6. Log cleanup action to Guardian AI
-      await guardianAI.logAction(
-        "system",
-        "record_cleanup",
-        "Automated cleanup completed",
-        {
-          recordsCleaned: result.recordsCleaned,
-          recordsArchived: result.recordsArchived,
-          summary: result.summary,
-        }
-      );
+      await guardianAI.logAction("system", "record_cleanup", "Automated cleanup completed", {
+        recordsCleaned: result.recordsCleaned,
+        recordsArchived: result.recordsArchived,
+        summary: result.summary,
+      });
 
-      console.log(
-        `✅ Cleanup complete: ${result.recordsCleaned} records cleaned, ${result.recordsArchived} archived`
-      );
+      console.log(`✅ Cleanup complete: ${result.recordsCleaned} records cleaned, ${result.recordsArchived} archived`);
       return result;
     } catch (error) {
       console.error("❌ Record cleanup failed:", error);
-      result.errors.push(
-        error instanceof Error ? error.message : "Unknown error"
-      );
+      result.errors.push(error instanceof Error ? error.message : "Unknown error");
       return result;
     }
   }
@@ -127,15 +116,11 @@ class RecordCleanupAI {
   /**
    * Clean old completed/failed jobs (background tasks, cron jobs)
    */
-  private async cleanOldJobs(
-    config: CleanupConfig
-  ): Promise<{ cleaned: number; archived: number }> {
+  private async cleanOldJobs(config: CleanupConfig): Promise<{ cleaned: number; archived: number }> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - config.jobRetentionDays);
 
-    console.log(
-      `   Cleaning jobs older than ${config.jobRetentionDays} days...`
-    );
+    console.log(`   Cleaning jobs older than ${config.jobRetentionDays} days...`);
 
     try {
       // Find old completed/failed jobs
@@ -159,12 +144,7 @@ class RecordCleanupAI {
       if (config.archiveBeforeDelete) {
         // Archive jobs before deletion (optional: save to separate archive table)
         for (const job of oldJobs) {
-          await guardianAI.logAction(
-            "system",
-            "job_archived",
-            `Archived job ${job.id}`,
-            { job }
-          );
+          await guardianAI.logAction("system", "job_archived", `Archived job ${job.id}`, { job });
           archived++;
         }
       }
@@ -187,15 +167,11 @@ class RecordCleanupAI {
   /**
    * Clean old audit logs (keep longer for compliance)
    */
-  private async cleanOldAuditLogs(
-    config: CleanupConfig
-  ): Promise<{ cleaned: number }> {
+  private async cleanOldAuditLogs(config: CleanupConfig): Promise<{ cleaned: number }> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - config.auditRetentionDays);
 
-    console.log(
-      `   Cleaning audit logs older than ${config.auditRetentionDays} days...`
-    );
+    console.log(`   Cleaning audit logs older than ${config.auditRetentionDays} days...`);
 
     try {
       if (config.dryRun) {
@@ -221,15 +197,11 @@ class RecordCleanupAI {
   /**
    * Clean old read/dismissed notifications
    */
-  private async cleanOldNotifications(
-    config: CleanupConfig
-  ): Promise<{ cleaned: number }> {
+  private async cleanOldNotifications(config: CleanupConfig): Promise<{ cleaned: number }> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - config.notificationRetentionDays);
 
-    console.log(
-      `   Cleaning notifications older than ${config.notificationRetentionDays} days...`
-    );
+    console.log(`   Cleaning notifications older than ${config.notificationRetentionDays} days...`);
 
     try {
       if (config.dryRun) {
@@ -237,7 +209,7 @@ class RecordCleanupAI {
           where: {
             AND: [
               { createdAt: { lt: cutoffDate } },
-              { read: true }, // Only delete read notifications
+              { isRead: true }, // Only delete read notifications
             ],
           },
         });
@@ -247,7 +219,7 @@ class RecordCleanupAI {
 
       const deleteResult = await prisma.notifications.deleteMany({
         where: {
-          AND: [{ createdAt: { lt: cutoffDate } }, { read: true }],
+          AND: [{ createdAt: { lt: cutoffDate } }, { isRead: true }],
         },
       });
 
@@ -262,15 +234,11 @@ class RecordCleanupAI {
   /**
    * Clean expired user sessions
    */
-  private async cleanExpiredSessions(
-    config: CleanupConfig
-  ): Promise<{ cleaned: number }> {
+  private async cleanExpiredSessions(config: CleanupConfig): Promise<{ cleaned: number }> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - config.sessionRetentionDays);
 
-    console.log(
-      `   Cleaning sessions older than ${config.sessionRetentionDays} days...`
-    );
+    console.log(`   Cleaning sessions older than ${config.sessionRetentionDays} days...`);
 
     try {
       if (config.dryRun) {
@@ -288,10 +256,7 @@ class RecordCleanupAI {
 
       const deleteResult = await prisma.session.deleteMany({
         where: {
-          OR: [
-            { expiresAt: { lt: new Date() } },
-            { lastActivity: { lt: cutoffDate } },
-          ],
+          OR: [{ expiresAt: { lt: new Date() } }, { lastActivity: { lt: cutoffDate } }],
         },
       });
 
@@ -317,9 +282,7 @@ class RecordCleanupAI {
           WHERE "userId" NOT IN (SELECT "id" FROM "User")
         `;
         if (orphanedNotifications > 0) {
-          console.log(
-            `   ✅ Cleaned ${orphanedNotifications} orphaned notifications`
-          );
+          console.log(`   ✅ Cleaned ${orphanedNotifications} orphaned notifications`);
         }
 
         // Clean transactions for deleted users
@@ -328,9 +291,7 @@ class RecordCleanupAI {
           WHERE "userId" NOT IN (SELECT "id" FROM "User")
         `;
         if (orphanedTransactions > 0) {
-          console.log(
-            `   ✅ Cleaned ${orphanedTransactions} orphaned transactions`
-          );
+          console.log(`   ✅ Cleaned ${orphanedTransactions} orphaned transactions`);
         }
       }
     } catch (error) {
@@ -355,27 +316,15 @@ class RecordCleanupAI {
     cutoffAudit.setDate(cutoffAudit.getDate() - this.config.auditRetentionDays);
 
     const cutoffNotification = new Date();
-    cutoffNotification.setDate(
-      cutoffNotification.getDate() - this.config.notificationRetentionDays
-    );
+    cutoffNotification.setDate(cutoffNotification.getDate() - this.config.notificationRetentionDays);
 
     const cutoffSession = new Date();
-    cutoffSession.setDate(
-      cutoffSession.getDate() - this.config.sessionRetentionDays
-    );
+    cutoffSession.setDate(cutoffSession.getDate() - this.config.sessionRetentionDays);
 
-    const [
-      oldJobsCount,
-      oldAuditLogsCount,
-      oldNotificationsCount,
-      expiredSessionsCount,
-    ] = await Promise.all([
+    const [oldJobsCount, oldAuditLogsCount, oldNotificationsCount, expiredSessionsCount] = await Promise.all([
       prisma.job.count({
         where: {
-          AND: [
-            { updatedAt: { lt: cutoffJob } },
-            { OR: [{ status: "completed" }, { status: "failed" }] },
-          ],
+          AND: [{ updatedAt: { lt: cutoffJob } }, { OR: [{ status: "completed" }, { status: "failed" }] }],
         },
       }),
       prisma.audit_logs.count({
@@ -383,30 +332,20 @@ class RecordCleanupAI {
       }),
       prisma.notifications.count({
         where: {
-          AND: [{ createdAt: { lt: cutoffNotification } }, { read: true }],
+          AND: [{ createdAt: { lt: cutoffNotification } }, { isRead: true }],
         },
       }),
       prisma.session.count({
         where: {
-          OR: [
-            { expiresAt: { lt: new Date() } },
-            { lastActivity: { lt: cutoffSession } },
-          ],
+          OR: [{ expiresAt: { lt: new Date() } }, { lastActivity: { lt: cutoffSession } }],
         },
       }),
     ]);
 
     // Estimate space savings (rough approximation: 1KB per record)
-    const totalRecords =
-      oldJobsCount +
-      oldAuditLogsCount +
-      oldNotificationsCount +
-      expiredSessionsCount;
+    const totalRecords = oldJobsCount + oldAuditLogsCount + oldNotificationsCount + expiredSessionsCount;
     const estimatedKB = totalRecords * 1;
-    const estimatedSpaceSavings =
-      estimatedKB > 1024
-        ? `${(estimatedKB / 1024).toFixed(2)} MB`
-        : `${estimatedKB} KB`;
+    const estimatedSpaceSavings = estimatedKB > 1024 ? `${(estimatedKB / 1024).toFixed(2)} MB` : `${estimatedKB} KB`;
 
     return {
       oldJobsCount,

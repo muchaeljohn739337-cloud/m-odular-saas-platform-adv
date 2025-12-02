@@ -377,7 +377,7 @@ router.get("/history", authenticateToken as any, requireAdmin as any, async (req
             in: ["admin:bulk-bonus", "admin_bulk_bonus", "admin_medbed_bonus"],
           },
         },
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
         skip,
         take: pageSize,
         select: {

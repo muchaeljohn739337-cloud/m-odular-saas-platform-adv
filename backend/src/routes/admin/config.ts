@@ -72,8 +72,8 @@ router.post("/silent-mode", authenticateToken, requireAdmin, async (req: Request
     // Update or create configuration
     await prisma.system_config.upsert({
       where: { key: "silent_mode" },
-      update: { value: String(enabled) },
-      create: { key: "silent_mode", value: String(enabled) },
+      update: { value: String(enabled), updatedAt: new Date() },
+      create: { key: "silent_mode", value: String(enabled), updatedAt: new Date() },
     });
 
     res.json({

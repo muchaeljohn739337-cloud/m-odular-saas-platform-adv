@@ -129,6 +129,7 @@ router.post("/purchase", authenticateToken as any, aiRateLimiter("crypto"), asyn
     // Create crypto order
     const order = await prisma.crypto_orders.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         userId,
         cryptoType: cryptoType.toUpperCase(),
         usdAmount: new Decimal(usd),
@@ -138,6 +139,7 @@ router.post("/purchase", authenticateToken as any, aiRateLimiter("crypto"), asyn
         totalUsd: new Decimal(totalUsd),
         status: "PENDING",
         adminAddress,
+        updatedAt: new Date(),
       },
     });
 
@@ -154,12 +156,14 @@ router.post("/purchase", authenticateToken as any, aiRateLimiter("crypto"), asyn
     // Create transaction record
     await prisma.transactions.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         userId,
         type: "debit",
         amount: new Decimal(totalUsd),
         description: `Crypto purchase: ${cryptoAmount} ${cryptoType.toUpperCase()}`,
         category: "crypto_purchase",
         status: "COMPLETED",
+        updatedAt: new Date(),
       },
     });
 
