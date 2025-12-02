@@ -50,19 +50,15 @@ export class AIDeploymentAgent extends BaseAgent {
       retryAttempts: 2,
       timeout: 600000, // 10 minutes
       priority: "critical",
-      description:
-        "AI-powered deployment orchestration with learning and self-healing",
+      description: "AI-powered deployment orchestration with learning and self-healing",
     };
     super(config, context);
 
     // Load configuration from environment
     this.renderApiKey = process.env.RENDER_API_KEY || "";
-    this.renderServiceId =
-      process.env.RENDER_SERVICE_ID || "srv-d4gh11n5r7bs73b8iak0";
-    this.backendUrl =
-      process.env.BACKEND_URL || "https://advancia-backend-8xq5.onrender.com";
-    this.frontendUrl =
-      process.env.FRONTEND_URL || "https://advanciapayledger.com";
+    this.renderServiceId = process.env.RENDER_SERVICE_ID || "srv-d4gh11n5r7bs73b8iak0";
+    this.backendUrl = process.env.BACKEND_URL || "https://advancia-backend-8xq5.onrender.com";
+    this.frontendUrl = process.env.FRONTEND_URL || "https://advanciapayledger.com";
   }
 
   async execute(): Promise<AgentResult> {
@@ -86,16 +82,10 @@ export class AIDeploymentAgent extends BaseAgent {
       deploymentLog.checks = preFlightChecks;
       itemsProcessed++;
 
-      const criticalFailures = preFlightChecks.filter(
-        (check) => !check.passed && check.critical
-      );
+      const criticalFailures = preFlightChecks.filter((check) => !check.passed && check.critical);
 
       if (criticalFailures.length > 0) {
-        this.context.logger.error(
-          `❌ Pre-flight checks failed: ${criticalFailures
-            .map((c) => c.name)
-            .join(", ")}`
-        );
+        this.context.logger.error(`❌ Pre-flight checks failed: ${criticalFailures.map((c) => c.name).join(", ")}`);
         errors++;
 
         return {
@@ -119,9 +109,7 @@ export class AIDeploymentAgent extends BaseAgent {
       itemsProcessed++;
 
       if (riskAssessment.recommendation === "block") {
-        this.context.logger.error(
-          `🚫 Deployment blocked - Risk score: ${riskAssessment.score}/10`
-        );
+        this.context.logger.error(`🚫 Deployment blocked - Risk score: ${riskAssessment.score}/10`);
         errors++;
 
         return {
@@ -179,9 +167,7 @@ export class AIDeploymentAgent extends BaseAgent {
       const validationFailures = validation.filter((v: any) => !v.passed);
       if (validationFailures.length > 0) {
         this.context.logger.error(
-          `⚠️ Post-deployment validation failed: ${validationFailures
-            .map((v: any) => v.name)
-            .join(", ")}`
+          `⚠️ Post-deployment validation failed: ${validationFailures.map((v: any) => v.name).join(", ")}`
         );
 
         // Rollback on validation failure
@@ -222,9 +208,7 @@ export class AIDeploymentAgent extends BaseAgent {
         data: {
           deploymentLog,
           riskScore: riskAssessment.score,
-          duration: execution.endTime
-            ? execution.endTime.getTime() - execution.startTime.getTime()
-            : 0,
+          duration: execution.endTime ? execution.endTime.getTime() - execution.startTime.getTime() : 0,
         },
         metrics: {
           duration: 0,
@@ -274,12 +258,7 @@ export class AIDeploymentAgent extends BaseAgent {
     }
 
     // Check 2: Environment variables
-    const requiredVars = [
-      "DATABASE_URL",
-      "JWT_SECRET",
-      "FRONTEND_URL",
-      "BACKEND_URL",
-    ];
+    const requiredVars = ["DATABASE_URL", "JWT_SECRET", "FRONTEND_URL", "BACKEND_URL"];
     const missingVars = requiredVars.filter((v) => !process.env[v]);
 
     checks.push({
@@ -367,19 +346,16 @@ export class AIDeploymentAgent extends BaseAgent {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
         },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 10,
     });
 
     const failureRate =
-      recentDeployments.filter((d) => d.action === "deployment_failed").length /
-      Math.max(recentDeployments.length, 1);
+      recentDeployments.filter((d) => d.action === "deployment_failed").length / Math.max(recentDeployments.length, 1);
 
     if (failureRate > 0.3) {
       score += 3;
-      factors.push(
-        `High recent failure rate: ${(failureRate * 100).toFixed(0)}%`
-      );
+      factors.push(`High recent failure rate: ${(failureRate * 100).toFixed(0)}%`);
     } else if (failureRate > 0.1) {
       score += 1;
       factors.push(`Moderate failure rate: ${(failureRate * 100).toFixed(0)}%`);
@@ -388,7 +364,7 @@ export class AIDeploymentAgent extends BaseAgent {
     // Factor 2: Current system health
     const activeUsers = await this.context.prisma.users.count({
       where: {
-        last_active: {
+        lastActive: {
           gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
         },
       },
@@ -461,14 +437,10 @@ export class AIDeploymentAgent extends BaseAgent {
           execution.backend.triggered = true;
           execution.backend.status = "deploying";
           execution.backend.deployId = data.deploy?.id;
-          this.context.logger.info(
-            `✅ Render deployment triggered: ${data.deploy?.id}`
-          );
+          this.context.logger.info(`✅ Render deployment triggered: ${data.deploy?.id}`);
         } else {
           execution.backend.status = "failed";
-          this.context.logger.error(
-            `❌ Render deployment failed: ${renderResponse.status}`
-          );
+          this.context.logger.error(`❌ Render deployment failed: ${renderResponse.status}`);
         }
       }
 
@@ -488,9 +460,7 @@ export class AIDeploymentAgent extends BaseAgent {
       execution.frontend.status = frontendSuccess ? "success" : "failed";
 
       execution.endTime = new Date();
-      execution.success =
-        execution.backend.status === "success" &&
-        execution.frontend.status === "success";
+      execution.success = execution.backend.status === "success" && execution.frontend.status === "success";
 
       return execution;
     } catch (error) {
@@ -504,10 +474,7 @@ export class AIDeploymentAgent extends BaseAgent {
   /**
    * Monitor backend deployment status
    */
-  private async monitorBackendDeployment(
-    maxAttempts: number,
-    intervalMs: number
-  ): Promise<boolean> {
+  private async monitorBackendDeployment(maxAttempts: number, intervalMs: number): Promise<boolean> {
     for (let i = 0; i < maxAttempts; i++) {
       try {
         const response = await fetch(`${this.backendUrl}/api/health`, {
@@ -533,10 +500,7 @@ export class AIDeploymentAgent extends BaseAgent {
   /**
    * Monitor frontend deployment status
    */
-  private async monitorFrontendDeployment(
-    maxAttempts: number,
-    intervalMs: number
-  ): Promise<boolean> {
+  private async monitorFrontendDeployment(maxAttempts: number, intervalMs: number): Promise<boolean> {
     for (let i = 0; i < maxAttempts; i++) {
       try {
         const response = await fetch(this.frontendUrl, {
@@ -630,9 +594,7 @@ export class AIDeploymentAgent extends BaseAgent {
       });
       const agents = await response.json();
 
-      const operationalAgents = agents.filter(
-        (a: any) => a.status === "success"
-      );
+      const operationalAgents = agents.filter((a: any) => a.status === "success");
 
       validations.push({
         name: "ai_agents",
@@ -653,9 +615,7 @@ export class AIDeploymentAgent extends BaseAgent {
   /**
    * Attempt self-healing for common deployment issues
    */
-  private async attemptSelfHealing(
-    execution: DeploymentExecution
-  ): Promise<boolean> {
+  private async attemptSelfHealing(execution: DeploymentExecution): Promise<boolean> {
     this.context.logger.info("🔧 Attempting self-healing...");
 
     // Self-healing strategy 1: Retry deployment once
@@ -664,9 +624,7 @@ export class AIDeploymentAgent extends BaseAgent {
     const retryExecution = await this.executeDeployment();
 
     if (retryExecution.success) {
-      this.context.logger.info(
-        "✅ Self-healing successful - deployment recovered"
-      );
+      this.context.logger.info("✅ Self-healing successful - deployment recovered");
       return true;
     }
 
@@ -712,11 +670,7 @@ export class AIDeploymentAgent extends BaseAgent {
   /**
    * Record deployment history for learning
    */
-  private async recordDeploymentHistory(
-    execution: DeploymentExecution,
-    log: any,
-    success: boolean
-  ): Promise<void> {
+  private async recordDeploymentHistory(execution: DeploymentExecution, log: any, success: boolean): Promise<void> {
     try {
       await SafePrisma.create("audit_logs", {
         userId: "ai-deployment-agent",
@@ -727,18 +681,14 @@ export class AIDeploymentAgent extends BaseAgent {
           execution,
           log,
           duration:
-            execution.endTime && execution.startTime
-              ? execution.endTime.getTime() - execution.startTime.getTime()
-              : 0,
+            execution.endTime && execution.startTime ? execution.endTime.getTime() - execution.startTime.getTime() : 0,
           riskScore: log.riskAssessment?.score,
         },
       });
 
       this.context.logger.info("📊 Deployment history recorded");
     } catch (error) {
-      this.context.logger.error(
-        `Failed to record deployment history: ${error}`
-      );
+      this.context.logger.error(`Failed to record deployment history: ${error}`);
     }
   }
 }

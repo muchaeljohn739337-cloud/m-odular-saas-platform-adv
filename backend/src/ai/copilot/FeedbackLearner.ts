@@ -15,13 +15,8 @@ export interface LearningMetrics {
 }
 
 export class FeedbackLearner {
-  async logInteraction(
-    userId: number,
-    sessionId: string,
-    message: string,
-    response: string
-  ): Promise<void> {
-    await prisma.copilotInteraction.create({
+  async logInteraction(userId: number, sessionId: string, message: string, response: string): Promise<void> {
+    await prisma.copilot_interactions.create({
       data: {
         userId,
         sessionId,
@@ -42,9 +37,7 @@ export class FeedbackLearner {
       },
     });
 
-    console.log(
-      `[FeedbackLearner] Task ${taskId} completed in ${executionTime}ms`
-    );
+    console.log(`[FeedbackLearner] Task ${taskId} completed in ${executionTime}ms`);
   }
 
   async logTaskFailure(taskId: string, error: string): Promise<void> {
@@ -60,12 +53,7 @@ export class FeedbackLearner {
     console.error(`[FeedbackLearner] Task ${taskId} failed: ${error}`);
   }
 
-  async logUserFeedback(
-    taskId: string,
-    userId: number,
-    rating: number,
-    comment?: string
-  ): Promise<void> {
+  async logUserFeedback(taskId: string, userId: number, rating: number, comment?: string): Promise<void> {
     await prisma.copilotFeedback.create({
       data: {
         taskId,
@@ -77,9 +65,7 @@ export class FeedbackLearner {
     });
 
     if (rating <= 2) {
-      console.warn(
-        `[FeedbackLearner] Low rating (${rating}) for task ${taskId}`
-      );
+      console.warn(`[FeedbackLearner] Low rating (${rating}) for task ${taskId}`);
     }
   }
 
@@ -87,16 +73,10 @@ export class FeedbackLearner {
     const tasks = await prisma.copilotTask.findMany();
 
     const totalTasks = tasks.length;
-    const successfulTasks = tasks.filter(
-      (t) => t.status === "completed"
-    ).length;
-    const successRate =
-      totalTasks > 0 ? (successfulTasks / totalTasks) * 100 : 0;
+    const successfulTasks = tasks.filter((t) => t.status === "completed").length;
+    const successRate = totalTasks > 0 ? (successfulTasks / totalTasks) * 100 : 0;
 
-    const taskTypeStats: Record<
-      string,
-      { count: number; successRate: number }
-    > = {};
+    const taskTypeStats: Record<string, { count: number; successRate: number }> = {};
     for (const task of tasks) {
       if (!taskTypeStats[task.type]) {
         taskTypeStats[task.type] = { count: 0, successRate: 0 };

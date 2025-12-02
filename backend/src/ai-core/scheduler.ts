@@ -103,7 +103,7 @@ export class AIScheduler {
   private scheduleWorkflowChecks(): void {
     // Check for pending approvals every 5 minutes
     this.schedule("check-pending-workflows", "*/5 * * * *", async () => {
-      const pendingWorkflows = await prisma.ai_workflows.findMany({
+      const pendingWorkflows = await prisma.aIWorkflow.findMany({
         where: {
           status: "PENDING_APPROVAL",
           createdAt: {
@@ -133,7 +133,7 @@ export class AIScheduler {
 
     // Retry failed tasks every hour
     this.schedule("retry-failed-tasks", "0 * * * *", async () => {
-      const failedTasks = await prisma.ai_tasks.findMany({
+      const failedTasks = await prisma.aITask.findMany({
         where: {
           status: "FAILED",
           retryCount: {
@@ -159,7 +159,7 @@ export class AIScheduler {
   }
 
   private async loadScheduledWorkflows(): Promise<void> {
-    const scheduledWorkflows = await prisma.ai_workflows.findMany({
+    const scheduledWorkflows = await prisma.aIWorkflow.findMany({
       where: {
         trigger: {
           path: ["type"],
@@ -192,10 +192,7 @@ export class AIScheduler {
         console.log(`Executing scheduled workflow: ${workflowId}`);
         await getWorkflowEngine().executeWorkflow(workflowId, {});
       } catch (error) {
-        console.error(
-          `Failed to execute scheduled workflow ${workflowId}:`,
-          error
-        );
+        console.error(`Failed to execute scheduled workflow ${workflowId}:`, error);
       }
     });
 
@@ -244,11 +241,7 @@ export class AIScheduler {
     return Array.from(this.jobs.keys());
   }
 
-  async scheduleDailyReport(
-    reportType: string,
-    recipients: string[],
-    time: string = "08:00"
-  ): Promise<void> {
+  async scheduleDailyReport(reportType: string, recipients: string[], time: string = "08:00"): Promise<void> {
     const [hour, minute] = time.split(":");
     const pattern = `${minute} ${hour} * * *`;
 

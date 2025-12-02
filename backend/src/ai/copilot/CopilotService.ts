@@ -60,9 +60,7 @@ export class CopilotService {
 
   constructor() {
     this.config = {
-      llmProvider:
-        (process.env.COPILOT_LLM_PROVIDER as "openai" | "anthropic") ||
-        "openai",
+      llmProvider: (process.env.COPILOT_LLM_PROVIDER as "openai" | "anthropic") || "openai",
       model: process.env.COPILOT_MODEL || "gpt-4-turbo-preview",
       temperature: parseFloat(process.env.COPILOT_TEMPERATURE || "0.7"),
       maxTokens: parseInt(process.env.COPILOT_MAX_TOKENS || "4000"),
@@ -80,12 +78,9 @@ export class CopilotService {
     console.log("[CopilotService] Initializing LLM clients...");
 
     // Get API keys from Vault (fallback to env)
-    const openaiKey =
-      (await vaultService.getSecret("OPENAI_API_KEY").catch(() => null)) ||
-      process.env.OPENAI_API_KEY;
+    const openaiKey = (await vaultService.getSecret("OPENAI_API_KEY").catch(() => null)) || process.env.OPENAI_API_KEY;
     const anthropicKey =
-      (await vaultService.getSecret("ANTHROPIC_API_KEY").catch(() => null)) ||
-      process.env.ANTHROPIC_API_KEY;
+      (await vaultService.getSecret("ANTHROPIC_API_KEY").catch(() => null)) || process.env.ANTHROPIC_API_KEY;
 
     if (this.config.llmProvider === "openai" && openaiKey) {
       this.openai = new OpenAI({ apiKey: openaiKey });
@@ -94,9 +89,7 @@ export class CopilotService {
       this.anthropic = new Anthropic({ apiKey: anthropicKey });
       console.log("[CopilotService] Anthropic initialized");
     } else {
-      console.warn(
-        "[CopilotService] No LLM provider configured or API key missing"
-      );
+      console.warn("[CopilotService] No LLM provider configured or API key missing");
     }
   }
 
@@ -133,11 +126,7 @@ export class CopilotService {
   /**
    * Chat with Copilot (conversational interface)
    */
-  async chat(
-    userId: number,
-    message: string,
-    sessionId?: string
-  ): Promise<string> {
+  async chat(userId: number, message: string, sessionId?: string): Promise<string> {
     if (!this.initialized) {
       await this.initialize();
     }
@@ -190,10 +179,7 @@ export class CopilotService {
   /**
    * Generate response using LLM
    */
-  private async generateResponse(
-    history: CopilotMessage[],
-    context?: CopilotContext
-  ): Promise<string> {
+  private async generateResponse(history: CopilotMessage[], context?: CopilotContext): Promise<string> {
     const systemPrompt = this.buildSystemPrompt(context);
 
     const messages = [
@@ -220,9 +206,7 @@ export class CopilotService {
           system: systemPrompt,
           messages: messages.slice(1), // Skip system message for Anthropic
         });
-        return response.content[0].type === "text"
-          ? response.content[0].text
-          : "No response generated";
+        return response.content[0].type === "text" ? response.content[0].text : "No response generated";
       }
 
       return "LLM provider not configured";
@@ -309,11 +293,7 @@ Guidelines:
 
       // Generate task content
       const context = await this.gatherContext(description);
-      const result = await taskGenerator.generate(
-        type,
-        description,
-        JSON.stringify(context)
-      );
+      const result = await taskGenerator.generate(type, description, JSON.stringify(context));
 
       // Mark as completed
       const executionTime = Date.now() - startTime;
@@ -369,13 +349,7 @@ Guidelines:
     // Get database models
     try {
       // This would ideally parse schema.prisma dynamically
-      context.models = [
-        "User",
-        "Transaction",
-        "TokenWallet",
-        "Reward",
-        "AuditLog",
-      ];
+      context.models = ["User", "Transaction", "TokenWallet", "Reward", "AuditLog"];
     } catch (error) {
       console.error("[CopilotService] Failed to load models:", error);
     }
@@ -387,7 +361,7 @@ Guidelines:
    * Store task in database
    */
   private async storeTask(task: CopilotTask): Promise<void> {
-    await prisma.copilotTask.create({
+    await prisma.copilot_tasks.create({
       data: {
         id: task.id,
         type: task.type,
@@ -405,11 +379,8 @@ Guidelines:
   /**
    * Update task in database
    */
-  private async updateTask(
-    taskId: string,
-    updates: Partial<CopilotTask>
-  ): Promise<void> {
-    await prisma.copilotTask.update({
+  private async updateTask(taskId: string, updates: Partial<CopilotTask>): Promise<void> {
+    await prisma.copilot_tasks.update({
       where: { id: taskId },
       data: updates,
     });
@@ -419,7 +390,7 @@ Guidelines:
    * Get task by ID
    */
   async getTask(taskId: string): Promise<CopilotTask | null> {
-    const task = await prisma.copilotTask.findUnique({
+    const task = await prisma.copilot_tasks.findUnique({
       where: { id: taskId },
     });
 
@@ -449,14 +420,12 @@ Guidelines:
    * Get statistics
    */
   async getStatistics() {
-    const taskStats = await prisma.copilotTask.groupBy({
+    const taskStats = await prisma.copilot_tasks.groupBy({
       by: ["status"],
       _count: true,
     });
 
-    const learningStats = this.config.enableLearning
-      ? await feedbackLearner.getStatistics()
-      : null;
+    const learningStats = this.config.enableLearning ? await feedbackLearner.getStatistics() : null;
 
     const ragStats = this.config.enableRAG ? ragEngine.getStatistics() : null;
 

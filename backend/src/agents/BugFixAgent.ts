@@ -37,7 +37,7 @@ export class BugFixAgent extends BaseAgent {
             gte: twentyMinutesAgo,
           },
         },
-        orderBy: { created_at: "desc" },
+        orderBy: { createdAt: "desc" },
         take: 20,
       });
       itemsProcessed++;
@@ -66,16 +66,9 @@ export class BugFixAgent extends BaseAgent {
           // Create SecurityPatch entry
           const patch = await this.context.prisma.security_patches.create({
             data: {
-              patch_id: `AUTO-${Date.now()}-${Math.random()
-                .toString(36)
-                .substr(2, 9)}`,
+              patch_id: `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               issueDescription: pattern.errorMessage,
-              severity:
-                pattern.occurrences >= 10
-                  ? "CRITICAL"
-                  : pattern.occurrences >= 5
-                  ? "HIGH"
-                  : "MEDIUM",
+              severity: pattern.occurrences >= 10 ? "CRITICAL" : pattern.occurrences >= 5 ? "HIGH" : "MEDIUM",
               patchType: "BUG_FIX",
               status: "PENDING",
               suggestedFix: solutions.join("\n\n"),
@@ -178,9 +171,7 @@ export class BugFixAgent extends BaseAgent {
       }
     });
 
-    return Array.from(patterns.values()).sort(
-      (a, b) => b.occurrences - a.occurrences
-    );
+    return Array.from(patterns.values()).sort((a, b) => b.occurrences - a.occurrences);
   }
 
   private async searchSolutions(errorMessage: string): Promise<string[]> {
@@ -199,17 +190,11 @@ export class BugFixAgent extends BaseAgent {
       solutions.push("Review input validation rules");
       solutions.push("Check for missing required fields in request");
       solutions.push("Verify data types match schema definitions");
-    } else if (
-      errorMessage.includes("permission") ||
-      errorMessage.includes("unauthorized")
-    ) {
+    } else if (errorMessage.includes("permission") || errorMessage.includes("unauthorized")) {
       solutions.push("Verify user has required permissions/role");
       solutions.push("Check JWT token validity and expiration");
       solutions.push("Review authorization middleware configuration");
-    } else if (
-      errorMessage.includes("duplicate") ||
-      errorMessage.includes("unique constraint")
-    ) {
+    } else if (errorMessage.includes("duplicate") || errorMessage.includes("unique constraint")) {
       solutions.push("Check for existing records before insert");
       solutions.push("Add unique constraint validation in code");
       solutions.push("Consider using upsert instead of insert");
