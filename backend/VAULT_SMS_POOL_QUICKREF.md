@@ -2,7 +2,8 @@
 
 ## 🎯 Overview
 
-Your SMS Pool credentials are now integrated with HashiCorp Vault for enhanced security. This document provides quick commands for common operations.
+Your SMS Pool credentials are now integrated with HashiCorp Vault for enhanced security. This document provides quick
+commands for common operations.
 
 ---
 
@@ -17,6 +18,7 @@ npx tsx scripts/store-smspool-in-vault.ts
 ```
 
 **Output:**
+
 - ✅ Stored: `smspool_api_key` (with 90-day rotation)
 - ✅ Stored: `smspool_service_id`
 - 📊 Audit log entries created
@@ -100,14 +102,14 @@ SMSPOOL_SERVICE_ID=1
 
 ## 📊 Security Features
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| **Encryption at Rest** | ✅ Enabled | AES-256-CBC |
-| **Automatic Rotation** | ✅ Enabled | 90-day policy |
-| **Audit Logging** | ✅ Enabled | All access logged |
-| **Admin-Only Access** | ✅ Enabled | RBAC enforced |
-| **MFA Support** | ✅ Available | TOTP-based |
-| **Fallback Support** | ✅ Enabled | Uses .env if Vault fails |
+| Feature                | Status       | Details                  |
+| ---------------------- | ------------ | ------------------------ |
+| **Encryption at Rest** | ✅ Enabled   | AES-256-CBC              |
+| **Automatic Rotation** | ✅ Enabled   | 90-day policy            |
+| **Audit Logging**      | ✅ Enabled   | All access logged        |
+| **Admin-Only Access**  | ✅ Enabled   | RBAC enforced            |
+| **MFA Support**        | ✅ Available | TOTP-based               |
+| **Fallback Support**   | ✅ Enabled   | Uses .env if Vault fails |
 
 ---
 
@@ -116,6 +118,7 @@ SMSPOOL_SERVICE_ID=1
 ### Issue: Script fails with "No admin user found"
 
 **Solution:**
+
 ```bash
 cd backend
 npx tsx scripts/seed-admin.ts
@@ -125,16 +128,18 @@ npx tsx scripts/seed-admin.ts
 ### Issue: "Secret already exists"
 
 **Solution:**
+
 ```typescript
 // Use rotateSecret instead of createSecret
-import { VaultService } from './src/services/VaultService';
+import { VaultService } from "./src/services/VaultService";
 const vault = new VaultService();
-await vault.rotateSecret('smspool_api_key', 'NEW_VALUE', 'admin-user-id');
+await vault.rotateSecret("smspool_api_key", "NEW_VALUE", "admin-user-id");
 ```
 
 ### Issue: Vault connection timeout
 
 **Solution:**
+
 ```bash
 # Check Vault server status
 curl $VAULT_ADDR/v1/sys/health
@@ -147,6 +152,7 @@ vault token lookup
 ### Issue: RPA still using environment variable
 
 **Solution:**
+
 ```bash
 # Verify VAULT_ENABLED is set correctly
 echo $VAULT_ENABLED  # Should output: true
@@ -181,6 +187,7 @@ echo $VAULT_ENABLED  # Should output: true
 ---
 
 **Need Help?**
+
 - Review: `backend/SMS_POOL_SETUP.md`
 - Check logs: Vault service logs in console
 - Test connection: `npx tsx scripts/store-smspool-in-vault.ts --dry-run`
