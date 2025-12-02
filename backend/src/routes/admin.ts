@@ -38,7 +38,7 @@ router.get("/doctors", adminAuth, async (req, res) => {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     return res.json({
@@ -73,7 +73,7 @@ router.get("/doctor/:id", adminAuth, async (req, res) => {
         scheduledAt: true,
         patientId: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 10,
     });
 
@@ -376,9 +376,9 @@ router.get(
 
       // User statistics
       const [totalUsers, activeUsers, newUsersThisMonth] = await Promise.all([
-        prisma.user.count(),
-        prisma.user.count({ where: { active: true } }),
-        prisma.user.count({
+        prisma.users.count(),
+        prisma.users.count({ where: { active: true } }),
+        prisma.users.count({
           where: {
             createdAt: {
               gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -388,14 +388,14 @@ router.get(
       ]);
 
       // Transaction statistics
-      const transactions = await prisma.transaction.aggregate({
+      const transactions = await prisma.transactions.aggregate({
         where: whereDate,
         _count: true,
         _sum: { amount: true },
       });
 
       // Token wallet statistics
-      const tokenStats = await prisma.tokenWallet.aggregate({
+      const tokenStats = await prisma.token_wallets.aggregate({
         _sum: { balance: true, lifetimeEarned: true },
       });
 
@@ -435,10 +435,10 @@ router.get(
       startDate.setDate(startDate.getDate() - daysNum);
 
       // Group users by day
-      const users = await prisma.user.findMany({
+      const users = await prisma.users.findMany({
         where: { createdAt: { gte: startDate } },
-        select: { createdAt: true },
-        orderBy: { createdAt: "asc" },
+        select: { created_at: true },
+        orderBy: { created_at: "asc" },
       });
 
       // Aggregate by day
@@ -473,10 +473,10 @@ router.get(
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysNum);
 
-      const transactions = await prisma.transaction.findMany({
+      const transactions = await prisma.transactions.findMany({
         where: { createdAt: { gte: startDate } },
-        select: { createdAt: true, amount: true },
-        orderBy: { createdAt: "asc" },
+        select: { created_at: true, amount: true },
+        orderBy: { created_at: "asc" },
       });
 
       // Aggregate by day
@@ -505,12 +505,12 @@ router.get(
 router.get("/stats", adminAuth, async (req, res) => {
   try {
     // Total users count
-    const totalUsers = await prisma.user.count();
+    const totalUsers = await prisma.users.count();
 
     // Active users (logged in within last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const activeUsers = await prisma.user.count({
+    const activeUsers = await prisma.users.count({
       where: {
         updatedAt: {
           gte: thirtyDaysAgo,
@@ -519,17 +519,17 @@ router.get("/stats", adminAuth, async (req, res) => {
     });
 
     // Total transactions
-    const totalTransactions = await prisma.transaction.count();
+    const totalTransactions = await prisma.transactions.count();
 
     // Pending withdrawals count
-    const pendingWithdrawals = await prisma.cryptoWithdrawal.count({
+    const pendingWithdrawals = await prisma.crypto_withdrawals.count({
       where: {
         status: "PENDING",
       },
     });
 
     // Total revenue (sum of completed transactions)
-    const revenueData = await prisma.transaction.aggregate({
+    const revenueData = await prisma.transactions.aggregate({
       _sum: {
         amount: true,
       },
@@ -541,7 +541,7 @@ router.get("/stats", adminAuth, async (req, res) => {
     const totalRevenue = revenueData._sum.amount?.toString() || "0";
 
     // Recent activity (last 5 transactions)
-    const recentActivity = await prisma.transaction.findMany({
+    const recentActivity = await prisma.transactions.findMany({
       take: 5,
       orderBy: {
         createdAt: "desc",
@@ -558,7 +558,7 @@ router.get("/stats", adminAuth, async (req, res) => {
 
     // Fetch user details for recent activity
     const userIds = [...new Set(recentActivity.map((a) => a.userId))];
-    const users = await prisma.user.findMany({
+    const users = await prisma.users.findMany({
       where: {
         id: {
           in: userIds,
@@ -606,8 +606,8 @@ router.get("/stats", adminAuth, async (req, res) => {
 // GET /api/admin/transactions - Get transaction history
 router.get("/transactions", adminAuth, async (req, res) => {
   try {
-    const transactions = await prisma.transaction.findMany({
-      orderBy: { createdAt: "desc" },
+    const transactions = await prisma.transactions.findMany({
+      orderBy: { created_at: "desc" },
       take: 1000,
       select: {
         id: true,
@@ -646,7 +646,7 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
         .json({ error: `Invalid currency: ${currencyUpper}` });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const balanceField = `${currencyUpper.toLowerCase()}Balance`;
@@ -660,9 +660,9 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
     const updateData: Record<string, number> = {};
     updateData[balanceField] = newBalance;
 
-    await prisma.user.update({ where: { id: userId }, data: updateData });
+    await prisma.users.update({ where: { id: userId }, data: updateData });
 
-    await prisma.transaction.create({
+    await prisma.transactions.create({
       data: {
         userId,
         amount: Number(amount),
@@ -682,8 +682,8 @@ router.post("/users/:userId/update-balance", adminAuth, async (req, res) => {
 // GET /api/admin/transactions - Get transaction history
 router.get("/transactions", adminAuth, async (req, res) => {
   try {
-    const transactions = await prisma.transaction.findMany({
-      orderBy: { createdAt: "desc" },
+    const transactions = await prisma.transactions.findMany({
+      orderBy: { created_at: "desc" },
       take: 1000,
       select: {
         id: true,
@@ -719,7 +719,7 @@ router.get(
 
       // Get pending users (where active = false)
       const [pendingUsers, totalCount] = await Promise.all([
-        prisma.user.findMany({
+        prisma.users.findMany({
           where: { active: false },
           select: {
             id: true,
@@ -729,11 +729,11 @@ router.get(
             createdAt: true,
             updatedAt: true,
           },
-          orderBy: { createdAt: "asc" },
+          orderBy: { created_at: "asc" },
           skip,
           take: limitNum,
         }),
-        prisma.user.count({ where: { active: false } }),
+        prisma.users.count({ where: { active: false } }),
       ]);
 
       return res.json({
@@ -773,7 +773,7 @@ router.post(
         });
       }
 
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: {
           id: true,
@@ -793,7 +793,7 @@ router.post(
       }
 
       if (action === "approve") {
-        const approvedUser = await prisma.user.update({
+        const approvedUser = await prisma.users.update({
           where: { id: userId },
           data: { active: true },
           select: {
@@ -811,7 +811,7 @@ router.post(
         });
       } else {
         // Reject: delete the user or mark as rejected
-        await prisma.user.delete({
+        await prisma.users.delete({
           where: { id: userId },
         });
 
@@ -858,7 +858,7 @@ router.post(
         });
       }
 
-      const users = await prisma.user.findMany({
+      const users = await prisma.users.findMany({
         where: { id: { in: userIds }, active: false },
         select: { id: true, email: true, firstName: true, lastName: true },
       });
@@ -878,7 +878,7 @@ router.post(
 
       if (action === "approve") {
         // Approve users
-        const updated = await prisma.user.updateMany({
+        const updated = await prisma.users.updateMany({
           where: { id: { in: users.map((u) => u.id) }, active: false },
           data: { active: true },
         });
@@ -888,7 +888,7 @@ router.post(
         // Reject users (delete them)
         for (const user of users) {
           try {
-            await prisma.user.delete({
+            await prisma.users.delete({
               where: { id: user.id },
             });
             results.rejected++;

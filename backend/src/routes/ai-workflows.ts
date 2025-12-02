@@ -30,7 +30,7 @@ const requireAdmin = async (req: Request, res: Response, next: Function) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: { role: true },
     });
@@ -62,11 +62,11 @@ router.get(
         where,
         include: {
           tasks: {
-            orderBy: { createdAt: "desc" },
+            orderBy: { created_at: "desc" },
             take: 5,
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: parseInt(limit as string),
         skip: parseInt(offset as string),
       });
@@ -101,7 +101,7 @@ router.get(
         where: { id },
         include: {
           tasks: {
-            orderBy: { createdAt: "desc" },
+            orderBy: { created_at: "desc" },
           },
         },
       });
@@ -237,7 +237,7 @@ router.get(
             select: { id: true, name: true, type: true },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: parseInt(limit as string),
         skip: parseInt(offset as string),
       });
@@ -399,7 +399,7 @@ router.get(
 
       const alerts = await prisma.aIAlert.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: parseInt(limit as string),
       });
 
@@ -445,7 +445,7 @@ router.get(
       const where: any = {};
       if (type) where.type = type;
 
-      const suggestions = await prisma.aISuggestion.findMany({
+      const suggestions = await prisma.ai_suggestions.findMany({
         where,
         orderBy: { confidence: "desc" },
         take: parseInt(limit as string),
@@ -469,7 +469,7 @@ router.post(
       const { id } = req.params;
       const userId = (req as any).user?.userId;
 
-      const suggestion = await prisma.aISuggestion.findUnique({
+      const suggestion = await prisma.ai_suggestions.findUnique({
         where: { id },
       });
 
@@ -480,7 +480,7 @@ router.post(
       // Apply the suggestion based on type
       // This would be implemented based on your specific use cases
 
-      const updated = await prisma.aISuggestion.update({
+      const updated = await prisma.ai_suggestions.update({
         where: { id },
         data: {
           applied: true,

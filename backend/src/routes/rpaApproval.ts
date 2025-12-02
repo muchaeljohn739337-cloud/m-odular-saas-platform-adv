@@ -1,4 +1,5 @@
-import { Decimal } from 'decimal.js';
+import crypto from "crypto";
+import { Decimal } from "decimal.js";
 import { Response, Router } from "express";
 import {
   authenticateToken,
@@ -45,10 +46,10 @@ router.post(
       const { override, adminNotes } = req.body;
 
       // Get withdrawal request
-      const withdrawal = await prisma.cryptoWithdrawal.findUnique({
+      const withdrawal = await prisma.crypto_withdrawals.findUnique({
         where: { id },
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
@@ -90,7 +91,7 @@ router.post(
 
       // Auto-approve if risk is low
       if (riskAssessment.autoApprove) {
-        const updated = await prisma.cryptoWithdrawal.update({
+        const updated = await prisma.crypto_withdrawals.update({
           where: { id },
           data: {
             status: "APPROVED",
@@ -100,8 +101,9 @@ router.post(
         });
 
         // Create audit log
-        await prisma.auditLog.create({
+        await prisma.audit_logs.create({
           data: {
+            id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
             userId: req.user?.userId || "system",
             action: "WITHDRAWAL_AUTO_APPROVED",
             resourceType: "CryptoWithdrawal",
@@ -132,8 +134,9 @@ router.post(
       }
 
       // Flag for manual review if risk is medium/high
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
           userId: req.user?.userId || "system",
           action: "WITHDRAWAL_FLAGGED_FOR_REVIEW",
           resourceType: "CryptoWithdrawal",
@@ -183,10 +186,10 @@ router.post(
       const { dryRun = false, maxRiskScore = 30 } = req.body;
 
       // Get all pending withdrawals
-      const pendingWithdrawals = await prisma.cryptoWithdrawal.findMany({
+      const pendingWithdrawals = await prisma.crypto_withdrawals.findMany({
         where: { status: "PENDING" },
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
@@ -201,7 +204,7 @@ router.post(
             },
           },
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: { created_at: "asc" },
       });
 
       const results = {
@@ -209,6 +212,7 @@ router.post(
         autoApproved: 0,
         flaggedForReview: 0,
         errors: 0,
+        metadata: [] as any[],
         details: [] as any[],
       };
 
@@ -221,7 +225,7 @@ router.post(
             riskAssessment.autoApprove
           ) {
             if (!dryRun) {
-              await prisma.cryptoWithdrawal.update({
+              await prisma.crypto_withdrawals.update({
                 where: { id: withdrawal.id },
                 data: {
                   status: "APPROVED",
@@ -230,8 +234,10 @@ router.post(
                 },
               });
 
-              await prisma.auditLog.create({
+              await prisma.audit_logs.create({
                 data: {
+                  id:
+                    (await import("crypto")).randomUUID?.() || `${Date.now()}`,
                   userId: "system",
                   action: "WITHDRAWAL_BATCH_AUTO_APPROVED",
                   resourceType: "CryptoWithdrawal",
@@ -320,7 +326,7 @@ router.post(
         !kycScore.flags.length
       ) {
         // Auto-verify user
-        await prisma.user.update({
+        await prisma.users.update({
           where: { id: userId },
           data: {
             // Add kycVerified field if it exists
@@ -328,8 +334,9 @@ router.post(
           },
         });
 
-        await prisma.auditLog.create({
+        await prisma.audit_logs.create({
           data: {
+            id: crypto.randomUUID(),
             userId,
             action: "KYC_AUTO_VERIFIED",
             resourceType: "User",
@@ -357,8 +364,9 @@ router.post(
       }
 
       // Flag for manual review
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: crypto.randomUUID(),
           userId,
           action: "KYC_FLAGGED_FOR_REVIEW",
           resourceType: "User",
@@ -459,7 +467,7 @@ async function assessWithdrawalRisk(withdrawal: any): Promise<RiskAssessment> {
   }
 
   // Factor 6: Recent withdrawal requests
-  const recentWithdrawals = await prisma.cryptoWithdrawal.count({
+  const recentWithdrawals = await prisma.crypto_withdrawals.count({
     where: {
       userId: user.id,
       createdAt: {

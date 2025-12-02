@@ -51,7 +51,7 @@ router.post("/register", validateApiKey, async (req, res) => {
         .json({ error: "Password must be at least 6 characters" });
     }
 
-    const existing = await prisma.user.findFirst({
+    const existing = await prisma.users.findFirst({
       where: { OR: [{ email }, ...(username ? [{ username }] : [])] },
       select: { id: true },
     });
@@ -60,7 +60,7 @@ router.post("/register", validateApiKey, async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email,
         username: username || email.split("@")[0],
@@ -122,7 +122,7 @@ router.post("/login", validateApiKey, async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.users.findFirst({
       where: { OR: [{ email }, { username: email }] },
       select: {
         id: true,
@@ -161,7 +161,7 @@ router.post("/login", validateApiKey, async (req, res) => {
 
     // Update last login (best effort)
     try {
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: user.id },
         data: { lastLogin: new Date() },
       });
@@ -409,7 +409,7 @@ router.post("/send-otp", otpLimiter, async (req, res) => {
   try {
     const { email } = sendOtpSchema.parse(req.body || {});
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.users.findFirst({
       where: { email },
     });
     if (!user) {
@@ -564,10 +564,10 @@ router.post("/verify-otp", otpLimiter, async (req, res) => {
       mem.delete(key);
     }
 
-    const user = await prisma.user.findFirst({ where: { email } });
+    const user = await prisma.users.findFirst({ where: { email } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.id },
       data: { emailVerified: true, emailVerifiedAt: new Date() },
     });
@@ -610,7 +610,7 @@ router.post("/forgot-password", otpLimiter, async (req, res) => {
   try {
     const { email } = forgotPasswordSchema.parse(req.body || {});
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.users.findFirst({
       where: { email },
     });
     if (!user) {
@@ -748,7 +748,7 @@ router.post("/reset-password", async (req, res) => {
 
     // Update user password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
       data: { passwordHash: hashedPassword },
     });
@@ -812,7 +812,7 @@ router.get("/me", authenticateToken, async (req: any, res) => {
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -893,7 +893,7 @@ router.get("/error", (req, res) => {
     success: false,
     error: error || code || "authentication_error",
     message: error_description || message || "Authentication failed",
-    details: req.query,
+    metadata: req.query,
   });
 });
 

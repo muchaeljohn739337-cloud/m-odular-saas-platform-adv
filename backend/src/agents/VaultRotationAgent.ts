@@ -46,7 +46,7 @@ export class VaultRotationAgent extends BaseAgent {
       );
 
       // Find all admin users
-      const admins = await this.context.prisma.user.findMany({
+      const admins = await this.context.prisma.users.findMany({
         where: { role: "ADMIN" },
         select: { id: true, email: true },
       });
@@ -77,9 +77,9 @@ export class VaultRotationAgent extends BaseAgent {
               .to(`user-${admin.id}`)
               .emit("vault:rotation-alert", {
                 count: secretsDue.length,
-                secrets: secretsDue.map((s) => ({
+                secrets: secretsDue.map((s: any) => ({
                   key: s.key,
-                  lastRotated: s.lastRotated,
+                  lastRotated: s.last_rotated,
                   rotationPolicy: s.rotationPolicy,
                 })),
                 timestamp: new Date(),

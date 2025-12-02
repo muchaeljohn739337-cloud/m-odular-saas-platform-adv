@@ -44,7 +44,7 @@ router.post("/subscribe", async (req, res, next) => {
 router.get("/", requireAdmin, async (req, res, next) => {
   try {
     const subs = await (prisma as any).subscriber.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
     res.json({ ok: true, subscribers: subs });
   } catch (err) {
@@ -68,7 +68,7 @@ router.get("/export/csv", requireAdmin, async (req, res, next) => {
   try {
     const subs: Array<{ id: number; email: string; createdAt: Date }> = await (
       prisma as any
-    ).subscriber.findMany({ orderBy: { createdAt: "desc" } });
+    ).subscriber.findMany({ orderBy: { created_at: "desc" } });
 
     // Build CSV manually to avoid adding dependencies
     const header = ["id", "email", "createdAt"].join(",");
@@ -90,7 +90,7 @@ router.get("/summary", requireAdmin, async (req, res, next) => {
   try {
     const total = await (prisma as any).subscriber.count();
     const latest = await (prisma as any).subscriber.findFirst({
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
     res.json({ ok: true, total, latest });
   } catch (err) {

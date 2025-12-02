@@ -1,4 +1,5 @@
 import { Response, Router } from "express";
+import crypto from "crypto";
 import {
   authenticateToken,
   AuthRequest,
@@ -57,7 +58,7 @@ router.post(
       }
 
       // Verify all users exist
-      const users = await prisma.user.findMany({
+      const users = await prisma.users.findMany({
         where: { id: { in: userIds } },
         select: { id: true, email: true, username: true, active: true },
       });
@@ -92,7 +93,7 @@ router.post(
             case "TRUMP_COIN":
             case "TOKEN":
               // Award to token wallet
-              const wallet = await prisma.tokenWallet.upsert({
+              const wallet = await prisma.token_wallets.upsert({
                 where: { userId: user.id },
                 update: {
                   balance: { increment: bonusAmount },
@@ -106,7 +107,7 @@ router.post(
                 },
               });
 
-              await prisma.tokenTransaction.create({
+              await prisma.token_transactions.create({
                 data: {
                   walletId: wallet.id,
                   amount: bonusAmount,
@@ -123,12 +124,12 @@ router.post(
 
             case "USD":
               // Award to USD balance
-              await prisma.user.update({
+              await prisma.users.update({
                 where: { id: user.id },
                 data: { usdBalance: { increment: bonusAmount } },
               });
 
-              await prisma.transaction.create({
+              await prisma.transactions.create({
                 data: {
                   userId: user.id,
                   amount: bonusAmount,
@@ -142,7 +143,7 @@ router.post(
             case "MEDBED_CREDIT":
               // Award MedBed credit (stored in user's custom field or wallet)
               // This assumes you have a medBedCredits field or similar
-              await prisma.user.update({
+              await prisma.users.update({
                 where: { id: user.id },
                 data: {
                   // Add custom field handling here
@@ -150,7 +151,7 @@ router.post(
                 },
               });
 
-              await prisma.transaction.create({
+              await prisma.transactions.create({
                 data: {
                   userId: user.id,
                   amount: bonusAmount,
@@ -181,8 +182,9 @@ router.post(
       // Note: AdminTransfer logging commented out (model doesn't exist in schema)
 
       // Create audit log
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: crypto.randomUUID(),
           userId: req.user?.userId || "system",
           action: "BULK_BONUS_ASSIGNMENT",
           resourceType: "bonus",
@@ -256,7 +258,7 @@ router.post(
       }
 
       // Get user
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: {
           id: true,
@@ -282,7 +284,7 @@ router.post(
       let transaction: any = null;
 
       if (bonusType === "TRUMP_COIN" || bonusType === "TOKEN") {
-        wallet = await prisma.tokenWallet.upsert({
+        wallet = await prisma.token_wallets.upsert({
           where: { userId: user.id },
           update: {
             balance: { increment: bonusAmount },
@@ -296,7 +298,7 @@ router.post(
           },
         });
 
-        transaction = await prisma.tokenTransaction.create({
+        transaction = await prisma.token_transactions.create({
           data: {
             walletId: wallet.id,
             amount: bonusAmount,
@@ -307,12 +309,12 @@ router.post(
         });
       } else {
         // USD or MedBed credit
-        await prisma.user.update({
+        await prisma.users.update({
           where: { id: user.id },
           data: { usdBalance: { increment: bonusAmount } },
         });
 
-        transaction = await prisma.transaction.create({
+        transaction = await prisma.transactions.create({
           data: {
             userId: user.id,
             amount: bonusAmount,
@@ -324,8 +326,9 @@ router.post(
       }
 
       // Create audit log
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: crypto.randomUUID(),
           userId: req.user?.userId || "system",
           action: "SINGLE_BONUS_AWARD",
           resourceType: "bonus",
@@ -403,7 +406,7 @@ router.get(
               ],
             },
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { created_at: "desc" },
           skip,
           take: pageSize,
           select: {

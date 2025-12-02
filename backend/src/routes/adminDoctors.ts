@@ -14,7 +14,7 @@ router.get("/doctors", requireAdmin, async (req: Request, res: Response) => {
 
     const doctors = await prisma.doctor.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     res.json({ doctors, count: doctors.length });

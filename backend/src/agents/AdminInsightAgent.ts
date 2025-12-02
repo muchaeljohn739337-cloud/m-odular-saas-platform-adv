@@ -2,7 +2,7 @@
 // Generates daily reports and insights for admins
 // Runs daily at 2 AM
 
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class AdminInsightAgent extends BaseAgent {
@@ -27,7 +27,7 @@ export class AdminInsightAgent extends BaseAgent {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
       // User metrics
-      const newUsers = await this.context.prisma.user.count({
+      const newUsers = await this.context.prisma.users.count({
         where: {
           createdAt: {
             gte: yesterday,
@@ -35,9 +35,9 @@ export class AdminInsightAgent extends BaseAgent {
         },
       });
 
-      const totalUsers = await this.context.prisma.user.count();
+      const totalUsers = await this.context.prisma.users.count();
 
-      const activeUsers = await this.context.prisma.user.count({
+      const activeUsers = await this.context.prisma.users.count({
         where: {
           lastLogin: {
             gte: yesterday,
@@ -48,7 +48,7 @@ export class AdminInsightAgent extends BaseAgent {
       itemsProcessed += 3;
 
       // Transaction metrics
-      const transactions = await this.context.prisma.transaction.findMany({
+      const transactions = await this.context.prisma.transactions.findMany({
         where: {
           createdAt: {
             gte: yesterday,
@@ -57,15 +57,15 @@ export class AdminInsightAgent extends BaseAgent {
       });
 
       const totalVolume = transactions.reduce(
-        (sum, tx) => sum.add(tx.amount),
+        (sum: Decimal, tx: any) => sum.add(tx.amount),
         new Decimal(0)
       );
 
       const successfulTxs = transactions.filter(
-        (tx) => tx.status === "COMPLETED"
+        (tx: any) => tx.status === "COMPLETED"
       ).length;
       const failedTxs = transactions.filter(
-        (tx) => tx.status === "FAILED"
+        (tx: any) => tx.status === "FAILED"
       ).length;
       const successRate =
         transactions.length > 0
@@ -75,7 +75,7 @@ export class AdminInsightAgent extends BaseAgent {
       itemsProcessed += transactions.length;
 
       // Notification metrics
-      const notifications = await this.context.prisma.notification.count({
+      const notifications = await this.context.prisma.notifications.count({
         where: {
           createdAt: {
             gte: yesterday,
@@ -84,7 +84,7 @@ export class AdminInsightAgent extends BaseAgent {
       });
 
       // Audit log metrics (error tracking)
-      const auditLogs = await this.context.prisma.auditLog.findMany({
+      const auditLogs = await this.context.prisma.audit_logs.findMany({
         where: {
           createdAt: {
             gte: yesterday,
@@ -92,7 +92,7 @@ export class AdminInsightAgent extends BaseAgent {
         },
       });
 
-      const errorLogs = auditLogs.filter((log) =>
+      const errorLogs = auditLogs.filter((log: any) =>
         log.action.includes("ERROR")
       ).length;
 

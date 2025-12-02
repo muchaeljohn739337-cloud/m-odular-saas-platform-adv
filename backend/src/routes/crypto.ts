@@ -107,7 +107,7 @@ router.post(
       }
 
       // Get user balance
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: { usdBalance: true },
       });
@@ -140,7 +140,7 @@ router.post(
       const adminAddress = "0x0000000000000000000000000000000000000000";
 
       // Create crypto order
-      const order = await prisma.cryptoOrder.create({
+      const order = await prisma.crypto_orders.create({
         data: {
           userId,
           cryptoType: cryptoType.toUpperCase(),
@@ -155,7 +155,7 @@ router.post(
       });
 
       // Deduct USD from user balance
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: userId },
         data: {
           usdBalance: {
@@ -165,7 +165,7 @@ router.post(
       });
 
       // Create transaction record
-      await prisma.transaction.create({
+      await prisma.transactions.create({
         data: {
           userId,
           type: "debit",
@@ -220,9 +220,9 @@ router.get(
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const orders = await prisma.cryptoOrder.findMany({
+      const orders = await prisma.crypto_orders.findMany({
         where: { userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: 50,
       });
 

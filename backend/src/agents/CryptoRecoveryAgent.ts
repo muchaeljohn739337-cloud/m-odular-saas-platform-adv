@@ -25,7 +25,7 @@ export class CryptoRecoveryAgent extends BaseAgent {
 
     try {
       // Find stuck pending transactions (> 1 hour old)
-      const stuckTransactions = await this.context.prisma.transaction.findMany({
+      const stuckTransactions = await this.context.prisma.transactions.findMany({
         where: {
           status: "PENDING",
           createdAt: {
@@ -43,7 +43,7 @@ export class CryptoRecoveryAgent extends BaseAgent {
 
           // For now, mark as failed if too old (> 24 hours)
           if (tx.createdAt < new Date(Date.now() - 24 * 60 * 60 * 1000)) {
-            await this.context.prisma.transaction.update({
+            await this.context.prisma.transactions.update({
               where: { id: tx.id },
               data: {
                 status: "FAILED",
@@ -53,13 +53,13 @@ export class CryptoRecoveryAgent extends BaseAgent {
             recovered++;
 
             this.context.logger.info("Marked stuck transaction as failed", {
-              transactionId: tx.id,
+              transaction_id: tx.id,
               age: Date.now() - tx.createdAt.getTime(),
             });
           } else {
             // Log for monitoring
             this.context.logger.warn("Stuck transaction detected", {
-              transactionId: tx.id,
+              transaction_id: tx.id,
               age: Date.now() - tx.createdAt.getTime(),
               amount: tx.amount.toString(),
             });
@@ -74,7 +74,7 @@ export class CryptoRecoveryAgent extends BaseAgent {
       }
 
       // Find failed transactions with retryable errors
-      const failedRetryable = await this.context.prisma.transaction.findMany({
+      const failedRetryable = await this.context.prisma.transactions.findMany({
         where: {
           status: "FAILED",
           createdAt: {
@@ -89,7 +89,7 @@ export class CryptoRecoveryAgent extends BaseAgent {
 
         // In production, implement retry logic here
         this.context.logger.info("Retryable transaction found", {
-          transactionId: tx.id,
+          transaction_id: tx.id,
         });
       }
 

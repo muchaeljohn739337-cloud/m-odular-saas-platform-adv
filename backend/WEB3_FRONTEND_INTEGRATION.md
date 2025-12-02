@@ -95,10 +95,7 @@ export function useWeb3Auth(): UseWeb3AuthReturn {
       console.log("🦊 Connected wallet:", walletAddress);
 
       // Request nonce
-      const { data: nonceData } = await axios.post(
-        `${API_URL}/api/auth/web3/nonce`,
-        { walletAddress }
-      );
+      const { data: nonceData } = await axios.post(`${API_URL}/api/auth/web3/nonce`, { walletAddress });
 
       console.log("🎲 Received nonce:", nonceData.nonce.slice(0, 10) + "...");
 
@@ -108,22 +105,17 @@ export function useWeb3Auth(): UseWeb3AuthReturn {
       console.log("✍️ Message signed");
 
       // Verify signature
-      const { data: authData } = await axios.post(
-        `${API_URL}/api/auth/web3/verify`,
-        {
-          walletAddress,
-          signature,
-          message: nonceData.message,
-        }
-      );
+      const { data: authData } = await axios.post(`${API_URL}/api/auth/web3/verify`, {
+        walletAddress,
+        signature,
+        message: nonceData.message,
+      });
 
       console.log("✅ Authentication successful");
 
       // Store token
       localStorage.setItem("authToken", authData.token);
-      axios.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${authData.token}`;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${authData.token}`;
 
       setUser(authData.user);
     } catch (err: any) {
@@ -155,10 +147,7 @@ export function useWeb3Auth(): UseWeb3AuthReturn {
       const walletAddress = await signer.getAddress();
 
       // Request nonce
-      const { data: nonceData } = await axios.post(
-        `${API_URL}/api/auth/web3/nonce`,
-        { walletAddress }
-      );
+      const { data: nonceData } = await axios.post(`${API_URL}/api/auth/web3/nonce`, { walletAddress });
 
       // Sign message
       const signature = await signer.signMessage(nonceData.message);
@@ -175,9 +164,7 @@ export function useWeb3Auth(): UseWeb3AuthReturn {
       setUser(data.user);
     } catch (err: any) {
       console.error("Wallet linking failed:", err);
-      setError(
-        err.response?.data?.error || err.message || "Wallet linking failed"
-      );
+      setError(err.response?.data?.error || err.message || "Wallet linking failed");
     } finally {
       setLoading(false);
     }
@@ -193,9 +180,7 @@ export function useWeb3Auth(): UseWeb3AuthReturn {
       setUser(data.user);
     } catch (err: any) {
       console.error("Wallet unlinking failed:", err);
-      setError(
-        err.response?.data?.error || err.message || "Wallet unlinking failed"
-      );
+      setError(err.response?.data?.error || err.message || "Wallet unlinking failed");
     } finally {
       setLoading(false);
     }
@@ -234,10 +219,7 @@ export function Web3LoginButton() {
           </p>
           <p className="text-gray-500">{user.role}</p>
         </div>
-        <button
-          onClick={signOut}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-        >
+        <button onClick={signOut} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
           Sign Out
         </button>
       </div>
@@ -336,9 +318,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 border-t pt-6">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">
-            Why Web3 Authentication?
-          </h3>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Why Web3 Authentication?</h3>
           <ul className="text-sm text-gray-600 space-y-2">
             <li className="flex items-start">
               <span className="mr-2">✅</span>
@@ -404,8 +384,7 @@ export function WalletLinking({ userId, currentWallet }: WalletLinkingProps) {
           ) : (
             <div className="p-4 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-800 mb-3">
-                Are you sure? You'll need to link a wallet again to access Web3
-                features.
+                Are you sure? You'll need to link a wallet again to access Web3 features.
               </p>
               <div className="flex gap-2">
                 <button
@@ -431,8 +410,7 @@ export function WalletLinking({ userId, currentWallet }: WalletLinkingProps) {
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Connect your Ethereum wallet to access Web3 features and enhanced
-            security.
+            Connect your Ethereum wallet to access Web3 features and enhanced security.
           </p>
 
           <button
@@ -562,7 +540,7 @@ export function useWalletConnect() {
 - [ ] Configure environment variables
 - [ ] Deploy and test in production
 
-## 🎉 You're Ready!
+## 🎉 You're Ready
 
 Your frontend can now authenticate users with Web3 wallets using the backend API you've implemented.
 

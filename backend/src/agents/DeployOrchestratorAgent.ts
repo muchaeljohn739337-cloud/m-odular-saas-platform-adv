@@ -48,7 +48,7 @@ export class DeployOrchestratorAgent extends BaseAgent {
       itemsProcessed++;
 
       // 2. Check recent error rate
-      const recentErrors = await this.context.prisma.auditLog.count({
+      const recentErrors = await this.context.prisma.audit_logs.count({
         where: {
           action: {
             contains: "ERROR",
@@ -75,7 +75,7 @@ export class DeployOrchestratorAgent extends BaseAgent {
       itemsProcessed++;
 
       // 3. Check transaction processing
-      const recentTxs = await this.context.prisma.transaction.findMany({
+      const recentTxs = await this.context.prisma.transactions.findMany({
         where: {
           createdAt: {
             gte: lookback,
@@ -105,7 +105,7 @@ export class DeployOrchestratorAgent extends BaseAgent {
       itemsProcessed += recentTxs.length;
 
       // 4. Check API response times (using audit logs as proxy)
-      const recentApiLogs = await this.context.prisma.auditLog.findMany({
+      const recentApiLogs = await this.context.prisma.audit_logs.findMany({
         where: {
           action: {
             startsWith: "API_",
@@ -162,7 +162,7 @@ export class DeployOrchestratorAgent extends BaseAgent {
 
       // Check for deployment markers (recent schema changes, etc.)
       const recentDeploymentMarker =
-        await this.context.prisma.auditLog.findFirst({
+        await this.context.prisma.audit_logs.findFirst({
           where: {
             action: "DEPLOYMENT",
             createdAt: {

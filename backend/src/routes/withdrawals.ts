@@ -1,15 +1,15 @@
-import { Router, Response } from "express";
-import prisma from "../prismaClient";
+import { Response, Router } from "express";
+import crypto from "crypto";
+import type { Server as IOServer } from "socket.io";
 import {
   authenticateToken,
-  requireAdmin,
-  logAdminAction,
   AuthRequest,
+  logAdminAction,
+  requireAdmin,
 } from "../middleware/auth";
-import type { Server as IOServer } from "socket.io";
+import prisma from "../prismaClient";
 
 const router = Router();
-
 let ioRef: IOServer | null = null;
 export function setWithdrawalSocketIO(io: IOServer) {
   ioRef = io;
@@ -53,7 +53,7 @@ router.post(
       }
 
       // Get user and check balance
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: {
           id: true,
@@ -90,8 +90,10 @@ router.post(
       }
 
       // Create withdrawal request
-      const withdrawal = await prisma.cryptoWithdrawal.create({
+      const withdrawal = await prisma.crypto_withdrawals.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId,
           cryptoType: balanceType.toUpperCase(),
           cryptoAmount: amountNum,
@@ -102,7 +104,7 @@ router.post(
       });
 
       // Deduct from user balance immediately (locked until processed)
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: userId },
         data: {
           [balanceField]: {
@@ -112,8 +114,10 @@ router.post(
       });
 
       // Create transaction record
-      await prisma.transaction.create({
+      await prisma.transactions.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId,
           amount: amountNum,
           type: "withdrawal",
@@ -125,7 +129,7 @@ router.post(
 
       // Notify admins via socket
       if (ioRef) {
-        const admins = await prisma.user.findMany({
+        const admins = await prisma.users.findMany({
           where: { role: "ADMIN" },
           select: { id: true },
         });
@@ -170,9 +174,9 @@ router.get(
     try {
       const userId = req.user!.userId;
 
-      const withdrawals = await prisma.cryptoWithdrawal.findMany({
+      const withdrawals = await prisma.crypto_withdrawals.findMany({
         where: { userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         select: {
           id: true,
           cryptoType: true,
@@ -188,7 +192,7 @@ router.get(
       });
 
       return res.json({
-        withdrawals: withdrawals.map((w) => ({
+        withdrawals: withdrawals.map((w: any) => ({
           ...w,
           cryptoAmount: w.cryptoAmount.toString(),
         })),
@@ -217,11 +221,11 @@ router.get(
         where.status = status;
       }
 
-      const withdrawals = await prisma.cryptoWithdrawal.findMany({
+      const withdrawals = await prisma.crypto_withdrawals.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
@@ -232,7 +236,7 @@ router.get(
       });
 
       return res.json({
-        withdrawals: withdrawals.map((w) => ({
+        withdrawals: withdrawals.map((w: any) => ({
           ...w,
           cryptoAmount: w.cryptoAmount.toString(),
           usdEquivalent: w.usdEquivalent.toString(),
@@ -267,10 +271,10 @@ router.patch(
       }
 
       // Get withdrawal request
-      const withdrawal = await prisma.cryptoWithdrawal.findUnique({
+      const withdrawal = await prisma.crypto_withdrawals.findUnique({
         where: { id },
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
@@ -288,7 +292,7 @@ router.patch(
         return res.status(404).json({ error: "Withdrawal request not found" });
       }
 
-      if (withdrawal.status !== 'PENDING') {
+      if (withdrawal.status !== "PENDING") {
         return res.status(400).json({
           error: `Cannot process withdrawal with status: ${withdrawal.status}`,
         });
@@ -305,7 +309,7 @@ router.patch(
 
       if (action === "approve") {
         // Update withdrawal to approved/completed
-        const updatedWithdrawal = await prisma.cryptoWithdrawal.update({
+        const updatedWithdrawal = await prisma.crypto_withdrawals.update({
           where: { id },
           data: {
             status: "COMPLETED",
@@ -319,7 +323,7 @@ router.patch(
         });
 
         // Update transaction to completed
-        await prisma.transaction.updateMany({
+        await prisma.transactions.updateMany({
           where: {
             userId: withdrawal.userId,
             type: "withdrawal",
@@ -343,8 +347,9 @@ router.patch(
         }
 
         // Log audit
-        await prisma.auditLog.create({
+        await prisma.audit_logs.create({
           data: {
+            id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
             userId: req.user!.userId,
             action: "approve_withdrawal",
             resourceType: "withdrawal",
@@ -370,7 +375,7 @@ router.patch(
         });
       } else {
         // Reject: refund balance to user
-        await prisma.user.update({
+        await prisma.users.update({
           where: { id: withdrawal.userId },
           data: {
             [balanceField]: {
@@ -380,7 +385,7 @@ router.patch(
         });
 
         // Update withdrawal to rejected
-        const updatedWithdrawal = await prisma.cryptoWithdrawal.update({
+        const updatedWithdrawal = await prisma.crypto_withdrawals.update({
           where: { id },
           data: {
             status: "REJECTED",
@@ -391,7 +396,7 @@ router.patch(
         });
 
         // Update transaction
-        await prisma.transaction.updateMany({
+        await prisma.transactions.updateMany({
           where: {
             userId: withdrawal.userId,
             type: "withdrawal",
@@ -417,8 +422,9 @@ router.patch(
         }
 
         // Log audit
-        await prisma.auditLog.create({
+        await prisma.audit_logs.create({
           data: {
+            id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
             userId: req.user!.userId,
             action: "reject_withdrawal",
             resourceType: "withdrawal",

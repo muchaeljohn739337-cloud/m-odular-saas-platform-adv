@@ -2,6 +2,7 @@
 // Audits transactions for anomalies, verifies blockchain confirmations
 // Runs every 2 hours
 
+import { SafePrisma } from "../ai-expansion/validators/SafePrisma";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class TransactionAuditAgent extends BaseAgent {
@@ -24,7 +25,7 @@ export class TransactionAuditAgent extends BaseAgent {
 
     try {
       // Get transactions from last 2 hours
-      const transactions = await this.context.prisma.transaction.findMany({
+      const transactions = await this.context.prisma.transactions.findMany({
         where: {
           createdAt: {
             gte: new Date(Date.now() - 2 * 60 * 60 * 1000),
@@ -39,11 +40,11 @@ export class TransactionAuditAgent extends BaseAgent {
 
         // Check for stuck pending transactions (> 30 minutes)
         if (
-          tx.status === 'PENDING' &&
+          tx.status === "PENDING" &&
           tx.createdAt < new Date(Date.now() - 30 * 60 * 1000)
         ) {
           anomalies.push({
-            transactionId: tx.id,
+            transaction_id: tx.id,
             type: "stuck_pending",
             message: "Transaction stuck in pending state",
           });
@@ -52,7 +53,7 @@ export class TransactionAuditAgent extends BaseAgent {
         // Check for large amounts
         if (tx.amount.toNumber() > 10000) {
           anomalies.push({
-            transactionId: tx.id,
+            transaction_id: tx.id,
             type: "large_amount",
             message: `Large transaction: ${tx.amount}`,
             userId: tx.userId,
@@ -60,7 +61,7 @@ export class TransactionAuditAgent extends BaseAgent {
         }
 
         // Check for rapid sequential transactions
-        const recentUserTxs = await this.context.prisma.transaction.count({
+        const recentUserTxs = await this.context.prisma.transactions.count({
           where: {
             userId: tx.userId,
             createdAt: {
@@ -71,7 +72,7 @@ export class TransactionAuditAgent extends BaseAgent {
 
         if (recentUserTxs > 5) {
           anomalies.push({
-            transactionId: tx.id,
+            transaction_id: tx.id,
             type: "rapid_transactions",
             message: `${recentUserTxs} transactions in 10 minutes`,
             userId: tx.userId,
@@ -88,13 +89,11 @@ export class TransactionAuditAgent extends BaseAgent {
 
         // Create audit logs
         for (const anomaly of anomalies) {
-          await this.context.prisma.auditLog.create({
-            data: {
-              userId: anomaly.userId || null,
-              action: `ANOMALY_DETECTED_${anomaly.type.toUpperCase()}`,
-              resourceType: "Transaction",
-              resourceId: anomaly.transactionId || "unknown",
-            },
+          await SafePrisma.create("audit_logs", {
+            userId: anomaly.userId || null,
+            action: `ANOMALY_DETECTED_${anomaly.type.toUpperCase()}`,
+            resourceType: "Transaction",
+            resourceId: anomaly.transactionId || "unknown",
           });
         }
 

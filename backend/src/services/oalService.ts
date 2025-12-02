@@ -5,8 +5,10 @@
  * All admin actions that modify critical data should be logged here.
  */
 
+import crypto from "crypto";
 import prisma from "../prismaClient";
-import { OALStatus } from "@prisma/client";
+// OALStatus type is not exported from current Prisma version; use string union fallback
+type OALStatus = "PENDING" | "APPROVED" | "REJECTED" | string;
 
 interface CreateOALLogParams {
   object: string; // e.g., "ledger.balance", "user.role", "system.config"
@@ -40,8 +42,9 @@ export async function logOAL(params: {
   metadata?: any;
 }) {
   try {
-    await prisma.oAL.create({
+    await prisma.oal_audit_log.create({
       data: {
+        id: crypto.randomUUID(),
         object: params.object,
         action: params.action,
         location: params.location,
@@ -49,6 +52,8 @@ export async function logOAL(params: {
         subjectId: params.subjectId,
         metadata: params.metadata,
         status: "APPROVED", // Auto-approve for simple logs
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
   } catch (err) {
@@ -61,8 +66,9 @@ export async function logOAL(params: {
  * Create a new OAL audit log entry (with full control)
  */
 export async function createOALLog(params: CreateOALLogParams) {
-  return await prisma.oAL.create({
+  return await prisma.oal_audit_log.create({
     data: {
+      id: crypto.randomUUID(),
       object: params.object,
       action: params.action,
       location: params.location,
@@ -70,6 +76,8 @@ export async function createOALLog(params: CreateOALLogParams) {
       metadata: params.metadata,
       createdById: params.createdById,
       status: params.status || "PENDING",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 }
@@ -78,11 +86,12 @@ export async function createOALLog(params: CreateOALLogParams) {
  * Update OAL status (approve/reject)
  */
 export async function updateOALStatus(params: UpdateOALStatusParams) {
-  return await prisma.oAL.update({
+  return await prisma.oal_audit_log.update({
     where: { id: params.id },
     data: {
       status: params.status,
       updatedById: params.updatedById,
+      updatedAt: new Date(),
     },
   });
 }
@@ -102,9 +111,9 @@ export async function getOALLogs(filters: {
 }) {
   const { limit = 100, offset = 0, ...where } = filters;
 
-  return await prisma.oAL.findMany({
+  return await prisma.oal_audit_log.findMany({
     where,
-    orderBy: { createdAt: "desc" },
+    orderBy: { created_at: "desc" },
     take: limit,
     skip: offset,
   });
@@ -114,7 +123,7 @@ export async function getOALLogs(filters: {
  * Get a single OAL log by ID
  */
 export async function getOALLogById(id: string) {
-  return await prisma.oAL.findUnique({
+  return await prisma.oal_audit_log.findUnique({
     where: { id },
   });
 }
@@ -209,14 +218,13 @@ export async function getOALLogsWithCount(filters: {
   const { limit = 20, offset = 0, ...where } = filters;
 
   const [items, count] = await Promise.all([
-    prisma.oAL.findMany({
+    prisma.oal_audit_log.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: limit,
       skip: offset,
-      
     }),
-    prisma.oAL.count({ where }),
+    prisma.oal_audit_log.count({ where }),
   ]);
 
   return { items, count };
@@ -226,9 +234,7 @@ export async function getOALLogsWithCount(filters: {
  * Get all OAL logs for export (no pagination)
  */
 export async function getAllOALLogsForExport() {
-  return await prisma.oAL.findMany({
-    orderBy: { createdAt: "desc" },
-    
+  return await prisma.oal_audit_log.findMany({
+    orderBy: { created_at: "desc" },
   });
 }
-

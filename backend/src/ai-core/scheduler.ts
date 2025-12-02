@@ -103,7 +103,7 @@ export class AIScheduler {
   private scheduleWorkflowChecks(): void {
     // Check for pending approvals every 5 minutes
     this.schedule("check-pending-workflows", "*/5 * * * *", async () => {
-      const pendingWorkflows = await prisma.aIWorkflow.findMany({
+      const pendingWorkflows = await prisma.ai_workflows.findMany({
         where: {
           status: "PENDING_APPROVAL",
           createdAt: {
@@ -120,7 +120,7 @@ export class AIScheduler {
           type: "workflow-approval-pending",
           severity: "MEDIUM",
           message: `${pendingWorkflows.length} workflows pending approval for >30 minutes`,
-          details: {
+          metadata: {
             workflows: pendingWorkflows.map((w) => ({
               id: w.id,
               name: w.name,
@@ -133,7 +133,7 @@ export class AIScheduler {
 
     // Retry failed tasks every hour
     this.schedule("retry-failed-tasks", "0 * * * *", async () => {
-      const failedTasks = await prisma.aITask.findMany({
+      const failedTasks = await prisma.ai_tasks.findMany({
         where: {
           status: "FAILED",
           retryCount: {
@@ -159,7 +159,7 @@ export class AIScheduler {
   }
 
   private async loadScheduledWorkflows(): Promise<void> {
-    const scheduledWorkflows = await prisma.aIWorkflow.findMany({
+    const scheduledWorkflows = await prisma.ai_workflows.findMany({
       where: {
         trigger: {
           path: ["type"],

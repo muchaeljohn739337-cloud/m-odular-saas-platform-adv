@@ -40,10 +40,10 @@ export class MarketIntelligenceAgent extends BaseAgent {
       itemsProcessed++;
 
       // Step 4: Store market intelligence data
-      await this.context.prisma.marketIntelligence.create({
+      await this.context.prisma.market_intelligence.create({
         data: {
           source: "CoinGecko+NewsAPI",
-          dataType: "price-sentiment",
+          data_type: "price-sentiment",
           insights: {
             prices,
             anomalies,
@@ -60,7 +60,7 @@ export class MarketIntelligenceAgent extends BaseAgent {
       const crisisDetected = this.evaluateCrisisConditions(prices, anomalies, newsSentiment);
       
       if (crisisDetected) {
-        await this.context.prisma.crisisEvent.create({
+        await this.context.prisma.crisis_events.create({
           data: {
             eventType: "MARKET_CRISIS",
             severity: this.calculateSeverity(anomalies),
@@ -78,7 +78,7 @@ export class MarketIntelligenceAgent extends BaseAgent {
 
         // Alert admins
         if (this.context.io) {
-          const admins = await this.context.prisma.user.findMany({
+          const admins = await this.context.prisma.users.findMany({
             where: { role: "ADMIN" },
             select: { id: true }
           });

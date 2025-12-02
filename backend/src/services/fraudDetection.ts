@@ -1,10 +1,11 @@
-import { Decimal } from 'decimal.js';
+import crypto from "crypto";
+import { Decimal } from "decimal.js";
 import prisma from "../prismaClient";
 import { getBotRiskScore } from "./botDetection";
 
 export async function assessFraudRisk(
   userId: string,
-  transactionId: string,
+  transaction_id: string,
   amount: number,
   transactionType: string
 ): Promise<{ score: number; factors: any[]; status: string }> {
@@ -17,7 +18,7 @@ export async function assessFraudRisk(
     factors.push({ type: "high_bot_risk", value: botRisk });
   }
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: { id: userId },
     select: { usdBalance: true },
   });
@@ -30,7 +31,7 @@ export async function assessFraudRisk(
     });
   }
 
-  const recentTransactions = await prisma.transaction.count({
+  const recentTransactions = await prisma.transactions.count({
     where: {
       userId,
       createdAt: {
@@ -59,8 +60,9 @@ export async function assessFraudRisk(
     status = "flagged";
   }
 
-  await prisma.fraudScore.create({
+  await prisma.fraud_scores.create({
     data: {
+      id: crypto.randomUUID(),
       userId,
       transactionId,
       score: new Decimal(riskScore),

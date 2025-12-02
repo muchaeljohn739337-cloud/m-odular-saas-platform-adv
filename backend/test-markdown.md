@@ -2,15 +2,12 @@
 
 **This should be a heading**
 
-## Valid Heading!
+## Valid Heading
 
-`
-function test() {
-  console.log('Missing language');
-}
-`
+`function test() {   console.log('Missing language'); }`
 
 Some content here.
-## No spacing around this heading
-More content.
 
+## No spacing around this heading
+
+More content.

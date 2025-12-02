@@ -71,9 +71,11 @@ Return as JSON with structure: { issues: [{ line, severity, message, fix }] }`;
       if (result.issues && result.issues.length > 0) {
         await Promise.all(
           result.issues.slice(0, 10).map((issue: any) =>
-            prisma.aISuggestion.create({
+            prisma.ai_suggestions.create({
               data: {
-                userId: "1",
+                id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+                updatedAt: new Date(),
+                user_id: "1",
                 suggestionType: "code-lint",
                 content: `Line ${issue.line}: ${issue.message}`,
               },
@@ -124,9 +126,11 @@ Return:
     const result = aiResponse.content;
 
     // Store suggestion
-    await prisma.aISuggestion.create({
+    await prisma.ai_suggestions.create({
       data: {
-        userId: "1",
+        id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+        updatedAt: new Date(),
+        user_id: "1",
         suggestionType: "code-fix",
         content: result,
       },
@@ -190,9 +194,11 @@ Provide specific, actionable recommendations.`;
     const review = aiResponse.content;
 
     // Store as suggestion
-    await prisma.aISuggestion.create({
+    await prisma.ai_suggestions.create({
       data: {
-        userId: "1",
+        id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+        updatedAt: new Date(),
+        user_id: "1",
         suggestionType: "code-review",
         content: review,
       },
@@ -237,9 +243,11 @@ Provide specific, actionable recommendations.`;
     const generatedCode = aiResponse.content;
 
     // Store as suggestion
-    await prisma.aISuggestion.create({
+    await prisma.ai_suggestions.create({
       data: {
-        userId: "1",
+        id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+        updatedAt: new Date(),
+        user_id: "1",
         suggestionType: "code-generation",
         content: generatedCode,
       },

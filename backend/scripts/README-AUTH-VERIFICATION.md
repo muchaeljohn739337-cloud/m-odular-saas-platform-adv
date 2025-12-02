@@ -140,7 +140,8 @@ npm install -D typescript ts-node @types/node
 
 ### False positives
 
-The script performs static code analysis. If you've implemented features differently than expected, review the code manually and update the verification script accordingly.
+The script performs static code analysis. If you've implemented features differently than expected, review the code
+manually and update the verification script accordingly.
 
 ## Next Steps
 

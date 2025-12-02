@@ -64,8 +64,9 @@ class AutoRememberSystem {
 
       // Also store in database if AuditLog model exists
       try {
-        await prisma.auditLog.create({
+        await prisma.audit_logs.create({
           data: {
+          id: crypto.randomUUID(),
             userId: "system",
             action: `auto_remember_${entry.category}`,
             ipAddress: "internal",

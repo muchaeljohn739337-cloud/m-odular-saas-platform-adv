@@ -28,7 +28,7 @@ export class CompliancePolicyAgent extends BaseAgent {
       const lookback = new Date(Date.now() - 6 * 60 * 60 * 1000); // Last 6 hours
 
       // Check for users without KYC verification (if required)
-      const unverifiedUsers = await this.context.prisma.user.findMany({
+      const unverifiedUsers = await this.context.prisma.users.findMany({
         where: {
           createdAt: {
             lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Older than 7 days
@@ -41,7 +41,7 @@ export class CompliancePolicyAgent extends BaseAgent {
 
       // Check transaction limits and reporting thresholds
       const largeTxThreshold = new Decimal(10000);
-      const largeTransactions = await this.context.prisma.transaction.findMany({
+      const largeTransactions = await this.context.prisma.transactions.findMany({
         where: {
           createdAt: {
             gte: lookback,
@@ -56,7 +56,7 @@ export class CompliancePolicyAgent extends BaseAgent {
       for (const tx of largeTransactions) {
         violations.push({
           type: "large_transaction_reporting",
-          transactionId: tx.id,
+          transaction_id: tx.id,
           userId: tx.userId,
           amount: tx.amount.toString(),
           requiresReporting: true,
@@ -70,7 +70,7 @@ export class CompliancePolicyAgent extends BaseAgent {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const todayTransactions = await this.context.prisma.transaction.findMany({
+      const todayTransactions = await this.context.prisma.transactions.findMany({
         where: {
           createdAt: {
             gte: today,
@@ -100,7 +100,7 @@ export class CompliancePolicyAgent extends BaseAgent {
       itemsProcessed += todayTransactions.length;
 
       // Check for missing audit logs (data retention compliance)
-      const oldestAuditLog = await this.context.prisma.auditLog.findFirst({
+      const oldestAuditLog = await this.context.prisma.audit_logs.findFirst({
         orderBy: {
           createdAt: "asc",
         },
@@ -123,7 +123,7 @@ export class CompliancePolicyAgent extends BaseAgent {
 
       // Check for data privacy compliance (inactive users)
       const inactiveThreshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days
-      const inactiveUsers = await this.context.prisma.user.count({
+      const inactiveUsers = await this.context.prisma.users.count({
         where: {
           lastLogin: {
             lt: inactiveThreshold,

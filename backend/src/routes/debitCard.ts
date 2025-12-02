@@ -20,7 +20,7 @@ function parsePriceFromMetadata(meta?: string | null): number | null {
 
 async function getDebitCardPrice(): Promise<number> {
   // Try SystemStatus config first
-  const row = await prisma.systemStatus.findFirst({ where: { serviceName: 'debit-card' } });
+  const row = await prisma.system_status.findFirst({ where: { serviceName: 'debit-card' } });
   const fromRow = parsePriceFromMetadata(row?.metadata || null);
   if (fromRow) return fromRow;
   // Fallback to env
@@ -46,12 +46,12 @@ router.post('/admin/price', authenticateToken as any, requireAdmin as any, async
   const { priceUSD } = req.body || {};
   const price = Number(priceUSD);
   if (Number.isNaN(price) || price <= 0) return res.status(400).json({ error: 'Invalid price' });
-  const existing = await prisma.systemStatus.findFirst({ where: { serviceName: 'debit-card' } });
+  const existing = await prisma.system_status.findFirst({ where: { serviceName: 'debit-card' } });
   const payload = { serviceName: 'debit-card', status: 'operational', statusMessage: 'config', metadata: JSON.stringify({ priceUSD: price }) };
   if (existing) {
-    await prisma.systemStatus.update({ where: { id: existing.id }, data: payload });
+    await prisma.system_status.update({ where: { id: existing.id }, data: payload });
   } else {
-    await prisma.systemStatus.create({ data: payload });
+    await prisma.system_status.create({ data: payload });
   }
   res.json({ priceUSD: price });
 });
@@ -65,7 +65,7 @@ router.post('/order', authenticateToken as any, async (req: any, res) => {
   const userId = req.user?.userId;
   try {
     // Create a support ticket for admin approval workflow
-    const ticket = await prisma.supportTicket.create({
+    const ticket = await prisma.support_tickets.create({
       data: {
         userId: userId,
         subject: 'Debit Card Order',

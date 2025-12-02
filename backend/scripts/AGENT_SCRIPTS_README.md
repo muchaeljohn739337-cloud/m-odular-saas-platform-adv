@@ -13,6 +13,7 @@ npm run agent:status
 ```
 
 **Output:**
+
 - Lists all 9 agents with their:
   - Name
   - Priority level (Critical, High, Medium, Low)
@@ -29,6 +30,7 @@ npm run agent:execute <AgentName>
 ```
 
 **Examples:**
+
 ```bash
 npm run agent:execute MonitorAgent
 npm run agent:execute TransactionAuditAgent
@@ -36,6 +38,7 @@ npm run agent:execute CryptoRecoveryAgent
 ```
 
 **Output:**
+
 - Execution success/failure
 - Processing duration
 - Number of items processed
@@ -43,6 +46,7 @@ npm run agent:execute CryptoRecoveryAgent
 - Any errors encountered
 
 **Available Agents:**
+
 - `MonitorAgent` - System health monitoring (every 5 min)
 - `SecurityFraudAgent` - Security threat detection (every 5 min)
 - `UserSupportAgent` - Customer support automation (every 10 min)
@@ -62,6 +66,7 @@ npm run agent:test
 ```
 
 **Output:**
+
 - Executes each agent sequentially
 - Shows pass/fail status for each agent
 - Reports execution duration
@@ -69,6 +74,7 @@ npm run agent:test
 - Lists any errors encountered
 
 **Use Cases:**
+
 - Verify agents work after deployment
 - Test agents in development before pushing
 - Troubleshoot agent issues
@@ -128,6 +134,7 @@ curl https://www.advanciapayledger.com/api/agents/status \
 ### Modifying Agent Schedule
 
 Edit `backend/src/agents/<AgentName>.ts`:
+
 ```typescript
 schedule: "*/5 * * * *", // Every 5 minutes
 ```
@@ -137,6 +144,7 @@ Cron format: `minute hour day month weekday`
 ### Disabling an Agent
 
 Edit `backend/src/agents/<AgentName>.ts`:
+
 ```typescript
 enabled: false, // Disable agent
 ```
@@ -146,6 +154,7 @@ enabled: false, // Disable agent
 ### Real-time Events (Socket.IO)
 
 Agents emit events that admins can listen to:
+
 - `system:alert` - Critical system issues
 - `security:alert` - Security threats detected
 - `audit:alert` - Transaction anomalies
@@ -154,6 +163,7 @@ Agents emit events that admins can listen to:
 ### Database Logs
 
 All agent executions create audit log entries:
+
 ```sql
 SELECT * FROM "AuditLog"
 WHERE action LIKE '%Agent%'
@@ -196,6 +206,7 @@ ORDER BY "createdAt" DESC;
 ### Base Agent Class
 
 All agents extend `BaseAgent` from `types.ts`:
+
 - Standardized configuration
 - Execution wrapper with error handling
 - Metrics collection
@@ -204,6 +215,7 @@ All agents extend `BaseAgent` from `types.ts`:
 ### Context Injection
 
 Agents receive:
+
 - `prisma` - Database client
 - `logger` - Logging interface
 - `io` - Socket.IO server (optional)

@@ -63,7 +63,7 @@ export class AICore {
         type: "system-info",
         severity: "LOW",
         message: "AI Core System initialized successfully",
-        details: {
+        metadata: {
           timestamp: new Date().toISOString(),
           components: [
             "Brain",

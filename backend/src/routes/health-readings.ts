@@ -1,4 +1,5 @@
-import { Decimal } from 'decimal.js';
+import crypto from "crypto";
+import { Decimal } from "decimal.js";
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth";
 import prisma from "../prismaClient";
@@ -30,8 +31,9 @@ router.post("/record", authenticateToken as any, async (req, res) => {
       return res.status(400).json({ error: "userId is required" });
     }
 
-    const reading = await prisma.healthReading.create({
+    const reading = await prisma.health_readings.create({
       data: {
+        id: crypto.randomUUID(),
         userId,
         heartRate: heartRate || null,
         bloodPressureSys: bloodPressureSys || null,
@@ -85,17 +87,17 @@ router.get("/history/:userId", authenticateToken as any, async (req, res) => {
     const skip = Math.max(0, Number(offset) || 0);
 
     const [readings, total] = await Promise.all([
-      prisma.healthReading.findMany({
+      prisma.health_readings.findMany({
         where,
         orderBy: { recordedAt: "desc" },
         take,
         skip,
       }),
-      prisma.healthReading.count({ where }),
+      prisma.health_readings.count({ where }),
     ]);
 
     res.json({
-      readings: readings.map((r) => ({
+      readings: readings.map((r: any) => ({
         ...r,
         sleepHours: r.sleepHours?.toString() || null,
         weight: r.weight?.toString() || null,
@@ -115,7 +117,7 @@ router.get("/latest/:userId", authenticateToken as any, async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const reading = await prisma.healthReading.findFirst({
+    const reading = await prisma.health_readings.findFirst({
       where: { userId },
       orderBy: { recordedAt: "desc" },
     });
@@ -147,7 +149,7 @@ router.get("/stats/:userId", authenticateToken as any, async (req, res) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysBack);
 
-    const readings = await prisma.healthReading.findMany({
+    const readings = await prisma.health_readings.findMany({
       where: {
         userId,
         recordedAt: { gte: startDate },
@@ -177,21 +179,23 @@ router.get("/stats/:userId", authenticateToken as any, async (req, res) => {
     };
 
     const heartRates = readings
-      .filter((r) => r.heartRate)
-      .map((r) => r.heartRate!);
-    const steps = readings.filter((r) => r.steps).map((r) => r.steps!);
+      .filter((r: any) => r.heartRate)
+      .map((r: any) => r.heartRate!);
+    const steps = readings
+      .filter((r: any) => r.steps)
+      .map((r: any) => r.steps!);
     const sleepHours = readings
-      .filter((r) => r.sleepHours)
-      .map((r) => Number(r.sleepHours));
+      .filter((r: any) => r.sleepHours)
+      .map((r: any) => Number(r.sleepHours));
     const weights = readings
-      .filter((r) => r.weight)
-      .map((r) => Number(r.weight));
+      .filter((r: any) => r.weight)
+      .map((r: any) => Number(r.weight));
     const temps = readings
-      .filter((r) => r.temperature)
-      .map((r) => Number(r.temperature));
+      .filter((r: any) => r.temperature)
+      .map((r: any) => Number(r.temperature));
     const oxygenLevels = readings
-      .filter((r) => r.oxygenLevel)
-      .map((r) => r.oxygenLevel!);
+      .filter((r: any) => r.oxygenLevel)
+      .map((r: any) => r.oxygenLevel!);
 
     res.json({
       period: `Last ${daysBack} days`,
@@ -216,7 +220,7 @@ router.delete("/:id", authenticateToken as any, async (req, res) => {
     const { id } = req.params;
     const { userId } = req.body;
 
-    const reading = await prisma.healthReading.findUnique({
+    const reading = await prisma.health_readings.findUnique({
       where: { id },
     });
 
@@ -228,7 +232,7 @@ router.delete("/:id", authenticateToken as any, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    await prisma.healthReading.delete({
+    await prisma.health_readings.delete({
       where: { id },
     });
 

@@ -1,14 +1,14 @@
 // RPA Module - Main Scheduler
 // Coordinates and schedules all RPA automation tasks
 
-import cron from "node-cron";
 import type { ScheduledTask } from "node-cron";
+import cron from "node-cron";
 import { rpaConfig } from "./config";
-import transactionProcessor from "./transactionProcessor";
-import kycVerifier from "./kycVerifier";
-import reportGenerator from "./reportGenerator";
-import notificationAutomation from "./notificationAutomation";
 import dataBackupSync from "./dataBackupSync";
+import kycVerifier from "./kycVerifier";
+import notificationAutomation from "./notificationAutomation";
+import reportGenerator from "./reportGenerator";
+import transactionProcessor from "./transactionProcessor";
 
 export class RPAScheduler {
   private scheduledTasks: Map<string, ScheduledTask> = new Map();
@@ -114,7 +114,11 @@ export class RPAScheduler {
   /**
    * Schedule a task with cron
    */
-  private scheduleTask(name: string, schedule: string, handler: () => Promise<void>): void {
+  private scheduleTask(
+    name: string,
+    schedule: string,
+    handler: () => Promise<void>
+  ): void {
     try {
       const task = cron.schedule(schedule, async () => {
         try {
@@ -187,10 +191,10 @@ export class RPAScheduler {
   private logScheduledTasks(): void {
     console.log("\n📋 Scheduled RPA Tasks:");
     console.log("========================");
-    
+
     for (const [name, _] of this.scheduledTasks) {
       let schedule = "";
-      
+
       switch (name) {
         case "transactionProcessing":
           schedule = rpaConfig.transactionProcessing.scheduleInterval;
@@ -208,18 +212,21 @@ export class RPAScheduler {
           schedule = rpaConfig.dataBackup.scheduleInterval;
           break;
       }
-      
+
       console.log(`  ✓ ${name}: ${schedule}`);
     }
-    
+
     console.log("========================\n");
   }
 
   /**
    * Health check for RPA system
    */
-  async healthCheck(): Promise<{ healthy: boolean; details: Record<string, any> }> {
-    const details: Record<string, any> = {
+  async healthCheck(): Promise<{
+    healthy: boolean;
+    metadata: Record<string, any>;
+  }> {
+    const metadata: Record<string, any> = {
       scheduler: {
         running: this.isRunning,
         activeTasks: this.scheduledTasks.size,
@@ -235,7 +242,7 @@ export class RPAScheduler {
 
     const healthy = this.isRunning && this.scheduledTasks.size > 0;
 
-    return { healthy, details };
+    return { healthy, metadata };
   }
 }
 

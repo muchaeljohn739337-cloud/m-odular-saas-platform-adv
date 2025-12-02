@@ -127,11 +127,11 @@ async function checkRateLimit(
 async function createAuditLog(
   userId: string,
   action: string,
-  details: any,
+  metadata: any,
   req: Request
 ) {
   try {
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         userId,
         action,
@@ -158,7 +158,7 @@ router.post("/text", authenticateToken, async (req: any, res: Response) => {
       return res.status(400).json({
         success: false,
         error: "Invalid input",
-        details: validation.error.errors,
+        metadata: validation.error.errors,
       });
     }
 
@@ -259,7 +259,7 @@ router.post("/code", authenticateToken, async (req: any, res: Response) => {
       return res.status(400).json({
         success: false,
         error: "Invalid input",
-        details: validation.error.errors,
+        metadata: validation.error.errors,
       });
     }
 
@@ -367,7 +367,7 @@ router.post("/image", authenticateToken, async (req: any, res: Response) => {
       return res.status(400).json({
         success: false,
         error: "Invalid input",
-        details: validation.error.errors,
+        metadata: validation.error.errors,
       });
     }
 
@@ -638,7 +638,7 @@ router.post(
         return res.status(400).json({
           success: false,
           error: "Invalid input",
-          details: validation.error.errors,
+          metadata: validation.error.errors,
         });
       }
 

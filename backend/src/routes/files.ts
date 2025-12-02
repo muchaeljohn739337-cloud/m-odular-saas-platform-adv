@@ -74,7 +74,7 @@ router.post(
       });
 
       // Save file record to database
-      const fileRecord = await prisma.uploadedFile.create({
+      const fileRecord = await prisma.uploaded_files.create({
         data: {
           userId: user.id,
           category,
@@ -100,7 +100,7 @@ router.post(
       console.error("File upload error:", error);
       res.status(500).json({
         error: "Failed to upload file",
-        details: error instanceof Error ? error.message : "Unknown error",
+        metadata: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -119,7 +119,7 @@ router.get(
       const { fileId } = req.params;
 
       // Get file record from database
-      const fileRecord = await prisma.uploadedFile.findUnique({
+      const fileRecord = await prisma.uploaded_files.findUnique({
         where: { id: fileId },
       });
 
@@ -164,17 +164,17 @@ router.get("/", authenticateToken, async (req: Request, res: Response) => {
       where.category = category;
     }
 
-    const files = await prisma.uploadedFile.findMany({
+    const files = await prisma.uploaded_files.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit),
     });
 
-    const total = await prisma.uploadedFile.count({ where });
+    const total = await prisma.uploaded_files.count({ where });
 
     res.json({
-      files: files.map((f) => ({
+      files: files.map((f: any) => ({
         id: f.id,
         filename: f.filename,
         category: f.category,
@@ -208,7 +208,7 @@ router.delete(
       const { fileId } = req.params;
 
       // Get file record
-      const fileRecord = await prisma.uploadedFile.findUnique({
+      const fileRecord = await prisma.uploaded_files.findUnique({
         where: { id: fileId },
       });
 
@@ -225,7 +225,7 @@ router.delete(
       await deleteFromR2(fileRecord.key);
 
       // Delete from database
-      await prisma.uploadedFile.delete({
+      await prisma.uploaded_files.delete({
         where: { id: fileId },
       });
 

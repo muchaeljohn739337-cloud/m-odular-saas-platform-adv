@@ -28,7 +28,7 @@ export class MonitorAgent extends BaseAgent {
       itemsProcessed++;
 
       // Check active users
-      const activeUsers = await this.context.prisma.user.count({
+      const activeUsers = await this.context.prisma.users.count({
         where: {
           lastLogin: {
             gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
@@ -37,14 +37,14 @@ export class MonitorAgent extends BaseAgent {
       });
 
       // Check pending transactions
-      const pendingTxs = await this.context.prisma.transaction.count({
+      const pendingTxs = await this.context.prisma.transactions.count({
         where: {
           status: "PENDING",
         },
       });
 
       // Check system errors in last 5 minutes
-      const recentErrors = await this.context.prisma.auditLog.count({
+      const recentErrors = await this.context.prisma.audit_logs.count({
         where: {
           action: {
             contains: "ERROR",

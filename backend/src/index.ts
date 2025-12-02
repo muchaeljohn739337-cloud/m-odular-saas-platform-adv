@@ -210,7 +210,7 @@ io.use(async (socket, next) => {
       userId: string;
       email?: string;
     };
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: payload.userId },
       select: { id: true, role: true, active: true },
     });

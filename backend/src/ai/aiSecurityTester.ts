@@ -357,7 +357,7 @@ export class AISecurityTester {
 // GOOD: db.query('SELECT * FROM users WHERE id = ?', [userId])
 
 // Use ORM/Query Builder:
-prisma.user.findUnique({ where: { id: userId } })
+prisma.users.findUnique({ where: { id: userId } })
         `;
 
       case "xss":

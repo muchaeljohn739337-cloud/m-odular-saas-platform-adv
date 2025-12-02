@@ -2,7 +2,6 @@
 // Botpress-powered AI chatbot for automated user support
 
 import prisma from "../prismaClient";
-import { rpaConfig } from "./config";
 
 interface ChatbotRequest {
   userId: string;
@@ -22,7 +21,7 @@ export class ChatbotSupport {
    */
   async getUserBalance(userId: string): Promise<number> {
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: { usdBalance: true },
       });
@@ -39,9 +38,9 @@ export class ChatbotSupport {
    */
   async getRecentTransactions(userId: string, limit: number = 5) {
     try {
-      const transactions = await prisma.transaction.findMany({
+      const transactions = await prisma.transactions.findMany({
         where: { userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: limit,
         select: {
           id: true,
@@ -53,14 +52,23 @@ export class ChatbotSupport {
         },
       });
 
-      return transactions.map((t) => ({
-        id: t.id,
-        amount: Number(t.amount),
-        type: t.type,
-        description: t.description,
-        status: t.status,
-        date: t.createdAt.toISOString(),
-      }));
+      return transactions.map(
+        (t: {
+          id: string;
+          amount: any;
+          type: string;
+          description: string | null;
+          status: string;
+          createdAt: Date;
+        }) => ({
+          id: t.id,
+          amount: Number(t.amount),
+          type: t.type,
+          description: t.description,
+          status: t.status,
+          date: t.createdAt.toISOString(),
+        })
+      );
     } catch (error) {
       console.error("[Chatbot] Error fetching transactions:", error);
       return [];
@@ -72,9 +80,9 @@ export class ChatbotSupport {
    */
   async getKYCStatus(userId: string) {
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
-        select: { 
+        select: {
           role: true,
           createdAt: true,
         },
@@ -105,9 +113,9 @@ export class ChatbotSupport {
    */
   async getCryptoOrders(userId: string, limit: number = 5) {
     try {
-      const orders = await prisma.cryptoOrder.findMany({
+      const orders = await prisma.crypto_orders.findMany({
         where: { userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: limit,
         select: {
           id: true,
@@ -119,14 +127,23 @@ export class ChatbotSupport {
         },
       });
 
-      return orders.map((o) => ({
-        id: o.id,
-        crypto: o.cryptoType,
-        cryptoAmount: Number(o.cryptoAmount),
-        usdAmount: Number(o.usdAmount),
-        status: o.status,
-        date: o.createdAt.toISOString(),
-      }));
+      return orders.map(
+        (o: {
+          id: string;
+          cryptoType: string;
+          cryptoAmount: any;
+          usdAmount: any;
+          status: string;
+          createdAt: Date;
+        }) => ({
+          id: o.id,
+          crypto: o.cryptoType,
+          cryptoAmount: Number(o.cryptoAmount),
+          usdAmount: Number(o.usdAmount),
+          status: o.status,
+          date: o.createdAt.toISOString(),
+        })
+      );
     } catch (error) {
       console.error("[Chatbot] Error fetching crypto orders:", error);
       return [];
@@ -139,38 +156,45 @@ export class ChatbotSupport {
   async handleFAQ(question: string): Promise<ChatbotResponse> {
     const faqDatabase = {
       "how to deposit": {
-        reply: "To deposit funds:\n1. Go to Dashboard\n2. Click 'Add Funds'\n3. Choose payment method (Card/Bank)\n4. Enter amount\n5. Confirm payment",
+        reply:
+          "To deposit funds:\n1. Go to Dashboard\n2. Click 'Add Funds'\n3. Choose payment method (Card/Bank)\n4. Enter amount\n5. Confirm payment",
         suggestions: ["Check balance", "View transactions"],
       },
       "how to withdraw": {
-        reply: "To withdraw funds:\n1. Go to Dashboard\n2. Click 'Withdraw'\n3. Enter amount\n4. Choose withdrawal method\n5. Confirm (minimum $10)",
+        reply:
+          "To withdraw funds:\n1. Go to Dashboard\n2. Click 'Withdraw'\n3. Enter amount\n4. Choose withdrawal method\n5. Confirm (minimum $10)",
         suggestions: ["Check balance", "Transaction history"],
       },
       "kyc verification": {
-        reply: "KYC Verification:\n1. Upload government-issued ID\n2. Take a selfie\n3. Wait 1-3 business days\n4. Get notified via email",
+        reply:
+          "KYC Verification:\n1. Upload government-issued ID\n2. Take a selfie\n3. Wait 1-3 business days\n4. Get notified via email",
         suggestions: ["Check KYC status", "Contact support"],
       },
       "buy crypto": {
-        reply: "To buy cryptocurrency:\n1. Go to 'Crypto' section\n2. Select crypto type (BTC, ETH, etc.)\n3. Enter amount\n4. Review exchange rate\n5. Confirm purchase",
+        reply:
+          "To buy cryptocurrency:\n1. Go to 'Crypto' section\n2. Select crypto type (BTC, ETH, etc.)\n3. Enter amount\n4. Review exchange rate\n5. Confirm purchase",
         suggestions: ["View crypto orders", "Check balance"],
       },
       "forgot password": {
-        reply: "To reset your password:\n1. Click 'Forgot Password' on login\n2. Enter your email\n3. Check inbox for reset link\n4. Click link and set new password",
+        reply:
+          "To reset your password:\n1. Click 'Forgot Password' on login\n2. Enter your email\n3. Check inbox for reset link\n4. Click link and set new password",
         suggestions: ["Login help", "Security tips"],
       },
       "account locked": {
-        reply: "If your account is locked:\n1. Check email for security alerts\n2. Contact support@advancia.com\n3. Provide account details\n4. Our team will verify and unlock",
+        reply:
+          "If your account is locked:\n1. Check email for security alerts\n2. Contact support@advancia.com\n3. Provide account details\n4. Our team will verify and unlock",
         suggestions: ["Contact support", "Security help"],
       },
       "transaction pending": {
-        reply: "Pending transactions usually complete within:\n• Card payments: 1-5 minutes\n• Bank transfers: 1-3 business days\n• Crypto: 10-30 minutes\n\nIf longer, contact support.",
+        reply:
+          "Pending transactions usually complete within:\n• Card payments: 1-5 minutes\n• Bank transfers: 1-3 business days\n• Crypto: 10-30 minutes\n\nIf longer, contact support.",
         suggestions: ["View transactions", "Contact support"],
       },
     };
 
     // Simple keyword matching
     const lowerQuestion = question.toLowerCase();
-    
+
     for (const [key, value] of Object.entries(faqDatabase)) {
       if (lowerQuestion.includes(key)) {
         return value;
@@ -178,7 +202,8 @@ export class ChatbotSupport {
     }
 
     return {
-      reply: "I'm not sure about that. Let me connect you with a human agent, or you can browse our FAQ section.",
+      reply:
+        "I'm not sure about that. Let me connect you with a human agent, or you can browse our FAQ section.",
       suggestions: ["Talk to human", "View FAQ", "Main menu"],
     };
   }
@@ -189,8 +214,9 @@ export class ChatbotSupport {
   async createSupportTicket(userId: string, message: string): Promise<string> {
     try {
       // Log to audit trail
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
           userId,
           action: "chatbot_support_ticket",
           resourceType: "Support",
@@ -204,7 +230,7 @@ export class ChatbotSupport {
 
       // In production, integrate with ticketing system (Zendesk, Freshdesk, etc.)
       console.log(`[Chatbot] Support ticket created for user ${userId}`);
-      
+
       return "Support ticket #" + Date.now().toString().slice(-6);
     } catch (error) {
       console.error("[Chatbot] Error creating support ticket:", error);
@@ -219,7 +245,9 @@ export class ChatbotSupport {
     try {
       const { userId, message, action } = payload;
 
-      console.log(`[Chatbot] Processing webhook - Action: ${action}, User: ${userId}`);
+      console.log(
+        `[Chatbot] Processing webhook - Action: ${action}, User: ${userId}`
+      );
 
       switch (action) {
         case "get_balance":
@@ -260,7 +288,7 @@ export class ChatbotSupport {
    */
   async getAnalytics(startDate: Date, endDate: Date) {
     try {
-      const interactions = await prisma.auditLog.count({
+      const interactions = await prisma.audit_logs.count({
         where: {
           action: { startsWith: "chatbot_" },
           createdAt: {
@@ -270,7 +298,7 @@ export class ChatbotSupport {
         },
       });
 
-      const supportTickets = await prisma.auditLog.count({
+      const supportTickets = await prisma.audit_logs.count({
         where: {
           action: "chatbot_support_ticket",
           createdAt: {
@@ -283,9 +311,12 @@ export class ChatbotSupport {
       return {
         totalInteractions: interactions,
         supportTickets,
-        automationRate: interactions > 0 
-          ? ((interactions - supportTickets) / interactions * 100).toFixed(1)
-          : 0,
+        automationRate:
+          interactions > 0
+            ? (((interactions - supportTickets) / interactions) * 100).toFixed(
+                1
+              )
+            : 0,
       };
     } catch (error) {
       console.error("[Chatbot] Error fetching analytics:", error);

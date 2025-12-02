@@ -2,6 +2,7 @@
 // Monitors support tickets, auto-responds to common issues
 // Runs every 10 minutes
 
+import { SafePrisma } from "../ai-expansion/validators/SafePrisma";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class UserSupportAgent extends BaseAgent {
@@ -26,7 +27,7 @@ export class UserSupportAgent extends BaseAgent {
     try {
       // Check for new/unread notifications that might need follow-up
       const pendingNotifications =
-        await this.context.prisma.notification.findMany({
+        await this.context.prisma.notifications.findMany({
           where: {
             createdAt: {
               gte: new Date(Date.now() - 10 * 60 * 1000), // Last 10 minutes
@@ -36,16 +37,15 @@ export class UserSupportAgent extends BaseAgent {
         });
 
       // Check for users with failed transactions
-      const failedTransactions = await this.context.prisma.transaction.findMany(
-        {
+      const failedTransactions =
+        await this.context.prisma.transactions.findMany({
           where: {
             status: "FAILED",
             createdAt: {
               gte: new Date(Date.now() - 10 * 60 * 1000), // Last 10 minutes
             },
           },
-        }
-      );
+        });
 
       // Send support notifications for failed transactions
       for (const tx of failedTransactions) {
@@ -54,7 +54,7 @@ export class UserSupportAgent extends BaseAgent {
         try {
           // Check if user already has a notification about this
           const existingNotif =
-            await this.context.prisma.notification.findFirst({
+            await this.context.prisma.notifications.findFirst({
               where: {
                 userId: tx.userId,
                 message: {
@@ -64,14 +64,12 @@ export class UserSupportAgent extends BaseAgent {
             });
 
           if (!existingNotif) {
-            await this.context.prisma.notification.create({
-              data: {
-                userId: tx.userId,
-                type: "TRANSACTION_FAILED",
-                category: "transaction",
-                title: "Transaction Failed",
-                message: `Your transaction ${tx.id} failed. Our support team is investigating. You can retry or contact support for assistance.`,
-              },
+            await SafePrisma.create("notifications", {
+              userId: tx.userId,
+              type: "TRANSACTION_FAILED",
+              category: "transaction",
+              title: "Transaction Failed",
+              message: `Your transaction ${tx.id} failed. Our support team is investigating. You can retry or contact support for assistance.`,
             });
 
             autoResponses++;
@@ -94,7 +92,7 @@ export class UserSupportAgent extends BaseAgent {
       }
 
       // Check for users with pending KYC
-      const pendingKyc = await this.context.prisma.user.count({
+      const pendingKyc = await this.context.prisma.users.count({
         where: {
           createdAt: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours

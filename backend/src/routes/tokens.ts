@@ -1,4 +1,4 @@
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
 import { Router } from "express";
 import { Server as SocketServer } from "socket.io";
 import { authenticateToken } from "../middleware/auth";
@@ -19,13 +19,17 @@ router.get("/balance/:userId", authenticateToken as any, async (req, res) => {
   try {
     const { userId } = req.params;
 
-    let wallet = await prisma.tokenWallet.findUnique({
+    let wallet = await prisma.token_wallets.findUnique({
       where: { userId },
     });
 
     if (!wallet) {
-      wallet = await prisma.tokenWallet.create({
-        data: { userId },
+      wallet = await prisma.token_wallets.create({
+        data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
+          userId,
+        },
       });
     }
 
@@ -42,7 +46,7 @@ router.get("/history/:userId", authenticateToken as any, async (req, res) => {
     const limit = Math.min(100, Number(req.query.limit) || 50);
     const offset = Math.max(0, Number(req.query.offset) || 0);
 
-    const wallet = await prisma.tokenWallet.findUnique({
+    const wallet = await prisma.token_wallets.findUnique({
       where: { userId },
     });
 
@@ -51,19 +55,19 @@ router.get("/history/:userId", authenticateToken as any, async (req, res) => {
     }
 
     const [transactions, total] = await Promise.all([
-      prisma.tokenTransaction.findMany({
+      prisma.token_transactions.findMany({
         where: { walletId: wallet.id },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: limit,
         skip: offset,
       }),
-      prisma.tokenTransaction.count({
+      prisma.token_transactions.count({
         where: { walletId: wallet.id },
       }),
     ]);
 
     res.json({
-      transactions: transactions.map((t) => serializeDecimalFields(t)),
+      transactions: transactions.map((t: any) => serializeDecimalFields(t)),
       total,
       limit,
       offset,
@@ -88,14 +92,18 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
       return res.status(400).json({ error: "Amount must be positive" });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      let fromWallet = await tx.tokenWallet.findUnique({
+    const result = await prisma.$transaction(async (tx: any) => {
+      let fromWallet = await tx.token_wallets.findUnique({
         where: { userId: fromUserId },
       });
 
       if (!fromWallet) {
-        fromWallet = await tx.tokenWallet.create({
-          data: { userId: fromUserId },
+        fromWallet = await tx.token_wallets.create({
+          data: {
+            id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+            updatedAt: new Date(),
+            userId: fromUserId,
+          },
         });
       }
 
@@ -103,22 +111,26 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
         throw new Error("Insufficient balance");
       }
 
-      let toWallet = await tx.tokenWallet.findUnique({
+      let toWallet = await tx.token_wallets.findUnique({
         where: { userId: toUserId },
       });
 
       if (!toWallet) {
-        toWallet = await tx.tokenWallet.create({
-          data: { userId: toUserId },
+        toWallet = await tx.token_wallets.create({
+          data: {
+            id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+            updatedAt: new Date(),
+            userId: toUserId,
+          },
         });
       }
 
-      await tx.tokenWallet.update({
+      await tx.token_wallets.update({
         where: { id: fromWallet.id },
         data: { balance: { decrement: transferAmount } },
       });
 
-      await tx.tokenWallet.update({
+      await tx.token_wallets.update({
         where: { id: toWallet.id },
         data: {
           balance: { increment: transferAmount },
@@ -126,8 +138,10 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
         },
       });
 
-      const fromTx = await tx.tokenTransaction.create({
+      const fromTx = await tx.token_transactions.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           walletId: fromWallet.id,
           amount: transferAmount.neg(),
           type: "transfer",
@@ -141,8 +155,10 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
         },
       });
 
-      const toTx = await tx.tokenTransaction.create({
+      const toTx = await tx.token_transactions.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           walletId: toWallet.id,
           amount: transferAmount,
           type: "transfer",
@@ -165,20 +181,20 @@ router.post("/transfer", authenticateToken as any, async (req, res) => {
         type: "sent",
         amount: transferAmount.toString(),
         to: toUserId,
-        transactionId: result.fromTx.id,
+        transaction_id: result.fromTx.id,
       });
 
       io.to(`user-${toUserId}`).emit("token:transfer", {
         type: "received",
         amount: transferAmount.toString(),
         from: fromUserId,
-        transactionId: result.toTx.id,
+        transaction_id: result.toTx.id,
       });
     }
 
     res.json({
       success: true,
-      transactionId: result.fromTx.id,
+      transaction_id: result.fromTx.id,
       message: "Transfer completed successfully",
     });
   } catch (error: any) {
@@ -209,8 +225,8 @@ router.post("/withdraw", authenticateToken as any, async (req, res) => {
       return res.status(400).json({ error: "Invalid blockchain address" });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      let wallet = await tx.tokenWallet.findUnique({
+    const result = await prisma.$transaction(async (tx: any) => {
+      let wallet = await tx.token_wallets.findUnique({
         where: { userId },
       });
 
@@ -223,14 +239,16 @@ router.post("/withdraw", authenticateToken as any, async (req, res) => {
       }
 
       // Deduct from wallet
-      await tx.tokenWallet.update({
+      await tx.token_wallets.update({
         where: { id: wallet.id },
         data: { balance: { decrement: withdrawAmount } },
       });
 
       // Record transaction
-      const transaction = await tx.tokenTransaction.create({
+      const transaction = await tx.token_transactions.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           walletId: wallet.id,
           amount: withdrawAmount.neg(),
           type: "withdraw",
@@ -252,14 +270,14 @@ router.post("/withdraw", authenticateToken as any, async (req, res) => {
       io.to(`user-${userId}`).emit("token:withdrawn", {
         amount: withdrawAmount.toString(),
         toAddress,
-        transactionId: result.id,
+        transaction_id: result.id,
         status: "PENDING",
       });
     }
 
     res.json({
       success: true,
-      transactionId: result.id,
+      transaction_id: result.id,
       amount: withdrawAmount.toString(),
       toAddress,
       status: "PENDING",
@@ -289,8 +307,8 @@ router.post("/cashout", authenticateToken as any, async (req, res) => {
       return res.status(400).json({ error: "Amount must be positive" });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      let wallet = await tx.tokenWallet.findUnique({
+    const result = await prisma.$transaction(async (tx: any) => {
+      let wallet = await tx.token_wallets.findUnique({
         where: { userId },
       });
 
@@ -305,14 +323,16 @@ router.post("/cashout", authenticateToken as any, async (req, res) => {
       const usdValue = cashoutAmount.mul(conversionRate);
 
       // Deduct tokens
-      await tx.tokenWallet.update({
+      await tx.token_wallets.update({
         where: { id: wallet.id },
         data: { balance: { decrement: cashoutAmount } },
       });
 
       // Record cashout transaction
-      const transaction = await tx.tokenTransaction.create({
+      const transaction = await tx.token_transactions.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           walletId: wallet.id,
           amount: cashoutAmount.neg(),
           type: "cashout",
@@ -334,13 +354,13 @@ router.post("/cashout", authenticateToken as any, async (req, res) => {
       io.to(`user-${userId}`).emit("token:cashout", {
         tokensSpent: cashoutAmount.toString(),
         usdReceived: result.usdValue.toString(),
-        transactionId: result.transaction.id,
+        transaction_id: result.transaction.id,
       });
     }
 
     res.json({
       success: true,
-      transactionId: result.transaction.id,
+      transaction_id: result.transaction.id,
       tokensSpent: cashoutAmount.toString(),
       usdReceived: result.usdValue.toString(),
       message: `Successfully cashed out $${result.usdValue.toString()}!`,
@@ -361,7 +381,7 @@ router.post("/cashout", authenticateToken as any, async (req, res) => {
 router.get("/admin/stats", async (req, res) => {
   try {
     // Get all wallets
-    const wallets = await prisma.tokenWallet.findMany({
+    const wallets = await prisma.token_wallets.findMany({
       select: {
         balance: true,
         lockedBalance: true,
@@ -369,25 +389,25 @@ router.get("/admin/stats", async (req, res) => {
     });
 
     const totalSupply = wallets.reduce(
-      (sum, w) => sum.add(w.balance).add(w.lockedBalance),
+      (sum: Decimal, w: any) => sum.add(w.balance).add(w.lockedBalance),
       new Decimal(0)
     );
 
     const totalInCirculation = wallets.reduce(
-      (sum, w) => sum.add(w.balance),
+      (sum: Decimal, w: any) => sum.add(w.balance),
       new Decimal(0)
     );
 
     const totalLocked = wallets.reduce(
-      (sum, w) => sum.add(w.lockedBalance),
+      (sum: Decimal, w: any) => sum.add(w.lockedBalance),
       new Decimal(0)
     );
 
     // Get active users (users with token balance > 0)
-    const activeUsers = wallets.filter((w) => w.balance.gt(0)).length;
+    const activeUsers = wallets.filter((w: any) => w.balance.gt(0)).length;
 
     // Get total transactions
-    const totalTransactions = await prisma.tokenTransaction.count();
+    const totalTransactions = await prisma.token_transactions.count();
 
     res.json({
       totalSupply: totalSupply.toString(),
@@ -408,22 +428,22 @@ router.get("/admin/recent-activity", async (req, res) => {
   try {
     const limit = Math.min(100, Number(req.query.limit) || 20);
 
-    const transactions = await prisma.tokenTransaction.findMany({
-      orderBy: { createdAt: "desc" },
+    const transactions = await prisma.token_transactions.findMany({
+      orderBy: { created_at: "desc" },
       take: limit,
     });
 
     // Get wallet and user info for each transaction
     const activities = await Promise.all(
-      transactions.map(async (tx) => {
-        const wallet = await prisma.tokenWallet.findUnique({
+      transactions.map(async (tx: any) => {
+        const wallet = await prisma.token_wallets.findUnique({
           where: { id: tx.walletId },
           select: { userId: true },
         });
 
         let userEmail = "Unknown";
         if (wallet) {
-          const user = await prisma.user.findUnique({
+          const user = await prisma.users.findUnique({
             where: { id: wallet.userId },
             select: { email: true },
           });
@@ -457,16 +477,16 @@ router.get("/admin/top-holders", async (req, res) => {
   try {
     const limit = Math.min(100, Number(req.query.limit) || 10);
 
-    const wallets = await prisma.tokenWallet.findMany({
+    const wallets = await prisma.token_wallets.findMany({
       orderBy: { balance: "desc" },
       take: limit,
     });
 
     const holders = await Promise.all(
       wallets
-        .filter((w) => w.balance.gt(0))
-        .map(async (wallet) => {
-          const user = await prisma.user.findUnique({
+        .filter((w: any) => w.balance.gt(0))
+        .map(async (wallet: any) => {
+          const user = await prisma.users.findUnique({
             where: { id: wallet.userId },
             select: { email: true, username: true },
           });

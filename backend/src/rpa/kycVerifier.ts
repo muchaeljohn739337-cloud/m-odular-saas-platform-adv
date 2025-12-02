@@ -1,10 +1,9 @@
 // RPA Module - KYC / Identity Verification
 // Auto-verify new users' identity documents using OCR and external APIs
 
+import fs from "fs/promises";
 import prisma from "../prismaClient";
 import { rpaConfig } from "./config";
-import fs from "fs/promises";
-import path from "path";
 
 interface KYCResult {
   verified: boolean;
@@ -29,24 +28,31 @@ export class KYCVerifier {
     try {
       // In production, this would use Tesseract OCR or cloud OCR service
       console.log(`🔍 Performing OCR on document: ${documentPath}`);
-      
+
       // Simulated OCR result
       const ocrResult = {
         text: "PASSPORT\nJOHN DOE\nDate of Birth: 01/01/1990\nPassport No: AB1234567\nExpiry: 01/01/2030",
         confidence: 0.95,
       };
-      
+
       return ocrResult;
     } catch (error) {
       console.error("OCR error:", error);
-      throw new Error(`OCR failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      throw new Error(
+        `OCR failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
   /**
    * Parse OCR text and extract document information
    */
-  parseDocumentData(ocrText: string, documentType: string): KYCResult["extractedData"] {
+  parseDocumentData(
+    ocrText: string,
+    documentType: string
+  ): KYCResult["extractedData"] {
     const extracted: KYCResult["extractedData"] = {};
 
     try {
@@ -56,7 +62,9 @@ export class KYCVerifier {
         extracted.fullName = nameMatch[1];
       }
 
-      const dobMatch = ocrText.match(/Date of Birth:?\s*(\d{2}\/\d{2}\/\d{4})/i);
+      const dobMatch = ocrText.match(
+        /Date of Birth:?\s*(\d{2}\/\d{2}\/\d{4})/i
+      );
       if (dobMatch) {
         extracted.dateOfBirth = dobMatch[1];
       }
@@ -89,10 +97,14 @@ export class KYCVerifier {
   /**
    * Verify document with external API
    */
-  async verifyWithExternalAPI(extractedData: KYCResult["extractedData"]): Promise<{ valid: boolean; confidence: number }> {
+  async verifyWithExternalAPI(
+    extractedData: KYCResult["extractedData"]
+  ): Promise<{ valid: boolean; confidence: number }> {
     try {
       if (!rpaConfig.kyc.verificationApi) {
-        console.warn("⚠️  No external verification API configured, skipping...");
+        console.warn(
+          "⚠️  No external verification API configured, skipping..."
+        );
         return { valid: true, confidence: 0.7 };
       }
 
@@ -124,7 +136,11 @@ export class KYCVerifier {
   /**
    * Verify a user's identity document
    */
-  async verifyDocument(userId: string, documentPath: string, documentType: string): Promise<KYCResult> {
+  async verifyDocument(
+    userId: string,
+    documentPath: string,
+    documentType: string
+  ): Promise<KYCResult> {
     const result: KYCResult = {
       verified: false,
       confidence: 0,
@@ -146,13 +162,16 @@ export class KYCVerifier {
 
       // Step 2: Perform OCR
       const ocrResult = await this.performOCR(documentPath);
-      
+
       if (ocrResult.confidence < 0.7) {
         result.warnings.push("Low OCR confidence - document may be unclear");
       }
 
       // Step 3: Extract document data
-      result.extractedData = this.parseDocumentData(ocrResult.text, documentType);
+      result.extractedData = this.parseDocumentData(
+        ocrResult.text,
+        documentType
+      );
 
       // Step 4: Validate extracted data
       if (!result.extractedData.fullName) {
@@ -174,16 +193,22 @@ export class KYCVerifier {
       }
 
       // Step 6: Verify with external API
-      const apiVerification = await this.verifyWithExternalAPI(result.extractedData);
-      
-      result.confidence = (ocrResult.confidence + apiVerification.confidence) / 2;
+      const apiVerification = await this.verifyWithExternalAPI(
+        result.extractedData
+      );
+
+      result.confidence =
+        (ocrResult.confidence + apiVerification.confidence) / 2;
 
       // Step 7: Auto-approve if confidence is high enough
-      if (result.confidence >= rpaConfig.kyc.autoApproveThreshold && result.errors.length === 0) {
+      if (
+        result.confidence >= rpaConfig.kyc.autoApproveThreshold &&
+        result.errors.length === 0
+      ) {
         result.verified = true;
-        
+
         // Update user record
-        await prisma.user.update({
+        await prisma.users.update({
           where: { id: userId },
           data: {
             // In production, add kycStatus field to User model
@@ -192,8 +217,9 @@ export class KYCVerifier {
         });
 
         // Log KYC approval
-        await prisma.auditLog.create({
+        await prisma.audit_logs.create({
           data: {
+            id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
             userId,
             action: "KYC_APPROVED",
             resourceType: "User",
@@ -210,14 +236,19 @@ export class KYCVerifier {
           },
         });
 
-        console.log(`✅ KYC approved for user ${userId} (confidence: ${result.confidence.toFixed(2)})`);
+        console.log(
+          `✅ KYC approved for user ${userId} (confidence: ${result.confidence.toFixed(
+            2
+          )})`
+        );
       } else {
         result.verified = false;
         result.warnings.push("Manual review required");
 
         // Log for manual review
-        await prisma.auditLog.create({
+        await prisma.audit_logs.create({
           data: {
+            id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
             userId,
             action: "KYC_PENDING_REVIEW",
             resourceType: "User",
@@ -234,10 +265,18 @@ export class KYCVerifier {
           },
         });
 
-        console.log(`⚠️  KYC requires manual review for user ${userId} (confidence: ${result.confidence.toFixed(2)})`);
+        console.log(
+          `⚠️  KYC requires manual review for user ${userId} (confidence: ${result.confidence.toFixed(
+            2
+          )})`
+        );
       }
     } catch (error) {
-      result.errors.push(`Verification failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      result.errors.push(
+        `Verification failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       console.error("❌ KYC verification error:", error);
     }
 

@@ -2,7 +2,8 @@
 // Monitors for suspicious activity, security threats, fraud patterns
 // Runs every 5 minutes
 
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
+import { SafePrisma } from "../ai-expansion/validators/SafePrisma";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class SecurityFraudAgent extends BaseAgent {
@@ -28,7 +29,7 @@ export class SecurityFraudAgent extends BaseAgent {
       const lookback = new Date(Date.now() - 5 * 60 * 1000); // Last 5 minutes
 
       // Check for multiple failed login attempts
-      const failedLogins = await this.context.prisma.auditLog.groupBy({
+      const failedLogins = await this.context.prisma.audit_logs.groupBy({
         by: ["userId"],
         where: {
           action: "LOGIN_FAILED",
@@ -62,15 +63,14 @@ export class SecurityFraudAgent extends BaseAgent {
       itemsProcessed += failedLogins.length;
 
       // Check for unusual transaction patterns
-      const recentTransactions = await this.context.prisma.transaction.findMany(
-        {
+      const recentTransactions =
+        await this.context.prisma.transactions.findMany({
           where: {
             createdAt: {
               gte: lookback,
             },
           },
-        }
-      );
+        });
 
       // Group by user to detect rapid transactions
       const userTxMap = new Map<string, number>();
@@ -101,7 +101,7 @@ export class SecurityFraudAgent extends BaseAgent {
 
       for (const tx of largeTxs) {
         // Check if user is new (< 7 days old)
-        const user = await this.context.prisma.user.findUnique({
+        const user = await this.context.prisma.users.findUnique({
           where: { id: tx.userId },
         });
 
@@ -112,7 +112,7 @@ export class SecurityFraudAgent extends BaseAgent {
           threats.push({
             type: "large_transaction_new_user",
             userId: tx.userId,
-            transactionId: tx.id,
+            transaction_id: tx.id,
             amount: tx.amount.toString(),
             severity: "high",
             userAge: Math.floor(
@@ -123,7 +123,7 @@ export class SecurityFraudAgent extends BaseAgent {
       }
 
       // Check for suspicious API usage patterns
-      const recentApiCalls = await this.context.prisma.auditLog.groupBy({
+      const recentApiCalls = await this.context.prisma.audit_logs.groupBy({
         by: ["userId"],
         where: {
           action: {
@@ -167,14 +167,12 @@ export class SecurityFraudAgent extends BaseAgent {
 
         // Log each threat to audit log
         for (const threat of threats) {
-          await this.context.prisma.auditLog.create({
-            data: {
-              userId: threat.userId || null,
-              action: `SECURITY_THREAT_${threat.type.toUpperCase()}`,
-              resourceType: "Security",
-              resourceId: threat.userId || "system",
-              ipAddress: null,
-            },
+          await SafePrisma.create("audit_logs", {
+            userId: threat.userId || null,
+            action: `SECURITY_THREAT_${threat.type.toUpperCase()}`,
+            resourceType: "Security",
+            resourceId: threat.userId || "system",
+            ipAddress: null,
           });
         }
 

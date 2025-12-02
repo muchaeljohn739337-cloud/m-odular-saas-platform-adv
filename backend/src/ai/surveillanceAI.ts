@@ -360,7 +360,7 @@ class SurveillanceAI {
   private async monitorSecurity(): Promise<void> {
     try {
       // Check for failed login attempts
-      const recentFailedLogins = await prisma.auditLog.count({
+      const recentFailedLogins = await prisma.audit_logs.count({
         where: {
           action: "login_failed",
           createdAt: {
@@ -389,7 +389,7 @@ class SurveillanceAI {
       }
 
       // Check for unauthorized access attempts
-      const unauthorizedAttempts = await prisma.auditLog.count({
+      const unauthorizedAttempts = await prisma.audit_logs.count({
         where: {
           action: "unauthorized_access",
           createdAt: {

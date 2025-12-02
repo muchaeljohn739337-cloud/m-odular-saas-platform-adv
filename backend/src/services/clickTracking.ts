@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Decimal } from "decimal.js";
 import { Request } from "express";
 import prisma from "../prismaClient";
@@ -14,8 +15,9 @@ export async function trackClick(
 
   const botResult = await detectBot(req, userId);
 
-  const clickEvent = await prisma.clickEvent.create({
+  const clickEvent = await prisma.click_events.create({
     data: {
+      id: crypto.randomUUID(),
       userId: userId || null,
       eventName,
       ipAddress,

@@ -1,5 +1,5 @@
-import prisma from "../../src/prismaClient";
 import bcrypt from "bcryptjs";
+import prisma from "../../src/prismaClient";
 
 export async function seedCompleteTestData() {
   console.log("🌱 Seeding test data...");
@@ -16,7 +16,7 @@ export async function seedCompleteTestData() {
       role: "ADMIN",
       emailVerified: true,
       active: true,
-      usdBalance: 10000.00,
+      usdBalance: 10000.0,
       termsAccepted: true,
       termsAcceptedAt: new Date(),
     },
@@ -33,7 +33,7 @@ export async function seedCompleteTestData() {
       role: "USER",
       emailVerified: true,
       active: true,
-      usdBalance: 1000.00,
+      usdBalance: 1000.0,
       termsAccepted: true,
       termsAcceptedAt: new Date(),
     },
@@ -45,7 +45,7 @@ export async function seedCompleteTestData() {
 
 export async function cleanTestData() {
   console.log("�� Cleaning test data...");
-  
+
   try {
     const testUsers = await prisma.User.findMany({
       where: {
@@ -94,7 +94,7 @@ export async function cleanTestData() {
     await prisma.Transaction.deleteMany({
       where: { userId: { in: testUserIds } },
     });
-    
+
     await prisma.User.deleteMany({
       where: { id: { in: testUserIds } },
     });
@@ -105,15 +105,16 @@ export async function cleanTestData() {
   }
 }
 
+// ⚠️ TEST CREDENTIALS ONLY - NOT FOR PRODUCTION
 export const TEST_CREDENTIALS = {
   admin: {
     email: "admin@test.com",
-    password: "Admin123!@#",
+    password: TEST_ADMIN_PASSWORD,
     role: "ADMIN",
   },
   user: {
     email: "user@test.com",
-    password: "User123!@#",
+    password: TEST_USER_PASSWORD,
     role: "USER",
   },
 };

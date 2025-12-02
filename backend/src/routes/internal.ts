@@ -22,7 +22,7 @@ router.post("/seed-admin", async (req, res) => {
     }
 
     // Check if admin already exists
-    const existingAdmin = await prisma.user.findUnique({
+    const existingAdmin = await prisma.users.findUnique({
       where: { email: "admin@advanciapay.com" },
     });
 
@@ -64,7 +64,7 @@ router.post("/seed-admin", async (req, res) => {
       adminData.emailVerifiedAt = new Date();
     }
 
-    const admin = await prisma.user.create({
+    const admin = await prisma.users.create({
       data: adminData as any,
     });
 
@@ -78,7 +78,7 @@ router.post("/seed-admin", async (req, res) => {
     console.error("Failed to seed admin:", error);
     res.status(500).json({
       error: "Failed to create admin user",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });

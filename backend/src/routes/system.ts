@@ -28,7 +28,7 @@ router.get("/health", (req, res) => {
 router.get("/status", async (req, res) => {
   try {
     // Check if SystemStatus table has any alerts
-    const services = await prisma.systemStatus.findMany({
+    const services = await prisma.system_status.findMany({
       orderBy: { updatedAt: "desc" },
     });
 
@@ -37,10 +37,10 @@ router.get("/status", async (req, res) => {
     let alertLevel: "none" | "warning" | "danger" = "none";
 
     if (services.length > 0) {
-      const hasDown = services.some((s) => s.status === "down");
-      const hasDegraded = services.some((s) => s.status === "degraded");
-      const hasDanger = services.some((s) => s.alertLevel === "danger");
-      const hasWarning = services.some((s) => s.alertLevel === "warning");
+      const hasDown = services.some((s: any) => s.status === "down");
+      const hasDegraded = services.some((s: any) => s.status === "degraded");
+      const hasDanger = services.some((s: any) => s.alertLevel === "danger");
+      const hasWarning = services.some((s: any) => s.alertLevel === "warning");
 
       if (hasDown) overallStatus = "down";
       else if (hasDegraded) overallStatus = "degraded";
@@ -55,7 +55,7 @@ router.get("/status", async (req, res) => {
         alertLevel,
         timestamp: new Date().toISOString(),
       },
-      services: services.map((s) => ({
+      services: services.map((s: any) => ({
         serviceName: s.serviceName,
         status: s.status,
         statusMessage: s.statusMessage || "",

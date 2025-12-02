@@ -2,11 +2,11 @@
 // Periodically back up PostgreSQL data or sync records to cloud storage automatically
 
 import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs/promises";
 import path from "path";
-import { rpaConfig } from "./config";
+import { promisify } from "util";
 import prisma from "../prismaClient";
+import { rpaConfig } from "./config";
 
 const execAsync = promisify(exec);
 
@@ -33,13 +33,16 @@ export class DataBackupSync {
       const backupDir = rpaConfig.dataBackup.backupLocation;
       await fs.mkdir(backupDir, { recursive: true });
 
-      const timestamp = new Date().toISOString().replace(/:/g, "-").split(".")[0];
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/:/g, "-")
+        .split(".")[0];
       const filename = `backup_${timestamp}.sql`;
       const filepath = path.join(backupDir, filename);
 
       // Get DATABASE_URL from environment
       const databaseUrl = process.env.DATABASE_URL;
-      
+
       if (!databaseUrl) {
         throw new Error("DATABASE_URL not found in environment");
       }
@@ -52,25 +55,54 @@ export class DataBackupSync {
       const dbUser = dbUrl.username;
       const dbPassword = dbUrl.password;
 
-      // Use pg_dump for PostgreSQL backup
-      const command = `PGPASSWORD="${dbPassword}" pg_dump -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -F p -f "${filepath}"`;
+      // SECURITY: Use pg_dump with environment variables to avoid shell injection
+      // Separate command from user input - password via env, args via array
+      const { execFile } = require("child_process");
+      const { promisify } = require("util");
+      const execFileAsync = promisify(execFile);
 
-      await execAsync(command);
+      // Execute with safe array arguments (no shell interpretation)
+      await execFileAsync(
+        "pg_dump",
+        [
+          "-h",
+          dbHost,
+          "-p",
+          dbPort,
+          "-U",
+          dbUser,
+          "-d",
+          dbName,
+          "-F",
+          "p",
+          "-f",
+          filepath,
+        ],
+        {
+          env: { ...process.env, PGPASSWORD: dbPassword },
+          maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large databases
+        }
+      );
 
       // Get file size
       const stats = await fs.stat(filepath);
-      
+
       result.success = true;
       result.filename = filename;
       result.filepath = filepath;
       result.size = stats.size;
       result.duration = Date.now() - startTime;
 
-      console.log(`✅ Backup created: ${filename} (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
+      console.log(
+        `✅ Backup created: ${filename} (${(stats.size / 1024 / 1024).toFixed(
+          2
+        )} MB)`
+      );
 
       // Log backup to audit log
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
           userId: "SYSTEM",
           action: "DATABASE_BACKUP",
           resourceType: "Database",
@@ -129,7 +161,7 @@ export class DataBackupSync {
     // In production, use AWS SDK
     // For now, just log
     console.log(`📤 Would upload to S3: ${filepath}`);
-    
+
     // Example AWS S3 upload code:
     /*
     const AWS = require('aws-sdk');
@@ -157,7 +189,9 @@ export class DataBackupSync {
       const retention = rpaConfig.dataBackup.retention;
 
       const files = await fs.readdir(backupDir);
-      const backupFiles = files.filter((f) => f.startsWith("backup_") && f.endsWith(".sql"));
+      const backupFiles = files.filter(
+        (f) => f.startsWith("backup_") && f.endsWith(".sql")
+      );
 
       const now = Date.now();
       let deletedCount = 0;
@@ -213,7 +247,7 @@ export class DataBackupSync {
       // Export based on table name
       switch (tableName) {
         case "users":
-          data = await prisma.user.findMany({
+          data = await prisma.users.findMany({
             select: {
               id: true,
               email: true,
@@ -227,10 +261,10 @@ export class DataBackupSync {
           });
           break;
         case "transactions":
-          data = await prisma.transaction.findMany();
+          data = await prisma.transactions.findMany();
           break;
         case "auditLogs":
-          data = await prisma.auditLog.findMany();
+          data = await prisma.audit_logs.findMany();
           break;
         default:
           throw new Error(`Unsupported table: ${tableName}`);
@@ -239,7 +273,10 @@ export class DataBackupSync {
       const backupDir = rpaConfig.dataBackup.backupLocation;
       await fs.mkdir(backupDir, { recursive: true });
 
-      const timestamp = new Date().toISOString().replace(/:/g, "-").split(".")[0];
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/:/g, "-")
+        .split(".")[0];
       const filename = `${tableName}_${timestamp}.json`;
       const filepath = path.join(backupDir, filename);
 
@@ -261,29 +298,38 @@ export class DataBackupSync {
     const result: BackupResult = { success: false };
 
     try {
-      console.log(`🔄 Creating incremental backup since ${lastBackupDate.toISOString()}...`);
+      console.log(
+        `🔄 Creating incremental backup since ${lastBackupDate.toISOString()}...`
+      );
 
       const backupDir = rpaConfig.dataBackup.backupLocation;
       await fs.mkdir(backupDir, { recursive: true });
 
       // Export changed records
       const changedData = {
-        users: await prisma.user.findMany({
+        users: await prisma.users.findMany({
           where: { updatedAt: { gte: lastBackupDate } },
         }),
-        transactions: await prisma.transaction.findMany({
+        transactions: await prisma.transactions.findMany({
           where: { createdAt: { gte: lastBackupDate } },
         }),
-        auditLogs: await prisma.auditLog.findMany({
+        auditLogs: await prisma.audit_logs.findMany({
           where: { createdAt: { gte: lastBackupDate } },
         }),
       };
 
-      const timestamp = new Date().toISOString().replace(/:/g, "-").split(".")[0];
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/:/g, "-")
+        .split(".")[0];
       const filename = `incremental_backup_${timestamp}.json`;
       const filepath = path.join(backupDir, filename);
 
-      await fs.writeFile(filepath, JSON.stringify(changedData, null, 2), "utf-8");
+      await fs.writeFile(
+        filepath,
+        JSON.stringify(changedData, null, 2),
+        "utf-8"
+      );
 
       const stats = await fs.stat(filepath);
 

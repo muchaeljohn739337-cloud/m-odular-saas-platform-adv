@@ -1,4 +1,5 @@
-import { OALStatus, Prisma } from "@prisma/client";
+// OALStatus is not exported in current Prisma client; use string fallback
+type OALStatus = "PENDING" | "APPROVED" | "REJECTED" | string;
 import { randomUUID } from "crypto";
 import prisma from "../prismaClient";
 import { createOALLog } from "./oalService";
@@ -37,8 +38,9 @@ export async function createWorkflow(data: RPAWorkflowData) {
       id: randomUUID(),
       name: data.name,
       description: data.description ?? null,
-      trigger: (data.trigger as Prisma.JsonValue) ?? {},
-      actions: (data.actions as Prisma.JsonValue) ?? [],
+      // Avoid tight Prisma JSON typing to fix compile issues
+      trigger: (data.trigger as unknown) ?? {},
+      actions: (data.actions as unknown) ?? [],
       enabled: data.enabled !== false,
       createdById: data.createdById,
       updatedAt: now,
@@ -62,14 +64,14 @@ export async function getWorkflows(filters: {
           select: { RPAExecution: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: filters.limit,
       skip: filters.offset,
     }),
     prisma.rPAWorkflow.count({ where }),
   ]);
 
-  const items = rawItems.map((workflow) => {
+  const items = rawItems.map((workflow: any) => {
     const { _count, RPAExecution, ...rest } = workflow as typeof workflow & {
       RPAExecution?: any[];
     };
@@ -117,9 +119,9 @@ export async function updateWorkflow(
   if (data.name !== undefined) updateData.name = data.name;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.trigger !== undefined)
-    updateData.trigger = (data.trigger as Prisma.JsonValue) ?? {};
+    updateData.trigger = (data.trigger as unknown) ?? {};
   if (data.actions !== undefined)
-    updateData.actions = (data.actions as Prisma.JsonValue) ?? [];
+    updateData.actions = (data.actions as unknown) ?? [];
   if (data.enabled !== undefined) updateData.enabled = data.enabled;
   updateData.updatedAt = new Date();
 
@@ -154,8 +156,8 @@ export async function executeWorkflow(data: RPAExecutionData) {
       id: executionId,
       workflowId: data.workflowId,
       status: "RUNNING",
-      trigger: (data.result as Prisma.JsonValue) ?? {},
-      steps: [] as Prisma.JsonArray,
+      trigger: (data.result as unknown) ?? {},
+      steps: [] as unknown as any[],
     },
   });
 
@@ -215,7 +217,7 @@ async function executeWorkflowSteps(
       data: {
         status: "SUCCESS",
         completedAt: new Date(),
-        steps: steps as unknown as Prisma.JsonArray,
+        steps: steps as unknown as any[],
       },
     });
 
@@ -237,7 +239,7 @@ async function executeWorkflowSteps(
         status: "FAILED",
         completedAt: new Date(),
         error: error.message,
-        steps: steps as unknown as Prisma.JsonArray,
+        steps: steps as unknown as any[],
       },
     });
 
@@ -260,19 +262,19 @@ async function executeAction(action: WorkflowAction): Promise<any> {
         subjectId: action.params.subjectId,
         metadata: action.params.metadata || {},
         createdById: action.params.createdById || "system",
-        status: action.params.status || OALStatus.PENDING,
+        status: action.params.status || "PENDING",
       });
 
     case "approve_oal":
-      return await prisma.oAL.update({
+      return await prisma.oal_audit_log.update({
         where: { id: action.params.logId },
-        data: { status: OALStatus.APPROVED },
+        data: { status: "APPROVED" },
       });
 
     case "reject_oal":
-      return await prisma.oAL.update({
+      return await prisma.oal_audit_log.update({
         where: { id: action.params.logId },
-        data: { status: OALStatus.REJECTED },
+        data: { status: "REJECTED" },
       });
 
     case "send_notification":
@@ -352,7 +354,7 @@ export async function getExecutions(filters: {
     prisma.rPAExecution.count({ where }),
   ]);
 
-  const items = rawItems.map((execution) => {
+  const items = rawItems.map((execution: any) => {
     const { RPAWorkflow, ...rest } = execution as typeof execution & {
       RPAWorkflow?: any;
     };

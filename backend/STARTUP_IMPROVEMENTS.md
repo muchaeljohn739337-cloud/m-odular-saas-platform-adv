@@ -54,7 +54,9 @@ startServer();
 **OLD:**
 
 ```yaml
-buildCommand: "npm ci && npx prisma migrate resolve --rolled-back 20251022094130_add_crypto_balances_to_users || true && npx prisma migrate deploy && npm run build"
+buildCommand:
+  "npm ci && npx prisma migrate resolve --rolled-back 20251022094130_add_crypto_balances_to_users || true && npx prisma
+  migrate deploy && npm run build"
 ```
 
 **NEW:**
@@ -65,10 +67,9 @@ buildCommand: "npm ci --production=false && npx prisma generate && npx prisma mi
 
 ## Benefits
 
-✅ **Database Retry Logic**: Server waits for database connection (fixes 502 errors)
-✅ **Cleaner Build**: Removes error suppression (`|| true`), explicit Prisma generation
-✅ **Better Logging**: Enhanced startup messages with environment info
-✅ **Production Ready**: Binds to `0.0.0.0` for proper Docker/Render deployment
+✅ **Database Retry Logic**: Server waits for database connection (fixes 502 errors) ✅ **Cleaner Build**: Removes error
+suppression (`|| true`), explicit Prisma generation ✅ **Better Logging**: Enhanced startup messages with environment
+info ✅ **Production Ready**: Binds to `0.0.0.0` for proper Docker/Render deployment
 
 ## Testing Locally
 

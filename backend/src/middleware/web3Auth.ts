@@ -149,13 +149,13 @@ export async function authenticateWeb3(
     }
 
     // Find or create user
-    let user = await prisma.user.findUnique({
+    let user = await prisma.users.findUnique({
       where: { ethWalletAddress: walletAddress.toLowerCase() },
     });
 
     if (!user) {
       // Auto-create user for new wallet
-      user = await prisma.user.create({
+      user = await prisma.users.create({
         data: {
           email: `${walletAddress.toLowerCase()}@web3.local`,
           username: `user_${walletAddress.slice(2, 10)}`,
@@ -342,7 +342,7 @@ export async function linkWalletToAccount(
     }
 
     // Check if wallet already linked
-    const existingWallet = await prisma.user.findUnique({
+    const existingWallet = await prisma.users.findUnique({
       where: { ethWalletAddress: walletAddress.toLowerCase() },
     });
 
@@ -354,7 +354,7 @@ export async function linkWalletToAccount(
     }
 
     // Link wallet to user
-    const user = await prisma.user.update({
+    const user = await prisma.users.update({
       where: { id: userId },
       data: { ethWalletAddress: walletAddress.toLowerCase() },
     });

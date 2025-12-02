@@ -40,7 +40,7 @@ router.post(
         success: true,
         exchangedAmount,
         exchangeRate,
-        transactionId: transaction.id,
+        transaction_id: transaction.id,
       });
     } catch (error) {
       console.error("Error processing exchange:", error);

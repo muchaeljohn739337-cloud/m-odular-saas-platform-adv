@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Decimal } from "decimal.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -15,12 +16,12 @@ export async function trainBotDetectionModel(
   adminId: string
 ): Promise<{ success: boolean; metrics: TrainingMetrics; modelId: string }> {
   try {
-    const trainingData = await prisma.aITrainingData.findMany({
+    const trainingData = await prisma.ai_training_data.findMany({
       where: {
         verifiedBy: { not: null },
       },
       take: 10000,
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     if (trainingData.length < 100) {
@@ -97,8 +98,9 @@ export async function trainBotDetectionModel(
     const modelPath = path.join(modelDir, "bot_detection_model.json");
     fs.writeFileSync(modelPath, JSON.stringify(modelData, null, 2));
 
-    const model = await prisma.aIModel.create({
+    const model = await prisma.ai_models.create({
       data: {
+        id: crypto.randomUUID(),
         name: "Bot Detection Model",
         version: modelData.version,
         modelType: "bot_detection",
@@ -111,6 +113,7 @@ export async function trainBotDetectionModel(
         isActive: false,
         trainedBy: adminId,
         trainedAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 
@@ -130,7 +133,7 @@ export async function verifyTrainingData(
   label: boolean,
   adminId: string
 ) {
-  await prisma.aITrainingData.update({
+  await prisma.ai_training_data.update({
     where: { id: dataId },
     data: {
       label,
@@ -141,14 +144,14 @@ export async function verifyTrainingData(
 }
 
 export async function getTrainingStats() {
-  const total = await prisma.aITrainingData.count();
-  const verified = await prisma.aITrainingData.count({
+  const total = await prisma.ai_training_data.count();
+  const verified = await prisma.ai_training_data.count({
     where: { verifiedBy: { not: null } },
   });
-  const bots = await prisma.aITrainingData.count({
+  const bots = await prisma.ai_training_data.count({
     where: { label: true, verifiedBy: { not: null } },
   });
-  const humans = await prisma.aITrainingData.count({
+  const humans = await prisma.ai_training_data.count({
     where: { label: false, verifiedBy: { not: null } },
   });
 

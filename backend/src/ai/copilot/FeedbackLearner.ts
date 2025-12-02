@@ -6,7 +6,7 @@
 
 import prisma from "../../prismaClient";
 
-interface LearningMetrics {
+export interface LearningMetrics {
   totalTasks: number;
   successRate: number;
   averageExecutionTime: number;

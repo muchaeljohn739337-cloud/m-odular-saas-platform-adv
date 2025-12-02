@@ -61,8 +61,10 @@ export const recordTransaction = async ({
     metadata,
   });
 
-  const trx = await prisma.transaction.create({
+  const trx = await prisma.transactions.create({
     data: {
+      id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+      updatedAt: new Date(),
       userId,
       amount: parsed.amount,
       type: parsed.type,
@@ -108,7 +110,7 @@ export const recordTransaction = async ({
           type === "credit" ? "Received" : "Sent"
         } $${transaction.amount.toFixed(2)}`,
       data: {
-        transactionId: transaction.id,
+        transaction_id: transaction.id,
         amount: transaction.amount,
         type,
         currency,
@@ -162,14 +164,14 @@ router.get("/user/:userId", authenticateToken as any, async (req: any, res) => {
     if (!isAdmin && req.user?.userId !== userId) {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
-    const userTransactions = await prisma.transaction.findMany({
+    const userTransactions = await prisma.transactions.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 100,
     });
     res.json({
       success: true,
-      transactions: userTransactions.map((t) => ({
+      transactions: userTransactions.map((t: any) => ({
         id: t.id,
         userId: t.userId,
         amount: t.amount.toString(),
@@ -194,14 +196,14 @@ router.get(
       if (!isAdmin && req.user?.userId !== userId) {
         return res.status(403).json({ success: false, error: "Forbidden" });
       }
-      const userTransactions = await prisma.transaction.findMany({
+      const userTransactions = await prisma.transactions.findMany({
         where: { userId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: 10,
       });
       res.json({
         success: true,
-        transactions: userTransactions.map((t) => ({
+        transactions: userTransactions.map((t: any) => ({
           id: t.id,
           userId: t.userId,
           amount: t.amount.toString(),
@@ -223,13 +225,13 @@ router.get(
   requireAdmin as any,
   async (_req, res) => {
     try {
-      const all = await prisma.transaction.findMany({
-        orderBy: { createdAt: "desc" },
+      const all = await prisma.transactions.findMany({
+        orderBy: { created_at: "desc" },
         take: 50,
       });
       res.json({
         success: true,
-        transactions: all.map((t) => ({
+        transactions: all.map((t: any) => ({
           id: t.id,
           userId: t.userId,
           amount: t.amount.toString(),
@@ -256,18 +258,18 @@ router.get(
         return res.status(403).json({ success: false, error: "Forbidden" });
       }
 
-      const userTransactions = await prisma.transaction.findMany({
+      const userTransactions = await prisma.transactions.findMany({
         where: { userId },
       });
 
       const balance_main = userTransactions.reduce(
-        (acc, t) =>
+        (acc: any, t: any) =>
           t.type === "credit" ? acc + Number(t.amount) : acc - Number(t.amount),
         0
       );
       const totalCredits = userTransactions
-        .filter((t) => t.type === "credit")
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+        .filter((t: any) => t.type === "credit")
+        .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
       const bonus_amount = totalCredits * 0.15;
       const referral_amount = 0;
       const total = balance_main + bonus_amount + referral_amount;

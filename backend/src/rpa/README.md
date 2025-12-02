@@ -2,7 +2,8 @@
 
 ## 📌 Overview
 
-The **RPA (Robotic Process Automation) Module** is a comprehensive automation system built for the Advancia platform. It automates repetitive, rule-based tasks to improve efficiency, reduce errors, and provide 24/7 operation.
+The **RPA (Robotic Process Automation) Module** is a comprehensive automation system built for the Advancia platform. It
+automates repetitive, rule-based tasks to improve efficiency, reduce errors, and provide 24/7 operation.
 
 ---
 
@@ -194,6 +195,7 @@ npm install
 ```
 
 Required packages:
+
 - `node-cron` - Task scheduling
 - `@types/node-cron` - TypeScript definitions
 - `nodemailer` - Email sending
@@ -202,8 +204,9 @@ Required packages:
 ### 3. Start the RPA System
 
 **Option A: Programmatic**
+
 ```typescript
-import { rpaScheduler } from './rpa';
+import { rpaScheduler } from "./rpa";
 
 // Start all automation tasks
 await rpaScheduler.start();
@@ -217,6 +220,7 @@ rpaScheduler.stop();
 ```
 
 **Option B: API Endpoint**
+
 ```bash
 
 # Start RPA scheduler
@@ -232,8 +236,7 @@ curl http://localhost:5000/api/rpa/status
 curl -X POST http://localhost:5000/api/rpa/stop
 ```
 
-**Option C: Auto-start**
-Set `RPA_AUTO_START=true` in `.env`
+**Option C: Auto-start** Set `RPA_AUTO_START=true` in `.env`
 
 ---
 
@@ -252,9 +255,11 @@ http://localhost:5000/api/rpa
 ```http
 GET /api/rpa/health
 ```
+
 Returns system health status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -271,9 +276,11 @@ Returns system health status.
 ```http
 GET /api/rpa/status
 ```
+
 Returns detailed status of all RPA tasks.
 
 **Response:**
+
 ```json
 {
   "isRunning": true,
@@ -296,9 +303,11 @@ Returns detailed status of all RPA tasks.
 ```http
 POST /api/rpa/start
 ```
+
 Starts all enabled RPA tasks.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -313,9 +322,11 @@ Starts all enabled RPA tasks.
 ```http
 POST /api/rpa/stop
 ```
+
 Stops all RPA tasks.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -330,12 +341,15 @@ Stops all RPA tasks.
 ```http
 POST /api/rpa/task/:taskName/run
 ```
+
 Manually trigger a specific task.
 
 **Parameters:**
+
 - `taskName` - One of: `transactionProcessing`, `kycVerification`, `reportGeneration`, `notificationQueue`, `dataBackup`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -357,6 +371,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -380,6 +395,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -412,6 +428,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -440,6 +457,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -458,6 +476,7 @@ POST /api/rpa/backup/create
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -481,6 +500,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -507,6 +527,7 @@ Content-Type: application/json
 ```
 
 **Examples:**
+
 - `*/5 * * * *` - Every 5 minutes
 - `0 8 * * *` - Daily at 8:00 AM
 - `0 2 * * *` - Daily at 2:00 AM
@@ -531,6 +552,7 @@ All RPA actions are logged with the `[RPA]` prefix:
 ### Health Check
 
 Monitor RPA health with:
+
 ```bash
 curl http://localhost:5000/api/rpa/health
 ```
@@ -538,6 +560,7 @@ curl http://localhost:5000/api/rpa/health
 ### Audit Trail
 
 All RPA actions are logged to the `audit_logs` table:
+
 ```typescript
 {
   action: "transaction_processed",
@@ -555,6 +578,7 @@ All RPA actions are logged to the `audit_logs` table:
 ### Issue: RPA tasks not running
 
 **Solution:**
+
 1. Check if scheduler is started: `GET /api/rpa/status`
 2. Verify environment variables are set
 3. Check logs for errors
@@ -563,6 +587,7 @@ All RPA actions are logged to the `audit_logs` table:
 ### Issue: Email notifications failing
 
 **Solution:**
+
 1. Verify SMTP credentials in `.env`
 2. Check Gmail "App Password" if using Gmail
 3. Confirm `SMTP_PORT=587` for TLS
@@ -571,6 +596,7 @@ All RPA actions are logged to the `audit_logs` table:
 ### Issue: SMS not sending
 
 **Solution:**
+
 1. Verify Twilio credentials
 2. Check Twilio phone number format (+1234567890)
 3. Ensure sufficient Twilio credit
@@ -579,6 +605,7 @@ All RPA actions are logged to the `audit_logs` table:
 ### Issue: Backup failing
 
 **Solution:**
+
 1. Ensure `pg_dump` is in PATH
 2. Verify DATABASE_URL is set
 3. Check disk space for backups
@@ -648,6 +675,7 @@ All RPA actions are logged to the `audit_logs` table:
 ## 🤝 Contributing
 
 When adding new RPA modules:
+
 1. Create a new file in `backend/src/rpa/`
 2. Export default singleton instance
 3. Add configuration to `config.ts`
@@ -660,6 +688,7 @@ When adding new RPA modules:
 ## 📞 Support
 
 For issues or questions about the RPA module:
+
 - Check logs in console
 - Review `/api/rpa/health` endpoint
 - Consult this documentation
@@ -667,6 +696,4 @@ For issues or questions about the RPA module:
 
 ---
 
-**Version**: 1.0.0
-**Last Updated**: January 2025
-**Status**: ✅ Production Ready (except User Support module)
+**Version**: 1.0.0 **Last Updated**: January 2025 **Status**: ✅ Production Ready (except User Support module)

@@ -2,8 +2,8 @@
 // Analyzes recent errors, searches for solutions, creates patches
 // Runs every 20 minutes
 
+import { SafePrisma } from "../ai-expansion/validators/SafePrisma";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
-import axios from "axios";
 
 export class BugFixAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -14,7 +14,7 @@ export class BugFixAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 90000,
       priority: "high",
-      description: "Analyzes errors and suggests fixes automatically"
+      description: "Analyzes errors and suggests fixes automatically",
     };
     super(config, context);
   }
@@ -28,17 +28,17 @@ export class BugFixAgent extends BaseAgent {
       const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
 
       // Step 1: Query recent errors from AuditLog
-      const recentErrors = await this.context.prisma.auditLog.findMany({
+      const recentErrors = await this.context.prisma.audit_logs.findMany({
         where: {
           action: {
-            contains: "ERROR"
+            contains: "ERROR",
           },
           createdAt: {
-            gte: twentyMinutesAgo
-          }
+            gte: twentyMinutesAgo,
+          },
         },
-        orderBy: { createdAt: "desc" },
-        take: 20
+        orderBy: { created_at: "desc" },
+        take: 20,
       });
       itemsProcessed++;
 
@@ -47,7 +47,7 @@ export class BugFixAgent extends BaseAgent {
           success: true,
           message: "No recent errors detected",
           data: { errorsAnalyzed: 0 },
-          metrics: { itemsProcessed, errors, duration: Date.now() - startTime }
+          metrics: { itemsProcessed, errors, duration: Date.now() - startTime },
         };
       }
 
@@ -62,13 +62,20 @@ export class BugFixAgent extends BaseAgent {
         if (pattern.occurrences >= 3) {
           // Search for solutions
           const solutions = await this.searchSolutions(pattern.errorMessage);
-          
+
           // Create SecurityPatch entry
-          const patch = await this.context.prisma.securityPatch.create({
+          const patch = await this.context.prisma.security_patches.create({
             data: {
-              patchId: `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              patch_id: `AUTO-${Date.now()}-${Math.random()
+                .toString(36)
+                .substr(2, 9)}`,
               issueDescription: pattern.errorMessage,
-              severity: pattern.occurrences >= 10 ? "CRITICAL" : pattern.occurrences >= 5 ? "HIGH" : "MEDIUM",
+              severity:
+                pattern.occurrences >= 10
+                  ? "CRITICAL"
+                  : pattern.occurrences >= 5
+                  ? "HIGH"
+                  : "MEDIUM",
               patchType: "BUG_FIX",
               status: "PENDING",
               suggestedFix: solutions.join("\n\n"),
@@ -77,29 +84,29 @@ export class BugFixAgent extends BaseAgent {
                 occurrences: pattern.occurrences,
                 firstSeen: pattern.firstSeen,
                 lastSeen: pattern.lastSeen,
-                affectedActions: pattern.actions
-              }
-            }
+                affectedActions: pattern.actions,
+              },
+            },
           });
-          
+
           fixesCreated++;
           itemsProcessed++;
 
           // Alert admins about critical bugs
           if (pattern.occurrences >= 10 && this.context.io) {
-            const admins = await this.context.prisma.user.findMany({
+            const admins = await this.context.prisma.users.findMany({
               where: { role: "ADMIN" },
-              select: { id: true }
+              select: { id: true },
             });
 
-            admins.forEach(admin => {
+            admins.forEach((admin) => {
               this.context.io?.to(`user-${admin.id}`).emit("bug:critical", {
                 type: "error",
                 title: "Critical Bug Detected",
                 message: `Error occurred ${pattern.occurrences} times in 20 minutes`,
-                patchId: patch.patchId,
+                patch_id: patch.patchId,
                 severity: patch.severity,
-                timestamp: new Date()
+                timestamp: new Date(),
               });
             });
           }
@@ -107,19 +114,19 @@ export class BugFixAgent extends BaseAgent {
       }
 
       // Step 4: Create audit log
-      await this.context.prisma.auditLog.create({
-        data: {
-          userId: null,
-          action: "BUG_FIX_ANALYSIS",
-          ipAddress: "127.0.0.1",
-          userAgent: "BugFixAgent",
-          details: {
-            agent: this.config.name,
-            errorsAnalyzed: recentErrors.length,
-            patternsDetected: errorPatterns.length,
-            fixesCreated
-          }
-        }
+      await SafePrisma.create("audit_logs", {
+        userId: null,
+        action: "BUG_FIX_ANALYSIS",
+        resourceType: "agent",
+        resourceId: this.config.name,
+        ipAddress: "127.0.0.1",
+        userAgent: "BugFixAgent",
+        metadata: {
+          agent: this.config.name,
+          errorsAnalyzed: recentErrors.length,
+          patternsDetected: errorPatterns.length,
+          fixesCreated,
+        },
       });
       itemsProcessed++;
 
@@ -129,18 +136,21 @@ export class BugFixAgent extends BaseAgent {
         data: {
           errorsAnalyzed: recentErrors.length,
           patternsDetected: errorPatterns.length,
-          fixesCreated
+          fixesCreated,
         },
-        metrics: { itemsProcessed, errors, duration: Date.now() - startTime }
+        metrics: { itemsProcessed, errors, duration: Date.now() - startTime },
       };
-
     } catch (error: any) {
       this.context.logger.error("BugFixAgent failed", error);
       return {
         success: false,
         message: error.message || "Bug analysis failed",
         data: { error: error.message },
-        metrics: { itemsProcessed, errors: errors + 1, duration: Date.now() - startTime }
+        metrics: {
+          itemsProcessed,
+          errors: errors + 1,
+          duration: Date.now() - startTime,
+        },
       };
     }
   }
@@ -148,7 +158,7 @@ export class BugFixAgent extends BaseAgent {
   private detectErrorPatterns(errors: any[]): any[] {
     const patterns: Map<string, any> = new Map();
 
-    errors.forEach(error => {
+    errors.forEach((error) => {
       const errorMsg = error.details?.error || error.action || "Unknown error";
       const key = errorMsg.substring(0, 100);
 
@@ -163,12 +173,14 @@ export class BugFixAgent extends BaseAgent {
           occurrences: 1,
           firstSeen: error.createdAt,
           lastSeen: error.createdAt,
-          actions: [error.action]
+          actions: [error.action],
         });
       }
     });
 
-    return Array.from(patterns.values()).sort((a, b) => b.occurrences - a.occurrences);
+    return Array.from(patterns.values()).sort(
+      (a, b) => b.occurrences - a.occurrences
+    );
   }
 
   private async searchSolutions(errorMessage: string): Promise<string[]> {
@@ -187,11 +199,17 @@ export class BugFixAgent extends BaseAgent {
       solutions.push("Review input validation rules");
       solutions.push("Check for missing required fields in request");
       solutions.push("Verify data types match schema definitions");
-    } else if (errorMessage.includes("permission") || errorMessage.includes("unauthorized")) {
+    } else if (
+      errorMessage.includes("permission") ||
+      errorMessage.includes("unauthorized")
+    ) {
       solutions.push("Verify user has required permissions/role");
       solutions.push("Check JWT token validity and expiration");
       solutions.push("Review authorization middleware configuration");
-    } else if (errorMessage.includes("duplicate") || errorMessage.includes("unique constraint")) {
+    } else if (
+      errorMessage.includes("duplicate") ||
+      errorMessage.includes("unique constraint")
+    ) {
       solutions.push("Check for existing records before insert");
       solutions.push("Add unique constraint validation in code");
       solutions.push("Consider using upsert instead of insert");

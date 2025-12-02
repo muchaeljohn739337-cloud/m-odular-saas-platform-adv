@@ -53,7 +53,7 @@ router.get("/", authenticateToken, async (req, res) => {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     return res.json({ consultations });

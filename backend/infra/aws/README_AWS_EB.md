@@ -41,6 +41,7 @@ eb deploy $envName
 ```
 
 Notes:
+
 - Procfile already set to `web: npm run start`
 - postinstall will run `prisma generate && npm run build`
 - A postdeploy hook runs `npx prisma migrate deploy`
@@ -87,4 +88,5 @@ aws s3 cp ./out/index.html s3://$bucket/index.html --cache-control "no-cache"
 
 ## CORS/Env
 
-Set `NEXT_PUBLIC_API_URL` on frontend to your EB backend URL. Update backend CORS origins in `backend/src/config/index.ts` if needed.
+Set `NEXT_PUBLIC_API_URL` on frontend to your EB backend URL. Update backend CORS origins in
+`backend/src/config/index.ts` if needed.

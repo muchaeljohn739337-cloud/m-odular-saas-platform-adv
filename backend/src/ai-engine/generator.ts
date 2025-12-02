@@ -182,7 +182,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
   } = options;
 
   // Create generation record
-  const generation = await prisma.aIGeneration.create({
+  const generation = await prisma.ai_generations.create({
     data: {
       userId,
       type,
@@ -233,7 +233,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
     }
 
     // Update generation record
-    await prisma.aIGeneration.update({
+    await prisma.ai_generations.update({
       where: { id: generation.id },
       data: {
         output: result.output,
@@ -246,7 +246,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    await prisma.aIUsageMetrics.upsert({
+    await prisma.ai_usage_metrics.upsert({
       where: {
         userId_date: {
           userId,
@@ -274,7 +274,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
     return generation.id;
   } catch (error) {
     // Update generation record with error
-    await prisma.aIGeneration.update({
+    await prisma.ai_generations.update({
       where: { id: generation.id },
       data: {
         status: "failed",
@@ -290,7 +290,7 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
  * Get generation by ID
  */
 export async function getGeneration(generationId: string) {
-  return await prisma.aIGeneration.findUnique({
+  return await prisma.ai_generations.findUnique({
     where: { id: generationId },
   });
 }
@@ -304,12 +304,12 @@ export async function getUserGenerations(
   offset = 0,
   type?: GenerationType
 ) {
-  return await prisma.aIGeneration.findMany({
+  return await prisma.ai_generations.findMany({
     where: {
       userId,
       type: type || undefined,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { created_at: "desc" },
     take: limit,
     skip: offset,
   });
@@ -322,7 +322,7 @@ export async function getUserMetrics(userId: string, days = 30) {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
-  return await prisma.aIUsageMetrics.findMany({
+  return await prisma.ai_usage_metrics.findMany({
     where: {
       userId,
       date: { gte: startDate },

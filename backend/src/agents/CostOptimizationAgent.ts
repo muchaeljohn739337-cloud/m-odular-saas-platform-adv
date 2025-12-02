@@ -27,7 +27,7 @@ export class CostOptimizationAgent extends BaseAgent {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
       // Analyze database query patterns
-      const transactionCount = await this.context.prisma.transaction.count({
+      const transactionCount = await this.context.prisma.transactions.count({
         where: {
           createdAt: {
             gte: yesterday,
@@ -35,7 +35,7 @@ export class CostOptimizationAgent extends BaseAgent {
         },
       });
 
-      const notificationCount = await this.context.prisma.notification.count({
+      const notificationCount = await this.context.prisma.notifications.count({
         where: {
           createdAt: {
             gte: yesterday,
@@ -43,7 +43,7 @@ export class CostOptimizationAgent extends BaseAgent {
         },
       });
 
-      const auditLogCount = await this.context.prisma.auditLog.count({
+      const auditLogCount = await this.context.prisma.audit_logs.count({
         where: {
           createdAt: {
             gte: yesterday,
@@ -54,7 +54,7 @@ export class CostOptimizationAgent extends BaseAgent {
       itemsProcessed += 3;
 
       // Check for old audit logs that can be archived
-      const oldAuditLogs = await this.context.prisma.auditLog.count({
+      const oldAuditLogs = await this.context.prisma.audit_logs.count({
         where: {
           createdAt: {
             lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // > 90 days old
@@ -73,7 +73,7 @@ export class CostOptimizationAgent extends BaseAgent {
       }
 
       // Check for inactive users consuming resources
-      const inactiveUsers = await this.context.prisma.user.count({
+      const inactiveUsers = await this.context.prisma.users.count({
         where: {
           lastLogin: {
             lt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // > 6 months
@@ -92,7 +92,7 @@ export class CostOptimizationAgent extends BaseAgent {
       }
 
       // Analyze notification patterns
-      const oldNotifications = await this.context.prisma.notification.count({
+      const oldNotifications = await this.context.prisma.notifications.count({
         where: {
           createdAt: {
             lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // > 30 days old
@@ -111,7 +111,7 @@ export class CostOptimizationAgent extends BaseAgent {
       }
 
       // Check for failed transactions that can be cleaned up
-      const oldFailedTxs = await this.context.prisma.transaction.count({
+      const oldFailedTxs = await this.context.prisma.transactions.count({
         where: {
           status: "FAILED",
           createdAt: {

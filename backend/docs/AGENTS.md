@@ -12,17 +12,17 @@ This module implements 9 RPA agents for platform monitoring, using a robust, ext
 
 ## Agents
 
-| Name        | Description                              |
-|-------------|------------------------------------------|
-| RpaAgent1   | Checks external payment API health       |
-| RpaAgent2   | Monitors transaction queue depth         |
-| RpaAgent3   | Audits ledger consistency               |
-| RpaAgent4   | Checks user authentication service       |
-| RpaAgent5   | Monitors scheduled payout processes      |
-| RpaAgent6   | Validates notification delivery API      |
-| RpaAgent7   | Checks fraud detection system status     |
-| RpaAgent8   | Monitors third-party KYC integration     |
-| RpaAgent9   | Audits system resource utilization       |
+| Name      | Description                          |
+| --------- | ------------------------------------ |
+| RpaAgent1 | Checks external payment API health   |
+| RpaAgent2 | Monitors transaction queue depth     |
+| RpaAgent3 | Audits ledger consistency            |
+| RpaAgent4 | Checks user authentication service   |
+| RpaAgent5 | Monitors scheduled payout processes  |
+| RpaAgent6 | Validates notification delivery API  |
+| RpaAgent7 | Checks fraud detection system status |
+| RpaAgent8 | Monitors third-party KYC integration |
+| RpaAgent9 | Audits system resource utilization   |
 
 ## Usage
 
@@ -34,6 +34,7 @@ This module implements 9 RPA agents for platform monitoring, using a robust, ext
 ## Extensibility
 
 To add a new agent:
+
 1. Extend `BaseAgent` with `run()` implementation and description.
 2. Import and add to `rpaAgents` array.
 

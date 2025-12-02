@@ -108,7 +108,7 @@ export class ReportHandler {
     endDate: Date
   ): Promise<any> {
     const [users, workflows, auditLogs] = await Promise.all([
-      prisma.user.count({
+      prisma.users.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
         },
@@ -122,7 +122,7 @@ export class ReportHandler {
           enabled: true,
         },
       }),
-      prisma.auditLog.count({
+      prisma.audit_logs.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
         },
@@ -133,7 +133,7 @@ export class ReportHandler {
       period: { start: startDate, end: endDate },
       users: {
         new: users,
-        total: await prisma.user.count(),
+        total: await prisma.users.count(),
       },
       workflows: {
         created: workflows.length,
@@ -193,7 +193,7 @@ export class ReportHandler {
     endDate: Date
   ): Promise<any> {
     const [securityLogs, failedWorkflows, errorLogs] = await Promise.all([
-      prisma.auditLog.findMany({
+      prisma.audit_logs.findMany({
         where: {
           createdAt: { gte: startDate, lte: endDate },
           action: { contains: "security" },
@@ -205,7 +205,7 @@ export class ReportHandler {
           enabled: false,
         },
       }),
-      prisma.auditLog.count({
+      prisma.audit_logs.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
           action: { contains: "error" },
@@ -231,17 +231,17 @@ export class ReportHandler {
     endDate: Date
   ): Promise<any> {
     const [users, subscriptions] = await Promise.all([
-      prisma.user.count({
+      prisma.users.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
         },
       }),
-      prisma.pushSubscription.findMany({
+      prisma.push_subscriptions.findMany({
         where: {
           createdAt: { gte: startDate, lte: endDate },
         },
         select: {
-          userId: true,
+          user_id: true,
         },
       }),
     ]);
@@ -263,7 +263,7 @@ export class ReportHandler {
     endDate: Date
   ): Promise<any> {
     const [suggestions, workflows, auditLogs] = await Promise.all([
-      prisma.aISuggestion.findMany({
+      prisma.ai_suggestions.findMany({
         where: {
           createdAt: { gte: startDate, lte: endDate },
         },
@@ -277,7 +277,7 @@ export class ReportHandler {
           createdAt: { gte: startDate, lte: endDate },
         },
       }),
-      prisma.auditLog.count({
+      prisma.audit_logs.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
           action: { contains: "AI" },

@@ -16,11 +16,12 @@ export async function logAdminAction(
     }
 
     // Log the admin action
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
+          id: crypto.randomUUID(),
         userId: user.id,
         action: `${req.method} ${req.path}`,
-        details: JSON.stringify({
+        metadata: JSON.stringify({
           body: req.body,
           query: req.query,
           params: req.params,

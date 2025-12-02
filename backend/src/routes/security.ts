@@ -2,8 +2,8 @@ import { Response, Router } from "express";
 import { getSecurity } from "../ai";
 import {
   authenticateToken,
-  requireAdmin,
   AuthRequest,
+  requireAdmin,
 } from "../middleware/auth";
 
 const router = Router();
@@ -146,6 +146,9 @@ router.post(
   "/disable-protect-mode",
   async (req: AuthRequest, res: Response) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
       const security = getSecurity();
       const antiDetect = security.antiDetectLayer;
 
@@ -163,19 +166,21 @@ router.post(
         data: {
           event_type: "PROTECT_MODE_DISABLED",
           layer: "UNIFIED",
-          admin_id: req.user.id,
+          admin_id: (req.user as any).id,
           action: "DISABLE_PROTECT_MODE",
           ip_address: req.ip,
           user_agent: req.get("user-agent"),
           success: true,
           forensic_data: {
-            admin_email: req.user.email,
+            admin_email: (req.user as any).email,
             reason: req.body.reason || "Manual override by admin",
           },
         },
       });
 
-      console.log(`⚠️ Protect mode DISABLED by admin ${req.user.email}`);
+      console.log(
+        `⚠️ Protect mode DISABLED by admin ${(req.user as any).email}`
+      );
 
       res.json({
         success: true,
@@ -218,6 +223,9 @@ router.get("/blocked-ips", async (req: AuthRequest, res: Response) => {
  */
 router.post("/unblock-ip/:ip", async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
     const { ip } = req.params;
 
     const security = getSecurity();
@@ -245,20 +253,20 @@ router.post("/unblock-ip/:ip", async (req: AuthRequest, res: Response) => {
       data: {
         event_type: "IP_UNBLOCKED",
         layer: "ANTI_SECURE",
-        admin_id: req.user.id,
+        admin_id: (req.user as any).id,
         action: "UNBLOCK_IP",
         ip_address: req.ip,
         user_agent: req.get("user-agent"),
         success: true,
         forensic_data: {
           unblocked_ip: ip,
-          admin_email: req.user.email,
+          admin_email: (req.user as any).email,
           reason: req.body.reason || "Manual unblock by admin",
         },
       },
     });
 
-    console.log(`✅ IP ${ip} unblocked by admin ${req.user.email}`);
+    console.log(`✅ IP ${ip} unblocked by admin ${(req.user as any).email}`);
 
     res.json({
       success: true,
@@ -362,6 +370,9 @@ router.get("/honeypots", async (req: AuthRequest, res: Response) => {
  */
 router.post("/rules", async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
     const { rule_name, layer, rule_type, pattern, action, severity } = req.body;
 
     if (!rule_name || !layer || !rule_type || !pattern || !action) {
@@ -386,7 +397,7 @@ router.post("/rules", async (req: AuthRequest, res: Response) => {
       data: {
         event_type: "SECURITY_RULE_CREATED",
         layer: "UNIFIED",
-        admin_id: req.user.id,
+        admin_id: (req.user as any).id,
         action: "CREATE_RULE",
         after_state: rule,
         ip_address: req.ip,
@@ -434,6 +445,9 @@ router.get("/rules", async (req: AuthRequest, res: Response) => {
  */
 router.patch("/rules/:id", async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
     const { id } = req.params;
     const updates = req.body;
 
@@ -454,7 +468,7 @@ router.patch("/rules/:id", async (req: AuthRequest, res: Response) => {
       data: {
         event_type: "SECURITY_RULE_UPDATED",
         layer: "UNIFIED",
-        admin_id: req.user.id,
+        admin_id: (req.user as any).id,
         action: "UPDATE_RULE",
         before_state: before,
         after_state: updated,

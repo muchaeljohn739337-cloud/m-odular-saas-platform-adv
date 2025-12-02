@@ -35,14 +35,14 @@ export class MonitoringHandler {
     // Get recent error logs
     const timeRange = this.parseTimeRange(taskData.timeRange || "1h");
 
-    const errors = await prisma.auditLog.findMany({
+    const errors = await prisma.audit_logs.findMany({
       where: {
         action: { contains: "error" },
         createdAt: {
           gte: timeRange,
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 100,
     });
 
@@ -57,7 +57,7 @@ export class MonitoringHandler {
     // Analyze error patterns with AI
     const errorSummary = errors.map((e: any) => ({
       action: e.action,
-      details: e.details,
+      metadata: e.details,
       time: e.createdAt,
     }));
 
@@ -170,7 +170,7 @@ export class MonitoringHandler {
     const timeRange = this.parseTimeRange(taskData.timeRange || "24h");
 
     // Check for suspicious activities
-    const suspiciousLogs = await prisma.auditLog.findMany({
+    const suspiciousLogs = await prisma.audit_logs.findMany({
       where: {
         OR: [
           {
@@ -240,7 +240,7 @@ export class MonitoringHandler {
         },
         _count: true,
       }),
-      prisma.user.count({
+      prisma.users.count({
         where: {
           updatedAt: {
             gte: timeRange,

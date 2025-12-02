@@ -240,6 +240,7 @@ migrations/
    Expected: "✅ All wallets are consistent!"
 
 3. **Test queries:**
+
    ```typescript
    // Should be much faster now:
    await prisma.tokenTransaction.findMany({

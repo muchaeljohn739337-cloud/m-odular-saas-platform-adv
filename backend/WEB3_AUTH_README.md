@@ -1,6 +1,7 @@
 # Web3 Authentication System
 
-Complete implementation of wallet-based authentication using Sign-In with Ethereum (SIWE) standard, with optional Cloudflare Workers edge deployment.
+Complete implementation of wallet-based authentication using Sign-In with Ethereum (SIWE) standard, with optional
+Cloudflare Workers edge deployment.
 
 ## 🎯 Features
 
@@ -406,27 +407,22 @@ const { data: auth } = await axios.post(`${EDGE_URL}/verify`, {
 ### Implemented Protections
 
 1. **Replay Attack Prevention**
-
    - One-time use nonces with 5-minute expiration
    - Nonces deleted after verification attempt
 
 2. **Rate Limiting**
-
    - 10 nonce requests per minute per wallet
    - 3 failed verification attempts max
 
 3. **Signature Verification**
-
    - Uses ethers.js `verifyMessage()` for cryptographic proof
    - Validates message format and nonce presence
 
 4. **SIWE Compliance**
-
    - Follows [EIP-4361](https://eips.ethereum.org/EIPS/eip-4361) standard
    - Includes domain, URI, chain ID, timestamp
 
 5. **JWT Security**
-
    - 24-hour token expiration
    - Includes wallet address in token payload
    - Role-based access control
@@ -506,18 +502,15 @@ npm test -- web3-auth.test.ts
 ### Common Issues
 
 1. **"Invalid signature" error**
-
    - Ensure message is exactly as provided by `/nonce` endpoint
    - Check wallet is signing the correct message
    - Verify wallet address matches
 
 2. **"Nonce expired" error**
-
    - Nonces expire after 5 minutes
    - Request new nonce and retry
 
 3. **Rate limit exceeded**
-
    - Wait 1 minute before requesting new nonce
    - Implement exponential backoff in frontend
 
@@ -561,6 +554,7 @@ npm test -- web3-auth.test.ts
    ```
 
 5. **WalletConnect Integration**
+
    ```typescript
    // Support mobile wallets
    import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
@@ -586,9 +580,10 @@ npm test -- web3-auth.test.ts
 - [ ] Automated tests
 - [ ] Multi-chain configuration
 
-## 🎉 You're Ready!
+## 🎉 You're Ready
 
-Your Web3 authentication system is fully implemented. Users can now sign in with their Ethereum wallets using industry-standard SIWE protocol!
+Your Web3 authentication system is fully implemented. Users can now sign in with their Ethereum wallets using
+industry-standard SIWE protocol!
 
 Start your server and test:
 

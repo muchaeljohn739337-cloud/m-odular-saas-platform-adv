@@ -199,14 +199,14 @@ class RecordCleanupAI {
 
     try {
       if (config.dryRun) {
-        const count = await prisma.auditLog.count({
+        const count = await prisma.audit_logs.count({
           where: { createdAt: { lt: cutoffDate } },
         });
         console.log(`   [DRY RUN] Would clean ${count} old audit log entries`);
         return { cleaned: 0 };
       }
 
-      const deleteResult = await prisma.auditLog.deleteMany({
+      const deleteResult = await prisma.audit_logs.deleteMany({
         where: { createdAt: { lt: cutoffDate } },
       });
 
@@ -233,7 +233,7 @@ class RecordCleanupAI {
 
     try {
       if (config.dryRun) {
-        const count = await prisma.notification.count({
+        const count = await prisma.notifications.count({
           where: {
             AND: [
               { createdAt: { lt: cutoffDate } },
@@ -245,7 +245,7 @@ class RecordCleanupAI {
         return { cleaned: 0 };
       }
 
-      const deleteResult = await prisma.notification.deleteMany({
+      const deleteResult = await prisma.notifications.deleteMany({
         where: {
           AND: [{ createdAt: { lt: cutoffDate } }, { read: true }],
         },
@@ -378,10 +378,10 @@ class RecordCleanupAI {
           ],
         },
       }),
-      prisma.auditLog.count({
+      prisma.audit_logs.count({
         where: { createdAt: { lt: cutoffAudit } },
       }),
-      prisma.notification.count({
+      prisma.notifications.count({
         where: {
           AND: [{ createdAt: { lt: cutoffNotification } }, { read: true }],
         },

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "crypto";
 import type { Server as IOServer } from "socket.io";
 import {
   authenticateToken,
@@ -43,10 +44,10 @@ router.get(
       }
 
       const [total, users] = await Promise.all([
-        prisma.user.count({ where }),
-        prisma.user.findMany({
+        prisma.users.count({ where }),
+        prisma.users.findMany({
           where,
-          orderBy: { createdAt: "desc" },
+          orderBy: { created_at: "desc" },
           skip,
           take: pageSize,
           select: {
@@ -63,7 +64,7 @@ router.get(
         }),
       ]);
 
-      const items = users.map((u) => ({
+      const items = users.map((u: any) => ({
         id: u.id,
         name: `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.username,
         email: u.email,
@@ -95,16 +96,18 @@ router.post(
         return res.status(400).json({ error: "Invalid amount provided" });
       }
 
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id },
         select: { id: true, username: true, firstName: true, lastName: true },
       });
       if (!user) return res.status(404).json({ error: "User not found" });
 
-      const wallet = await prisma.tokenWallet.upsert({
+      const wallet = await prisma.token_wallets.upsert({
         where: { userId: id },
         update: { balance: amount, lifetimeEarned: { increment: amount } },
         create: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId: id,
           balance: amount,
           lifetimeEarned: amount,
@@ -112,8 +115,9 @@ router.post(
         },
       });
 
-      await prisma.tokenTransaction.create({
+      await prisma.token_transactions.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
           walletId: wallet.id,
           amount: amount,
           type: "bonus",
@@ -155,8 +159,8 @@ router.post(
       }
 
       // Fetch all user IDs (filtering can be applied if desired)
-      const users = await prisma.user.findMany({ select: { id: true } });
-      const userIds = users.map((u) => u.id);
+      const users = await prisma.users.findMany({ select: { id: true } });
+      const userIds = users.map((u: any) => u.id);
       const totalUsers = userIds.length;
       if (totalUsers === 0)
         return res.json({
@@ -173,14 +177,14 @@ router.post(
         const chunkTotal = amt * chunk.length;
         batchIndex += 1;
 
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
           // Admin accounting for this batch
           await tx.adminPortfolio.upsert({
             where: { currency: "USD" },
             update: { balance: { decrement: chunkTotal } },
             create: { currency: "USD", balance: -chunkTotal },
           });
-          await tx.adminTransfer.create({
+          await tx.admin_transfers.create({
             data: {
               currency: "USD",
               amount: chunkTotal,
@@ -197,7 +201,7 @@ router.post(
             data: { usdBalance: { increment: amt } },
           });
           await tx.transaction.createMany({
-            data: chunk.map((id) => ({
+            data: chunk.map((id: any) => ({
               userId: id,
               amount: amt,
               type: "credit",
@@ -273,10 +277,12 @@ router.post(
         return res.status(400).json({ error: "Invalid role" });
       }
 
-      const userTier = await prisma.userTier.upsert({
+      const userTier = await prisma.user_tiers.upsert({
         where: { userId: id },
         update: { currentTier: String(role).toLowerCase() },
         create: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId: id,
           currentTier: String(role).toLowerCase(),
           points: 0,
@@ -324,7 +330,7 @@ router.post(
       }
 
       // Get user
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id },
         select: {
           id: true,
@@ -352,7 +358,7 @@ router.post(
           : "usdtBalance";
 
       // Update user balance
-      const updatedUser = await prisma.user.update({
+      const updatedUser = await prisma.users.update({
         where: { id },
         data: {
           [balanceField]: {
@@ -371,8 +377,10 @@ router.post(
       });
 
       // Create transaction record
-      await prisma.transaction.create({
+      await prisma.transactions.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId: id,
           amount: amountNum,
           type: "credit",
@@ -385,8 +393,9 @@ router.post(
       });
 
       // Log in audit trail
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
           userId: (req as any).user.userId, // Admin who performed the action
           action: "add_balance",
           resourceType: "user",
@@ -444,7 +453,7 @@ router.patch(
       if (!allowed.includes(next as any)) {
         return res.status(400).json({ error: "Invalid role" });
       }
-      const updated = await prisma.user.update({
+      const updated = await prisma.users.update({
         where: { id },
         data: { role: next as any },
       });
@@ -464,7 +473,7 @@ router.get(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id },
         select: {
           id: true,
@@ -488,7 +497,7 @@ router.get(
       if (!user) return res.status(404).json({ error: "User not found" });
 
       // Fetch token wallet
-      const wallet = await prisma.tokenWallet.findUnique({
+      const wallet = await prisma.token_wallets.findUnique({
         where: { userId: id },
         select: {
           balance: true,
@@ -499,9 +508,9 @@ router.get(
       });
 
       // Fetch recent transactions (last 10)
-      const transactions = await prisma.transaction.findMany({
+      const transactions = await prisma.transactions.findMany({
         where: { userId: id },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: 10,
         select: {
           id: true,
@@ -514,7 +523,7 @@ router.get(
       });
 
       // Fetch user tier
-      const tier = await prisma.userTier.findUnique({
+      const tier = await prisma.user_tiers.findUnique({
         where: { userId: id },
         select: { currentTier: true, points: true, lifetimePoints: true },
       });
@@ -552,7 +561,7 @@ router.get(
         lifetimePoints: tier?.lifetimePoints ?? 0,
       };
 
-      const recentActivity = transactions.map((t) => ({
+      const recentActivity = transactions.map((t: any) => ({
         id: t.id,
         amount: t.amount?.toString() ?? "0",
         type: t.type,
@@ -590,7 +599,7 @@ router.get(
 
       // Fetch audit logs for this user (either as the subject or as the actor)
       const [logs, total] = await Promise.all([
-        prisma.auditLog.findMany({
+        prisma.audit_logs.findMany({
           where: {
             OR: [
               { userId: id }, // Actions performed on this user
@@ -611,14 +620,14 @@ router.get(
             metadata: true,
           },
         }),
-        prisma.auditLog.count({
+        prisma.audit_logs.count({
           where: {
             OR: [{ userId: id }, { resourceId: id }],
           },
         }),
       ]);
 
-      const items = logs.map((log) => ({
+      const items = logs.map((log: any) => ({
         id: log.id,
         action: log.action,
         resourceType: log.resourceType,
@@ -661,7 +670,7 @@ router.patch(
           .json({ error: "Invalid status. Use ACTIVE or SUSPENDED." });
       }
       const active = next === "ACTIVE";
-      const updated = await prisma.user.update({
+      const updated = await prisma.users.update({
         where: { id },
         data: { active },
       });
@@ -685,13 +694,13 @@ router.get(
   async (req, res) => {
     try {
       const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 5));
-      const rows = await prisma.adminTransfer.findMany({
+      const rows = await prisma.admin_transfers.findMany({
         where: { source: "admin:bulk-credit" },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: limit,
         select: { id: true, amount: true, note: true, createdAt: true },
       });
-      const result = rows.map((r) => ({
+      const result = rows.map((r: any) => ({
         id: r.id,
         amount: Number(r.amount),
         note: r.note || null,
@@ -724,14 +733,14 @@ router.get(
       const where = { source: "admin:bulk-credit" as const };
 
       const [rows, aggregates] = await prisma.$transaction([
-        prisma.adminTransfer.findMany({
+        prisma.admin_transfers.findMany({
           where,
-          orderBy: { createdAt: "desc" },
+          orderBy: { created_at: "desc" },
           skip,
           take: pageSize,
           select: { id: true, amount: true, note: true, createdAt: true },
         }),
-        prisma.adminTransfer.aggregate({
+        prisma.admin_transfers.aggregate({
           where,
           _sum: { amount: true },
           _count: true,
@@ -742,7 +751,7 @@ router.get(
       const totalAmount = Number(aggregates._sum?.amount || 0);
       const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-      const items = rows.map((r) => ({
+      const items = rows.map((r: any) => ({
         id: r.id,
         amount: Number(r.amount),
         note: r.note || null,

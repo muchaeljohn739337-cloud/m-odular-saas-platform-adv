@@ -48,7 +48,7 @@ router.post("/:userId/adjust-balance", async (req: Request, res: Response) => {
     });
 
     // 2. Execute the balance adjustment
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
     if (!user) {
       return res
         .status(404)
@@ -64,7 +64,7 @@ router.post("/:userId/adjust-balance", async (req: Request, res: Response) => {
     const newBalance =
       parseFloat(currentBalance.toString()) + parseFloat(amount);
 
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
       data: { [balanceField]: newBalance },
     });
@@ -117,7 +117,7 @@ router.patch("/:userId/role", async (req: Request, res: Response) => {
     }
 
     // 1. Get current user
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
     if (!user) {
       return res
         .status(404)
@@ -137,7 +137,7 @@ router.patch("/:userId/role", async (req: Request, res: Response) => {
     });
 
     // 3. Update the role
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
       data: { role: newRole },
     });
@@ -263,7 +263,7 @@ router.post(
         const currency = metadata.currency;
         const delta = metadata.delta;
 
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const user = await prisma.users.findUnique({ where: { id: userId } });
         if (user) {
           const balanceField = `${currency.toLowerCase()}Balance` as
             | "usdBalance"
@@ -273,7 +273,7 @@ router.post(
           const newBalance =
             parseFloat(currentBalance.toString()) + parseFloat(delta);
 
-          await prisma.user.update({
+          await prisma.users.update({
             where: { id: userId },
             data: { [balanceField]: newBalance },
           });

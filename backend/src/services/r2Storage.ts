@@ -127,13 +127,18 @@ export async function downloadFromR2(key: string): Promise<Buffer> {
 
   // Convert stream to buffer
   const stream = response.Body as Readable;
-  const chunks: Buffer[] = [];
+  const chunks: Uint8Array[] = [];
 
   for await (const chunk of stream) {
-    chunks.push(chunk);
+    // Ensure each chunk is a Buffer
+    const buf = Buffer.isBuffer(chunk)
+      ? new Uint8Array(chunk)
+      : new Uint8Array(Buffer.from(chunk as any));
+    chunks.push(buf);
   }
 
-  return Buffer.concat(chunks);
+  // Cast to any to satisfy TS typing differences between Buffer and Uint8Array
+  return Buffer.concat(chunks as any);
 }
 
 /**

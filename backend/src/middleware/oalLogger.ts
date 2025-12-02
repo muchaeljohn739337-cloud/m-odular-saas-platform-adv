@@ -226,7 +226,7 @@ export const oalLoggers = {
     location: "admin.transactions",
     extractSubjectId: (req) => req.body.userId,
     extractMetadata: (req) => ({
-      transactionId: req.body.transactionId || req.params.transactionId,
+      transaction_id: req.body.transactionId || req.params.transactionId,
       amount: req.body.amount,
       reason: req.body.reason,
     }),

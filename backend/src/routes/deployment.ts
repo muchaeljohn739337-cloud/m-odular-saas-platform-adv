@@ -19,17 +19,16 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       // Get recent deployment history
-      const recentDeployments = await prisma.auditLog.findMany({
+      const recentDeployments = await prisma.audit_logs.findMany({
         where: {
-          entity: "deployment",
-        },
-        orderBy: { createdAt: "desc" },
+                  },
+        orderBy: { created_at: "desc" },
         take: 10,
       });
 
       // Get AI Deployment Agent status
       const agentScheduler = getAgentScheduler(prisma);
-      const agents = agentScheduler.getAllAgents();
+      const agents = agentScheduler.getAgents();
       const deploymentAgent = agents.find(
         (a) => a.getConfig().name === "AIDeploymentAgent"
       );
@@ -42,7 +41,7 @@ router.get(
           lastRun: deploymentAgent?.getLastRun(),
           status: deploymentAgent?.getStatus(),
         },
-        recentDeployments: recentDeployments.map((d) => ({
+        recentDeployments: recentDeployments.map((d: any) => ({
           id: d.entityId,
           action: d.action,
           timestamp: d.createdAt,
@@ -53,7 +52,7 @@ router.get(
     } catch (error) {
       res.status(500).json({
         error: "Failed to retrieve deployment status",
-        details: error instanceof Error ? error.message : "Unknown error",
+        metadata: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -70,7 +69,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const agentScheduler = getAgentScheduler(prisma);
-      const result = await agentScheduler.runAgentManually("AIDeploymentAgent");
+      const result = await agentScheduler.executeAgent("AIDeploymentAgent");
 
       res.json({
         success: true,
@@ -80,7 +79,7 @@ router.post(
     } catch (error) {
       res.status(500).json({
         error: "Failed to trigger deployment",
-        details: error instanceof Error ? error.message : "Unknown error",
+        metadata: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -97,7 +96,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       // Calculate current risk factors
-      const recentErrors = await prisma.auditLog.count({
+      const recentErrors = await prisma.audit_logs.count({
         where: {
           action: "error",
           createdAt: {
@@ -106,25 +105,24 @@ router.get(
         },
       });
 
-      const activeUsers = await prisma.user.count({
+      const activeUsers = await prisma.users.count({
         where: {
-          lastActive: {
+          last_active: {
             gte: new Date(Date.now() - 15 * 60 * 1000),
           },
         },
       });
 
-      const pendingTransactions = await prisma.transaction.count({
+      const pendingTransactions = await prisma.transactions.count({
         where: {
           status: { in: ["pending", "processing"] },
         },
       });
 
       // Recent deployment failure rate
-      const recentDeployments = await prisma.auditLog.findMany({
+      const recentDeployments = await prisma.audit_logs.findMany({
         where: {
-          entity: "deployment",
-          createdAt: {
+                    createdAt: {
             gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
           },
         },
@@ -132,7 +130,7 @@ router.get(
       });
 
       const failureRate =
-        recentDeployments.filter((d) => d.action === "deployment_failed")
+        recentDeployments.filter((d: any) => d.action === "deployment_failed")
           .length / Math.max(recentDeployments.length, 1);
 
       // Calculate risk score
@@ -198,7 +196,7 @@ router.get(
     } catch (error) {
       res.status(500).json({
         error: "Failed to assess deployment risk",
-        details: error instanceof Error ? error.message : "Unknown error",
+        metadata: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -217,10 +215,10 @@ router.post(
       const { reason } = req.body;
 
       // Log rollback action
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
-          entity: "deployment",
-          entityId: crypto.randomUUID(),
+          id: crypto.randomUUID(),
+                    entityId: crypto.randomUUID(),
           action: "manual_rollback",
           userId: req.user?.id || "admin",
           changes: JSON.stringify({
@@ -245,7 +243,7 @@ router.post(
     } catch (error) {
       res.status(500).json({
         error: "Failed to initiate rollback",
-        details: error instanceof Error ? error.message : "Unknown error",
+        metadata: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -263,31 +261,30 @@ router.get(
     try {
       const { limit = 20, offset = 0 } = req.query;
 
-      const deployments = await prisma.auditLog.findMany({
+      const deployments = await prisma.audit_logs.findMany({
         where: {
-          entity: "deployment",
-        },
-        orderBy: { createdAt: "desc" },
+                  },
+        orderBy: { created_at: "desc" },
         take: Number(limit),
         skip: Number(offset),
       });
 
       // Calculate insights
       const successCount = deployments.filter(
-        (d) => d.action === "deployment_success"
+        (d: any) => d.action === "deployment_success"
       ).length;
       const failureCount = deployments.filter(
-        (d) => d.action === "deployment_failed"
+        (d: any) => d.action === "deployment_failed"
       ).length;
       const rollbackCount = deployments.filter(
-        (d) =>
+        (d: any) =>
           d.action === "rollback_triggered" || d.action === "manual_rollback"
       ).length;
 
       // Average deployment duration
       const durationsMs = deployments
-        .filter((d) => d.action === "deployment_success")
-        .map((d) => {
+        .filter((d: any) => d.action === "deployment_success")
+        .map((d: any) => {
           try {
             const changes =
               typeof d.changes === "string" ? JSON.parse(d.changes) : d.changes;
@@ -299,11 +296,12 @@ router.get(
 
       const avgDuration =
         durationsMs.length > 0
-          ? durationsMs.reduce((a, b) => a + b, 0) / durationsMs.length
+          ? durationsMs.reduce((a: number, b: number) => a + b, 0) /
+            durationsMs.length
           : 0;
 
       res.json({
-        deployments: deployments.map((d) => ({
+        deployments: deployments.map((d: any) => ({
           id: d.entityId,
           action: d.action,
           timestamp: d.createdAt,
@@ -326,7 +324,7 @@ router.get(
     } catch (error) {
       res.status(500).json({
         error: "Failed to retrieve deployment history",
-        details: error instanceof Error ? error.message : "Unknown error",
+        metadata: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }

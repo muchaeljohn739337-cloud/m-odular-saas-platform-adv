@@ -154,7 +154,7 @@ router.get(
         timestamp: new Date(),
       });
     } catch (error: any) {
-      console.error("Failed to get worker details:", error);
+      console.error("Failed to get worker metadata:", error);
       res.status(500).json({
         success: false,
         error: "Failed to retrieve worker details",

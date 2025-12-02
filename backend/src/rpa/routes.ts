@@ -22,7 +22,7 @@ router.get("/health", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Health check failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -38,7 +38,7 @@ router.get("/status", (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Failed to get status",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -57,7 +57,7 @@ router.post("/start", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Failed to start scheduler",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -76,7 +76,7 @@ router.post("/stop", (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Failed to stop scheduler",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -97,7 +97,7 @@ router.post("/task/:taskName/run", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Task execution failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -123,7 +123,7 @@ router.post("/transaction/process", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Transaction processing failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -154,7 +154,7 @@ router.post("/kyc/verify", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "KYC verification failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -183,7 +183,7 @@ router.post("/report/generate", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Report generation failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -219,7 +219,7 @@ router.post("/notification/send", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Notification sending failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -242,7 +242,7 @@ router.post("/backup/create", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Backup creation failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -269,7 +269,7 @@ router.post("/backup/export", async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       error: "Table export failed",
-      details: error instanceof Error ? error.message : "Unknown error",
+      metadata: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });

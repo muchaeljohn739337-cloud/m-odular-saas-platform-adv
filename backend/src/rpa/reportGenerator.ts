@@ -1,11 +1,11 @@
 // RPA Module - Report Generation
 // Generate periodic reports (balances, crypto recovery logs, admin actions) and email to admin
 
+import fs from "fs/promises";
+import nodemailer from "nodemailer";
+import path from "path";
 import prisma from "../prismaClient";
 import { rpaConfig } from "./config";
-import fs from "fs/promises";
-import path from "path";
-import nodemailer from "nodemailer";
 
 interface ReportData {
   title: string;
@@ -61,7 +61,7 @@ export class ReportGenerator {
     const sections: ReportSection[] = [];
 
     // Section 1: Overall balances
-    const totalBalances = await prisma.user.aggregate({
+    const totalBalances = await prisma.users.aggregate({
       _sum: { usdBalance: true },
       _avg: { usdBalance: true },
       _count: { id: true },
@@ -80,7 +80,7 @@ export class ReportGenerator {
     });
 
     // Section 2: Token wallet balances
-    const tokenBalances = await prisma.tokenWallet.aggregate({
+    const tokenBalances = await prisma.token_wallets.aggregate({
       _sum: {
         balance: true,
         lockedBalance: true,
@@ -104,7 +104,7 @@ export class ReportGenerator {
     });
 
     // Section 3: Transaction summary
-    const transactions = await prisma.transaction.groupBy({
+    const transactions = await prisma.transactions.groupBy({
       by: ["type"],
       _sum: { amount: true },
       _count: { id: true },
@@ -118,13 +118,19 @@ export class ReportGenerator {
 
     sections.push({
       title: "Transaction Summary",
-      data: transactions.map((t) => ({
-        type: t.type,
-        count: t._count.id,
-        totalAmount: t._sum.amount?.toString() || "0",
-      })),
+      data: transactions.map(
+        (t: {
+          type: string;
+          _count: { id: number };
+          _sum: { amount?: any };
+        }) => ({
+          type: t.type,
+          count: t._count.id,
+          totalAmount: t._sum.amount?.toString() || "0",
+        })
+      ),
       summary: `Total transactions in period: ${transactions.reduce(
-        (sum, t) => sum + t._count.id,
+        (sum: number, t: { _count: { id: number } }) => sum + t._count.id,
         0
       )}`,
     });
@@ -151,7 +157,7 @@ export class ReportGenerator {
     const sections: ReportSection[] = [];
 
     // Section 1: Crypto orders
-    const cryptoOrders = await prisma.cryptoOrder.findMany({
+    const cryptoOrders = await prisma.crypto_orders.findMany({
       where: {
         createdAt: {
           gte: startDate,
@@ -167,26 +173,36 @@ export class ReportGenerator {
         status: true,
         createdAt: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 100,
     });
 
     sections.push({
       title: "Crypto Orders",
-      data: cryptoOrders.map((order) => ({
-        id: order.id,
-        userId: order.userId,
-        cryptoType: order.cryptoType,
-        cryptoAmount: order.cryptoAmount.toString(),
-        usdAmount: order.usdAmount.toString(),
-        status: order.status,
-        orderedAt: order.createdAt,
-      })),
+      data: cryptoOrders.map(
+        (order: {
+          id: string;
+          userId: string;
+          cryptoType: string;
+          cryptoAmount: any;
+          usdAmount: any;
+          status: string;
+          createdAt: Date;
+        }) => ({
+          id: order.id,
+          userId: order.userId,
+          cryptoType: order.cryptoType,
+          cryptoAmount: order.cryptoAmount.toString(),
+          usdAmount: order.usdAmount.toString(),
+          status: order.status,
+          orderedAt: order.createdAt,
+        })
+      ),
       summary: `Total orders: ${cryptoOrders.length}`,
     });
 
     // Section 2: Status breakdown
-    const statusBreakdown = await prisma.cryptoOrder.groupBy({
+    const statusBreakdown = await prisma.crypto_orders.groupBy({
       by: ["status"],
       _count: { id: true },
       where: {
@@ -199,10 +215,12 @@ export class ReportGenerator {
 
     sections.push({
       title: "Order Status Breakdown",
-      data: statusBreakdown.map((s) => ({
-        status: s.status,
-        count: s._count.id,
-      })),
+      data: statusBreakdown.map(
+        (s: { status: string; _count: { id: number } }) => ({
+          status: s.status,
+          count: s._count.id,
+        })
+      ),
     });
 
     const report: ReportData = {
@@ -227,7 +245,7 @@ export class ReportGenerator {
     const sections: ReportSection[] = [];
 
     // Get admin users
-    const adminUsers = await prisma.user.findMany({
+    const adminUsers = await prisma.users.findMany({
       where: { role: "ADMIN" },
       select: { id: true, email: true, username: true },
     });
@@ -235,7 +253,7 @@ export class ReportGenerator {
     const adminIds = adminUsers.map((u) => u.id);
 
     // Section 1: Admin audit logs
-    const adminLogs = await prisma.auditLog.findMany({
+    const adminLogs = await prisma.audit_logs.findMany({
       where: {
         userId: { in: adminIds },
         createdAt: {
@@ -243,24 +261,27 @@ export class ReportGenerator {
           lte: endDate,
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 100, // Limit to latest 100 actions
     });
 
     sections.push({
       title: "Admin Actions",
       data: adminLogs.map((log) => ({
-        admin: adminUsers.find((u) => u.id === log.userId)?.email || "Unknown",
+        admin:
+          adminUsers.find(
+            (u: { id: string; email: string }) => u.id === (log.userId ?? "")
+          )?.email || "Unknown",
         action: log.action,
         resource: log.resourceType,
         timestamp: log.createdAt,
-        ipAddress: log.ipAddress,
+        ipAddress: log.ipAddress ?? "",
       })),
       summary: `Total admin actions: ${adminLogs.length}`,
     });
 
     // Section 2: Action type breakdown
-    const actionBreakdown = await prisma.auditLog.groupBy({
+    const actionBreakdown = await prisma.audit_logs.groupBy({
       by: ["action"],
       _count: { id: true },
       where: {
@@ -274,10 +295,12 @@ export class ReportGenerator {
 
     sections.push({
       title: "Action Type Breakdown",
-      data: actionBreakdown.map((a) => ({
-        action: a.action,
-        count: a._count.id,
-      })),
+      data: actionBreakdown.map(
+        (a: { action: string; _count: { id: number } }) => ({
+          action: a.action,
+          count: a._count.id,
+        })
+      ),
     });
 
     const report: ReportData = {

@@ -1,7 +1,8 @@
-import prisma from "../prismaClient";
-import webpush from "web-push";
+import crypto from "crypto";
 import * as nodemailer from "nodemailer";
 import { Server as SocketServer } from "socket.io";
+import webpush from "web-push";
+import prisma from "../prismaClient";
 
 // Configure VAPID (will be set from env)
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
@@ -60,14 +61,14 @@ export async function createNotification(payload: NotificationPayload) {
 
   try {
     // Get user preferences
-    let userPrefs = await prisma.notificationPreference.findUnique({
+    let userPrefs = await prisma.notification_preferences.findUnique({
       where: { userId },
     });
 
     // Create default preferences if none exist
     if (!userPrefs) {
-      userPrefs = await prisma.notificationPreference.create({
-        data: { userId },
+      userPrefs = await prisma.notification_preferences.create({
+        data: { id: crypto.randomUUID(), userId, updatedAt: new Date() },
       });
     }
 
@@ -81,15 +82,17 @@ export async function createNotification(payload: NotificationPayload) {
     }
 
     // Create notification record
-    const notification = await prisma.notification.create({
+    const notification = await prisma.notifications.create({
       data: {
-        userId,
+        id: crypto.randomUUID(),
+        userId: userId,
         type,
         priority,
         category,
         title,
         message,
         data: data || {},
+        updatedAt: new Date(),
       },
     });
 
@@ -120,7 +123,7 @@ export async function createNotification(payload: NotificationPayload) {
         : Promise.resolve(),
     ]).then(async (results) => {
       // Update notification with delivery status
-      await prisma.notification.update({
+      await prisma.notifications.update({
         where: { id: notification.id },
         data: {
           emailSent:
@@ -153,7 +156,7 @@ async function sendEmail(
   message: string
 ) {
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
     if (!user?.email) {
       console.warn(`⚠️  No email found for user ${userId}`);
       return;
@@ -230,7 +233,7 @@ async function sendPush(
       return;
     }
 
-    const subscriptions = await prisma.pushSubscription.findMany({
+    const subscriptions = await prisma.push_subscriptions.findMany({
       where: { userId, isActive: true },
     });
 
@@ -239,7 +242,7 @@ async function sendPush(
       return;
     }
 
-    const pushPromises = subscriptions.map(async (sub) => {
+    const pushPromises = subscriptions.map(async (sub: any) => {
       try {
         await webpush.sendNotification(
           {
@@ -261,7 +264,7 @@ async function sendPush(
       } catch (error: any) {
         if (error.statusCode === 410) {
           // Subscription expired
-          await prisma.pushSubscription.update({
+          await prisma.push_subscriptions.update({
             where: { id: sub.id },
             data: { isActive: false },
           });
@@ -291,8 +294,9 @@ async function logDelivery(
   errorMessage?: string
 ) {
   try {
-    await prisma.notificationLog.create({
+    await prisma.notification_logs.create({
       data: {
+        id: crypto.randomUUID(),
         notificationId,
         channel,
         status,
@@ -311,7 +315,7 @@ export async function sendFallbackEmails() {
   const cutoff = new Date(Date.now() - delay * 60 * 1000);
 
   try {
-    const unread = await prisma.notification.findMany({
+    const unread = await prisma.notifications.findMany({
       where: {
         isRead: false,
         createdAt: { lt: cutoff },
@@ -336,7 +340,7 @@ export async function sendFallbackEmails() {
 
     for (const notification of unread) {
       // Fetch user email separately
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: notification.userId },
         select: { email: true },
       });
@@ -368,7 +372,7 @@ export async function sendFallbackEmails() {
           `,
         });
 
-        await prisma.notification.update({
+        await prisma.notifications.update({
           where: { id: notification.id },
           data: { emailSent: true, emailSentAt: new Date() },
         });
@@ -399,18 +403,18 @@ export async function getUserNotifications(
   const { page = 1, limit = 20, unreadOnly = false, category } = options;
   const skip = (page - 1) * limit;
 
-  const where: any = { userId };
-  if (unreadOnly) where.isRead = false;
+  const where: any = { user_id: userId };
+  if (unreadOnly) where.is_read = false;
   if (category) where.category = category;
 
   const [notifications, total] = await Promise.all([
-    prisma.notification.findMany({
+    prisma.notifications.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       skip,
       take: limit,
     }),
-    prisma.notification.count({ where }),
+    prisma.notifications.count({ where }),
   ]);
 
   return {
@@ -423,7 +427,7 @@ export async function getUserNotifications(
 }
 
 export async function markAsRead(notificationId: string, userId: string) {
-  const updated = await prisma.notification.update({
+  const updated = await prisma.notifications.update({
     where: { id: notificationId, userId },
     data: { isRead: true, readAt: new Date() },
   });
@@ -444,7 +448,7 @@ export async function markAsRead(notificationId: string, userId: string) {
 }
 
 export async function markAllAsRead(userId: string) {
-  const res = await prisma.notification.updateMany({
+  const res = await prisma.notifications.updateMany({
     where: { userId, isRead: false },
     data: { isRead: true, readAt: new Date() },
   });
@@ -460,7 +464,7 @@ export async function markAllAsRead(userId: string) {
 }
 
 export async function getUnreadCount(userId: string) {
-  return await prisma.notification.count({
+  return await prisma.notifications.count({
     where: { userId, isRead: false },
   });
 }
@@ -469,19 +473,19 @@ export async function deleteNotification(
   notificationId: string,
   userId: string
 ) {
-  return await prisma.notification.delete({
-    where: { id: notificationId, userId },
+  return await prisma.notifications.delete({
+    where: { id: notificationId },
   });
 }
 
 export async function getUserPreferences(userId: string) {
-  let prefs = await prisma.notificationPreference.findUnique({
+  let prefs = await prisma.notification_preferences.findUnique({
     where: { userId },
   });
 
   if (!prefs) {
-    prefs = await prisma.notificationPreference.create({
-      data: { userId },
+    prefs = await prisma.notification_preferences.create({
+      data: { id: crypto.randomUUID(), userId, updatedAt: new Date() },
     });
   }
 
@@ -489,7 +493,7 @@ export async function getUserPreferences(userId: string) {
 }
 
 export async function updateUserPreferences(userId: string, updates: any) {
-  return await prisma.notificationPreference.upsert({
+  return await prisma.notification_preferences.upsert({
     where: { userId },
     update: updates,
     create: { userId, ...updates },
@@ -505,7 +509,7 @@ export async function notifyAllAdmins(
 ) {
   try {
     // Find all admin users
-    const adminUsers = await prisma.user.findMany({
+    const adminUsers = await prisma.users.findMany({
       where: { role: "ADMIN" },
       select: { id: true, email: true, firstName: true, lastName: true },
     });
@@ -519,7 +523,7 @@ export async function notifyAllAdmins(
 
     // Send notification to each admin
     const notifications = await Promise.allSettled(
-      adminUsers.map((admin) =>
+      adminUsers.map((admin: any) =>
         createNotification({
           ...payload,
           userId: admin.id,

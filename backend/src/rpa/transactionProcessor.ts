@@ -2,7 +2,7 @@
 // Automatically validates and processes pending transactions
 // Implements fraud detection and compliance checks
 
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
 import prisma from "../prismaClient";
 import config from "./config";
 
@@ -20,7 +20,7 @@ class TransactionProcessor {
   /**
    * Validate a transaction for potential fraud or policy violations
    */
-  async validateTransaction(transactionId: string): Promise<ValidationResult> {
+  async validateTransaction(transaction_id: string): Promise<ValidationResult> {
     try {
       const result: ValidationResult = {
         isValid: true,
@@ -31,7 +31,7 @@ class TransactionProcessor {
       };
 
       // Fetch transaction with user details
-      const transaction = await prisma.transaction.findUnique({
+      const transaction = await prisma.transactions.findUnique({
         where: { id: transactionId },
       });
 
@@ -46,7 +46,7 @@ class TransactionProcessor {
       }
 
       // Fetch user separately
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: transaction.userId },
         select: { usdBalance: true },
       });
@@ -71,7 +71,7 @@ class TransactionProcessor {
 
       // Validation Rule 3: Check for duplicate transactions (within 1 minute)
       const oneMinuteAgo = new Date(Date.now() - 60000);
-      const duplicates = await prisma.transaction.count({
+      const duplicates = await prisma.transactions.count({
         where: {
           userId: transaction.userId,
           amount: transaction.amount,
@@ -87,7 +87,7 @@ class TransactionProcessor {
       }
 
       // Validation Rule 4: Check transaction limits
-      const dailyTransactions = await prisma.transaction.aggregate({
+      const dailyTransactions = await prisma.transactions.aggregate({
         where: {
           userId: transaction.userId,
           createdAt: { gte: new Date(Date.now() - 86400000) }, // Last 24 hours
@@ -141,7 +141,7 @@ class TransactionProcessor {
   /**
    * Process a validated transaction
    */
-  async processTransaction(transactionId: string): Promise<boolean> {
+  async processTransaction(transaction_id: string): Promise<boolean> {
     try {
       const validation = await this.validateTransaction(transactionId);
 
@@ -152,7 +152,7 @@ class TransactionProcessor {
         );
 
         // Update transaction status to failed
-        await prisma.transaction.update({
+        await prisma.transactions.update({
           where: { id: transactionId },
           data: {
             status: "FAILED",
@@ -164,7 +164,7 @@ class TransactionProcessor {
       }
 
       // Fetch transaction details
-      const transaction = await prisma.transaction.findUnique({
+      const transaction = await prisma.transactions.findUnique({
         where: { id: transactionId },
       });
 
@@ -181,7 +181,7 @@ class TransactionProcessor {
       }
 
       // Update transaction status
-      await prisma.transaction.update({
+      await prisma.transactions.update({
         where: { id: transactionId },
         data: {
           status: "COMPLETED",
@@ -200,7 +200,7 @@ class TransactionProcessor {
       );
 
       // Mark transaction as failed
-      await prisma.transaction
+      await prisma.transactions
         .update({
           where: { id: transactionId },
           data: { status: "FAILED" },
@@ -217,7 +217,7 @@ class TransactionProcessor {
   private async processCredit(transaction: any): Promise<void> {
     const amountNum = Number(transaction.amount);
 
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: transaction.userId },
       data: {
         usdBalance: { increment: new Decimal(amountNum) },
@@ -233,7 +233,7 @@ class TransactionProcessor {
   private async processDebit(transaction: any): Promise<void> {
     const amountNum = Number(transaction.amount);
 
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: transaction.userId },
       data: {
         usdBalance: { decrement: new Decimal(amountNum) },
@@ -251,7 +251,7 @@ class TransactionProcessor {
 
     // Pattern 1: Rapid succession of transactions (>5 in 5 minutes)
     const fiveMinutesAgo = new Date(Date.now() - 300000);
-    const recentTransactions = await prisma.transaction.count({
+    const recentTransactions = await prisma.transactions.count({
       where: {
         userId,
         createdAt: { gte: fiveMinutesAgo },
@@ -263,7 +263,7 @@ class TransactionProcessor {
     }
 
     // Pattern 2: Large transactions from new account (<7 days old)
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
     });
 
@@ -272,7 +272,7 @@ class TransactionProcessor {
       const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
       if (accountAge < sevenDays) {
-        const largeTransactions = await prisma.transaction.count({
+        const largeTransactions = await prisma.transactions.count({
           where: {
             userId,
             amount: { gte: new Decimal(1000) },
@@ -286,7 +286,7 @@ class TransactionProcessor {
     }
 
     // Pattern 3: Round-trip transactions (rapid credit/debit cycles)
-    const creditDebitPairs = await prisma.transaction.groupBy({
+    const creditDebitPairs = await prisma.transactions.groupBy({
       by: ["type"],
       where: {
         userId,
@@ -296,9 +296,13 @@ class TransactionProcessor {
     });
 
     const credits =
-      creditDebitPairs.find((g) => g.type === "credit")?._count?.type || 0;
+      creditDebitPairs.find(
+        (g: { type: string; _count?: { type?: number } }) => g.type === "credit"
+      )?._count?.type || 0;
     const debits =
-      creditDebitPairs.find((g) => g.type === "debit")?._count?.type || 0;
+      creditDebitPairs.find(
+        (g: { type: string; _count?: { type?: number } }) => g.type === "debit"
+      )?._count?.type || 0;
 
     if (Math.min(credits, debits) > 3) {
       indicators++;
@@ -311,13 +315,14 @@ class TransactionProcessor {
    * Log transaction processing to audit trail
    */
   private async logTransaction(
-    transactionId: string,
+    transaction_id: string,
     action: string,
     validation: ValidationResult
   ): Promise<void> {
     try {
-      await prisma.auditLog.create({
+      await prisma.audit_logs.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
           action: `transaction_${action}`,
           resourceType: "Transaction",
           resourceId: transactionId,
@@ -344,10 +349,10 @@ class TransactionProcessor {
     try {
       console.log(`[RPA] Starting batch transaction processing...`);
 
-      const pendingTransactions = await prisma.transaction.findMany({
+      const pendingTransactions = await prisma.transactions.findMany({
         where: { status: "PENDING" },
         take: this.config.batchSize,
-        orderBy: { createdAt: "asc" },
+        orderBy: { created_at: "asc" },
       });
 
       console.log(

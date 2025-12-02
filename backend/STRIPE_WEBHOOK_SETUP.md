@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-✅ Stripe test keys configured in `.env`
-✅ Backend server running on `http://localhost:4000`
+✅ Stripe test keys configured in `.env` ✅ Backend server running on `http://localhost:4000`
 
 ## Steps to Enable Webhooks Locally
 
 ### 1. Install Stripe CLI
 
 **Windows (PowerShell as Administrator):**
+
 ```powershell
 
 # Using Scoop (recommended)
@@ -23,6 +23,7 @@ scoop install stripe
 ```
 
 **Verify Installation:**
+
 ```powershell
 stripe --version
 ```
@@ -34,6 +35,7 @@ stripe login
 ```
 
 This will:
+
 - Open your browser
 - Ask you to authorize the CLI
 - Return to terminal when complete
@@ -45,6 +47,7 @@ stripe listen --forward-to localhost:4000/api/payments/webhook
 ```
 
 **Expected Output:**
+
 ```
 > Ready! Your webhook signing secret is whsec_xxxxxxxxxxxxx (^C to quit)
 ```
@@ -52,6 +55,7 @@ stripe listen --forward-to localhost:4000/api/payments/webhook
 ### 4. Copy the Webhook Secret
 
 The output will show something like:
+
 ```
 Your webhook signing secret is whsec_1234567890abcdefghijklmnopqrstuvwxyz
 ```
@@ -98,6 +102,7 @@ This will create a checkout session. To complete the payment:
 4. Complete the payment
 
 **Watch the Stripe CLI terminal** - you should see:
+
 ```
 2025-01-20 00:15:30   --> checkout.session.completed [evt_xxx]
 2025-01-20 00:15:30  <--  [200] POST http://localhost:4000/api/payments/webhook [evt_xxx]
@@ -183,16 +188,14 @@ When a `checkout.session.completed` event is received:
 
 ## Stripe Test Cards
 
-| Card Number         | Scenario              |
-|--------------------|-----------------------|
-| 4242 4242 4242 4242 | Success               |
-| 4000 0000 0000 9995 | Decline (insufficient)|
-| 4000 0025 0000 3155 | Requires authentication|
-| 4000 0000 0000 0002 | Declined card         |
+| Card Number         | Scenario                |
+| ------------------- | ----------------------- |
+| 4242 4242 4242 4242 | Success                 |
+| 4000 0000 0000 9995 | Decline (insufficient)  |
+| 4000 0025 0000 3155 | Requires authentication |
+| 4000 0000 0000 0002 | Declined card           |
 
-**Expiry:** Any future date
-**CVC:** Any 3 digits
-**ZIP:** Any valid ZIP
+**Expiry:** Any future date **CVC:** Any 3 digits **ZIP:** Any valid ZIP
 
 ---
 

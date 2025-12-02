@@ -31,11 +31,9 @@ router.post(
   aiRateLimiter("stripe"),
   async (req: any, res) => {
     if (!stripeClient) {
-      return res
-        .status(503)
-        .json({
-          error: "Stripe is not configured. Please provide STRIPE_SECRET_KEY.",
-        });
+      return res.status(503).json({
+        error: "Stripe is not configured. Please provide STRIPE_SECRET_KEY.",
+      });
     }
 
     const { amount, currency = "usd", metadata } = req.body || {};
@@ -151,7 +149,7 @@ router.post(
       const userId = payment.metadata?.userId;
 
       if (userId) {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
           await tx.user.update({
             where: { id: userId },
             data: {
@@ -221,7 +219,7 @@ export const handleStripeWebhook = async (req: any, res: any) => {
         }
 
         // Begin transaction
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
           // Credit user's balance
           await tx.user.update({
             where: { id: userId },

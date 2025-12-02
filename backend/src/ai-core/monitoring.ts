@@ -2,6 +2,17 @@ import { PrismaClient } from "@prisma/client";
 import { logger } from "../utils/logger";
 import { AIBrainCell } from "./brain";
 
+const TaskStatusEnum = {
+  PENDING: "PENDING",
+  RUNNING: "RUNNING",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+} as const;
+const AlertStatusEnum = {
+  PENDING: "PENDING",
+  RESOLVED: "RESOLVED",
+} as const;
+
 const prisma = new PrismaClient();
 
 export interface MonitoringRule {
@@ -17,7 +28,7 @@ export interface MonitoringRule {
 export interface Alert {
   ruleId: string;
   message: string;
-  details: any;
+  metadata: any;
   severity: string;
   suggestedAction?: string;
 }
@@ -107,6 +118,7 @@ export class AIMonitoringService {
     const condition = JSON.parse(rule.condition);
 
     let triggered = false;
+    let metadata: any = {};
     let details: any = {};
 
     switch (rule.type) {
@@ -140,7 +152,7 @@ export class AIMonitoringService {
       await this.handleAlert({
         ruleId: rule.id,
         message: `Alert: ${rule.name}`,
-        details,
+        metadata: details,
         severity: rule.severity,
       });
     }
@@ -155,15 +167,12 @@ export class AIMonitoringService {
   /**
    * Check for errors
    */
-  private async checkErrors(
-    condition: any,
-    threshold?: number
-  ): Promise<boolean> {
+  private async checkErrors(condition: any, threshold?: number): Promise<boolean> {
     const since = new Date(Date.now() - (condition.timeWindowMs || 3600000));
 
     const errorCount = await prisma.aITask.count({
       where: {
-        status: "failed",
+        status: TaskStatusEnum.FAILED,
         createdAt: { gte: since },
         ...(condition.taskType && { taskType: condition.taskType }),
       },
@@ -180,7 +189,7 @@ export class AIMonitoringService {
 
     const errors = await prisma.aITask.findMany({
       where: {
-        status: "failed",
+        status: TaskStatusEnum.FAILED,
         createdAt: { gte: since },
         ...(condition.taskType && { taskType: condition.taskType }),
       },
@@ -189,7 +198,7 @@ export class AIMonitoringService {
       select: {
         id: true,
         taskType: true,
-        errorMessage: true,
+        error: true,
         createdAt: true,
       },
     });
@@ -200,15 +209,12 @@ export class AIMonitoringService {
   /**
    * Check performance metrics
    */
-  private async checkPerformance(
-    condition: any,
-    threshold?: number
-  ): Promise<boolean> {
+  private async checkPerformance(condition: any, threshold?: number): Promise<boolean> {
     const since = new Date(Date.now() - (condition.timeWindowMs || 3600000));
 
     const tasks = await prisma.aITask.findMany({
       where: {
-        status: "completed",
+        status: TaskStatusEnum.COMPLETED,
         createdAt: { gte: since },
         ...(condition.taskType && { taskType: condition.taskType }),
       },
@@ -220,7 +226,7 @@ export class AIMonitoringService {
     if (tasks.length === 0) return false;
 
     const avgExecutionTime =
-      tasks.reduce((sum, t) => sum + (t.executionTimeMs || 0), 0) /
+      tasks.reduce((sum: number, t: { executionTimeMs: number | null }) => sum + (t.executionTimeMs || 0), 0) /
       tasks.length;
 
     return threshold ? avgExecutionTime >= threshold : false;
@@ -234,7 +240,7 @@ export class AIMonitoringService {
 
     const tasks = await prisma.aITask.findMany({
       where: {
-        status: "completed",
+        status: TaskStatusEnum.COMPLETED,
         createdAt: { gte: since },
         ...(condition.taskType && { taskType: condition.taskType }),
       },
@@ -246,14 +252,14 @@ export class AIMonitoringService {
 
     const avgExecutionTime =
       tasks.length > 0
-        ? tasks.reduce((sum, t) => sum + (t.executionTimeMs || 0), 0) /
+        ? tasks.reduce((sum: number, t: { executionTimeMs: number | null }) => sum + (t.executionTimeMs || 0), 0) /
           tasks.length
         : 0;
 
     return {
       taskCount: tasks.length,
       avgExecutionTime,
-      maxExecutionTime: Math.max(...tasks.map((t) => t.executionTimeMs || 0)),
+      maxExecutionTime: Math.max(...tasks.map((t: { executionTimeMs: number | null }) => t.executionTimeMs || 0)),
     };
   }
 
@@ -282,9 +288,7 @@ export class AIMonitoringService {
    */
   private async getSecurityDetails(condition: any) {
     return {
-      checkType: condition.checkFailedLogins
-        ? "failed_logins"
-        : "unauthorized_access",
+      checkType: condition.checkFailedLogins ? "failed_logins" : "unauthorized_access",
       timestamp: new Date(),
     };
   }
@@ -292,10 +296,7 @@ export class AIMonitoringService {
   /**
    * Check usage metrics
    */
-  private async checkUsage(
-    condition: any,
-    threshold?: number
-  ): Promise<boolean> {
+  private async checkUsage(condition: any, threshold?: number): Promise<boolean> {
     const since = new Date(Date.now() - (condition.timeWindowMs || 86400000));
 
     const taskCount = await prisma.aITask.count({
@@ -318,11 +319,11 @@ export class AIMonitoringService {
     });
 
     const completedTasks = await prisma.aITask.count({
-      where: { status: "completed", createdAt: { gte: since } },
+      where: { status: TaskStatusEnum.COMPLETED, createdAt: { gte: since } },
     });
 
     const failedTasks = await prisma.aITask.count({
-      where: { status: "failed", createdAt: { gte: since } },
+      where: { status: TaskStatusEnum.FAILED, createdAt: { gte: since } },
     });
 
     return {
@@ -346,7 +347,7 @@ export class AIMonitoringService {
    * Handle an alert
    */
   private async handleAlert(alert: Alert) {
-    logger.warn(`AI Alert: ${alert.message}`, alert.details);
+    logger.warn(`AI Alert: ${alert.message}`, alert.metadata);
 
     // Get AI suggestion for the alert
     const suggestion = await this.getAISuggestion(alert);
@@ -356,10 +357,9 @@ export class AIMonitoringService {
       data: {
         ruleId: alert.ruleId,
         message: alert.message,
-        details: JSON.stringify(alert.details),
+        metadata: JSON.stringify(alert.metadata),
         severity: alert.severity,
-        suggestedAction: suggestion,
-        status: "pending",
+        status: AlertStatusEnum.PENDING,
       },
     });
 
@@ -380,7 +380,7 @@ export class AIMonitoringService {
         systemPrompt:
           "You are a system monitoring expert. Analyze the alert and provide a clear, actionable suggestion to resolve the issue.",
         userPrompt: `Alert: ${alert.message}\nDetails: ${JSON.stringify(
-          alert.details,
+          alert.metadata,
           null,
           2
         )}\n\nProvide a suggested action to resolve this issue.`,
@@ -403,14 +403,6 @@ export class AIMonitoringService {
       where: status ? { status } : undefined,
       orderBy: { createdAt: "desc" },
       take: 50,
-      include: {
-        rule: {
-          select: {
-            name: true,
-            type: true,
-          },
-        },
-      },
     });
   }
 
@@ -421,10 +413,7 @@ export class AIMonitoringService {
     return await prisma.aIAlert.update({
       where: { id: alertId },
       data: {
-        status: "resolved",
-        resolvedBy,
-        resolvedAt: new Date(),
-        resolutionNotes: notes,
+        status: AlertStatusEnum.RESOLVED,
       },
     });
   }
@@ -438,11 +427,11 @@ export class AIMonitoringService {
     });
 
     const pendingAlerts = await prisma.aIAlert.count({
-      where: { status: "pending" },
+      where: { status: AlertStatusEnum.PENDING },
     });
 
     const criticalAlerts = await prisma.aIAlert.count({
-      where: { status: "pending", severity: "critical" },
+      where: { status: AlertStatusEnum.PENDING, severity: "critical" },
     });
 
     const last24h = new Date(Date.now() - 86400000);
@@ -460,4 +449,4 @@ export class AIMonitoringService {
 }
 
 // Export singleton instance for compatibility
-export const AIMonitoring = AIMonitoringSystem;
+export const AIMonitoring = new AIMonitoringService();

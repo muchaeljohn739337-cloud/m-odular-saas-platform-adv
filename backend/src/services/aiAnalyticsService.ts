@@ -12,7 +12,7 @@ import prisma from "../prismaClient";
 export async function analyzeTrumpCoinWallet(userId: string) {
   try {
     // Get user with crypto balances
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -35,16 +35,16 @@ export async function analyzeTrumpCoinWallet(userId: string) {
     }
 
     // Get crypto orders (trump coin or any crypto purchases)
-    const cryptoOrders = await prisma.cryptoOrder.findMany({
+    const cryptoOrders = await prisma.crypto_orders.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 50,
     });
 
     // Get crypto withdrawals
-    const cryptoWithdrawals = await prisma.cryptoWithdrawal.findMany({
+    const cryptoWithdrawals = await prisma.crypto_withdrawals.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 20,
     });
 
@@ -191,7 +191,7 @@ export async function analyzeCashOutEligibility(
 ) {
   try {
     // Get user with balances
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -216,14 +216,14 @@ export async function analyzeCashOutEligibility(
     }
 
     // Get recent transactions
-    const transactions = await prisma.transaction.findMany({
+    const transactions = await prisma.transactions.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 50,
     });
 
     // Get pending withdrawals
-    const pendingWithdrawals = await prisma.cryptoWithdrawal.findMany({
+    const pendingWithdrawals = await prisma.crypto_withdrawals.findMany({
       where: {
         userId,
         status: "PENDING",
@@ -231,7 +231,7 @@ export async function analyzeCashOutEligibility(
     });
 
     // Get loans
-    const activeLoans = await prisma.loan.findMany({
+    const activeLoans = await prisma.loans.findMany({
       where: {
         userId,
         status: "active",
@@ -407,7 +407,7 @@ ${
 export async function generateProductRecommendations(userId: string) {
   try {
     // Get user profile and activity
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -430,35 +430,35 @@ export async function generateProductRecommendations(userId: string) {
     }
 
     // Get user's transaction history
-    const transactions = await prisma.transaction.findMany({
+    const transactions = await prisma.transactions.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 100,
     });
 
     // Get crypto orders
-    const cryptoOrders = await prisma.cryptoOrder.findMany({
+    const cryptoOrders = await prisma.crypto_orders.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 20,
     });
 
     // Get loans
-    const loans = await prisma.loan.findMany({
+    const loans = await prisma.loans.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 10,
     });
 
     // Get MedBeds bookings
-    const medBedsBookings = await prisma.medBedsBooking.findMany({
+    const medBedsBookings = await prisma.medbeds_bookings.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 10,
     });
 
     // Get user tier if exists
-    const userTier = await prisma.userTier.findUnique({
+    const userTier = await prisma.user_tiers.findUnique({
       where: { userId },
     });
 
@@ -581,7 +581,7 @@ export async function generateProductRecommendations(userId: string) {
     // Debit card recommendations
     if (
       parseFloat(user.usdBalance.toString()) > 1000 &&
-      !loans.find((l) => l.status === "active")
+      !loans.find((l: { status: string }) => l.status === "active")
     ) {
       recommendations.push({
         product: "Virtual Debit Card",
@@ -609,7 +609,10 @@ export async function generateProductRecommendations(userId: string) {
 
     // Sort by relevance and take top 5
     const topRecommendations = recommendations
-      .sort((a, b) => b.relevance - a.relevance)
+      .sort(
+        (a: { relevance: number }, b: { relevance: number }) =>
+          b.relevance - a.relevance
+      )
       .slice(0, 5);
 
     const recommendationsText = topRecommendations
@@ -666,14 +669,14 @@ These recommendations are tailored to enhance your experience with services you'
 export async function generateMarketInsights() {
   try {
     // Get aggregate platform data
-    const totalUsers = await prisma.user.count();
-    const activeUsers = await prisma.user.count({
+    const totalUsers = await prisma.users.count();
+    const activeUsers = await prisma.users.count({
       where: { active: true },
     });
 
     // Get recent crypto orders
-    const recentCryptoOrders = await prisma.cryptoOrder.findMany({
-      orderBy: { createdAt: "desc" },
+    const recentCryptoOrders = await prisma.crypto_orders.findMany({
+      orderBy: { created_at: "desc" },
       take: 100,
       select: {
         cryptoType: true,
@@ -685,7 +688,7 @@ export async function generateMarketInsights() {
     });
 
     // Get crypto order statistics
-    const cryptoOrderStats = await prisma.cryptoOrder.groupBy({
+    const cryptoOrderStats = await prisma.crypto_orders.groupBy({
       by: ["cryptoType", "status"],
       _count: true,
       _sum: {
@@ -694,8 +697,8 @@ export async function generateMarketInsights() {
     });
 
     // Get recent transactions
-    const recentTransactions = await prisma.transaction.findMany({
-      orderBy: { createdAt: "desc" },
+    const recentTransactions = await prisma.transactions.findMany({
+      orderBy: { created_at: "desc" },
       take: 50,
       select: {
         type: true,
@@ -706,7 +709,7 @@ export async function generateMarketInsights() {
     });
 
     // Get loans statistics
-    const loanStats = await prisma.loan.groupBy({
+    const loanStats = await prisma.loans.groupBy({
       by: ["status"],
       _count: true,
       _sum: {
@@ -716,7 +719,7 @@ export async function generateMarketInsights() {
     });
 
     // Get MedBeds booking statistics
-    const medBedsStats = await prisma.medBedsBooking.groupBy({
+    const medBedsStats = await prisma.medbeds_bookings.groupBy({
       by: ["chamberType", "status"],
       _count: true,
       _sum: {
@@ -726,7 +729,8 @@ export async function generateMarketInsights() {
 
     // Calculate market metrics
     const totalCryptoVolume = cryptoOrderStats.reduce(
-      (sum, stat) => sum + parseFloat(stat._sum.usdAmount?.toString() || "0"),
+      (sum: number, stat: { _sum: { usdAmount?: any } }) =>
+        sum + parseFloat(stat._sum.usdAmount?.toString() || "0"),
       0
     );
 
@@ -743,7 +747,7 @@ export async function generateMarketInsights() {
         popularTypes: cryptoOrderStats
           .sort((a, b) => (b._count || 0) - (a._count || 0))
           .slice(0, 3)
-          .map((stat) => ({
+          .map((stat: any) => ({
             type: stat.cryptoType,
             count: stat._count,
             volume: stat._sum.usdAmount?.toString() || "0",
@@ -751,10 +755,10 @@ export async function generateMarketInsights() {
       },
       transactions: {
         recentCount: recentTransactions.length,
-        types: [...new Set(recentTransactions.map((tx) => tx.type))],
+        types: [...new Set(recentTransactions.map((tx: any) => tx.type))],
       },
       loans: {
-        stats: loanStats.map((stat) => ({
+        stats: loanStats.map((stat: any) => ({
           status: stat.status,
           count: stat._count,
           totalAmount: stat._sum.amount?.toString() || "0",
@@ -762,7 +766,7 @@ export async function generateMarketInsights() {
         })),
       },
       medBeds: {
-        stats: medBedsStats.map((stat) => ({
+        stats: medBedsStats.map((stat: any) => ({
           chamberType: stat.chamberType,
           status: stat.status,
           count: stat._count,
@@ -783,7 +787,10 @@ export async function generateMarketInsights() {
 
     const topCrypto =
       cryptoOrderStats.length > 0
-        ? cryptoOrderStats.sort((a, b) => (b._count || 0) - (a._count || 0))[0]
+        ? cryptoOrderStats.sort(
+            (a: { _count?: number }, b: { _count?: number }) =>
+              (b._count || 0) - (a._count || 0)
+          )[0]
         : null;
 
     const avgOrderValue =
@@ -797,9 +804,9 @@ export async function generateMarketInsights() {
     else if (recentCryptoOrders.length < 20) marketSentiment = "Bearish";
 
     const activeLoanCount =
-      loanStats.find((s) => s.status === "active")?._count || 0;
+      loanStats.find((s: any) => s.status === "active")?._count || 0;
     const completedLoanCount =
-      loanStats.find((s) => s.status === 'COMPLETED')?._count || 0;
+      loanStats.find((s: any) => s.status === "COMPLETED")?._count || 0;
     const loanRepaymentRate =
       completedLoanCount > 0
         ? (
@@ -835,13 +842,14 @@ ${
 TRANSACTIONS:
 • Recent Transaction Count: ${recentTransactions.length}
 • Transaction Types: ${
-      [...new Set(recentTransactions.map((tx) => tx.type))].join(", ") || "None"
+      [...new Set(recentTransactions.map((tx: any) => tx.type))].join(", ") ||
+      "None"
     }
 
 LENDING SERVICES:
 ${loanStats
   .map(
-    (stat) =>
+    (stat: any) =>
       `• ${stat.status}: ${stat._count} loans ($${parseFloat(
         stat._sum.amount?.toString() || "0"
       ).toLocaleString()})`
@@ -854,7 +862,7 @@ ${
   medBedsStats.length > 0
     ? medBedsStats
         .map(
-          (stat) =>
+          (stat: any) =>
             `• ${stat.chamberType} (${stat.status}): ${
               stat._count
             } bookings ($${parseFloat(

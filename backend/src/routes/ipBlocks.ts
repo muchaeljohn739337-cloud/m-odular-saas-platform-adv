@@ -9,7 +9,7 @@ router.use(authenticateToken, requireAdmin);
 
 router.get("/", async (_req, res) => {
   try {
-    const blocks = await prisma.ipBlock.findMany({
+    const blocks = await prisma.ip_blocks.findMany({
       orderBy: { updatedAt: "desc" },
     });
     res.json(blocks);
@@ -25,7 +25,7 @@ router.post("/unblock", async (req, res) => {
   }
 
   try {
-    await prisma.ipBlock.deleteMany({
+    await prisma.ip_blocks.deleteMany({
       where: { ip: req.body.ip },
     });
     res.json({ success: true });

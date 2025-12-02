@@ -3,17 +3,21 @@ import cron from "node-cron";
 import { logger } from "../utils/logger";
 import { AIQueueManager } from "./queue";
 
+// Local enum mirrors Prisma enum values for runtime usage
+const WorkflowStatusEnum = {
+  RUNNING: "RUNNING",
+  FAILED: "FAILED",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  AWAITING_APPROVAL: "AWAITING_APPROVAL",
+} as const;
+
 const prisma = new PrismaClient();
 
 export interface WorkflowConfig {
   name: string;
   description: string;
-  category:
-    | "automation"
-    | "monitoring"
-    | "code_suggestion"
-    | "data_collection"
-    | "orchestration";
+  category: "automation" | "monitoring" | "code_suggestion" | "data_collection" | "orchestration";
   triggerType: "event" | "scheduled" | "manual";
   cronSchedule?: string;
   enabled?: boolean;
@@ -113,11 +117,7 @@ export class AIWorkflowEngine {
   /**
    * Execute a workflow
    */
-  async executeWorkflow(
-    workflowId: string,
-    triggeredBy: string,
-    triggerData?: any
-  ) {
+  async executeWorkflow(workflowId: string, triggeredBy: string, triggerData?: any) {
     const workflow = await prisma.aIWorkflow.findUnique({
       where: { id: workflowId },
     });
@@ -134,15 +134,13 @@ export class AIWorkflowEngine {
     const execution = await prisma.aIWorkflowExecution.create({
       data: {
         workflowId,
-        status: "running",
+        status: WorkflowStatusEnum.RUNNING,
         triggeredBy,
         triggerData: triggerData ? JSON.stringify(triggerData) : null,
       },
     });
 
-    logger.info(
-      `Workflow execution started: ${workflow.name} (${execution.id})`
-    );
+    logger.info(`Workflow execution started: ${workflow.name} (${execution.id})`);
 
     try {
       // Queue the workflow for processing
@@ -158,7 +156,7 @@ export class AIWorkflowEngine {
       await prisma.aIWorkflowExecution.update({
         where: { id: execution.id },
         data: {
-          status: "failed",
+          status: WorkflowStatusEnum.FAILED,
           error: error instanceof Error ? error.message : String(error),
           completedAt: new Date(),
         },
@@ -183,17 +181,12 @@ export class AIWorkflowEngine {
             scheduledAt: new Date(),
           });
         } catch (error) {
-          logger.error(
-            `Scheduled workflow execution failed: ${workflowId}`,
-            error
-          );
+          logger.error(`Scheduled workflow execution failed: ${workflowId}`, error);
         }
       });
 
       this.scheduledJobs.set(workflowId, task);
-      logger.info(
-        `Workflow scheduled: ${workflowId} with cron: ${cronSchedule}`
-      );
+      logger.info(`Workflow scheduled: ${workflowId} with cron: ${cronSchedule}`);
     } catch (error) {
       logger.error(`Failed to schedule workflow ${workflowId}:`, error);
       throw error;
@@ -215,11 +208,7 @@ export class AIWorkflowEngine {
   /**
    * Create a task within a workflow execution
    */
-  async createTask(
-    workflowId: string,
-    executionId: string,
-    taskDef: TaskDefinition
-  ) {
+  async createTask(workflowId: string, executionId: string, taskDef: TaskDefinition) {
     const workflow = await prisma.aIWorkflow.findUnique({
       where: { id: workflowId },
     });
@@ -268,12 +257,7 @@ export class AIWorkflowEngine {
   /**
    * Approve a task (human-in-the-loop)
    */
-  async approveTask(
-    taskId: string,
-    reviewedBy: string,
-    feedback?: string,
-    modification?: any
-  ) {
+  async approveTask(taskId: string, reviewedBy: string, feedback?: string, modification?: any) {
     const task = await prisma.aITask.findUnique({
       where: { id: taskId },
       include: { workflow: true },
@@ -291,7 +275,7 @@ export class AIWorkflowEngine {
     const updatedTask = await prisma.aITask.update({
       where: { id: taskId },
       data: {
-        status: "approved",
+        status: WorkflowStatusEnum.APPROVED,
         reviewedBy,
         reviewedAt: new Date(),
         approvalStatus: modification ? "modified" : "approved",
@@ -348,10 +332,10 @@ export class AIWorkflowEngine {
     const updatedTask = await prisma.aITask.update({
       where: { id: taskId },
       data: {
-        status: "rejected",
+        status: WorkflowStatusEnum.REJECTED,
         reviewedBy,
         reviewedAt: new Date(),
-        approvalStatus: "rejected",
+        approvalStatus: WorkflowStatusEnum.REJECTED,
         humanFeedback: reason,
         error: `Rejected: ${reason}`,
       },
@@ -403,9 +387,7 @@ export class AIWorkflowEngine {
       await prisma.aIWorkflowExecution.update({
         where: { id: task.executionId },
         data: {
-          ...(error
-            ? { tasksFailed: { increment: 1 } }
-            : { tasksCompleted: { increment: 1 } }),
+          ...(error ? { tasksFailed: { increment: 1 } } : { tasksCompleted: { increment: 1 } }),
         },
       });
 
@@ -444,8 +426,7 @@ export class AIWorkflowEngine {
       });
 
       logger.info(
-        `Workflow execution completed: ${executionId} ` +
-          `(${tasksCompleted} succeeded, ${tasksFailed} failed)`
+        `Workflow execution completed: ${executionId} ` + `(${tasksCompleted} succeeded, ${tasksFailed} failed)`
       );
     }
   }
@@ -496,7 +477,7 @@ export class AIWorkflowEngine {
   async getTasksAwaitingApproval(limit = 50) {
     const tasks = await prisma.aITask.findMany({
       where: {
-        status: "awaiting_approval",
+        status: WorkflowStatusEnum.AWAITING_APPROVAL,
       },
       include: {
         workflow: true,

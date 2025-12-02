@@ -1,17 +1,18 @@
-import { Router, Request, Response } from "express";
+import { Request, Response, Router } from "express";
 import { Parser } from "json2csv";
 import { Server as SocketIOServer } from "socket.io";
 import { authenticateToken, requireAdmin } from "../middleware/auth";
 // OAL Rules feature disabled
 import {
   createOALLog,
-  updateOALStatus,
-  getOALLogsWithCount,
   getAllOALLogsForExport,
   getOALLogById,
+  getOALLogsWithCount,
   logBalanceAdjustment,
+  updateOALStatus,
 } from "../services/oalService";
-import { OALStatus } from "@prisma/client";
+// OALStatus is not exported in current Prisma, use local union from service
+type OALStatus = "PENDING" | "APPROVED" | "REJECTED" | string;
 
 const router = Router();
 router.use(authenticateToken, requireAdmin);
@@ -179,7 +180,7 @@ router.post("/", async (req: Request, res: Response) => {
       subjectId,
       metadata,
       createdById: userId,
-      status: status || OALStatus.PENDING,
+      status: status || "PENDING",
     });
 
     // OAL Rules checking disabled
@@ -201,7 +202,7 @@ router.patch("/:id/status", async (req: Request, res: Response) => {
     const { status } = req.body;
     const userId = (req as any).user?.userId;
 
-    if (!Object.values(OALStatus).includes(status)) {
+    if (!["PENDING", "APPROVED", "REJECTED"].includes(status)) {
       return res.status(400).json({
         success: false,
         message: "Invalid status. Must be PENDING, APPROVED, or REJECTED",
@@ -254,4 +255,3 @@ router.post("/balance-adjustment", async (req: Request, res: Response) => {
 });
 
 export default router;
-

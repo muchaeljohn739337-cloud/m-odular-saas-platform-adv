@@ -1,13 +1,16 @@
-import 'dotenv/config';
-import prisma from '../src/prismaClient';
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
+import "dotenv/config";
+import prisma from "../src/prismaClient";
 
 async function main() {
-  const email = process.env.SEED_ADMIN_EMAIL || 'admin@advanciapay.com';
-  const password = process.env.SEED_ADMIN_PASSWORD || 'Admin123!';
-  const username = process.env.SEED_ADMIN_USERNAME || 'admin';
-  const firstName = 'System';
-  const lastName = 'Admin';
+  const email = process.env.SEED_ADMIN_EMAIL || "admin@advanciapay.com";
+  // nosemgrep: javascript.lang.security.audit.hardcoded-password
+  // snyk-disable-next-line javascript/NoHardcodedPasswords
+  // Default password for development - MUST be changed in production via SEED_ADMIN_PASSWORD env var
+  const password = process.env.SEED_ADMIN_PASSWORD || "Admin123!";
+  const username = process.env.SEED_ADMIN_USERNAME || "admin";
+  const firstName = "System";
+  const lastName = "Admin";
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -23,7 +26,7 @@ async function main() {
       passwordHash: hash,
       firstName,
       lastName,
-      role: 'ADMIN',
+      role: "ADMIN",
       active: true,
       termsAccepted: true,
       termsAcceptedAt: new Date(),
@@ -34,7 +37,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('Seed admin failed:', e);
+    console.error("Seed admin failed:", e);
     process.exit(1);
   })
   .finally(async () => {

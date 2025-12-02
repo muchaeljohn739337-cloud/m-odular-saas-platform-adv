@@ -1,4 +1,5 @@
-import { Decimal } from 'decimal.js';
+import crypto from "crypto";
+import { Decimal } from "decimal.js";
 import { Request } from "express";
 import * as fs from "fs";
 import * as path from "path";
@@ -57,7 +58,7 @@ async function extractFeatures(
     hasBotPattern: false,
   };
 
-  const recentBots = await prisma.botDetection.count({
+  const recentBots = await prisma.bot_detections.count({
     where: {
       ipAddress,
       isBot: true,
@@ -70,7 +71,7 @@ async function extractFeatures(
   features.ipReputation = Math.min(recentBots / 10, 1.0);
 
   if (userId) {
-    const recentClicks = await prisma.clickEvent.count({
+    const recentClicks = await prisma.click_events.count({
       where: {
         userId,
         createdAt: {
@@ -148,7 +149,7 @@ async function ruleBasedDetection(
     signals.userAgentFlags.push("missing_accept");
   }
 
-  const recentBots = await prisma.botDetection.count({
+  const recentBots = await prisma.bot_detections.count({
     where: {
       ipAddress,
       isBot: true,
@@ -165,7 +166,7 @@ async function ruleBasedDetection(
   }
 
   if (userId) {
-    const recentClicks = await prisma.clickEvent.count({
+    const recentClicks = await prisma.click_events.count({
       where: {
         userId,
         createdAt: {
@@ -227,8 +228,9 @@ export async function detectBot(
     };
   }
 
-  await prisma.botDetection.create({
+  await prisma.bot_detections.create({
     data: {
+      id: crypto.randomUUID(),
       userId: userId || null,
       ipAddress: req.ip || req.socket.remoteAddress || "unknown",
       userAgent: req.headers["user-agent"] || "",
@@ -240,8 +242,9 @@ export async function detectBot(
     },
   });
 
-  await prisma.aITrainingData.create({
+  await prisma.ai_training_data.create({
     data: {
+      id: crypto.randomUUID(),
       userId: userId || null,
       ipAddress: req.ip || req.socket.remoteAddress || "unknown",
       userAgent: req.headers["user-agent"] || "",
@@ -254,9 +257,9 @@ export async function detectBot(
 }
 
 export async function getBotRiskScore(userId: string): Promise<number> {
-  const recent = await prisma.botDetection.findFirst({
+  const recent = await prisma.bot_detections.findFirst({
     where: { userId },
-    orderBy: { createdAt: "desc" },
+    orderBy: { created_at: "desc" },
   });
 
   return recent ? Number(recent.riskScore) : 0;

@@ -34,7 +34,7 @@ export const authenticateToken = async (
     const payload = jwt.verify(token, config.jwtSecret) as JWTPayload;
     
     // Check if account is active in database
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: payload.userId },
       select: { active: true, role: true }
     });

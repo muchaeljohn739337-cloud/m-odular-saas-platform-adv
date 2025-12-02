@@ -9,11 +9,16 @@ export function decryptSecret(
   const iv = Buffer.from(ivHex, "hex");
   const encryptedText = Buffer.from(encrypted, "hex");
 
-  const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  // Coerce Buffer types to satisfy TS crypto signatures
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    key as unknown as crypto.CipherKey,
+    iv as unknown as crypto.BinaryLike
+  );
+  const firstChunk: Buffer = decipher.update(encryptedText as any) as any;
+  const finalBuf: Buffer = Buffer.concat([firstChunk, decipher.final() as any]);
 
-  return decrypted.toString();
+  return finalBuf.toString();
 }
 
 export function decodeBase64Secret(base64Secret: string): string {

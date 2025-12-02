@@ -3,6 +3,22 @@ import { Job, Queue, QueueEvents } from "bullmq";
 import Redis from "ioredis";
 import { logger } from "../utils/logger";
 
+// Local enums mirroring Prisma enums
+const TaskStatusEnum = {
+  PENDING: "PENDING",
+  RUNNING: "RUNNING",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+} as const;
+const WorkflowStatusEnum = {
+  RUNNING: "RUNNING",
+  FAILED: "FAILED",
+  COMPLETED: "COMPLETED",
+  AWAITING_APPROVAL: "AWAITING_APPROVAL",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+} as const;
+
 const prisma = new PrismaClient();
 
 // Redis connection (optional - only if REDIS_HOST/REDIS_URL is set)
@@ -322,7 +338,9 @@ export class AIQueueManager {
   static async cleanQueue(
     queueName: QueueName,
     grace: number = 3600000, // 1 hour
-    status: "completed" | "failed" = "completed"
+    status:
+      | TaskStatusEnum.COMPLETED
+      | TaskStatusEnum.FAILED = TaskStatusEnum.COMPLETED
   ) {
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (queue) {
@@ -487,7 +505,7 @@ export class TaskQueue {
     priority?: number;
     requiresApproval?: boolean;
   }) {
-    const task = await prisma.aITask.create({
+    const task = await prisma.ai_tasks.create({
       data: {
         workflowId: params.workflowId,
         taskType: params.type,
@@ -516,7 +534,7 @@ export class TaskQueue {
    * Retry a failed task
    */
   async retryTask(taskId: string) {
-    const task = await prisma.aITask.findUnique({
+    const task = await prisma.ai_tasks.findUnique({
       where: { id: taskId },
     });
 
@@ -529,10 +547,10 @@ export class TaskQueue {
     }
 
     // Update task status
-    const updatedTask = await prisma.aITask.update({
+    const updatedTask = await prisma.ai_tasks.update({
       where: { id: taskId },
       data: {
-        status: "pending",
+        status: TaskStatusEnum.PENDING,
         result: null,
         error: null,
       },

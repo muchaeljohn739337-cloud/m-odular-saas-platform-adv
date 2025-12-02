@@ -2,6 +2,7 @@
 // Orchestrates deployments, monitors health, self-heals issues, auto-rollback
 // Learns from deployment patterns to prevent outages
 
+import { SafePrisma } from "../ai-expansion/validators/SafePrisma";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 interface DeploymentRisk {
@@ -294,7 +295,7 @@ export class AIDeploymentAgent extends BaseAgent {
     // Check 3: Prisma schema validity
     try {
       // Check if Prisma Client is generated
-      const userCount = await this.context.prisma.user.count();
+      const userCount = await this.context.prisma.users.count();
       checks.push({
         name: "prisma_schema",
         passed: true,
@@ -311,7 +312,7 @@ export class AIDeploymentAgent extends BaseAgent {
     }
 
     // Check 4: Recent error rate
-    const recentErrors = await this.context.prisma.auditLog.count({
+    const recentErrors = await this.context.prisma.audit_logs.count({
       where: {
         action: "error",
         createdAt: {
@@ -360,14 +361,13 @@ export class AIDeploymentAgent extends BaseAgent {
     let score = 0;
 
     // Factor 1: Recent deployment failures
-    const recentDeployments = await this.context.prisma.auditLog.findMany({
+    const recentDeployments = await this.context.prisma.audit_logs.findMany({
       where: {
-        entity: "deployment",
         createdAt: {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 10,
     });
 
@@ -386,9 +386,9 @@ export class AIDeploymentAgent extends BaseAgent {
     }
 
     // Factor 2: Current system health
-    const activeUsers = await this.context.prisma.user.count({
+    const activeUsers = await this.context.prisma.users.count({
       where: {
-        lastActive: {
+        last_active: {
           gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
         },
       },
@@ -403,7 +403,7 @@ export class AIDeploymentAgent extends BaseAgent {
     }
 
     // Factor 3: Pending transactions
-    const pendingTransactions = await this.context.prisma.transaction.count({
+    const pendingTransactions = await this.context.prisma.transactions.count({
       where: {
         status: { in: ["PENDING", "PROCESSING"] },
       },
@@ -682,16 +682,14 @@ export class AIDeploymentAgent extends BaseAgent {
 
     try {
       // Log rollback action
-      await this.context.prisma.auditLog.create({
-        data: {
-          entity: "deployment",
-          entityId: execution.id,
-          action: "rollback_triggered",
-          userId: "system",
-          changes: JSON.stringify({
-            reason: "deployment_validation_failed",
-            execution,
-          }),
+      await SafePrisma.create("audit_logs", {
+        userId: "system",
+        action: "rollback_triggered",
+        resourceType: "deployment",
+        resourceId: execution.id,
+        metadata: {
+          reason: "deployment_validation_failed",
+          execution,
         },
       });
 
@@ -720,21 +718,19 @@ export class AIDeploymentAgent extends BaseAgent {
     success: boolean
   ): Promise<void> {
     try {
-      await this.context.prisma.auditLog.create({
-        data: {
-          entity: "deployment",
-          entityId: execution.id,
-          action: success ? "deployment_success" : "deployment_failed",
-          userId: "ai-deployment-agent",
-          changes: JSON.stringify({
-            execution,
-            log,
-            duration:
-              execution.endTime && execution.startTime
-                ? execution.endTime.getTime() - execution.startTime.getTime()
-                : 0,
-            riskScore: log.riskAssessment?.score,
-          }),
+      await SafePrisma.create("audit_logs", {
+        userId: "ai-deployment-agent",
+        action: success ? "deployment_success" : "deployment_failed",
+        resourceType: "deployment",
+        resourceId: execution.id,
+        metadata: {
+          execution,
+          log,
+          duration:
+            execution.endTime && execution.startTime
+              ? execution.endTime.getTime() - execution.startTime.getTime()
+              : 0,
+          riskScore: log.riskAssessment?.score,
         },
       });
 

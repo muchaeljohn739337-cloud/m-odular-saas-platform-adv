@@ -1,4 +1,4 @@
-import { Decimal } from 'decimal.js';
+import { Decimal } from "decimal.js";
 import { Router } from "express";
 import type { Server as IOServer } from "socket.io";
 import Stripe from "stripe";
@@ -48,7 +48,7 @@ router.post(
 
       if (paymentMethod === "balance") {
         // Pay with USD balance
-        const user = await prisma.user.findUnique({
+        const user = await prisma.users.findUnique({
           where: { id: userId },
           select: { usdBalance: true, email: true, username: true },
         });
@@ -66,7 +66,7 @@ router.post(
         }
 
         // Process payment with transaction
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await prisma.$transaction(async (tx: any) => {
           // Deduct balance
           const updatedUser = await tx.user.update({
             where: { id: userId },
@@ -96,7 +96,7 @@ router.post(
               cost,
               paymentMethod: "balance",
               paymentStatus: "paid",
-              transactionId: transaction.id,
+              transaction_id: transaction.id,
               status: "scheduled",
               notes,
             },
@@ -129,7 +129,7 @@ router.post(
         });
       } else if (paymentMethod === "stripe") {
         // Create Stripe checkout session
-        const user = await prisma.user.findUnique({
+        const user = await prisma.users.findUnique({
           where: { id: userId },
           select: { email: true, username: true },
         });
@@ -139,8 +139,10 @@ router.post(
         }
 
         // Create pending booking first
-        const booking = await prisma.medBedsBooking.create({
+        const booking = await prisma.medbeds_bookings.create({
           data: {
+            id: crypto.randomUUID(),
+            updatedAt: new Date(),
             userId,
             chamberType,
             chamberName,
@@ -186,7 +188,7 @@ router.post(
         });
 
         // Update booking with Stripe session ID
-        await prisma.medBedsBooking.update({
+        await prisma.medbeds_bookings.update({
           where: { id: booking.id },
           data: { stripeSessionId: session.id },
         });
@@ -216,13 +218,13 @@ router.get("/my-bookings", authenticateToken as any, async (req: any, res) => {
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
   try {
-    const bookings = await prisma.medBedsBooking.findMany({
+    const bookings = await prisma.medbeds_bookings.findMany({
       where: { userId },
       orderBy: { sessionDate: "desc" },
     });
 
     res.json(
-      bookings.map((b) => ({
+      bookings.map((b: any) => ({
         ...b,
         cost: b.cost.toString(),
       }))
@@ -242,10 +244,10 @@ router.get("/admin/bookings", requireAdmin as any, async (req, res) => {
     if (status) where.status = status;
     if (paymentStatus) where.paymentStatus = paymentStatus;
 
-    const bookings = await prisma.medBedsBooking.findMany({
+    const bookings = await prisma.medbeds_bookings.findMany({
       where,
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -259,7 +261,7 @@ router.get("/admin/bookings", requireAdmin as any, async (req, res) => {
     });
 
     res.json(
-      bookings.map((b) => ({
+      bookings.map((b: any) => ({
         ...b,
         cost: b.cost.toString(),
         user: b.user,
@@ -277,7 +279,7 @@ router.patch("/admin/bookings/:id", requireAdmin as any, async (req, res) => {
   const { status, effectiveness, notes } = req.body || {};
 
   try {
-    const booking = await prisma.medBedsBooking.update({
+    const booking = await prisma.medbeds_bookings.update({
       where: { id },
       data: {
         ...(status && { status }),
@@ -313,8 +315,10 @@ router.post("/book", authenticateToken as any, async (req: any, res) => {
     return res.status(400).json({ error: "Missing required fields" });
   try {
     const userId = req.user?.userId;
-    const ticket = await prisma.supportTicket.create({
+    const ticket = await prisma.support_tickets.create({
       data: {
+        id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+        updatedAt: new Date(),
         userId: userId,
         subject: "Med Beds Appointment Request",
         message: `Full Name: ${fullName}\nEmail: ${email}\nPhone: ${phone}\nPreferred Date: ${preferredDate}\nPreferred Time: ${

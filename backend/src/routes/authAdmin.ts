@@ -197,12 +197,12 @@ router.post("/verify-otp", async (req, res) => {
   delete otpStore[email];
 
   // Locate an ADMIN user so downstream auth middleware can validate userId
-  let adminUser = await prisma.user.findFirst({
+  let adminUser = await prisma.users.findFirst({
     where: { role: "ADMIN", active: true },
     select: { id: true, email: true, role: true },
   });
   if (!adminUser) {
-    const fallback = await prisma.user.findUnique({
+    const fallback = await prisma.users.findUnique({
       where: { email: ADMIN_EMAIL },
       select: { id: true, email: true, role: true, active: true },
     });
@@ -269,7 +269,7 @@ router.get("/dev/get-otp", (req, res) => {
 router.get("/logs", async (req, res) => {
   try {
     const logs = await prisma.adminLoginLog.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 100, // Last 100 login attempts
     });
 

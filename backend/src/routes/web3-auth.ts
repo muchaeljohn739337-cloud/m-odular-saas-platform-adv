@@ -94,8 +94,10 @@ router.post(
       const token = (req as any).token;
 
       // Log authentication event
-      await prisma.ethActivity.create({
+      await prisma.eth_activity.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId: user.id,
           address: user.ethWalletAddress || "",
           addressNormalized: (user.ethWalletAddress || "").toLowerCase(),
@@ -156,8 +158,10 @@ router.post(
       const user = (req as any).user;
 
       // Log wallet linking event
-      await prisma.ethActivity.create({
+      await prisma.eth_activity.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId: user.id,
           address: user.ethWalletAddress || "",
           addressNormalized: (user.ethWalletAddress || "").toLowerCase(),
@@ -200,7 +204,7 @@ router.post(
       const { userId } = (req as any).user;
 
       // Verify user owns this wallet
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
       });
 
@@ -211,14 +215,16 @@ router.post(
       }
 
       // Unlink wallet
-      const updatedUser = await prisma.user.update({
+      const updatedUser = await prisma.users.update({
         where: { id: userId },
         data: { ethWalletAddress: null },
       });
 
       // Log unlinking event
-      await prisma.ethActivity.create({
+      await prisma.eth_activity.create({
         data: {
+          id: (await import("crypto")).randomUUID?.() || `${Date.now()}`,
+          updatedAt: new Date(),
           userId: user.id,
           address: user.ethWalletAddress || "",
           addressNormalized: (user.ethWalletAddress || "").toLowerCase(),
@@ -262,7 +268,7 @@ router.get(
       const { userId, ethWalletAddress } = (req as any).user;
 
       // Get user details
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
       });
 
@@ -271,14 +277,14 @@ router.get(
       }
 
       // Get recent Web3 activity
-      const recentActivity = await prisma.ethActivity.findMany({
+      const recentActivity = await prisma.eth_activity.findMany({
         where: { userId: user.id },
-        orderBy: { createdAt: "desc" },
+        orderBy: { created_at: "desc" },
         take: 10,
       });
 
       // Check if wallet has any crypto balances (if implemented)
-      const wallets = await prisma.tokenWallet.findMany({
+      const wallets = await prisma.token_wallets.findMany({
         where: { userId: user.id },
       });
 
@@ -297,12 +303,12 @@ router.get(
           walletAddress: ethWalletAddress,
           walletLinked: !!user.ethWalletAddress,
           hasTokenWallets: wallets.length > 0,
-          tokenWallets: wallets.map((w) => ({
+          tokenWallets: wallets.map((w: any) => ({
             tokenType: w.tokenType,
             balance: w.balance.toString(),
           })),
         },
-        recentActivity: recentActivity.map((a) => ({
+        recentActivity: recentActivity.map((a: any) => ({
           type: a.type,
           timestamp: a.createdAt,
           note: a.note,
@@ -376,7 +382,7 @@ router.post(
       const { userId } = (req as any).user;
 
       // Get fresh user data
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
       });
 

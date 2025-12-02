@@ -28,7 +28,7 @@ router.post("/webhook", async (req, res) => {
 router.get("/current", async (_req, res) => {
   try {
     const sinceHour = new Date(Date.now() - 60 * 60 * 1000);
-    const blocksHour = await prisma.ipBlock.count({
+    const blocksHour = await prisma.ip_blocks.count({
       where: { updatedAt: { gt: sinceHour } },
     });
 

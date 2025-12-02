@@ -24,6 +24,7 @@ npm install
 **See [PRISMA_SETUP.md](./PRISMA_SETUP.md) for detailed options.**
 
 **Quick Docker Setup (Recommended):**
+
 ```powershell
 
 # Start PostgreSQL container
@@ -41,6 +42,7 @@ npx prisma migrate dev --name init
 ```
 
 **Alternative: SQLite (Quick Development)**
+
 ```powershell
 
 # Edit prisma/schema.prisma - change provider to "sqlite"
@@ -53,6 +55,7 @@ npx prisma migrate dev --name init
 ### 3. Configure Environment
 
 Create `.env` file (or copy from `.env.example`):
+
 ```env
 DATABASE_URL="postgresql://dev_user:dev_password@localhost:5432/advancia_ledger?schema=public"
 PORT=4000
@@ -93,9 +96,11 @@ npx prisma studio
 ```http
 GET /health
 ```
+
 Returns server status and uptime.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -119,11 +124,12 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "uuid",
   "userId": "user-123",
-  "amount": 50.00,
+  "amount": 50.0,
   "type": "credit",
   "status": "pending",
   "description": "Salary deposit",
@@ -140,12 +146,13 @@ GET /api/transactions/recent/:userId
 Returns the last 10 transactions for a user.
 
 **Response:**
+
 ```json
 [
   {
     "id": "uuid",
     "userId": "user-123",
-    "amount": 50.00,
+    "amount": 50.0,
     "type": "credit",
     "status": "completed",
     "timestamp": "2024-01-15T10:30:00.000Z"
@@ -168,6 +175,7 @@ GET /api/transactions/balance/:userId
 ```
 
 **Response:**
+
 ```json
 {
   "userId": "user-123",
@@ -192,6 +200,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "id": "cs_test_a1B2...",
@@ -222,23 +231,26 @@ Currently stores payload in application logs (plug in secure storage later).
 ### Client → Server
 
 **Join User Room**
+
 ```javascript
-socket.emit('join-room', userId);
+socket.emit("join-room", userId);
 ```
 
 ### Server → Client
 
 **New Transaction**
+
 ```javascript
-socket.on('transaction-created', (transaction) => {
-  console.log('New transaction:', transaction);
+socket.on("transaction-created", (transaction) => {
+  console.log("New transaction:", transaction);
 });
 ```
 
 **Global Transaction Broadcast**
+
 ```javascript
-socket.on('global-transaction', (transaction) => {
-  console.log('Transaction broadcast:', transaction);
+socket.on("global-transaction", (transaction) => {
+  console.log("Transaction broadcast:", transaction);
 });
 ```
 
@@ -368,6 +380,7 @@ Use the automated test suite:
 ```
 
 This will:
+
 1. Start the backend server in a new terminal
 2. Wait for startup
 3. Run health checks
@@ -382,6 +395,7 @@ Error: P1000: Authentication failed
 ```
 
 **Solution:**
+
 - Verify PostgreSQL is running: `Get-Service postgresql*`
 - Check DATABASE_URL in `.env`
 - For Docker: `docker ps` to verify container is running
@@ -394,6 +408,7 @@ Error: listen EADDRINUSE: address already in use :::4000
 ```
 
 **Solution:**
+
 ```powershell
 
 # Find process using port 4000
@@ -412,6 +427,7 @@ Error: Cannot find module '@prisma/client'
 ```
 
 **Solution:**
+
 ```powershell
 npx prisma generate
 ```
@@ -444,6 +460,7 @@ MIT
 ## Support
 
 For issues and questions:
+
 - Check [PRISMA_SETUP.md](./PRISMA_SETUP.md) for database setup
 - Review API endpoints documentation above
 - Check environment variables are correct
