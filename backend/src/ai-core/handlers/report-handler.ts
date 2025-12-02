@@ -241,7 +241,7 @@ export class ReportHandler {
     const [suggestions, workflows, auditLogs] = await Promise.all([
       prisma.ai_suggestions.findMany({
         where: {
-          createdAt: { gte: startDate, lte: endDate },
+          created_at: { gte: startDate, lte: endDate },
         },
         select: {
           type: true,

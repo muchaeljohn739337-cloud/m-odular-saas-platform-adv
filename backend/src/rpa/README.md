@@ -160,11 +160,10 @@ RPA_NOTIFICATIONS_ENABLED=true
 RPA_EMAIL_RATE_LIMIT=10            # Emails per minute
 RPA_SMS_RATE_LIMIT=5               # SMS per minute
 
-# Twilio SMS
+# SMS Pool (SMS Verification)
 
-TWILIO_ACCOUNT_SID=your-twilio-sid
-TWILIO_AUTH_TOKEN=your-twilio-token
-TWILIO_PHONE_NUMBER=+1234567890
+SMSPOOL_API_KEY=your-smspool-api-key
+SMSPOOL_SERVICE_ID=1              # 1 = Any service (default)
 
 # Email (Nodemailer)
 

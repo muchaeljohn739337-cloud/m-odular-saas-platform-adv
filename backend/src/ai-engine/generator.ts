@@ -143,7 +143,7 @@ async function generateImage(
   });
 
   return {
-    imageUrl: response.data[0].url || "",
+    imageUrl: response.data?.[0]?.url || \"\",
     tokensUsed: 0, // DALL-E pricing is per image, not per token
   };
 }
@@ -164,7 +164,6 @@ export async function aiGenerate(options: GenerateOptions): Promise<string> {
       prompt,
       metadata: metadata ? JSON.stringify(metadata) : null,
       status: "pending",
-      updatedAt: new Date(),
     },
   });
 
