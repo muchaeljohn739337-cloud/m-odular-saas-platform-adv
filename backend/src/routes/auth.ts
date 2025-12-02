@@ -234,6 +234,7 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
     // Create doctor (status: PENDING by default)
     const doctor = await prisma.doctors.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         email: data.email,
         passwordHash,
         firstName: data.firstName,
@@ -243,6 +244,7 @@ router.post("/register-doctor", validateApiKey, async (req, res) => {
         phoneNumber: data.phoneNumber || null,
         inviteCode: data.inviteCode,
         status: "PENDING",
+        updatedAt: new Date(),
       },
     });
 

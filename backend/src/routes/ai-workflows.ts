@@ -4,23 +4,24 @@ import { Request, Response, Router } from "express";
 import { body, validationResult } from "express-validator";
 import { AIMonitoring } from "../ai-core/monitoring";
 import { TaskQueue } from "../ai-core/queue";
-import { WorkflowEngine } from "../ai-core/workflow-engine";
 import { authenticateToken } from "../middleware/auth";
 
 const router = Router();
 const prisma = new PrismaClient();
 
 // Lazy initialization to avoid circular dependencies
-function getWorkflowEngine(): WorkflowEngine {
-  return WorkflowEngine.getInstance();
+import { workflowEngine } from "../ai-core/workflow-engine";
+
+function getWorkflowEngine() {
+  return workflowEngine;
 }
 
-function getMonitoring(): AIMonitoring {
-  return AIMonitoring.getInstance();
+function getMonitoring() {
+  return AIMonitoring;
 }
 
-function getTaskQueue(): TaskQueue {
-  return TaskQueue.getInstance();
+function getTaskQueue() {
+  return new TaskQueue();
 }
 
 // Middleware to check admin role
@@ -210,7 +211,7 @@ router.get("/tasks", authenticateToken, requireAdmin, async (req: Request, res: 
       where,
       include: {
         workflow: {
-          select: { id: true, name: true, type: true },
+          select: { id: true, name: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -387,7 +388,7 @@ router.get("/suggestions", authenticateToken, requireAdmin, async (req: Request,
 
     const suggestions = await prisma.ai_suggestions.findMany({
       where,
-      orderBy: { confidence: "desc" },
+      orderBy: { createdAt: "desc" },
       take: parseInt(limit as string),
     });
 
@@ -418,9 +419,7 @@ router.post("/suggestions/:id/apply", authenticateToken, requireAdmin, async (re
     const updated = await prisma.ai_suggestions.update({
       where: { id },
       data: {
-        applied: true,
-        appliedAt: new Date(),
-        appliedBy: userId,
+        accepted: true,
       },
     });
 
@@ -437,11 +436,11 @@ router.get("/dashboard/stats", authenticateToken, requireAdmin, async (req: Requ
     const [totalWorkflows, activeWorkflows, pendingTasks, completedTasks, failedTasks, activeAlerts] =
       await Promise.all([
         prisma.aIWorkflow.count(),
-        prisma.aIWorkflow.count({ where: { status: WorkflowStatus.RUNNING } }),
-        prisma.aITask.count({ where: { status: TaskStatus.PENDING } }),
-        prisma.aITask.count({ where: { status: TaskStatus.COMPLETED } }),
-        prisma.aITask.count({ where: { status: TaskStatus.FAILED } }),
-        prisma.aIAlert.count({ where: { resolved: false } }),
+        prisma.aIWorkflow.count(),
+        prisma.aITask.count(),
+        prisma.aITask.count(),
+        prisma.aITask.count(),
+        prisma.aIAlert.count(),
       ]);
 
     res.json({

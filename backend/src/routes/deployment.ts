@@ -32,7 +32,7 @@ router.get("/status", authenticateToken, requireAdmin, async (req: Request, res:
         enabled: deploymentAgent?.getConfig().enabled,
         schedule: deploymentAgent?.getConfig().schedule,
         lastRun: deploymentAgent?.getLastRun(),
-        status: deploymentAgent?.getStatus(),
+        status: deploymentAgent?.metadata.status,
       },
       recentDeployments: recentDeployments.map((d: any) => ({
         id: d.entityId,
@@ -89,7 +89,7 @@ router.get("/risk-assessment", authenticateToken, requireAdmin, async (req: Requ
 
     const activeUsers = await prisma.users.count({
       where: {
-        last_active: {
+        lastLogin: {
           gte: new Date(Date.now() - 15 * 60 * 1000),
         },
       },
@@ -191,7 +191,6 @@ router.post("/rollback", authenticateToken, requireAdmin, async (req: Request, r
     await prisma.audit_logs.create({
       data: {
         id: crypto.randomUUID(),
-        entityId: crypto.randomUUID(),
         action: "manual_rollback",
         userId: req.user?.id || "admin",
         changes: JSON.stringify({

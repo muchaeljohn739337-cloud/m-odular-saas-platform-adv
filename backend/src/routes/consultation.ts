@@ -53,7 +53,7 @@ router.get("/", authenticateToken, async (req, res) => {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     return res.json({ consultations });
@@ -122,11 +122,13 @@ router.post("/", authenticateToken, async (req, res) => {
 
     const consultation = await prisma.consultations.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         patientId: userId,
         doctorId: data.doctorId,
         symptoms: data.symptoms || null,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
         status: "SCHEDULED",
+        updatedAt: new Date(),
       },
     });
 
@@ -235,6 +237,7 @@ router.post("/message", authenticateToken, async (req, res) => {
 
     const message = await prisma.consultation_messages.create({
       data: {
+        id: (await import("crypto")).randomUUID(),
         consultationId: data.consultationId,
         senderType: userId ? "patient" : "doctor",
         senderId: userId || doctorId!,

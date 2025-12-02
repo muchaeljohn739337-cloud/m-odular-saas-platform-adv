@@ -20,7 +20,7 @@ class TransactionProcessor {
   /**
    * Validate a transaction for potential fraud or policy violations
    */
-  async validateTransaction(transaction_id: string): Promise<ValidationResult> {
+  async validateTransaction(transactionId: string): Promise<ValidationResult> {
     try {
       const result: ValidationResult = {
         isValid: true,
@@ -134,7 +134,7 @@ class TransactionProcessor {
   /**
    * Process a validated transaction
    */
-  async processTransaction(transaction_id: string): Promise<boolean> {
+  async processTransaction(transactionId: string): Promise<boolean> {
     try {
       const validation = await this.validateTransaction(transactionId);
 
@@ -298,7 +298,7 @@ class TransactionProcessor {
   /**
    * Log transaction processing to audit trail
    */
-  private async logTransaction(transaction_id: string, action: string, validation: ValidationResult): Promise<void> {
+  private async logTransaction(transactionId: string, action: string, validation: ValidationResult): Promise<void> {
     try {
       await prisma.audit_logs.create({
         data: {

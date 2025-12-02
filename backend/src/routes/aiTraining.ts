@@ -30,7 +30,7 @@ router.get("/data", requireAdmin as any, async (req, res) => {
       where,
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit),
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     const total = await prisma.ai_training_data.count({ where });
@@ -91,7 +91,7 @@ router.get("/models", requireAdmin as any, async (req, res) => {
   try {
     const models = await prisma.ai_models.findMany({
       where: { modelType: "bot_detection" },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     res.json(models);

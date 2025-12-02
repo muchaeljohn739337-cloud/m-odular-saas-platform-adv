@@ -91,15 +91,18 @@ router.post(
                   lifetimeEarned: { increment: bonusAmount },
                 },
                 create: {
+                  id: (await import("crypto")).randomUUID(),
                   userId: user.id,
                   balance: bonusAmount,
                   lifetimeEarned: bonusAmount,
                   tokenType: bonusType === "TRUMP_COIN" ? "TRUMP" : "ADVANCIA",
+                  updatedAt: new Date(),
                 },
               });
 
               await prisma.token_transactions.create({
                 data: {
+                  id: (await import("crypto")).randomUUID(),
                   walletId: wallet.id,
                   amount: bonusAmount,
                   type: "bonus",
@@ -122,11 +125,13 @@ router.post(
 
               await prisma.transactions.create({
                 data: {
+                  id: (await import("crypto")).randomUUID(),
                   userId: user.id,
                   amount: bonusAmount,
                   type: "credit",
                   status: "COMPLETED",
                   description: description || "Admin bulk USD bonus",
+                  updatedAt: new Date(),
                 },
               });
               break;
@@ -144,11 +149,13 @@ router.post(
 
               await prisma.transactions.create({
                 data: {
+                  id: (await import("crypto")).randomUUID(),
                   userId: user.id,
                   amount: bonusAmount,
                   type: "credit",
                   status: "COMPLETED",
                   description: description || "Admin MedBed credit bonus",
+                  updatedAt: new Date(),
                 },
               });
               break;
@@ -273,15 +280,18 @@ router.post(
             lifetimeEarned: { increment: bonusAmount },
           },
           create: {
+            id: (await import("crypto")).randomUUID(),
             userId: user.id,
             balance: bonusAmount,
             lifetimeEarned: bonusAmount,
             tokenType: bonusType === "TRUMP_COIN" ? "TRUMP" : "ADVANCIA",
+            updatedAt: new Date(),
           },
         });
 
         transaction = await prisma.token_transactions.create({
           data: {
+            id: (await import("crypto")).randomUUID(),
             walletId: wallet.id,
             amount: bonusAmount,
             type: "bonus",
@@ -298,11 +308,13 @@ router.post(
 
         transaction = await prisma.transactions.create({
           data: {
+            id: (await import("crypto")).randomUUID(),
             userId: user.id,
             amount: bonusAmount,
             type: "credit",
             status: "COMPLETED",
             description: description || `Admin ${bonusType} bonus`,
+            updatedAt: new Date(),
           },
         });
       }

@@ -126,7 +126,7 @@ router.get("/admin/tickets/:id", authenticateToken as any, requireAdmin as any, 
         if (sessionId) {
           messages = await (prisma as any).chatMessage.findMany({
             where: { sessionId: String(sessionId) },
-            orderBy: { created_at: "asc" },
+            orderBy: { createdAt: "asc" },
           });
         } else {
           const sessions = await (prisma as any).chatSession.findMany({
@@ -137,7 +137,7 @@ router.get("/admin/tickets/:id", authenticateToken as any, requireAdmin as any, 
           if (sessionIds.length) {
             messages = await (prisma as any).chatMessage.findMany({
               where: { sessionId: { in: sessionIds } },
-              orderBy: { created_at: "asc" },
+              orderBy: { createdAt: "asc" },
             });
           }
         }
@@ -286,7 +286,7 @@ router.get("/my/:id", authenticateToken as any, async (req: any, res: Response) 
       if (sessionId) {
         messages = await (prisma as any).chatMessage.findMany({
           where: { sessionId: String(sessionId) },
-          orderBy: { created_at: "asc" },
+          orderBy: { createdAt: "asc" },
         });
       } else {
         const sessions = await (prisma as any).chatSession.findMany({
@@ -297,7 +297,7 @@ router.get("/my/:id", authenticateToken as any, async (req: any, res: Response) 
         if (sessionIds.length) {
           messages = await (prisma as any).chatMessage.findMany({
             where: { sessionId: { in: sessionIds } },
-            orderBy: { created_at: "asc" },
+            orderBy: { createdAt: "asc" },
           });
         }
       }
