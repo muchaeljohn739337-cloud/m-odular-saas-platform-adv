@@ -461,6 +461,9 @@ MIT
 
 For issues and questions:
 
+- **GitHub Repository**: [modular-saas-platform](https://github.com/muchaeljohn739337-cloud/modular-saas-platform)
+- **Report Issues**: [GitHub Issues](https://github.com/muchaeljohn739337-cloud/modular-saas-platform/issues)
+- **Documentation**: See `/docs` folder for detailed guides
 - Check [PRISMA_SETUP.md](./PRISMA_SETUP.md) for database setup
 - Review API endpoints documentation above
 - Check environment variables are correct

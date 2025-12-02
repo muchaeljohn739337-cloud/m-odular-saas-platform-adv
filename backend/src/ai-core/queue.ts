@@ -38,9 +38,7 @@ let connection: Redis | null = null;
 //     console.warn("⚠️  Redis connection error in AI queue:", err.message);
 //   });
 // } else {
-console.warn(
-  "⚠️  Redis not configured for AI queue system. Queue features will be disabled."
-);
+console.warn("⚠️  Redis not configured for AI queue system. Queue features will be disabled.");
 // }
 
 // Queue names
@@ -101,19 +99,17 @@ if (connection) {
   };
 
   // Listen to queue events
-  Object.entries(queueEvents).forEach(([name, events]) => {
-    events.on("completed", ({ jobId }) => {
+  Object.entries(queueEvents).forEach(([name, events]: [string, QueueEvents]) => {
+    events.on("completed", ({ jobId }: { jobId: string }) => {
       logger.info(`Job completed in ${name}: ${jobId}`);
     });
 
-    events.on("failed", ({ jobId, failedReason }) => {
+    events.on("failed", ({ jobId, failedReason }: { jobId: string; failedReason: string }) => {
       logger.error(`Job failed in ${name}: ${jobId} - ${failedReason}`);
     });
 
-    events.on("progress", ({ jobId, data }) => {
-      logger.debug(
-        `Job progress in ${name}: ${jobId} - ${JSON.stringify(data)}`
-      );
+    events.on("progress", ({ jobId, data }: { jobId: string; data: any }) => {
+      logger.debug(`Job progress in ${name}: ${jobId} - ${JSON.stringify(data)}`);
     });
   });
 }
@@ -252,9 +248,7 @@ export class AIQueueManager {
   /**
    * Schedule code suggestion analysis
    */
-  static async scheduleCodeSuggestion(
-    data: CodeSuggestionJobData
-  ): Promise<Job<CodeSuggestionJobData> | null> {
+  static async scheduleCodeSuggestion(data: CodeSuggestionJobData): Promise<Job<CodeSuggestionJobData> | null> {
     if (!queues) {
       logger.warn("Queue system not available (Redis not configured)");
       return null;
@@ -272,7 +266,7 @@ export class AIQueueManager {
       logger.warn("Queue system not available (Redis not configured)");
       return null;
     }
-    const queue = Object.values(queues).find((q) => q.name === queueName);
+    const queue = Object.values(queues).find((q: Queue) => q.name === queueName) as Queue | undefined;
     if (!queue) {
       throw new Error(`Queue not found: ${queueName}`);
     }
@@ -299,8 +293,11 @@ export class AIQueueManager {
    * Get all queue statistics
    */
   static async getAllQueueStats() {
+    if (!queues) {
+      return [];
+    }
     const stats = await Promise.all(
-      Object.entries(queues).map(async ([name, queue]) => ({
+      Object.entries(queues).map(async ([name, queue]: [string, Queue]) => ({
         name,
         queueName: queue.name,
         stats: await this.getQueueStats(queue.name as QueueName),
@@ -338,9 +335,7 @@ export class AIQueueManager {
   static async cleanQueue(
     queueName: QueueName,
     grace: number = 3600000, // 1 hour
-    status:
-      | TaskStatusEnum.COMPLETED
-      | TaskStatusEnum.FAILED = TaskStatusEnum.COMPLETED
+    status: TaskStatusEnum.COMPLETED | TaskStatusEnum.FAILED = TaskStatusEnum.COMPLETED
   ) {
     const queue = Object.values(queues).find((q) => q.name === queueName);
     if (queue) {

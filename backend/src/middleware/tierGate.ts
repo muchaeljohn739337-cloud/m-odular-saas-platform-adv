@@ -495,26 +495,28 @@ export async function getTierComparison(): Promise<
   try {
     const plans = await prisma.pricingPlan.findMany({
       where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
+      orderBy: { displayOrder: "asc" },
     });
 
-    return plans.map((plan) => {
-      const tierKey = Object.keys(TIER_HIERARCHY).find((k) => plan.name.toLowerCase().includes(k)) || "free";
+    return plans.map(
+      (plan: { name: string; priceMonthly: any; priceYearly: any; aiRequestsPerDay: number; features: any }) => {
+        const tierKey = Object.keys(TIER_HIERARCHY).find((k) => plan.name.toLowerCase().includes(k)) || "free";
 
-      return {
-        name: plan.name,
-        price: {
-          monthly: Number(plan.priceMonthly),
-          yearly: Number(plan.priceYearly),
-        },
-        limits: {
-          ...DEFAULT_TIER_LIMITS[tierKey],
-          dailyAIRequests: plan.aiRequestsLimit,
-          ...((plan.features as Record<string, any>) || {}),
-        },
-        popular: plan.name.toLowerCase().includes("pro"),
-      };
-    });
+        return {
+          name: plan.name,
+          price: {
+            monthly: Number(plan.priceMonthly),
+            yearly: Number(plan.priceYearly),
+          },
+          limits: {
+            ...DEFAULT_TIER_LIMITS[tierKey],
+            dailyAIRequests: plan.aiRequestsPerDay,
+            ...((typeof plan.features === "string" ? JSON.parse(plan.features) : plan.features) || {}),
+          },
+          popular: plan.name.toLowerCase().includes("pro"),
+        };
+      }
+    );
   } catch {
     // Fallback to defaults
     return Object.entries(DEFAULT_TIER_LIMITS).map(([name, limits]) => ({
