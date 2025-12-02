@@ -2,8 +2,36 @@
 // Centralized configuration for all RPA automation tasks
 
 import dotenv from "dotenv";
+import { VaultService } from "../services/VaultService";
 
 dotenv.config();
+
+// Initialize Vault service for secure credential retrieval
+const vaultService = new VaultService();
+
+/**
+ * Get SMS Pool credentials from Vault or fallback to environment variables
+ */
+async function getSMSPoolCredentials() {
+  try {
+    if (process.env.VAULT_ENABLED === "true") {
+      const apiKey = await vaultService.getSecret("smspool_api_key");
+      const serviceId = await vaultService.getSecret("smspool_service_id");
+      return {
+        apiKey: apiKey || process.env.SMSPOOL_API_KEY,
+        serviceId: serviceId || process.env.SMSPOOL_SERVICE_ID || "1",
+      };
+    }
+  } catch (error) {
+    console.log("⚠️ Vault retrieval failed, using environment variables");
+  }
+
+  // Fallback to environment variables
+  return {
+    apiKey: process.env.SMSPOOL_API_KEY,
+    serviceId: process.env.SMSPOOL_SERVICE_ID || "1",
+  };
+}
 
 export const rpaConfig = {
   // Transaction Processing
@@ -47,8 +75,10 @@ export const rpaConfig = {
     sms: {
       enabled: process.env.RPA_SMS_ENABLED === "true",
       provider: "smspool",
-      smspoolApiKey: process.env.SMSPOOL_API_KEY,
-      smspoolServiceId: process.env.SMSPOOL_SERVICE_ID || "1",
+      // Credentials loaded from Vault (preferred) or environment variables (fallback)
+      // Use getSMSPoolCredentials() to access these values securely
+      smspoolApiKey: process.env.SMSPOOL_API_KEY, // Fallback only
+      smspoolServiceId: process.env.SMSPOOL_SERVICE_ID || "1", // Fallback only
     },
     throttle: {
       maxPerMinute: 60,
@@ -101,3 +131,6 @@ export const rpaConfig = {
 };
 
 export default rpaConfig;
+
+// Export Vault-backed credential getter
+export { getSMSPoolCredentials };

@@ -22,11 +22,56 @@ Add these variables to your `backend/.env` file:
 
 ```env
 # SMS Pool Configuration
-SMSPOOL_API_KEY=your-smspool-api-key-here
+SMSPOOL_API_KEY=SMSPOOL_fS2pMx2K7kxv2gotVOMPwQZEK8K9D0UG
 SMSPOOL_SERVICE_ID=1  # 1 = Any service (default)
 ```
 
-### 3. Service ID Options
+### 3. 🔐 Store Credentials in HashiCorp Vault (Recommended for Production)
+
+For enhanced security, store SMS Pool credentials in Vault instead of environment variables:
+
+**Step 1: Enable Vault**
+
+In your `backend/.env` file:
+
+```env
+VAULT_ENABLED=true
+VAULT_ADDR=http://localhost:8200  # Or your Vault server address
+VAULT_TOKEN=your-vault-token-here
+VAULT_NAMESPACE=  # Optional
+```
+
+**Step 2: Run the Vault Storage Script**
+
+```bash
+cd backend
+npx tsx scripts/store-smspool-in-vault.ts
+```
+
+This script will:
+
+- ✅ Store `SMSPOOL_API_KEY` in Vault with 90-day rotation policy
+- ✅ Store `SMSPOOL_SERVICE_ID` in Vault
+- ✅ Create audit logs for compliance
+- ✅ Encrypt credentials at rest
+
+**Step 3: Verify Vault Storage**
+
+The RPA config (`backend/src/rpa/config.ts`) automatically:
+
+1. Tries to fetch credentials from Vault first
+2. Falls back to environment variables if Vault is unavailable
+3. Logs the retrieval method for transparency
+
+**Benefits of Vault Storage:**
+
+- 🔒 Automatic credential rotation (90-day policy)
+- 📊 Complete audit trail of secret access
+- 🔐 AES-256-CBC encryption at rest
+- 👥 Admin-only access control
+- 🚀 Zero-trust architecture
+
+### 4. Service ID Options
 
 The `SMSPOOL_SERVICE_ID` determines which service to use for verification:
 
