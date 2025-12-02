@@ -76,18 +76,13 @@ class AISystemValidator {
 
       // Check for duplicate schemas
       const mainSchema = path.join(process.cwd(), "prisma", "schema.prisma");
-      const aiCoreSchema = path.join(
-        process.cwd(),
-        "prisma",
-        "ai-core-schema.prisma"
-      );
+      const aiCoreSchema = path.join(process.cwd(), "prisma", "ai-core-schema.prisma");
 
       if (fs.existsSync(mainSchema) && fs.existsSync(aiCoreSchema)) {
         this.results.push({
           passed: false,
           message: "⚠️  Prisma: Multiple schemas detected",
-          details:
-            "Merge ai-core-schema.prisma into schema.prisma to prevent conflicts",
+          details: "Merge ai-core-schema.prisma into schema.prisma to prevent conflicts",
         });
       } else {
         this.results.push({
@@ -109,35 +104,16 @@ class AISystemValidator {
   private async checkRequiredDependencies(): Promise<void> {
     console.log("\n📦 Checking dependencies...");
 
-    const packageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8")
-    );
+    const packageJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8"));
 
-    const required = [
-      "@anthropic-ai/sdk",
-      "openai",
-      "bullmq",
-      "ioredis",
-      "zod",
-    ];
+    const required = ["@anthropic-ai/sdk", "openai", "bullmq", "ioredis", "zod"];
 
-    const recommended = [
-      "langchain",
-      "@langchain/openai",
-      "@langchain/anthropic",
-      "n8n",
-      "ajv",
-      "ts-morph",
-    ];
+    const recommended = ["langchain", "@langchain/openai", "@langchain/anthropic", "n8n", "ajv", "ts-morph"];
 
-    const missing = required.filter(
-      (dep) =>
-        !packageJson.dependencies[dep] && !packageJson.devDependencies[dep]
-    );
+    const missing = required.filter((dep) => !packageJson.dependencies[dep] && !packageJson.devDependencies[dep]);
 
     const missingRecommended = recommended.filter(
-      (dep) =>
-        !packageJson.dependencies[dep] && !packageJson.devDependencies[dep]
+      (dep) => !packageJson.dependencies[dep] && !packageJson.devDependencies[dep]
     );
 
     if (missing.length === 0) {
@@ -170,13 +146,7 @@ class AISystemValidator {
 
     const required = ["DATABASE_URL", "JWT_SECRET", "NODE_ENV"];
 
-    const aiOptional = [
-      "OPENAI_API_KEY",
-      "ANTHROPIC_API_KEY",
-      "REDIS_URL",
-      "N8N_URL",
-      "N8N_API_KEY",
-    ];
+    const aiOptional = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "REDIS_URL", "N8N_URL", "N8N_API_KEY"];
 
     const missing = required.filter((key) => !process.env[key]);
     const missingAI = aiOptional.filter((key) => !process.env[key]);
@@ -218,9 +188,7 @@ class AISystemValidator {
       "src/ai-core/workflow-engine.ts",
     ];
 
-    const missing = coreFiles.filter(
-      (file) => !fs.existsSync(path.join(process.cwd(), file))
-    );
+    const missing = coreFiles.filter((file) => !fs.existsSync(path.join(process.cwd(), file)));
 
     if (missing.length === 0) {
       this.results.push({
@@ -244,9 +212,7 @@ class AISystemValidator {
 
     try {
       const agentDir = path.join(process.cwd(), "src", "agents");
-      const agentFiles = fs
-        .readdirSync(agentDir)
-        .filter((f) => f.endsWith("Agent.ts"));
+      const agentFiles = fs.readdirSync(agentDir).filter((f) => f.endsWith("Agent.ts"));
 
       this.results.push({
         passed: true,
@@ -268,7 +234,7 @@ class AISystemValidator {
 
     try {
       // Try to import and connect
-      const { default: prisma } = await import("../../prismaClient");
+      const { default: prisma } = await import("../../prismaClient.js");
       await prisma.$connect();
       await prisma.$disconnect();
 
@@ -308,9 +274,7 @@ class AISystemValidator {
     if (failed === 0) {
       console.log("🎉 System ready for AI expansion!");
       console.log("\nNext steps:");
-      console.log(
-        "1. Install recommended packages: npm install langchain @langchain/openai @langchain/anthropic n8n"
-      );
+      console.log("1. Install recommended packages: npm install langchain @langchain/openai @langchain/anthropic n8n");
       console.log("2. Review AI_EXPANSION_BLUEPRINT.md");
       console.log("3. Start with Phase 2: Create validation layer");
     } else {

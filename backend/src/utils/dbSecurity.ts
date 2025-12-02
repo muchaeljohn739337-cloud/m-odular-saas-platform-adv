@@ -23,10 +23,7 @@ const prisma = new PrismaClient();
  * Execute safe raw SQL query with parameterized inputs
  * Uses Prisma's tagged template for automatic escaping
  */
-export async function safeQuery<T = any>(
-  query: TemplateStringsArray,
-  ...values: any[]
-): Promise<T[]> {
+export async function safeQuery<T = any>(query: TemplateStringsArray, ...values: any[]): Promise<T[]> {
   try {
     // Prisma automatically escapes values in tagged templates
     return await prisma.$queryRaw<T[]>(query, ...values);
@@ -43,16 +40,9 @@ export async function safeQuery<T = any>(
  * Safely build dynamic table/column names using whitelist validation
  * NEVER allow user input directly as identifiers
  */
-export function sanitizeIdentifier(
-  identifier: string,
-  allowedValues: string[]
-): string {
+export function sanitizeIdentifier(identifier: string, allowedValues: string[]): string {
   if (!allowedValues.includes(identifier)) {
-    throw new Error(
-      `Invalid identifier: ${identifier}. Must be one of: ${allowedValues.join(
-        ", "
-      )}`
-    );
+    throw new Error(`Invalid identifier: ${identifier}. Must be one of: ${allowedValues.join(", ")}`);
   }
   return identifier;
 }
@@ -60,14 +50,11 @@ export function sanitizeIdentifier(
 /**
  * Validate and sanitize SQL LIMIT/OFFSET values
  */
-export function sanitizePaginationParams(params: {
-  limit?: number | string;
-  offset?: number | string;
-}): { limit: number; offset: number } {
-  const limit = Math.min(
-    Math.max(1, parseInt(String(params.limit || 100))),
-    1000
-  );
+export function sanitizePaginationParams(params: { limit?: number | string; offset?: number | string }): {
+  limit: number;
+  offset: number;
+} {
+  const limit = Math.min(Math.max(1, parseInt(String(params.limit || 100))), 1000);
   const offset = Math.max(0, parseInt(String(params.offset || 0)));
 
   if (isNaN(limit) || isNaN(offset)) {
@@ -85,14 +72,9 @@ export function sanitizeOrderBy(
   allowedColumns: string[],
   allowedDirections: string[] = ["ASC", "DESC"]
 ): string {
-  const [column, direction = "ASC"] = orderBy
-    .split(" ")
-    .map((s) => s.toUpperCase());
+  const [column, direction = "ASC"] = orderBy.split(" ").map((s) => s.toUpperCase());
 
-  const sanitizedColumn = sanitizeIdentifier(
-    column.toLowerCase(),
-    allowedColumns
-  );
+  const sanitizedColumn = sanitizeIdentifier(column.toLowerCase(), allowedColumns);
   const sanitizedDirection = sanitizeIdentifier(direction, allowedDirections);
 
   return `${sanitizedColumn} ${sanitizedDirection}`;
@@ -122,9 +104,7 @@ export async function executeWithRetry<T = any>(
 
       if (attempt < maxRetries) {
         // Exponential backoff: 100ms, 200ms, 400ms
-        await new Promise((resolve) =>
-          setTimeout(resolve, 100 * Math.pow(2, attempt - 1))
-        );
+        await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, attempt - 1)));
       }
     }
   }
@@ -135,10 +115,7 @@ export async function executeWithRetry<T = any>(
 /**
  * Safe bulk operations with transaction support
  */
-export async function safeBulkOperation<T>(
-  operations: Array<() => Promise<T>>,
-  batchSize: number = 100
-): Promise<T[]> {
+export async function safeBulkOperation<T>(operations: Array<() => Promise<T>>, batchSize: number = 100): Promise<T[]> {
   const results: T[] = [];
 
   // Process in batches to avoid overwhelming database
@@ -205,8 +182,7 @@ export async function checkDatabaseHealth(): Promise<{
  * Validate UUID format before database operations
  */
 export function isValidUUID(uuid: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 }
 
@@ -238,12 +214,7 @@ export async function safeQueryWithFilters(
   }
 ): Promise<any[]> {
   // Whitelist allowed tables
-  const allowedTables = [
-    "users",
-    "audit_logs",
-    "transactions",
-    "notifications",
-  ];
+  const allowedTables = ["users", "audit_logs", "transactions", "notifications"];
   sanitizeIdentifier(tableName, allowedTables);
 
   // Sanitize pagination
@@ -264,8 +235,7 @@ export async function safeQueryWithFilters(
       skip: offset,
       orderBy: options.orderBy
         ? {
-            [options.orderBy.split(" ")[0]]:
-              options.orderBy.split(" ")[1]?.toLowerCase() || "asc",
+            [options.orderBy.split(" ")[0]]: options.orderBy.split(" ")[1]?.toLowerCase() || "asc",
           }
         : undefined,
     });

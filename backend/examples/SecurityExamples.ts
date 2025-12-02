@@ -241,7 +241,6 @@ async function example8_BulkOperations() {
             userAgent: "SecurityExample",
             metadata: {},
             createdAt: new Date(),
-            updatedAt: new Date(),
           },
         })
     );
@@ -322,7 +321,7 @@ async function runAllExamples() {
     console.log("7. Batch operations with transaction support");
     console.log("\nSee DATABASE_SECURITY.md for complete documentation.");
   } catch (error) {
-    console.error("Example error:", error.message);
+    console.error("Example error:", (error as Error).message);
   } finally {
     await prisma.$disconnect();
   }

@@ -91,7 +91,7 @@ interface TierUser {
   tier?: string;
 }
 
-interface AuthenticatedRequest extends Omit<Request, 'user'> {
+interface AuthenticatedRequest extends Omit<Request, "user"> {
   user?: TierUser;
   tierLimits?: TierLimits;
   subscription?: {

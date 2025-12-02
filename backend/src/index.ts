@@ -7,20 +7,14 @@ import { Server as SocketIOServer } from "socket.io";
 import agentRoutes from "./agents/routes";
 import { getAgentScheduler } from "./agents/scheduler";
 import { autoRemember } from "./ai/autoRemember";
-import {
-  initializeMultiBrainAgent,
-  multiBrainAgent,
-} from "./ai/prisma/multiBrainAgent";
+import { initializeMultiBrainAgent, multiBrainAgent } from "./ai/prisma/multiBrainAgent";
 import { initializePrismaSolver } from "./ai/prisma/prismaSolverCore";
 import { recordCleanupAI } from "./ai/recordCleanupAI";
 import { surveillanceAI } from "./ai/surveillanceAI";
 import app from "./app";
 import { config } from "./config";
 import { activityLogger } from "./middleware/activityLogger";
-import {
-  applySecurityMiddleware,
-  forceHTTPS,
-} from "./middleware/httpsEnforcement";
+import { applySecurityMiddleware, forceHTTPS } from "./middleware/httpsEnforcement";
 import { rateLimit, validateInput } from "./middleware/security";
 import prisma from "./prismaClient";
 import adminRouter from "./routes/admin";
@@ -32,19 +26,14 @@ import aiSolverRouter from "./routes/aiSolver";
 import aiTrainingRouter from "./routes/aiTraining";
 import analyticsRouter from "./routes/analytics";
 import authRouter from "./routes/auth";
-import authAdminRouter, {
-  activeSessions,
-  setBroadcastSessions as setAuthBroadcast,
-} from "./routes/authAdmin";
+import authAdminRouter, { activeSessions, setBroadcastSessions as setAuthBroadcast } from "./routes/authAdmin";
 import botCheckRouter from "./routes/botCheck";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
 import web3AuthRouter from "./routes/web3-auth";
 // AI system imports for initialization
 import { aiCore } from "./ai-core";
 import { copilotService } from "./ai/copilot/CopilotService";
-import aiGeneratorRouter, {
-  setAIGeneratorSocketIO,
-} from "./routes/ai-generator";
+import aiGeneratorRouter, { setAIGeneratorSocketIO } from "./routes/ai-generator";
 import aiWorkflowsRouter from "./routes/ai-workflows";
 import aiWorkersRouter, { setAIWorkersSocketIO } from "./routes/aiWorkers";
 import consultationRouter from "./routes/consultation";
@@ -64,23 +53,16 @@ import markdownFixerRouter from "./routes/markdownFixer";
 import marketingRouter from "./routes/marketing";
 import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
-import paymentsRouter, {
-  handleStripeWebhook,
-  setPaymentsSocketIO,
-} from "./routes/payments";
+import paymentsRouter, { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
 import rewardsRouter, { setRewardSocketIO } from "./routes/rewards";
 import rpaRouter, { setRPASocketIO } from "./routes/rpa";
 import securityLevelRouter from "./routes/securityLevel";
-import sessionsRouter, {
-  setBroadcastSessions as setSessionsBroadcast,
-} from "./routes/sessions";
+import sessionsRouter, { setBroadcastSessions as setSessionsBroadcast } from "./routes/sessions";
 import subscribersRouter from "./routes/subscribers";
 import supportRouter, { setSupportSocketIO } from "./routes/support";
 import systemRouter from "./routes/system";
 import tokensRouter, { setTokenSocketIO } from "./routes/tokens";
-import transactionsRouter, {
-  setTransactionSocketIO,
-} from "./routes/transactions";
+import transactionsRouter, { setTransactionSocketIO } from "./routes/transactions";
 import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
 import vaultRouter, { setVaultSocketIO } from "./routes/vault";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
@@ -112,11 +94,7 @@ app.use(
 );
 
 // Stripe webhook MUST use raw body, so register it BEFORE express.json()
-app.post(
-  "/api/payments/webhook",
-  express.raw({ type: "application/json" }),
-  handleStripeWebhook
-);
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
 // JSON parser and common middlewares AFTER webhook
 app.use(express.json());
@@ -126,6 +104,31 @@ app.use("/api", rateLimit({ windowMs: 60_000, maxRequests: 300 }));
 
 // Health check endpoint (critical for production monitoring)
 app.use("/api", healthRouter);
+
+// robots.txt - SEO & crawler control
+app.get("/robots.txt", (req, res) => {
+  const robotsTxt = `# Advancia Pay Ledger - Backend API
+# https://advanciapay.com
+
+User-agent: *
+
+# Disallow all API endpoints from crawlers
+Disallow: /api/
+Disallow: /api/admin/
+Disallow: /api/internal/
+Disallow: /api/auth/
+Disallow: /api/payments/
+Disallow: /api/crypto/
+Disallow: /api/vault/
+
+# Allow health check for monitoring
+Allow: /api/health
+
+# Sitemap (served by frontend)
+# Sitemap: https://advanciapay.com/sitemap.xml
+`;
+  res.type("text/plain").send(robotsTxt);
+});
 
 // Regular routes
 app.use("/api/payments", paymentsRouter);
@@ -187,19 +190,12 @@ const io = new SocketIOServer(server, {
 // JWT auth for Socket.IO handshake
 io.use(async (socket, next) => {
   try {
-    const token =
-      (socket.handshake.auth?.token as string) ||
-      (socket.handshake.query?.token as string);
+    const token = (socket.handshake.auth?.token as string) || (socket.handshake.query?.token as string);
     const guestSessionId =
-      (socket.handshake.auth?.guestSessionId as string) ||
-      (socket.handshake.query?.guestSessionId as string);
+      (socket.handshake.auth?.guestSessionId as string) || (socket.handshake.query?.guestSessionId as string);
     if (!token) {
       // Allow unauthenticated chat listeners for guest chat sessions
-      if (
-        guestSessionId &&
-        typeof guestSessionId === "string" &&
-        guestSessionId.length >= 6
-      ) {
+      if (guestSessionId && typeof guestSessionId === "string" && guestSessionId.length >= 6) {
         (socket as any).data = { guestSessionId };
         return next();
       }
@@ -214,8 +210,7 @@ io.use(async (socket, next) => {
       where: { id: payload.userId },
       select: { id: true, role: true, active: true },
     });
-    if (!user || user.active === false)
-      return next(new Error("Account disabled"));
+    if (!user || user.active === false) return next(new Error("Account disabled"));
     (socket as any).data = { userId: user.id, role: user.role };
     next();
   } catch (e) {
@@ -295,9 +290,7 @@ async function startServer() {
     console.log("✅ Database connection successful");
 
     // Initialize Auto-Precision Core
-    const {
-      initializeAutoPrecision,
-    } = require("./ai/auto_precision_integration");
+    const { initializeAutoPrecision } = require("./ai/auto_precision_integration");
     await initializeAutoPrecision();
 
     // Initialize Governance AI

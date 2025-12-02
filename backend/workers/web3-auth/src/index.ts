@@ -14,6 +14,11 @@ interface KVNamespace {
   delete(key: string): Promise<void>;
 }
 
+interface ExecutionContext {
+  waitUntil(promise: Promise<any>): void;
+  passThroughOnException(): void;
+}
+
 interface Env {
   WEB3_NONCES: KVNamespace;
   RATE_LIMITS: KVNamespace;

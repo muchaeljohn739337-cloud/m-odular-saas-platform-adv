@@ -25,8 +25,7 @@ const router = Router();
  * Gets IP, country, KYC status, transaction history
  */
 async function enrichUserData(req: Request, userId?: string) {
-  const ipAddress =
-    req.ip || (req.headers["x-forwarded-for"] as string) || "0.0.0.0";
+  const ipAddress = req.ip || (req.headers["x-forwarded-for"] as string) || "0.0.0.0";
 
   if (!userId) {
     return {
@@ -161,8 +160,7 @@ router.get("/jurisdiction", async (req: Request, res: Response) => {
     console.error("❌ Jurisdiction detection error:", error);
     return res.status(500).json({
       success: false,
-      error:
-        error.message || "Internal server error during jurisdiction detection",
+      error: error.message || "Internal server error during jurisdiction detection",
     });
   }
 });
@@ -329,59 +327,54 @@ router.get("/rules/:jurisdiction", async (req: Request, res: Response) => {
  * Get compliance report for specific transaction
  * Params: transactionId
  */
-router.get(
-  "/compliance/:transactionId",
-  authenticateToken,
-  async (req: Request, res: Response) => {
-    try {
-      const { transactionId } = req.params;
+router.get("/compliance/:transactionId", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { transactionId } = req.params;
 
-      // Get compliance logs for transaction
-      const logs = await prisma.compliance_logs.findMany({
-        where: {
-          payment_id: transactionId,
-        },
-        orderBy: {
-          timestamp: "desc",
-        },
-      });
+    // Get compliance logs for transaction
+    const logs = await prisma.compliance_logs.findMany({
+      where: {
+        payment_id: transactionId,
+      },
+      orderBy: {
+        timestamp: "desc",
+      },
+    });
 
-      if (logs.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: `No compliance logs found for transaction ${transactionId}`,
-        });
-      }
-
-      // Get risk assessment if exists
-      const riskAssessment = await prisma.risk_assessments.findFirst({
-        where: { transaction_id: transactionId },
-        orderBy: { assessedAt: "desc" },
-      });
-
-      // Get compliance alerts if any
-      const alerts = await prisma.compliance_alerts.findMany({
-        where: { transaction_id: transactionId },
-        orderBy: { created_at: "desc" },
-      });
-
-      return res.status(200).json({
-        success: true,
-        transaction_id: transactionId,
-        compliance_logs: logs,
-        risk_assessment: riskAssessment,
-        alerts,
-      });
-    } catch (error: any) {
-      console.error("❌ Compliance report error:", error);
-      return res.status(500).json({
+    if (logs.length === 0) {
+      return res.status(404).json({
         success: false,
-        error:
-          error.message || "Internal server error during compliance report",
+        error: `No compliance logs found for transaction ${transactionId}`,
       });
     }
+
+    // Get risk assessment if exists
+    const riskAssessment = await prisma.risk_assessments.findFirst({
+      where: { transaction_id: transactionId },
+      orderBy: { assessedAt: "desc" },
+    });
+
+    // Get compliance alerts if any
+    const alerts = await prisma.compliance_alerts.findMany({
+      where: { transaction_id: transactionId },
+      orderBy: { created_at: "desc" },
+    });
+
+    return res.status(200).json({
+      success: true,
+      transaction_id: transactionId,
+      compliance_logs: logs,
+      risk_assessment: riskAssessment,
+      alerts,
+    });
+  } catch (error: any) {
+    console.error("❌ Compliance report error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error during compliance report",
+    });
   }
-);
+});
 
 // ═══════════════════════════════════════════════════════════════
 // ROUTE 7: Get Governance Statistics (Admin Only)
@@ -392,71 +385,64 @@ router.get(
  * Get Governance AI statistics
  * Requires admin authentication
  */
-router.get(
-  "/statistics",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const governanceAI = getGovernanceAI();
-      const stats = governanceAI.getStatistics();
+router.get("/statistics", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const governanceAI = getGovernanceAI();
+    const stats = governanceAI.getStatistics();
 
-      // Get database statistics
-      const [totalLogs, totalAlerts, openAlerts, totalRiskAssessments] =
-        await Promise.all([
-          prisma.compliance_logs.count(),
-          prisma.compliance_alerts.count(),
-          prisma.compliance_alerts.count({ where: { status: "OPEN" } }),
-          prisma.risk_assessments.count(),
-        ]);
+    // Get database statistics
+    const [totalLogs, totalAlerts, openAlerts, totalRiskAssessments] = await Promise.all([
+      prisma.compliance_logs.count(),
+      prisma.compliance_alerts.count(),
+      prisma.compliance_alerts.count({ where: { status: "OPEN" } }),
+      prisma.risk_assessments.count(),
+    ]);
 
-      // Get jurisdiction breakdown
-      const jurisdictionBreakdown = await prisma.compliance_logs.groupBy({
-        by: ["jurisdiction"],
-        _count: true,
-        orderBy: {
-          _count: {
-            jurisdiction: "desc",
-          },
+    // Get jurisdiction breakdown
+    const jurisdictionBreakdown = await prisma.compliance_logs.groupBy({
+      by: ["jurisdiction"],
+      _count: true,
+      orderBy: {
+        _count: {
+          jurisdiction: "desc",
         },
-      });
+      },
+    });
 
-      // Get processor usage
-      const processorUsage = await prisma.compliance_logs.groupBy({
-        by: ["processor"],
-        _count: true,
-        where: {
-          processor: { not: null },
+    // Get processor usage
+    const processorUsage = await prisma.compliance_logs.groupBy({
+      by: ["processor"],
+      _count: true,
+      where: {
+        processor: { not: null },
+      },
+      orderBy: {
+        _count: {
+          processor: "desc",
         },
-        orderBy: {
-          _count: {
-            processor: "desc",
-          },
-        },
-      });
+      },
+    });
 
-      return res.status(200).json({
-        success: true,
-        runtime_stats: stats,
-        database_stats: {
-          total_logs: totalLogs,
-          total_alerts: totalAlerts,
-          open_alerts: openAlerts,
-          total_risk_assessments: totalRiskAssessments,
-        },
-        jurisdiction_breakdown: jurisdictionBreakdown,
-        processor_usage: processorUsage,
-      });
-    } catch (error: any) {
-      console.error("❌ Statistics error:", error);
-      return res.status(500).json({
-        success: false,
-        error:
-          error.message || "Internal server error during statistics retrieval",
-      });
-    }
+    return res.status(200).json({
+      success: true,
+      runtime_stats: stats,
+      database_stats: {
+        total_logs: totalLogs,
+        total_alerts: totalAlerts,
+        open_alerts: openAlerts,
+        total_risk_assessments: totalRiskAssessments,
+      },
+      jurisdiction_breakdown: jurisdictionBreakdown,
+      processor_usage: processorUsage,
+    });
+  } catch (error: any) {
+    console.error("❌ Statistics error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error during statistics retrieval",
+    });
   }
-);
+});
 
 // ═══════════════════════════════════════════════════════════════
 // ROUTE 8: Update Jurisdiction Rules (Admin Only)
@@ -467,55 +453,44 @@ router.get(
  * Update compliance rules for jurisdiction
  * Requires admin authentication
  */
-router.put(
-  "/rules/:jurisdiction",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { jurisdiction } = req.params;
-      const {
-        regulators,
-        requirements,
-        allowed_processors,
-        restricted_countries,
-        compliance_level,
-      } = req.body;
+router.put("/rules/:jurisdiction", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { jurisdiction } = req.params;
+    const { regulators, requirements, allowed_processors, restricted_countries, compliance_level } = req.body;
 
-      // Normalize jurisdiction
-      const normalizedJurisdiction = jurisdiction.toUpperCase();
+    // Normalize jurisdiction
+    const normalizedJurisdiction = jurisdiction.toUpperCase();
 
-      // Update rules
-      const updatedRules = await prisma.jurisdiction_rules.update({
-        where: { jurisdiction: normalizedJurisdiction },
-        data: {
-          regulators: regulators || undefined,
-          requirements: requirements || undefined,
-          allowed_processors: allowed_processors || undefined,
-          restrictedCountries: restricted_countries || undefined,
-          complianceLevel: compliance_level || undefined,
-          lastUpdated: new Date(),
-        },
-      });
+    // Update rules
+    const updatedRules = await prisma.jurisdiction_rules.update({
+      where: { jurisdiction: normalizedJurisdiction },
+      data: {
+        regulators: regulators || undefined,
+        requirements: requirements || undefined,
+        allowed_processors: allowed_processors || undefined,
+        restrictedCountries: restricted_countries || undefined,
+        complianceLevel: compliance_level || undefined,
+        lastUpdated: new Date(),
+      },
+    });
 
-      // Clear cache in Governance AI
-      const governanceAI = getGovernanceAI();
-      governanceAI.clearCaches();
+    // Clear cache in Governance AI
+    const governanceAI = getGovernanceAI();
+    governanceAI.clearCaches();
 
-      return res.status(200).json({
-        success: true,
-        message: `Jurisdiction rules for ${normalizedJurisdiction} updated successfully`,
-        rules: updatedRules,
-      });
-    } catch (error: any) {
-      console.error("❌ Rules update error:", error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || "Internal server error during rules update",
-      });
-    }
+    return res.status(200).json({
+      success: true,
+      message: `Jurisdiction rules for ${normalizedJurisdiction} updated successfully`,
+      rules: updatedRules,
+    });
+  } catch (error: any) {
+    console.error("❌ Rules update error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error during rules update",
+    });
   }
-);
+});
 
 // ═══════════════════════════════════════════════════════════════
 // ROUTE 9: Resolve Compliance Alert (Admin Only)
@@ -526,47 +501,42 @@ router.put(
  * Resolve a compliance alert
  * Requires admin authentication
  */
-router.put(
-  "/alerts/:alertId/resolve",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { alertId } = req.params;
-      const { resolution_notes, status } = req.body;
+router.put("/alerts/:alertId/resolve", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { alertId } = req.params;
+    const { resolution_notes, status } = req.body;
 
-      if (!status || !["RESOLVED", "FALSE_POSITIVE"].includes(status)) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid status. Must be RESOLVED or FALSE_POSITIVE",
-        });
-      }
-
-      // Update alert
-      const updatedAlert = await prisma.compliance_alerts.update({
-        where: { id: alertId },
-        data: {
-          status,
-          resolution_notes: resolution_notes || "",
-          resolvedAt: new Date(),
-          assignedTo: (req as any).user?.id, // From authenticateToken middleware
-        },
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: `Compliance alert ${alertId} resolved`,
-        alert: updatedAlert,
-      });
-    } catch (error: any) {
-      console.error("❌ Alert resolution error:", error);
-      return res.status(500).json({
+    if (!status || !["RESOLVED", "FALSE_POSITIVE"].includes(status)) {
+      return res.status(400).json({
         success: false,
-        error: error.message || "Internal server error during alert resolution",
+        error: "Invalid status. Must be RESOLVED or FALSE_POSITIVE",
       });
     }
+
+    // Update alert
+    const updatedAlert = await prisma.compliance_alerts.update({
+      where: { id: alertId },
+      data: {
+        status,
+        resolution_notes: resolution_notes || "",
+        resolvedAt: new Date(),
+        assignedTo: (req as any).user?.id, // From authenticateToken middleware
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Compliance alert ${alertId} resolved`,
+      alert: updatedAlert,
+    });
+  } catch (error: any) {
+    console.error("❌ Alert resolution error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error during alert resolution",
+    });
   }
-);
+});
 
 // ═══════════════════════════════════════════════════════════════
 // ROUTE 10: Get Open Compliance Alerts (Admin Only)
@@ -577,37 +547,208 @@ router.put(
  * Get all open compliance alerts
  * Requires admin authentication
  */
-router.get(
-  "/alerts",
-  authenticateToken,
-  requireAdmin,
-  async (req: Request, res: Response) => {
-    try {
-      const { status, severity, limit } = req.query;
+router.get("/alerts", authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { status, severity, limit } = req.query;
 
-      const alerts = await prisma.compliance_alerts.findMany({
-        where: {
-          status: status ? (status as string) : "OPEN",
-          severity: severity ? (severity as string) : undefined,
-        },
-        orderBy: [{ severity: "desc" }, { created_at: "desc" }],
-        take: limit ? parseInt(limit as string) : 100,
-      });
+    const alerts = await prisma.compliance_alerts.findMany({
+      where: {
+        status: status ? (status as string) : "OPEN",
+        severity: severity ? (severity as string) : undefined,
+      },
+      orderBy: [{ severity: "desc" }, { created_at: "desc" }],
+      take: limit ? parseInt(limit as string) : 100,
+    });
 
-      return res.status(200).json({
-        success: true,
-        count: alerts.length,
-        alerts,
-      });
-    } catch (error: any) {
-      console.error("❌ Alerts retrieval error:", error);
-      return res.status(500).json({
+    return res.status(200).json({
+      success: true,
+      count: alerts.length,
+      alerts,
+    });
+  } catch (error: any) {
+    console.error("❌ Alerts retrieval error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error during alerts retrieval",
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ROUTE 11: Tax Calculator
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Tax rates by jurisdiction
+ */
+const TAX_RATES: Record<string, { name: string; rates: Record<string, number>; currency: string }> = {
+  IN: {
+    name: "India (GST)",
+    currency: "INR",
+    rates: {
+      exempt: 0,
+      essential: 0,
+      reduced: 5,
+      standard: 12,
+      higher: 18,
+      luxury: 28,
+    },
+  },
+  US: {
+    name: "United States (Sales Tax)",
+    currency: "USD",
+    rates: {
+      exempt: 0,
+      reduced: 4,
+      standard: 7,
+      higher: 10,
+    },
+  },
+  GB: {
+    name: "United Kingdom (VAT)",
+    currency: "GBP",
+    rates: {
+      exempt: 0,
+      reduced: 5,
+      standard: 20,
+    },
+  },
+  EU: {
+    name: "European Union (VAT)",
+    currency: "EUR",
+    rates: {
+      exempt: 0,
+      reduced: 9,
+      standard: 21,
+      luxury: 27,
+    },
+  },
+};
+
+/**
+ * POST /api/governance/calculate
+ * Calculate tax for a given amount and jurisdiction
+ * Body: { amount, jurisdiction, rateType, hsnCode? }
+ */
+router.post("/calculate", async (req: Request, res: Response) => {
+  try {
+    const { amount, jurisdiction = "IN", rateType = "standard", hsnCode } = req.body;
+
+    // Validate amount
+    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      return res.status(400).json({
         success: false,
-        error: error.message || "Internal server error during alerts retrieval",
+        error: "Invalid amount. Must be a positive number.",
       });
     }
+
+    const baseAmount = parseFloat(amount);
+    const jurisdictionUpper = jurisdiction.toUpperCase();
+
+    // Get tax rates for jurisdiction
+    const taxConfig = TAX_RATES[jurisdictionUpper];
+    if (!taxConfig) {
+      return res.status(400).json({
+        success: false,
+        error: `Unsupported jurisdiction: ${jurisdiction}. Supported: ${Object.keys(TAX_RATES).join(", ")}`,
+      });
+    }
+
+    // Get rate
+    const rateKey = rateType.toLowerCase();
+    const rate = taxConfig.rates[rateKey];
+    if (rate === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid rate type: ${rateType}. Available for ${jurisdictionUpper}: ${Object.keys(taxConfig.rates).join(", ")}`,
+      });
+    }
+
+    // Calculate tax
+    const taxAmount = (baseAmount * rate) / 100;
+    const totalAmount = baseAmount + taxAmount;
+
+    // Build response
+    const result = {
+      success: true,
+      calculation: {
+        baseAmount: Number(baseAmount.toFixed(2)),
+        taxRate: rate,
+        taxAmount: Number(taxAmount.toFixed(2)),
+        totalAmount: Number(totalAmount.toFixed(2)),
+        currency: taxConfig.currency,
+      },
+      jurisdiction: {
+        code: jurisdictionUpper,
+        name: taxConfig.name,
+        rateType: rateKey,
+      },
+      breakdown: {
+        subtotal: Number(baseAmount.toFixed(2)),
+        [`${taxConfig.name.includes("GST") ? "GST" : taxConfig.name.includes("VAT") ? "VAT" : "Tax"} @ ${rate}%`]:
+          Number(taxAmount.toFixed(2)),
+        total: Number(totalAmount.toFixed(2)),
+      },
+      hsnCode: hsnCode || null,
+      timestamp: new Date().toISOString(),
+    };
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error("❌ Tax calculation error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error during tax calculation",
+    });
   }
-);
+});
+
+/**
+ * GET /api/governance/tax-rates
+ * Get available tax rates for all jurisdictions
+ */
+router.get("/tax-rates", async (req: Request, res: Response) => {
+  try {
+    const { jurisdiction } = req.query;
+
+    if (jurisdiction) {
+      const code = (jurisdiction as string).toUpperCase();
+      const config = TAX_RATES[code];
+      if (!config) {
+        return res.status(404).json({
+          success: false,
+          error: `Jurisdiction not found: ${code}`,
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        jurisdiction: {
+          code,
+          ...config,
+        },
+      });
+    }
+
+    // Return all jurisdictions
+    const jurisdictions = Object.entries(TAX_RATES).map(([code, config]) => ({
+      code,
+      name: config.name,
+      currency: config.currency,
+      rates: config.rates,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      jurisdictions,
+    });
+  } catch (error: any) {
+    console.error("❌ Tax rates retrieval error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════
 // EXPORT ROUTER
