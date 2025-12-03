@@ -197,7 +197,12 @@ Return as JSON array with format:
       }
 
       // Parse AI response
-      const tasks = JSON.parse(content.replace(/```json\n?/g, "").replace(/```\n?/g, ""));
+      const backtick = String.fromCharCode(96);
+      const tripleBacktick = backtick + backtick + backtick;
+      let cleanTaskContent = content;
+      cleanTaskContent = cleanTaskContent.split(tripleBacktick + "json").join("");
+      cleanTaskContent = cleanTaskContent.split(tripleBacktick).join("");
+      const tasks = JSON.parse(cleanTaskContent);
 
       this.context.logger.info(`[ProjectPlannerAgent] AI generated ${tasks.length} task suggestions`);
 
@@ -250,7 +255,7 @@ Description: ${task.description || "No description"}
 Priority: ${task.priority}
 
 Provide a realistic time estimate in hours (integer). Consider complexity and priority.
-Reply with ONLY a number (e.g., 8)\`;
+Reply with ONLY a number (e.g., 8)`;
 
         const response = await getOpenAI().chat.completions.create({
           model: "gpt-3.5-turbo",
@@ -376,11 +381,16 @@ Reply with ONLY a number (e.g., 8)\`;
           const content = response.choices[0]?.message?.content;
           if (!content) continue;
 
-          const suggestions = JSON.parse(content.replace(/```json\n?/g, "").replace(/```\n?/g, ""));
+          const backtick = String.fromCharCode(96);
+          const tripleBacktick = backtick + backtick + backtick;
+          let cleanContent = content;
+          cleanContent = cleanContent.split(tripleBacktick + "json").join("");
+          cleanContent = cleanContent.split(tripleBacktick).join("");
+          const suggestions = JSON.parse(cleanContent);
 
           if (suggestions.length > 0) {
             this.context.logger.info(
-              `[ProjectPlannerAgent] AI suggested ${suggestions.length} task dependencies for project "${project.name}"`
+              "[ProjectPlannerAgent] AI suggested " + suggestions.length + " task dependencies for project '" + project.name + "'"
             );
 
             // Store suggestions but don't auto-apply (require human approval)
@@ -397,7 +407,7 @@ Reply with ONLY a number (e.g., 8)\`;
             }
           }
         } catch (error: any) {
-          this.context.logger.warn(`[ProjectPlannerAgent] Failed to suggest dependencies: ${error.message}`);
+          this.context.logger.warn("[ProjectPlannerAgent] Failed to suggest dependencies: " + error.message);
         }
       }
     }
@@ -433,7 +443,7 @@ Reply with ONLY a number (e.g., 8)\`;
 
   private async notifyBlockedTasks(project: any, blockedTasks: any[]): Promise<void> {
     if (this.context.io) {
-      this.context.io.to(`user:${project.ownerId}`).emit("project:blocked-tasks", {
+      this.context.io.to("user:" + project.ownerId).emit("project:blocked-tasks", {
         projectId: project.id,
         projectName: project.name,
         blockedCount: blockedTasks.length,
@@ -448,7 +458,7 @@ Reply with ONLY a number (e.g., 8)\`;
 
   private async notifyUnassignedTasks(project: any, tasks: any[]): Promise<void> {
     if (this.context.io) {
-      this.context.io.to(`user:${project.ownerId}`).emit("project:unassigned-high-priority", {
+      this.context.io.to("user:" + project.ownerId).emit("project:unassigned-high-priority", {
         projectId: project.id,
         projectName: project.name,
         taskCount: tasks.length,
@@ -463,11 +473,11 @@ Reply with ONLY a number (e.g., 8)\`;
 
   private async notifyLowProjectHealth(project: any, healthScore: number): Promise<void> {
     if (this.context.io) {
-      this.context.io.to(`user:${project.ownerId}`).emit("project:low-health", {
+      this.context.io.to("user:" + project.ownerId).emit("project:low-health", {
         projectId: project.id,
         projectName: project.name,
         healthScore,
-        message: `Project health is at ${healthScore}/100. Review blocked, overdue, or unassigned tasks.`,
+        message: "Project health is at " + healthScore + "/100. Review blocked, overdue, or unassigned tasks.",
       });
     }
   }
