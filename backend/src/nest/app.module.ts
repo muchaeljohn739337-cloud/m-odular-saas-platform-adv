@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import { AiModule } from "./ai/ai.module";
 import { AuthModule } from "./auth/auth.module";
 import { BlogModule } from "./blog/blog.module";
+import { CalendarModule } from "./calendar/calendar.module";
 import { HealthController } from "./health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { UserModule } from "./user/user.module";
@@ -23,6 +24,7 @@ import { UserModule } from "./user/user.module";
     UserModule,
     BlogModule,
     AiModule,
+    CalendarModule,
   ],
   controllers: [HealthController],
 })
