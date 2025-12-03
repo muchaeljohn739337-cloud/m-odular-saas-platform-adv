@@ -1,9 +1,19 @@
 import OpenAI from "openai";
 import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not set. Please configure it in .env file.");
+    }
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 export class ProjectPlannerAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -170,7 +180,7 @@ Return as JSON array with format:
   }
 ]`;
 
-      const response = await openai.chat.completions.create({
+      const response = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           { role: "system", content: "You are a project management expert. Always return valid JSON." },
@@ -240,9 +250,9 @@ Description: ${task.description || "No description"}
 Priority: ${task.priority}
 
 Provide a realistic time estimate in hours (integer). Consider complexity and priority.
-Reply with ONLY a number (e.g., 8)`;
+Reply with ONLY a number (e.g., 8)\`;
 
-        const response = await openai.chat.completions.create({
+        const response = await getOpenAI().chat.completions.create({
           model: "gpt-3.5-turbo",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.3,
@@ -364,7 +374,7 @@ Reply with JSON array of dependencies:
 
 Only suggest dependencies if there's a clear logical sequence. If no dependencies are needed, return empty array [].`;
 
-          const response = await openai.chat.completions.create({
+          const response = await getOpenAI().chat.completions.create({
             model: "gpt-4",
             messages: [
               { role: "system", content: "You are a project management expert." },

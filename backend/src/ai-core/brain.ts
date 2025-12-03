@@ -2,14 +2,33 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { logger } from "../utils/logger";
 
-// Initialize AI clients
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-load AI clients to avoid startup errors
+let openai: OpenAI | null = null;
+let anthropic: Anthropic | null = null;
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+function getOpenAI(): OpenAI {
+  if (!openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not set. Please configure it in .env file.");
+    }
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
+
+function getAnthropic(): Anthropic {
+  if (!anthropic) {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not set. Please configure it in .env file.");
+    }
+    anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+  }
+  return anthropic;
+}
 
 export type AIModel =
   | "gpt-4"
@@ -61,7 +80,7 @@ export class AIBrainCell {
    * OpenAI GPT analysis
    */
   private async analyzeWithOpenAI(request: AIRequest): Promise<AIResponse> {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: request.model as "gpt-4" | "gpt-3.5-turbo",
       messages: [
         { role: "system", content: request.systemPrompt },
@@ -89,7 +108,7 @@ export class AIBrainCell {
    * Claude analysis
    */
   private async analyzeWithClaude(request: AIRequest): Promise<AIResponse> {
-    const response = await anthropic.messages.create({
+    const response = await getAnthropic().messages.create({
       model: request.model.replace("claude-3-", "claude-3-") as any,
       system: request.systemPrompt,
       messages: [{ role: "user", content: request.userPrompt }],

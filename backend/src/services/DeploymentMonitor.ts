@@ -5,7 +5,6 @@
  */
 
 import prisma from "../prismaClient";
-import { AgentAction, agentConfig } from "./agent-config";
 
 export interface DeploymentMetrics {
   deploymentId: string;
@@ -86,17 +85,17 @@ export class DeploymentMonitor {
       await prisma.audit_logs.create({
         data: {
           action: "DEPLOYMENT_STARTED",
-          userId: performedBy,
-          resourceType: "DEPLOYMENT",
-          resourceId: deploymentId,
+          user_id: performedBy,
+          resource_type: "DEPLOYMENT",
+          resource_id: deploymentId,
           changes: JSON.stringify({
             actionId: action.id,
             actionName: action.name,
             riskLevel: action.riskLevel,
             estimatedDuration: action.estimatedDuration,
           }),
-          ipAddress: "127.0.0.1",
-          userAgent: "DeploymentMonitor",
+          ip_address: "127.0.0.1",
+          user_agent: "DeploymentMonitor",
         },
       });
     } catch (error) {
@@ -238,9 +237,9 @@ export class DeploymentMonitor {
       await prisma.audit_logs.create({
         data: {
           action: "DEPLOYMENT_ROLLED_BACK",
-          userId: "system",
-          resourceType: "DEPLOYMENT",
-          resourceId: deploymentId,
+          user_id: "system",
+          resource_type: "DEPLOYMENT",
+          resource_id: deploymentId,
           changes: JSON.stringify({
             triggers,
             metrics: {
@@ -250,8 +249,8 @@ export class DeploymentMonitor {
               errors: metrics.errors.slice(-5), // Last 5 errors
             },
           }),
-          ipAddress: "127.0.0.1",
-          userAgent: "DeploymentMonitor",
+          ip_address: "127.0.0.1",
+          user_agent: "DeploymentMonitor",
         },
       });
 
@@ -337,9 +336,9 @@ Action Required: Review logs and investigate root cause.
       await prisma.audit_logs.create({
         data: {
           action: "DEPLOYMENT_COMPLETED",
-          userId: "system",
-          resourceType: "DEPLOYMENT",
-          resourceId: deploymentId,
+          user_id: "system",
+          resource_type: "DEPLOYMENT",
+          resource_id: deploymentId,
           changes: JSON.stringify({
             duration: durationMinutes,
             healthChecksPassed: metrics.healthChecksPassed,
@@ -347,8 +346,8 @@ Action Required: Review logs and investigate root cause.
             errorRate: metrics.errorRate,
             avgResponseTime: metrics.responseTime,
           }),
-          ipAddress: "127.0.0.1",
-          userAgent: "DeploymentMonitor",
+          ip_address: "127.0.0.1",
+          user_agent: "DeploymentMonitor",
         },
       });
     } catch (error) {
@@ -381,16 +380,16 @@ Action Required: Review logs and investigate root cause.
       await prisma.audit_logs.create({
         data: {
           action: "DEPLOYMENT_FAILED",
-          userId: "system",
-          resourceType: "DEPLOYMENT",
-          resourceId: deploymentId,
+          user_id: "system",
+          resource_type: "DEPLOYMENT",
+          resource_id: deploymentId,
           changes: JSON.stringify({
             reason,
             errorRate: metrics.errorRate,
             errors: metrics.errors,
           }),
-          ipAddress: "127.0.0.1",
-          userAgent: "DeploymentMonitor",
+          ip_address: "127.0.0.1",
+          user_agent: "DeploymentMonitor",
         },
       });
     } catch (error) {

@@ -342,7 +342,7 @@ export async function autoPostBlogToSocial(blogPostId: string, userId: string) {
         accountId: account.id,
         content: content.text,
         hashtags: content.hashtags,
-        mediaUrls: blogPost.media ? [blogPost.media[0]?.url] : undefined,
+        mediaUrls: undefined, // TODO: Add media URL support when blog_posts has media field
       });
 
       // Post immediately
