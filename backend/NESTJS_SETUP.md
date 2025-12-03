@@ -32,11 +32,13 @@ backend/
 ## Modules
 
 ### 1. PrismaModule
+
 - Provides Prisma Client across all modules
 - Handles database connection lifecycle
 - Shared with Express backend
 
 ### 2. AuthModule
+
 - JWT-based authentication
 - User registration and login
 - Password hashing with bcrypt
@@ -44,17 +46,20 @@ backend/
 - Guards for protected routes
 
 **Endpoints:**
+
 - `POST /api/v2/auth/register` - Register new user
 - `POST /api/v2/auth/login` - Login user
 - `GET /api/v2/auth/me` - Get current user (protected)
 - `POST /api/v2/auth/logout` - Logout (protected)
 
 ### 3. UserModule
+
 - User profile management
 - User listing with pagination
 - Admin approval/suspension
 
 **Endpoints:**
+
 - `GET /api/v2/users/me` - Get own profile (protected)
 - `PUT /api/v2/users/me` - Update own profile (protected)
 - `GET /api/v2/users` - List users (admin)
@@ -63,11 +68,13 @@ backend/
 - `PUT /api/v2/users/:id/suspend` - Suspend user (admin)
 
 ### 4. BlogModule
+
 - Blog post management
 - Public post listing
 - Admin CMS features
 
 **Endpoints:**
+
 - `GET /api/v2/blog/posts` - List published posts
 - `GET /api/v2/blog/posts/:slug` - Get post by slug
 - `POST /api/v2/blog/posts` - Create post (protected)
@@ -79,22 +86,26 @@ backend/
 - `PUT /api/v2/blog/admin/posts/:id/unpublish` - Unpublish post (admin)
 
 ### 5. AiModule
+
 - AI text generation
 - Text summarization
 - Content analysis
 
 **Endpoints:**
+
 - `POST /api/v2/ai/generate` - Generate text (protected)
 - `POST /api/v2/ai/summarize` - Summarize text (protected)
 - `POST /api/v2/ai/analyze` - Analyze content (protected)
 - `GET /api/v2/ai/jobs/:jobId` - Get job status (protected)
 
 ### 6. CalendarModule
+
 - Calendar management
 - Event scheduling
 - Event queries (today, upcoming)
 
 **Endpoints:**
+
 - `POST /api/v2/calendar/calendars` - Create calendar (protected)
 - `GET /api/v2/calendar/calendars` - List calendars (protected)
 - `DELETE /api/v2/calendar/calendars/:id` - Delete calendar (protected)
@@ -111,6 +122,7 @@ backend/
 ### Development Mode
 
 Start NestJS server:
+
 ```bash
 npm run dev:nest
 ```
@@ -120,6 +132,7 @@ The server will run on `http://localhost:4001` with auto-reload enabled.
 ### Production Mode
 
 Build and start:
+
 ```bash
 npm run build:nest
 npm run start:nest
@@ -150,6 +163,7 @@ OPENAI_API_KEY=your-openai-key
 The NestJS services use the actual Prisma schema fields:
 
 ### User Model Fields:
+
 - `firstName` / `lastName` (not `name`)
 - `active` boolean (not `status` string)
 - `lastLogin` (not `lastLoginAt`)
@@ -157,6 +171,7 @@ The NestJS services use the actual Prisma schema fields:
 - `username` (required, unique)
 
 ### Authentication Flow:
+
 1. User registers with email, username, password
 2. Password is hashed with bcrypt (12 rounds)
 3. User account starts as inactive (`active: false`)
@@ -167,11 +182,13 @@ The NestJS services use the actual Prisma schema fields:
 ## Testing
 
 Test the health endpoint:
+
 ```bash
 curl http://localhost:4001/api/v2/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -204,6 +221,7 @@ Expected response:
 ## Troubleshooting
 
 ### Port Already in Use
+
 ```bash
 # Windows
 Get-NetTCPConnection -LocalPort 4001 | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
@@ -213,11 +231,13 @@ lsof -ti:4001 | xargs kill -9
 ```
 
 ### Database Connection Issues
+
 - Ensure Prisma Client is generated: `npx prisma generate`
 - Check DATABASE_URL in `.env`
 - Verify database file exists: `prisma/dev.db`
 
 ### Module Import Errors
+
 - Ensure all dependencies are installed: `npm install`
 - Check circular dependencies
 - Verify module imports in `app.module.ts`
