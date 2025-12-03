@@ -12,10 +12,13 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Calendar, CalendarEvent, CalendarService, PaginatedEvents } from "./calendar.service";
 import { CreateCalendarDto, CreateEventDto, UpdateEventDto } from "./dto/calendar.dto";
 
+@ApiTags("calendar")
+@ApiBearerAuth("JWT-auth")
 @Controller("calendar")
 @UseGuards(JwtAuthGuard)
 export class CalendarController {
@@ -24,16 +27,22 @@ export class CalendarController {
   // ==================== Calendars ====================
 
   @Post("calendars")
+  @ApiOperation({ summary: "Create new calendar" })
+  @ApiResponse({ status: 201, description: "Calendar created successfully" })
   async createCalendar(@Request() req: { user: { id: string } }, @Body() dto: CreateCalendarDto): Promise<Calendar> {
     return this.calendarService.createCalendar(req.user.id, dto);
   }
 
   @Get("calendars")
+  @ApiOperation({ summary: "Get all user calendars" })
+  @ApiResponse({ status: 200, description: "Calendars retrieved successfully" })
   async getCalendars(@Request() req: { user: { id: string } }): Promise<Calendar[]> {
     return this.calendarService.getCalendars(req.user.id);
   }
 
   @Delete("calendars/:id")
+  @ApiOperation({ summary: "Delete calendar" })
+  @ApiResponse({ status: 200, description: "Calendar deleted successfully" })
   async deleteCalendar(
     @Request() req: { user: { id: string } },
     @Param("id") id: string
@@ -45,11 +54,20 @@ export class CalendarController {
   // ==================== Events ====================
 
   @Post("events")
+  @ApiOperation({ summary: "Create new event" })
+  @ApiResponse({ status: 201, description: "Event created successfully" })
   async createEvent(@Request() req: { user: { id: string } }, @Body() dto: CreateEventDto): Promise<CalendarEvent> {
     return this.calendarService.createEvent(req.user.id, dto);
   }
 
   @Get("events")
+  @ApiOperation({ summary: "Get events with optional filters (paginated)" })
+  @ApiQuery({ name: "start", required: false, type: String, description: "Start date filter" })
+  @ApiQuery({ name: "end", required: false, type: String, description: "End date filter" })
+  @ApiQuery({ name: "calendarId", required: false, type: String })
+  @ApiQuery({ name: "page", required: false, type: Number })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiResponse({ status: 200, description: "Events retrieved successfully" })
   async getEvents(
     @Request() req: { user: { id: string } },
     @Query("start") start?: string,
@@ -65,11 +83,16 @@ export class CalendarController {
   }
 
   @Get("events/today")
+  @ApiOperation({ summary: "Get today's events" })
+  @ApiResponse({ status: 200, description: "Today's events retrieved" })
   async getTodayEvents(@Request() req: { user: { id: string } }): Promise<CalendarEvent[]> {
     return this.calendarService.getTodayEvents(req.user.id);
   }
 
   @Get("events/upcoming")
+  @ApiOperation({ summary: "Get upcoming events" })
+  @ApiQuery({ name: "days", required: false, type: Number, description: "Number of days ahead (default: 7)" })
+  @ApiResponse({ status: 200, description: "Upcoming events retrieved" })
   async getUpcomingEvents(
     @Request() req: { user: { id: string } },
     @Query("days", new DefaultValuePipe(7), ParseIntPipe) days: number
@@ -78,11 +101,16 @@ export class CalendarController {
   }
 
   @Get("events/:id")
+  @ApiOperation({ summary: "Get event by ID" })
+  @ApiResponse({ status: 200, description: "Event retrieved successfully" })
+  @ApiResponse({ status: 404, description: "Event not found" })
   async getEvent(@Request() req: { user: { id: string } }, @Param("id") id: string): Promise<CalendarEvent> {
     return this.calendarService.getEventById(req.user.id, id);
   }
 
   @Put("events/:id")
+  @ApiOperation({ summary: "Update event" })
+  @ApiResponse({ status: 200, description: "Event updated successfully" })
   async updateEvent(
     @Request() req: { user: { id: string } },
     @Param("id") id: string,
@@ -92,6 +120,8 @@ export class CalendarController {
   }
 
   @Delete("events/:id")
+  @ApiOperation({ summary: "Delete event" })
+  @ApiResponse({ status: 200, description: "Event deleted successfully" })
   async deleteEvent(@Request() req: { user: { id: string } }, @Param("id") id: string): Promise<{ message: string }> {
     await this.calendarService.deleteEvent(req.user.id, id);
     return { message: "Event deleted successfully" };
