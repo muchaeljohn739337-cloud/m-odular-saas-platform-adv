@@ -1,14 +1,5 @@
-import { InjectQueue } from "@nestjs/bull";
 import { Injectable } from "@nestjs/common";
-import { Queue } from "bull";
-import { PrismaService } from "../prisma/prisma.service";
-
-export interface AiJobData {
-  type: "content-generation" | "summarization" | "analysis" | "embedding";
-  input: string;
-  options?: Record<string, unknown>;
-  userId: string;
-}
+import { randomUUID } from "crypto";
 
 export interface AiJobResult {
   jobId: string;
@@ -17,32 +8,69 @@ export interface AiJobResult {
   error?: string;
 }
 
+// In-memory job store (for demo - use Redis/BullMQ in production)
+const jobStore = new Map<string, { status: string; result?: string; type: string }>();
+
 @Injectable()
 export class AiService {
-  constructor(
-    @InjectQueue("ai-jobs") private readonly aiQueue: Queue,
-    private readonly prisma: PrismaService
-  ) {}
+  async generateContent(prompt: string, userId: string): Promise<{ jobId: string }> {
+    const jobId = randomUUID();
 
-  async queueJob(data: AiJobData): Promise<{ jobId: string; status: string }> {
-    const job = await this.aiQueue.add("process", data, {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 1000,
-      },
-      removeOnComplete: 100,
-      removeOnFail: 50,
-    });
+    // Simulate async processing
+    jobStore.set(jobId, { status: "processing", type: "content-generation" });
 
-    return {
-      jobId: job.id.toString(),
-      status: "queued",
-    };
+    setTimeout(() => {
+      jobStore.set(jobId, {
+        status: "completed",
+        type: "content-generation",
+        result: `Generated content for: "${prompt.substring(0, 50)}..."`,
+      });
+    }, 1000);
+
+    return { jobId };
+  }
+
+  async summarize(text: string, userId: string): Promise<{ jobId: string }> {
+    const jobId = randomUUID();
+
+    jobStore.set(jobId, { status: "processing", type: "summarization" });
+
+    setTimeout(() => {
+      const words = text.split(" ");
+      const summary = words.slice(0, Math.min(20, words.length)).join(" ");
+      jobStore.set(jobId, {
+        status: "completed",
+        type: "summarization",
+        result: `Summary: ${summary}...`,
+      });
+    }, 500);
+
+    return { jobId };
+  }
+
+  async analyze(text: string, userId: string): Promise<{ jobId: string }> {
+    const jobId = randomUUID();
+
+    jobStore.set(jobId, { status: "processing", type: "analysis" });
+
+    setTimeout(() => {
+      jobStore.set(jobId, {
+        status: "completed",
+        type: "analysis",
+        result: JSON.stringify({
+          wordCount: text.split(" ").length,
+          charCount: text.length,
+          sentiment: "neutral",
+          topics: ["general"],
+        }),
+      });
+    }, 500);
+
+    return { jobId };
   }
 
   async getJobStatus(jobId: string): Promise<AiJobResult> {
-    const job = await this.aiQueue.getJob(jobId);
+    const job = jobStore.get(jobId);
 
     if (!job) {
       return {
@@ -52,53 +80,10 @@ export class AiService {
       };
     }
 
-    const state = await job.getState();
-
     return {
       jobId,
-      status: state as AiJobResult["status"],
-      result: job.returnvalue,
+      status: job.status as AiJobResult["status"],
+      result: job.result,
     };
-  }
-
-  async generateContent(prompt: string, userId: string): Promise<{ jobId: string }> {
-    const result = await this.queueJob({
-      type: "content-generation",
-      input: prompt,
-      userId,
-    });
-
-    // Log the generation request
-    await this.prisma.aiGeneration.create({
-      data: {
-        type: "content-generation",
-        prompt,
-        status: "PENDING",
-        userId,
-        jobId: result.jobId,
-      },
-    });
-
-    return { jobId: result.jobId };
-  }
-
-  async summarize(text: string, userId: string): Promise<{ jobId: string }> {
-    const result = await this.queueJob({
-      type: "summarization",
-      input: text,
-      userId,
-    });
-
-    return { jobId: result.jobId };
-  }
-
-  async analyze(text: string, userId: string): Promise<{ jobId: string }> {
-    const result = await this.queueJob({
-      type: "analysis",
-      input: text,
-      userId,
-    });
-
-    return { jobId: result.jobId };
   }
 }

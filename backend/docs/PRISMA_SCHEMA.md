@@ -1,6 +1,6 @@
 # Prisma Database Schema Documentation
 
-Generated: 2025-12-03T15:07:30.823Z
+Generated: 2025-12-03T15:47:37.569Z
 
 ## Models
 
@@ -249,18 +249,18 @@ Generated: 2025-12-03T15:07:30.823Z
 | Field | Type | Attributes |
 |-------|------|------------|
 | id | String | @id |
-| jurisdiction | String | event_type        String |
-| user_id | String? | payment_id        String? |
-| payload | Json | compliance_result Json |
-| processor | String? | risk_score        Decimal? |
-| violations | Json? | auto_corrected    Boolean  @default(false) |
+| jurisdiction | String | event_type               String |
+| user_id | String? | payment_id               String? |
+| payload | Json | compliance_result        Json |
+| processor | String? | risk_score               Decimal? |
+| violations | Json? | auto_corrected           Boolean  @default(false) |
 | timestamp | DateTime | @default(now()) |
 | created_at | DateTime | @default(now()) |
-| transaction_id | String? | currency                String? |
-| amount | Float? | risk_level              String? |
+| transaction_id | String? | currency                 String? |
+| amount | Float? | risk_level               String? |
 | requires_reporting | Boolean | @default(false) |
-| reporting_threshold_type | String? | details                 String? |
-| ip_address | String? | user_agent              String? |
+| reporting_threshold_type | String? | details                  String? |
+| ip_address | String? | user_agent               String? |
 
 ### consultation_messages
 
@@ -750,32 +750,32 @@ Generated: 2025-12-03T15:07:30.823Z
 | id | String | @id |
 | email | String | @unique |
 | username | String | @unique |
-| passwordHash | String | firstName          String? |
-| lastName | String? | role               String               @default("USER") |
+| passwordHash | String | firstName               String? |
+| lastName | String? | role                    String               @default("USER") |
 | usdBalance | Decimal | @default(0) |
 | active | Boolean | @default(true) |
 | emailVerified | Boolean | @default(false) |
-| emailVerifiedAt | DateTime? | lastLogin          DateTime? |
+| emailVerifiedAt | DateTime? | lastLogin               DateTime? |
 | termsAccepted | Boolean | @default(false) |
-| termsAcceptedAt | DateTime? | totpSecret         String? |
+| termsAcceptedAt | DateTime? | totpSecret              String? |
 | totpEnabled | Boolean | @default(false) |
 | totpVerified | Boolean | @default(false) |
-| backupCodes | String? | ethWalletAddress   String?              @unique |
+| backupCodes | String? | ethWalletAddress        String?              @unique |
 | createdAt | DateTime | @default(now()) |
-| updatedAt | DateTime | btcBalance         Decimal              @default(0) |
+| updatedAt | DateTime | btcBalance              Decimal              @default(0) |
 | ethBalance | Decimal | @default(0) |
 | usdtBalance | Decimal | @default(0) |
 | googleId | String? | @unique |
 | profilePicture | String? | // Block/Ban tracking |
-| blockedAt | DateTime? | blockedReason      String? |
+| blockedAt | DateTime? | blockedReason           String? |
 | blockedBy | String? | // Admin user ID who blocked |
-| deletedAt | DateTime? | deletedBy          String? // Admin user ID who deleted |
+| deletedAt | DateTime? | deletedBy               String? // Admin user ID who deleted |
 | preferredCurrency | String? | @default("USD") |
-| country | String? | detectedCurrency   String? |
+| country | String? | detectedCurrency        String? |
 | kycVerified | Boolean | @default(false) |
 | kycLevel | String? | @default("none") |
 | annualTransactionVolume | Decimal? | @default(0) |
-| lastTransactionDate | DateTime? | RPAWorkflow        RPAWorkflow[] |
+| lastTransactionDate | DateTime? | RPAWorkflow             RPAWorkflow[] |
 | ai_generations | ai_generations | [] |
 | ai_usage_metrics | ai_usage_metrics | [] |
 | crypto_withdrawals | crypto_withdrawals | [] |
@@ -784,13 +784,16 @@ Generated: 2025-12-03T15:07:30.823Z
 | subscriptions | Subscription | [] |
 | blogPosts | BlogPost | []           @relation("BlogAuthor") |
 | blogComments | BlogComment | []        @relation("BlogCommentAuthor") |
-| ownedProjects | Project | []            @relation("ProjectOwner") |
-| projectMemberships | ProjectMember | []      @relation("ProjectMembership") |
-| assignedTasks | Task | []               @relation("TaskAssignee") |
-| reportedTasks | Task | []               @relation("TaskReporter") |
-| taskComments | TaskComment | []        @relation("TaskComments") |
-| taskAttachments | TaskAttachment | []     @relation("TaskAttachments") |
-| timeEntries | TimeEntry | []          @relation("TimeEntries") |
+| ownedProjects | Project | []        @relation("ProjectOwner") |
+| projectMemberships | ProjectMember | []  @relation("ProjectMembership") |
+| assignedTasks | Task | []           @relation("TaskAssignee") |
+| reportedTasks | Task | []           @relation("TaskReporter") |
+| taskComments | TaskComment | []    @relation("TaskComments") |
+| taskAttachments | TaskAttachment | [] @relation("TaskAttachments") |
+| timeEntries | TimeEntry | []      @relation("TimeEntries") |
+| calendars | Calendar | [] |
+| calendarEvents | CalendarEvent | [] |
+| aiGenerationsNest | AiGeneration | [] |
 
 ### vault_audit_logs
 
@@ -1204,10 +1207,10 @@ Generated: 2025-12-03T15:07:30.823Z
 |-------|------|------------|
 | id | String | @id @default(uuid()) |
 | name | String | description String? |
-| ownerId | String | status      String   @default("PLANNING") // PLANNING, ACTIVE, ON_HOLD, COMPLETED, ARCHIVED |
+| ownerId | String | status      String    @default("PLANNING") // PLANNING, ACTIVE, ON_HOLD, COMPLETED, ARCHIVED |
 | priority | String | @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL |
 | startDate | DateTime? | endDate     DateTime? |
-| budget | Float? | progress    Int      @default(0) // 0-100 |
+| budget | Float? | progress    Int       @default(0) // 0-100 |
 | visibility | String | @default("PRIVATE") // PRIVATE, TEAM, PUBLIC |
 | metadata | String? | // JSON |
 | createdAt | DateTime | @default(now()) |
@@ -1235,14 +1238,14 @@ Generated: 2025-12-03T15:07:30.823Z
 | Field | Type | Attributes |
 |-------|------|------------|
 | id | String | @id @default(uuid()) |
-| projectId | String | sprintId        String? |
-| boardId | String? | columnId        String? |
-| title | String | description     String? |
+| projectId | String | sprintId       String? |
+| boardId | String? | columnId       String? |
+| title | String | description    String? |
 | status | String | @default("TODO") // TODO, IN_PROGRESS, IN_REVIEW, DONE, BLOCKED |
 | priority | String | @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL |
-| assigneeId | String? | reporterId      String |
-| estimatedHours | Float? | actualHours     Float? |
-| dueDate | DateTime? | completedAt     DateTime? |
+| assigneeId | String? | reporterId     String |
+| estimatedHours | Float? | actualHours    Float? |
+| dueDate | DateTime? | completedAt    DateTime? |
 | position | Int | @default(0) |
 | aiGenerated | Boolean | @default(false) |
 | aiSuggestions | String? | // JSON |
@@ -1277,10 +1280,10 @@ Generated: 2025-12-03T15:07:30.823Z
 | Field | Type | Attributes |
 |-------|------|------------|
 | id | String | @id @default(uuid()) |
-| projectId | String | name        String |
-| goal | String? | startDate   DateTime |
-| endDate | DateTime | status      String    @default("PLANNED") // PLANNED, ACTIVE, COMPLETED, CANCELLED |
-| velocity | Int? | createdAt   DateTime  @default(now()) |
+| projectId | String | name      String |
+| goal | String? | startDate DateTime |
+| endDate | DateTime | status    String   @default("PLANNED") // PLANNED, ACTIVE, COMPLETED, CANCELLED |
+| velocity | Int? | createdAt DateTime @default(now()) |
 | updatedAt | DateTime | @updatedAt |
 | project | Project | @relation(fields: [projectId], references: [id], onDelete: Cascade) |
 | tasks | Task | [] |
@@ -1303,9 +1306,9 @@ Generated: 2025-12-03T15:07:30.823Z
 | Field | Type | Attributes |
 |-------|------|------------|
 | id | String | @id @default(uuid()) |
-| boardId | String | name        String |
-| position | Int | limit       Int?     // WIP limit |
-| color | String? | createdAt   DateTime @default(now()) |
+| boardId | String | name      String |
+| position | Int | limit     Int? // WIP limit |
+| color | String? | createdAt DateTime @default(now()) |
 | updatedAt | DateTime | @updatedAt |
 | board | KanbanBoard | @relation(fields: [boardId], references: [id], onDelete: Cascade) |
 
@@ -1405,7 +1408,7 @@ Generated: 2025-12-03T15:07:30.823Z
 | id | String | @id |
 | userId | String | @map("user_id") |
 | cryptoType | String | @map("crypto_type") |
-| amount | Float | currency                String |
+| amount | Float | currency               String |
 | fiatAmount | Float | @map("fiat_amount") |
 | exchangeRate | Float | @map("exchange_rate") |
 | status | String | @default("pending_compliance") |
@@ -1425,4 +1428,49 @@ Generated: 2025-12-03T15:07:30.823Z
 | complianceNotes | String? | @map("compliance_notes") |
 | createdAt | DateTime | @default(now()) @map("created_at") |
 | updatedAt | DateTime | @default(now()) @map("updated_at") |
+
+### Calendar
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id @default(uuid()) |
+| name | String | color     String   @default("#3B82F6") |
+| isDefault | Boolean | @default(false) @map("is_default") |
+| userId | String | @map("user_id") |
+| user | users | @relation(fields: [userId], references: [id], onDelete: Cascade) |
+| createdAt | DateTime | @default(now()) @map("created_at") |
+| events | CalendarEvent | [] |
+
+### CalendarEvent
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id @default(uuid()) |
+| title | String | description String? |
+| startTime | DateTime | @map("start_time") |
+| endTime | DateTime | @map("end_time") |
+| allDay | Boolean | @default(false) @map("all_day") |
+| location | String? | color       String? |
+| recurring | String? | // NONE, DAILY, WEEKLY, BIWEEKLY, MONTHLY, YEARLY |
+| reminders | String? | // JSON array of reminder minutes |
+| calendarId | String | @map("calendar_id") |
+| calendar | Calendar | @relation(fields: [calendarId], references: [id], onDelete: Cascade) |
+| userId | String | @map("user_id") |
+| user | users | @relation(fields: [userId], references: [id], onDelete: Cascade) |
+| createdAt | DateTime | @default(now()) @map("created_at") |
+| updatedAt | DateTime | @updatedAt @map("updated_at") |
+
+### AiGeneration
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id @default(uuid()) |
+| type | String | // content-generation, summarization, analysis, embedding |
+| prompt | String | result    String? |
+| status | String | @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED |
+| jobId | String? | @map("job_id") |
+| error | String? | userId    String   @map("user_id") |
+| user | users | @relation(fields: [userId], references: [id], onDelete: Cascade) |
+| createdAt | DateTime | @default(now()) @map("created_at") |
+| updatedAt | DateTime | @updatedAt @map("updated_at") |
 
