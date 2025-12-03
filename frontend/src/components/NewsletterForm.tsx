@@ -23,7 +23,7 @@ export default function NewsletterForm() {
       if (res.ok) {
         setStatus("ok");
         setMessage(
-          "✅ Thanks for subscribing! Check your email for confirmation."
+          "✅ Thanks for subscribing! Check your email for confirmation.",
         );
         setEmail("");
 

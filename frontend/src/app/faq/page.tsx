@@ -427,7 +427,7 @@ export default function FAQPage() {
                 onClick={() => {
                   // Trigger chatbot
                   const chatButton = document.querySelector(
-                    "[data-chatbot-trigger]"
+                    "[data-chatbot-trigger]",
                   ) as HTMLElement;
                   chatButton?.click();
                 }}

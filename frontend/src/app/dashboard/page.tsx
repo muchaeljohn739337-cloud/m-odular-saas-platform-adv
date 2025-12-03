@@ -48,7 +48,7 @@ export default function DashboardPage() {
       if (ordersResponse.ok) {
         const orders = await ordersResponse.json();
         const pending = orders.filter(
-          (o: { status: string }) => o.status === "PENDING"
+          (o: { status: string }) => o.status === "PENDING",
         ).length;
         setPendingOrders(pending);
       }
@@ -58,12 +58,12 @@ export default function DashboardPage() {
         `/api/crypto/withdrawals/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (withdrawalsResponse.ok) {
         const withdrawals = await withdrawalsResponse.json();
         const pending = withdrawals.filter(
-          (w: { status: string }) => w.status === "PENDING"
+          (w: { status: string }) => w.status === "PENDING",
         ).length;
         setPendingWithdrawals(pending);
       }

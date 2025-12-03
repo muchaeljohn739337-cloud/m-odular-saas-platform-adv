@@ -297,7 +297,6 @@ export default function PredictiveCard({ metricKey }: { metricKey: string }) {
 ### **Security Layers**
 
 1. **Frontend AI** (Browser-based)
-
    - ✅ Bot behavior detection
    - ✅ Input validation assistance
    - ✅ UI security hints
@@ -522,7 +521,6 @@ npm run test:e2e -- --grep "AI"
 ## 🛠️ Development Workflow
 
 1. **Add AI Feature**:
-
    - Define types in `ai-core.types.ts`
    - Add service call in `aiCore.ts`
    - Create hook if needed
@@ -530,7 +528,6 @@ npm run test:e2e -- --grep "AI"
    - Update documentation
 
 2. **Backend Implementation**:
-
    - Create API endpoint
    - Integrate AI model (OpenAI, custom ML)
    - Test with Postman/curl

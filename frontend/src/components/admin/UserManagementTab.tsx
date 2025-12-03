@@ -77,7 +77,7 @@ const UserManagementTab = () => {
         badges: [],
       },
     ],
-    []
+    [],
   );
 
   const statusOptions = [
@@ -328,7 +328,9 @@ const UserManagementTab = () => {
                         onClick={() =>
                           handleStatusChange(
                             user.id,
-                            user.status === "suspended" ? "active" : "suspended"
+                            user.status === "suspended"
+                              ? "active"
+                              : "suspended",
                           )
                         }
                         className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
@@ -431,7 +433,7 @@ const UserManagementTab = () => {
                 onClick={() =>
                   handleStatusChange(
                     user.id,
-                    user.status === "suspended" ? "active" : "suspended"
+                    user.status === "suspended" ? "active" : "suspended",
                   )
                 }
                 className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"

@@ -46,39 +46,30 @@ export class SuggestionAgent extends BaseAgent {
       // Step 2: Analyze each user and generate suggestions
       for (const user of activeUsers) {
         // Get user preferences
-        const preferences = await this.context.prisma.user_preferences.findMany(
-          {
-            where: { userId: user.id },
-            orderBy: { interactionCount: "desc" },
-          }
-        );
+        const preferences = await this.context.prisma.user_preferences.findMany({
+          where: { user_id: user.id },
+        });
 
         // Get user's recent transactions
-        const recentTransactions = await this.context.prisma.transactions.count(
-          {
-            where: {
-              userId: user.id,
-              createdAt: {
-                gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-              },
+        const recentTransactions = await this.context.prisma.transactions.count({
+          where: {
+            userId: user.id,
+            createdAt: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
             },
-          }
-        );
+          },
+        });
 
         itemsProcessed++;
 
         // Generate suggestions based on activity
-        const suggestions = this.generateSuggestions(
-          user,
-          preferences,
-          recentTransactions
-        );
+        const suggestions = this.generateSuggestions(user, preferences, recentTransactions);
 
         // Create AISuggestion entries
         for (const suggestion of suggestions) {
           await this.context.prisma.ai_suggestions.create({
             data: {
-              userId: user.id,
+              user_id: user.id,
               suggestionType: suggestion.type,
               content: suggestion.content,
               priority: suggestion.priority,
@@ -147,22 +138,15 @@ export class SuggestionAgent extends BaseAgent {
     }
   }
 
-  private generateSuggestions(
-    user: any,
-    preferences: any[],
-    recentTransactions: number
-  ): any[] {
+  private generateSuggestions(user: any, preferences: any[], recentTransactions: number): any[] {
     const suggestions: any[] = [];
 
     // Suggestion 1: Enable 2FA if not active
-    const has2FA = preferences.find(
-      (p) => p.preferenceKey === "twoFactorEnabled"
-    );
+    const has2FA = preferences.find((p) => p.preferenceKey === "twoFactorEnabled");
     if (!has2FA || has2FA.preferenceValue === "false") {
       suggestions.push({
         type: "SECURITY",
-        content:
-          "Enable Two-Factor Authentication (2FA) to secure your account with an extra layer of protection.",
+        content: "Enable Two-Factor Authentication (2FA) to secure your account with an extra layer of protection.",
         priority: "HIGH",
         metadata: {
           action: "enable-2fa",
@@ -172,14 +156,11 @@ export class SuggestionAgent extends BaseAgent {
     }
 
     // Suggestion 2: Set up notifications
-    const hasNotifications = preferences.find(
-      (p) => p.preferenceKey === "notificationsEnabled"
-    );
+    const hasNotifications = preferences.find((p) => p.preferenceKey === "notificationsEnabled");
     if (!hasNotifications) {
       suggestions.push({
         type: "FEATURE",
-        content:
-          "Stay updated with real-time notifications for transactions, rewards, and important updates.",
+        content: "Stay updated with real-time notifications for transactions, rewards, and important updates.",
         priority: "MEDIUM",
         metadata: {
           action: "enable-notifications",
@@ -207,8 +188,7 @@ export class SuggestionAgent extends BaseAgent {
     if (user.role === "USER" && preferences.length < 3) {
       suggestions.push({
         type: "OPTIMIZATION",
-        content:
-          "Complete your profile preferences to get personalized recommendations and better support.",
+        content: "Complete your profile preferences to get personalized recommendations and better support.",
         priority: "LOW",
         metadata: {
           action: "complete-profile",
@@ -218,14 +198,11 @@ export class SuggestionAgent extends BaseAgent {
     }
 
     // Suggestion 5: Verify email if not verified
-    const emailVerified = preferences.find(
-      (p) => p.preferenceKey === "emailVerified"
-    );
+    const emailVerified = preferences.find((p) => p.preferenceKey === "emailVerified");
     if (!emailVerified || emailVerified.preferenceValue === "false") {
       suggestions.push({
         type: "SECURITY",
-        content:
-          "Verify your email address to enable account recovery and important security notifications.",
+        content: "Verify your email address to enable account recovery and important security notifications.",
         priority: "HIGH",
         metadata: {
           action: "verify-email",

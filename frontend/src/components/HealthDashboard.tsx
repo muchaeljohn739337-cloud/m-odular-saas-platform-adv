@@ -52,7 +52,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 export default function HealthDashboard({ userId }: HealthDashboardProps) {
   const [summary, setSummary] = useState<HealthSummary | null>(null);
   const [latestReading, setLatestReading] = useState<HealthReading | null>(
-    null
+    null,
   );
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +76,7 @@ export default function HealthDashboard({ userId }: HealthDashboardProps) {
   const fetchSummary = useCallback(async () => {
     try {
       const res = await fetch(
-        `${API_URL}/api/health/summary/${userId}?days=30`
+        `${API_URL}/api/health/summary/${userId}?days=30`,
       );
       const data = await res.json();
       // Ensure data is a valid summary object
@@ -199,7 +199,7 @@ export default function HealthDashboard({ userId }: HealthDashboardProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`bg-gradient-to-br ${getHealthScoreColor(
-            summary.healthScore
+            summary.healthScore,
           )} rounded-2xl p-8 text-white shadow-2xl`}
         >
           <div className="flex justify-between items-start">
@@ -372,8 +372,8 @@ export default function HealthDashboard({ userId }: HealthDashboardProps) {
                 {summary.mostCommonMood === "great"
                   ? "😄"
                   : summary.mostCommonMood === "good"
-                  ? "🙂"
-                  : "😐"}
+                    ? "🙂"
+                    : "😐"}
               </div>
               <p className="text-3xl font-bold text-navy capitalize">
                 {summary.mostCommonMood}

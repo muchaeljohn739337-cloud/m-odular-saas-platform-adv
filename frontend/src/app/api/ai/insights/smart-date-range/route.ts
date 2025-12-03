@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     console.error("Date range suggestion error:", error);
     return NextResponse.json(
       { error: "Failed to suggest date range" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

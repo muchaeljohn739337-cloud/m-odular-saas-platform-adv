@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     console.error("Revenue forecast error:", error);
     return NextResponse.json(
       { error: "Failed to generate revenue forecast" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

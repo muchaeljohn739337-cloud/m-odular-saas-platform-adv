@@ -54,7 +54,7 @@ export class AIStateManager {
         JSON.stringify({ status: "healthy", timestamp: Date.now() }),
         {
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -158,7 +158,7 @@ export default {
             service: "ai-connector",
             timestamp: new Date().toISOString(),
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 

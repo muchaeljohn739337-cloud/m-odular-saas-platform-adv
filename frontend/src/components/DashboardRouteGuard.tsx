@@ -3,7 +3,11 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 
-export default function DashboardRouteGuard({ children }: { children: React.ReactNode }) {
+export default function DashboardRouteGuard({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { status } = useSession();
   const router = useRouter();
 

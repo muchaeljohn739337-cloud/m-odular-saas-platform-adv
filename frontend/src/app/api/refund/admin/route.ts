@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
           "Service did not meet expectations. Features were not as advertised.",
         status: "pending",
         requestedAt: new Date(
-          Date.now() - 2 * 24 * 60 * 60 * 1000
+          Date.now() - 2 * 24 * 60 * 60 * 1000,
         ).toISOString(),
       },
       {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         reason: "Found a better alternative. Need to cancel subscription.",
         status: "pending",
         requestedAt: new Date(
-          Date.now() - 5 * 24 * 60 * 60 * 1000
+          Date.now() - 5 * 24 * 60 * 60 * 1000,
         ).toISOString(),
       },
       {
@@ -68,10 +68,10 @@ export async function GET(request: NextRequest) {
         reason: "Billing issue - charged twice for the same period.",
         status: "approved",
         requestedAt: new Date(
-          Date.now() - 10 * 24 * 60 * 60 * 1000
+          Date.now() - 10 * 24 * 60 * 60 * 1000,
         ).toISOString(),
         processedAt: new Date(
-          Date.now() - 8 * 24 * 60 * 60 * 1000
+          Date.now() - 8 * 24 * 60 * 60 * 1000,
         ).toISOString(),
         processedBy: "admin@example.com",
         adminNotes: "Duplicate charge confirmed. Full refund issued.",
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     const startIndex = (page - 1) * limit;
     const paginatedRequests = filteredRequests.slice(
       startIndex,
-      startIndex + limit
+      startIndex + limit,
     );
 
     return NextResponse.json({
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     console.error("Admin refund list error:", error);
     return NextResponse.json(
       { error: "Failed to fetch refund requests" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -126,14 +126,14 @@ export async function POST(request: NextRequest) {
     if (!refundId || !action) {
       return NextResponse.json(
         { error: "refundId and action are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!["approve", "reject"].includes(action)) {
       return NextResponse.json(
         { error: "action must be 'approve' or 'reject'" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
     console.error("Process refund error:", error);
     return NextResponse.json(
       { error: "Failed to process refund request" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

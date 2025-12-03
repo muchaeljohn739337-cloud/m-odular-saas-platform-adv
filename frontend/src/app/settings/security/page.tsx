@@ -46,7 +46,11 @@ export default function SecuritySettingsPage() {
   }, [fetchSecurityStatus]);
 
   const handleDisable2FA = async () => {
-    if (!confirm("Are you sure you want to disable 2FA? This will make your account less secure.")) {
+    if (
+      !confirm(
+        "Are you sure you want to disable 2FA? This will make your account less secure.",
+      )
+    ) {
       return;
     }
 
@@ -90,14 +94,17 @@ export default function SecuritySettingsPage() {
       const token = localStorage.getItem("token");
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-      const response = await fetch(`${apiUrl}/api/2fa/backup-codes/regenerate`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${apiUrl}/api/2fa/backup-codes/regenerate`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
         },
-        body: JSON.stringify({ code }),
-      });
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -105,7 +112,7 @@ export default function SecuritySettingsPage() {
       }
 
       const result = await response.json();
-      
+
       // Download new backup codes
       const blob = new Blob(
         [
@@ -115,7 +122,7 @@ export default function SecuritySettingsPage() {
           result.backupCodes.join("\n"),
           "\n\nGenerated: " + new Date().toLocaleString(),
         ],
-        { type: "text/plain" }
+        { type: "text/plain" },
       );
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -166,8 +173,8 @@ export default function SecuritySettingsPage() {
                   Two-Factor Authentication (2FA)
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Add an extra layer of security to your account by requiring a code from
-                  your authenticator app when you sign in.
+                  Add an extra layer of security to your account by requiring a
+                  code from your authenticator app when you sign in.
                 </p>
 
                 <div className="flex items-center space-x-2 mb-4">
@@ -265,28 +272,64 @@ export default function SecuritySettingsPage() {
             </h3>
             <ul className="space-y-2 text-blue-800 dark:text-blue-200">
               <li className="flex items-start">
-                <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                <span>Enable 2FA to protect your account from unauthorized access</span>
+                <span>
+                  Enable 2FA to protect your account from unauthorized access
+                </span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>Save your backup codes in a secure location</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>Use a strong, unique password for your account</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                <span>Never share your 2FA codes or backup codes with anyone</span>
+                <span>
+                  Never share your 2FA codes or backup codes with anyone
+                </span>
               </li>
             </ul>
           </div>

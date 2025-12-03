@@ -66,7 +66,7 @@ export class BugFixAgent extends BaseAgent {
           // Create SecurityPatch entry
           const patch = await this.context.prisma.security_patches.create({
             data: {
-              patch_id: `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              id: `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               issueDescription: pattern.errorMessage,
               severity: pattern.occurrences >= 10 ? "CRITICAL" : pattern.occurrences >= 5 ? "HIGH" : "MEDIUM",
               patchType: "BUG_FIX",

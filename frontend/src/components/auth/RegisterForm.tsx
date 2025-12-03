@@ -115,7 +115,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       setError(
         err instanceof Error
           ? err.message
-          : "Registration failed. Please try again."
+          : "Registration failed. Please try again.",
       );
     } finally {
       setIsLoading(false);

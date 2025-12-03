@@ -30,14 +30,54 @@ interface CryptoBalance {
 }
 
 const CRYPTO_TYPES = [
-  { symbol: "TRUMP", name: "Trump Coin", color: "from-red-500 to-orange-600", price: 0.50 },
-  { symbol: "XLM", name: "Stellar", color: "from-blue-400 to-cyan-500", price: 0.12 },
-  { symbol: "XRP", name: "Ripple", color: "from-gray-600 to-slate-700", price: 0.52 },
-  { symbol: "DOGE", name: "Dogecoin", color: "from-yellow-500 to-amber-600", price: 0.08 },
-  { symbol: "SHIB", name: "Shiba Inu", color: "from-orange-400 to-red-500", price: 0.000008 },
-  { symbol: "ADA", name: "Cardano", color: "from-blue-500 to-indigo-600", price: 0.35 },
-  { symbol: "DOT", name: "Polkadot", color: "from-pink-500 to-rose-600", price: 5.20 },
-  { symbol: "MATIC", name: "Polygon", color: "from-purple-500 to-violet-600", price: 0.85 },
+  {
+    symbol: "TRUMP",
+    name: "Trump Coin",
+    color: "from-red-500 to-orange-600",
+    price: 0.5,
+  },
+  {
+    symbol: "XLM",
+    name: "Stellar",
+    color: "from-blue-400 to-cyan-500",
+    price: 0.12,
+  },
+  {
+    symbol: "XRP",
+    name: "Ripple",
+    color: "from-gray-600 to-slate-700",
+    price: 0.52,
+  },
+  {
+    symbol: "DOGE",
+    name: "Dogecoin",
+    color: "from-yellow-500 to-amber-600",
+    price: 0.08,
+  },
+  {
+    symbol: "SHIB",
+    name: "Shiba Inu",
+    color: "from-orange-400 to-red-500",
+    price: 0.000008,
+  },
+  {
+    symbol: "ADA",
+    name: "Cardano",
+    color: "from-blue-500 to-indigo-600",
+    price: 0.35,
+  },
+  {
+    symbol: "DOT",
+    name: "Polkadot",
+    color: "from-pink-500 to-rose-600",
+    price: 5.2,
+  },
+  {
+    symbol: "MATIC",
+    name: "Polygon",
+    color: "from-purple-500 to-violet-600",
+    price: 0.85,
+  },
 ];
 
 export default function CryptoBalanceAdmin() {
@@ -48,13 +88,17 @@ export default function CryptoBalanceAdmin() {
   const [amount, setAmount] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   // Check admin access
   const userRole = sessionUser?.role || sessionUser?.email;
-  const isAdmin = userRole === "admin" || 
-                  sessionUser?.email === "admin@advancia.com" ||
-                  sessionUser?.email?.includes("admin");
+  const isAdmin =
+    userRole === "admin" ||
+    sessionUser?.email === "admin@advancia.com" ||
+    sessionUser?.email?.includes("admin");
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -78,7 +122,10 @@ export default function CryptoBalanceAdmin() {
 
   const addBalance = async () => {
     if (!userEmail || !amount || parseFloat(amount) <= 0) {
-      setMessage({ type: "error", text: "Please enter valid email and amount" });
+      setMessage({
+        type: "error",
+        text: "Please enter valid email and amount",
+      });
       return;
     }
 
@@ -96,12 +143,18 @@ export default function CryptoBalanceAdmin() {
 
       const data = await response.json();
       if (response.ok) {
-        setMessage({ type: "success", text: `Added ${amount} ${selectedCrypto} to ${userEmail}` });
+        setMessage({
+          type: "success",
+          text: `Added ${amount} ${selectedCrypto} to ${userEmail}`,
+        });
         setAmount("");
         setUserEmail("");
         loadBalances();
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to add balance" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to add balance",
+        });
       }
     } catch {
       setMessage({ type: "error", text: "Network error" });
@@ -112,7 +165,10 @@ export default function CryptoBalanceAdmin() {
 
   const deductBalance = async () => {
     if (!userEmail || !amount || parseFloat(amount) <= 0) {
-      setMessage({ type: "error", text: "Please enter valid email and amount" });
+      setMessage({
+        type: "error",
+        text: "Please enter valid email and amount",
+      });
       return;
     }
 
@@ -130,12 +186,18 @@ export default function CryptoBalanceAdmin() {
 
       const data = await response.json();
       if (response.ok) {
-        setMessage({ type: "success", text: `Deducted ${amount} ${selectedCrypto} from ${userEmail}` });
+        setMessage({
+          type: "success",
+          text: `Deducted ${amount} ${selectedCrypto} from ${userEmail}`,
+        });
         setAmount("");
         setUserEmail("");
         loadBalances();
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to deduct balance" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to deduct balance",
+        });
       }
     } catch {
       setMessage({ type: "error", text: "Network error" });
@@ -151,7 +213,9 @@ export default function CryptoBalanceAdmin() {
           <div className="max-w-2xl mx-auto">
             <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 text-center">
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-red-700 mb-2">Access Denied</h2>
+              <h2 className="text-xl font-bold text-red-700 mb-2">
+                Access Denied
+              </h2>
               <p className="text-red-600">
                 This page is only accessible to administrators.
               </p>
@@ -162,7 +226,9 @@ export default function CryptoBalanceAdmin() {
     );
   }
 
-  const selectedCryptoInfo = CRYPTO_TYPES.find(c => c.symbol === selectedCrypto);
+  const selectedCryptoInfo = CRYPTO_TYPES.find(
+    (c) => c.symbol === selectedCrypto,
+  );
 
   return (
     <SidebarLayout>
@@ -205,12 +271,18 @@ export default function CryptoBalanceAdmin() {
               className="bg-white rounded-2xl shadow-xl p-6"
             >
               <div className="flex items-center gap-3 mb-6">
-                <div className={`p-3 rounded-xl bg-gradient-to-r ${selectedCryptoInfo?.color || "from-gray-400 to-gray-600"}`}>
+                <div
+                  className={`p-3 rounded-xl bg-gradient-to-r ${selectedCryptoInfo?.color || "from-gray-400 to-gray-600"}`}
+                >
                   <Coins className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Add/Deduct Balance</h2>
-                  <p className="text-sm text-gray-500">Manage user crypto holdings</p>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Add/Deduct Balance
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Manage user crypto holdings
+                  </p>
                 </div>
               </div>
 
@@ -263,7 +335,11 @@ export default function CryptoBalanceAdmin() {
                   />
                   {amount && selectedCryptoInfo && (
                     <p className="text-xs text-gray-500 mt-1">
-                      ≈ ${(parseFloat(amount) * selectedCryptoInfo.price).toFixed(2)} USD
+                      ≈ $
+                      {(parseFloat(amount) * selectedCryptoInfo.price).toFixed(
+                        2,
+                      )}{" "}
+                      USD
                     </p>
                   )}
                 </div>
@@ -293,7 +369,9 @@ export default function CryptoBalanceAdmin() {
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 touch-manipulation"
                 >
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                  />
                   Refresh Balances
                 </button>
               </div>
@@ -310,8 +388,12 @@ export default function CryptoBalanceAdmin() {
                   <TrendingUp className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Active Balances</h2>
-                  <p className="text-sm text-gray-500">{balances.length} users with crypto</p>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Active Balances
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {balances.length} users with crypto
+                  </p>
                 </div>
               </div>
 
@@ -329,12 +411,20 @@ export default function CryptoBalanceAdmin() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <p className="font-semibold text-gray-900">{balance.userId}</p>
-                          <p className="text-sm text-gray-500">{balance.name}</p>
+                          <p className="font-semibold text-gray-900">
+                            {balance.userId}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {balance.name}
+                          </p>
                         </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${
-                          CRYPTO_TYPES.find(c => c.symbol === balance.symbol)?.color || "from-gray-400 to-gray-600"
-                        } text-white`}>
+                        <div
+                          className={`px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${
+                            CRYPTO_TYPES.find(
+                              (c) => c.symbol === balance.symbol,
+                            )?.color || "from-gray-400 to-gray-600"
+                          } text-white`}
+                        >
                           {balance.symbol}
                         </div>
                       </div>
@@ -360,10 +450,17 @@ export default function CryptoBalanceAdmin() {
             transition={{ delay: 0.2 }}
             className="mt-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-6"
           >
-            <h3 className="font-bold text-blue-900 mb-2">ℹ️ Important Notes:</h3>
+            <h3 className="font-bold text-blue-900 mb-2">
+              ℹ️ Important Notes:
+            </h3>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• BTC, ETH, and USDT are managed separately via Stripe integration</li>
-              <li>• These balances are for display and internal tracking only</li>
+              <li>
+                • BTC, ETH, and USDT are managed separately via Stripe
+                integration
+              </li>
+              <li>
+                • These balances are for display and internal tracking only
+              </li>
               <li>• Changes take effect immediately for the user</li>
               <li>• All transactions are logged for audit purposes</li>
             </ul>

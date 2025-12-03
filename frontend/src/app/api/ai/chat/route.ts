@@ -250,13 +250,13 @@ export async function POST(request: NextRequest) {
     if (!message || !sessionId) {
       return NextResponse.json(
         { error: "Message and sessionId are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Simulate AI processing delay (would be real API call in production)
     await new Promise((resolve) =>
-      setTimeout(resolve, 500 + Math.random() * 1000)
+      setTimeout(resolve, 500 + Math.random() * 1000),
     );
 
     // In production, this would call OpenAI/Claude API:
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
 
     // Log for analytics (in production, store in database)
     console.log(
-      `[AI Chat] Session: ${sessionId}, Query: "${message.slice(0, 50)}..."`
+      `[AI Chat] Session: ${sessionId}, Query: "${message.slice(0, 50)}..."`,
     );
 
     return NextResponse.json({
@@ -290,7 +290,7 @@ export async function POST(request: NextRequest) {
     console.error("Chat API error:", error);
     return NextResponse.json(
       { error: "Failed to process chat request" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

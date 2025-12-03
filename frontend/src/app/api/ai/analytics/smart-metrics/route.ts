@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     console.error("Smart metrics error:", error);
     return NextResponse.json(
       { error: "Failed to generate smart metrics" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

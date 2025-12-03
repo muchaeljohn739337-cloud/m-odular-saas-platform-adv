@@ -434,8 +434,8 @@ export default function RewardsDashboard({ userId }: RewardsDashboardProps) {
                         {entry.rank === 1
                           ? "🥇"
                           : entry.rank === 2
-                          ? "🥈"
-                          : "🥉"}
+                            ? "🥈"
+                            : "🥉"}
                       </span>
                     ) : (
                       <span className="text-lg font-bold text-gray-500">

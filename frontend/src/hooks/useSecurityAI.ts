@@ -19,7 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export function useSecurityAI() {
   const [sessionRisk, setSessionRisk] = useState<SessionRiskAnalysis | null>(
-    null
+    null,
   );
   const [threatLevel, setThreatLevel] = useState<ThreatLevel>("LOW");
   const [anomalies, setAnomalies] = useState<AnomalyDetection[]>([]);
@@ -54,14 +54,14 @@ export function useSecurityAI() {
         return null;
       }
     },
-    []
+    [],
   );
 
   // Check for anomalous behavior
   const checkAnomaly = useCallback(
     async (
       action: string,
-      metadata?: Record<string, unknown>
+      metadata?: Record<string, unknown>,
     ): Promise<AnomalyDetection | null> => {
       try {
         const anomaly = await detectAnomaly(action, metadata);
@@ -71,7 +71,7 @@ export function useSecurityAI() {
 
           if (anomaly.severity === "critical" || anomaly.severity === "high") {
             setThreatLevel(
-              anomaly.severity === "critical" ? "CRITICAL" : "HIGH"
+              anomaly.severity === "critical" ? "CRITICAL" : "HIGH",
             );
           }
         }
@@ -82,7 +82,7 @@ export function useSecurityAI() {
         return null;
       }
     },
-    []
+    [],
   );
 
   // Bot detection
@@ -96,7 +96,7 @@ export function useSecurityAI() {
         return { isBot: false, confidence: 0, reason: "Detection unavailable" };
       }
     },
-    []
+    [],
   );
 
   // Auto-analyze session on mount and periodically

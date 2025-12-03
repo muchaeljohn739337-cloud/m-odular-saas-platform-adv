@@ -85,7 +85,7 @@ export default function QuickActions() {
       // Boost priority of AI-recommended actions
       suggestions.forEach((suggestion: SmartRecommendation) => {
         const matchingAction = actionsCopy.find(
-          (action) => action.href === suggestion.quickAction?.route
+          (action) => action.href === suggestion.quickAction?.route,
         );
         if (matchingAction) {
           matchingAction.priority += suggestion.priority * 2;

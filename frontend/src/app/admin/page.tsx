@@ -146,15 +146,15 @@ export default function AdminPanel() {
               ...user,
               status: user.status === "suspended" ? "active" : "suspended",
             }
-          : user
-      )
+          : user,
+      ),
     );
   };
 
   const handleDeleteUser = (userId: string) => {
     if (
       confirm(
-        "Are you sure you want to delete this user? This action cannot be undone."
+        "Are you sure you want to delete this user? This action cannot be undone.",
       )
     ) {
       setUsers(users.filter((user) => user.id !== userId));
@@ -166,8 +166,8 @@ export default function AdminPanel() {
     if (confirm("Grant admin privileges to this user?")) {
       setUsers(
         users.map((user) =>
-          user.id === userId ? { ...user, role: "admin" } : user
-        )
+          user.id === userId ? { ...user, role: "admin" } : user,
+        ),
       );
     }
   };
@@ -186,15 +186,15 @@ export default function AdminPanel() {
 
     setUsers(
       users.map((user) =>
-        user.id === userId ? { ...user, balance: parsedBalance } : user
-      )
+        user.id === userId ? { ...user, balance: parsedBalance } : user,
+      ),
     );
 
     // Update total volume in stats
     const totalBalance = users.reduce(
       (sum, user) =>
         user.id === userId ? sum + parsedBalance : sum + user.balance,
-      0
+      0,
     );
     setStats({ ...stats, totalVolume: totalBalance });
 
@@ -206,7 +206,7 @@ export default function AdminPanel() {
     alert(
       `✅ Balance updated for ${
         user?.name
-      }\nNew balance: $${parsedBalance.toFixed(2)}`
+      }\nNew balance: $${parsedBalance.toFixed(2)}`,
     );
   };
 
@@ -463,8 +463,8 @@ export default function AdminPanel() {
                                 user.status === "active"
                                   ? "bg-green-100 text-green-700"
                                   : user.status === "suspended"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-yellow-100 text-yellow-700"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-yellow-100 text-yellow-700"
                               }`}
                             >
                               {user.status.toUpperCase()}

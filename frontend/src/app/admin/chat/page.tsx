@@ -59,7 +59,7 @@ export default function AdminChatMonitor() {
         setNewTicketCount((c: number) => c + 1);
         setToast({ show: true, text: `New support ticket: ${ticket.subject}` });
         setTimeout(() => setToast({ show: false, text: "" }), 3500);
-      }
+      },
     );
     return () => {
       s.disconnect();

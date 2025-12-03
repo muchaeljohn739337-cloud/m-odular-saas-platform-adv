@@ -142,7 +142,7 @@ export default function SecurityDashboard() {
   async function disableProtectMode() {
     if (
       !confirm(
-        "Disable Protect Mode? This should only be done if threats are resolved."
+        "Disable Protect Mode? This should only be done if threats are resolved.",
       )
     )
       return;
@@ -228,7 +228,7 @@ export default function SecurityDashboard() {
           <Badge variant="outline" className="text-lg py-2 px-4">
             <div
               className={`w-2 h-2 rounded-full ${getThreatColor(
-                status.threat_level
+                status.threat_level,
               )} mr-2`}
             />
             Threat Level: {status.threat_level}

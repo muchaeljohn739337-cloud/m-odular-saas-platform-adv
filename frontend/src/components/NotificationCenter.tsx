@@ -25,7 +25,7 @@ export default function NotificationCenter({
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
   const filteredNotifications = notifications.filter((n) =>
-    filter === "unread" ? !n.isRead : true
+    filter === "unread" ? !n.isRead : true,
   );
 
   const handleMarkAsRead = async (id: string) => {

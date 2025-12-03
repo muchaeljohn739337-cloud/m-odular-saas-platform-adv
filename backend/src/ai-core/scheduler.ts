@@ -1,12 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import cron from "node-cron";
+import { monitoring } from "./monitoring";
+import { taskQueue } from "./queue";
 import { WorkflowEngine } from "./workflow-engine";
 
 const prisma = new PrismaClient();
 
 // Lazy-load workflow engine to avoid circular dependency
-function getWorkflowEngine(): WorkflowEngine {
-  return WorkflowEngine.getInstance();
+function getWorkflowEngine(): any {
+  return (WorkflowEngine as any).getInstance();
 }
 
 export class AIScheduler {
@@ -103,28 +105,28 @@ export class AIScheduler {
   private scheduleWorkflowChecks(): void {
     // Check for pending approvals every 5 minutes
     this.schedule("check-pending-workflows", "*/5 * * * *", async () => {
-      const pendingWorkflows = await prisma.aIWorkflow.findMany({
+      const pendingTasks = await prisma.aITask.findMany({
         where: {
-          status: "PENDING_APPROVAL",
+          status: "awaiting_approval",
           createdAt: {
             lt: new Date(Date.now() - 30 * 60000), // Older than 30 minutes
           },
         },
         include: {
-          tasks: true,
+          workflow: true,
         },
       });
 
-      if (pendingWorkflows.length > 0) {
+      if (pendingTasks.length > 0) {
         await monitoring.createAlert({
           type: "workflow-approval-pending",
           severity: "MEDIUM",
-          message: `${pendingWorkflows.length} workflows pending approval for >30 minutes`,
+          message: `${pendingTasks.length} tasks pending approval for >30 minutes`,
           metadata: {
-            workflows: pendingWorkflows.map((w) => ({
-              id: w.id,
-              name: w.name,
-              age: Date.now() - w.createdAt.getTime(),
+            tasks: pendingTasks.map((t) => ({
+              id: t.id,
+              workflowName: t.workflow.name,
+              age: Date.now() - t.createdAt.getTime(),
             })),
           },
         });
@@ -135,8 +137,8 @@ export class AIScheduler {
     this.schedule("retry-failed-tasks", "0 * * * *", async () => {
       const failedTasks = await prisma.aITask.findMany({
         where: {
-          status: "FAILED",
-          retryCount: {
+          status: "failed",
+          attempts: {
             lt: 3,
           },
           updatedAt: {
@@ -161,17 +163,17 @@ export class AIScheduler {
   private async loadScheduledWorkflows(): Promise<void> {
     const scheduledWorkflows = await prisma.aIWorkflow.findMany({
       where: {
-        trigger: {
-          path: ["type"],
-          equals: "scheduled",
+        triggerType: "scheduled",
+        cronSchedule: {
+          not: null,
         },
+        enabled: true,
       },
     });
 
     for (const workflow of scheduledWorkflows) {
-      const trigger = workflow.trigger as any;
-      if (trigger?.schedule) {
-        this.scheduleWorkflow(workflow.id, trigger.schedule);
+      if (workflow.cronSchedule) {
+        this.scheduleWorkflow(workflow.id, workflow.cronSchedule);
       }
     }
 

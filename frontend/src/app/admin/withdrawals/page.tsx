@@ -32,7 +32,7 @@ export default function AdminWithdrawalsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("pending");
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<string | null>(
-    null
+    null,
   );
   const [actionNotes, setActionNotes] = useState<string>("");
   const [txHash, setTxHash] = useState<string>("");
@@ -42,7 +42,10 @@ export default function AdminWithdrawalsPage() {
   const fetchWithdrawals = React.useCallback(async () => {
     try {
       setLoading(true);
-      const url = filterStatus ? `/withdrawals/admin/all?status=${filterStatus}` : "/withdrawals/admin/all"; const response: any = await adminApi.get(url);
+      const url = filterStatus
+        ? `/withdrawals/admin/all?status=${filterStatus}`
+        : "/withdrawals/admin/all";
+      const response: any = await adminApi.get(url);
 
       if (response.data && Array.isArray(response.data.withdrawals)) {
         setWithdrawals(response.data.withdrawals);
@@ -61,7 +64,7 @@ export default function AdminWithdrawalsPage() {
 
   const handleAction = async (
     withdrawalId: string,
-    action: "approve" | "reject"
+    action: "approve" | "reject",
   ) => {
     if (!actionNotes && action === "reject") {
       toast.error("Please provide a reason for rejection");
@@ -83,14 +86,14 @@ export default function AdminWithdrawalsPage() {
           adminNotes: actionNotes || undefined,
           txHash: txHash || undefined,
           networkFee: networkFee ? parseFloat(networkFee) : undefined,
-        }
+        },
       );
 
       if (response.data.success) {
         toast.success(
           action === "approve"
             ? "Withdrawal approved successfully"
-            : "Withdrawal rejected and balance refunded"
+            : "Withdrawal rejected and balance refunded",
         );
         setSelectedWithdrawal(null);
         setActionNotes("");
@@ -218,8 +221,8 @@ export default function AdminWithdrawalsPage() {
                             withdrawal.cryptoType === "BTC"
                               ? 8
                               : withdrawal.cryptoType === "ETH"
-                              ? 6
-                              : 2
+                                ? 6
+                                : 2,
                           )}{" "}
                           {withdrawal.cryptoType}
                         </p>

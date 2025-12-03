@@ -109,7 +109,7 @@ export default function AITrainingPage() {
         alert(
           `Training complete! Accuracy: ${(
             result.metrics.accuracy * 100
-          ).toFixed(1)}%`
+          ).toFixed(1)}%`,
         );
         loadData(token);
       } else {

@@ -44,7 +44,7 @@ export default function BottomSheet({
 
   const handleDragEnd = (
     event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
+    info: PanInfo,
   ) => {
     if (info.offset.y > 100) {
       onClose();
@@ -119,9 +119,7 @@ export default function BottomSheet({
             )}
 
             {/* Content */}
-            <div
-              className="overflow-y-auto overscroll-contain p-6 max-h-[calc(100%-100px)]"
-            >
+            <div className="overflow-y-auto overscroll-contain p-6 max-h-[calc(100%-100px)]">
               {children}
             </div>
           </motion.div>

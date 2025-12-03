@@ -17,7 +17,7 @@ interface RequestOptions {
  */
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
 ): Promise<T> {
   const { method = "GET", headers = {}, body } = options;
 

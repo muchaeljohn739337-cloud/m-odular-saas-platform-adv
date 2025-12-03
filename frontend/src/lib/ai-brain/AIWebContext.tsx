@@ -32,15 +32,15 @@ interface AIWebContextType {
   getSuggestions: (
     field: string,
     currentValue: string,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
   ) => Promise<AutoCompleteContext | null>;
   getFormHelp: (
     formType: string,
-    currentData: Record<string, unknown>
+    currentData: Record<string, unknown>,
   ) => Promise<FormAssistance[]>;
   enhancedSearch: (
     query: string,
-    filters?: Record<string, unknown>
+    filters?: Record<string, unknown>,
   ) => Promise<any>;
   loadPersonalization: () => Promise<void>;
 }
@@ -57,7 +57,7 @@ export function AIWebProvider({ children }: { children: ReactNode }) {
     async (
       field: string,
       currentValue: string,
-      context?: Record<string, unknown>
+      context?: Record<string, unknown>,
     ): Promise<AutoCompleteContext | null> => {
       try {
         const suggestions = await getAutoComplete(field, currentValue, context);
@@ -67,14 +67,14 @@ export function AIWebProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
-    []
+    [],
   );
 
   // Get form assistance
   const getFormHelp = useCallback(
     async (
       formType: string,
-      currentData: Record<string, unknown>
+      currentData: Record<string, unknown>,
     ): Promise<FormAssistance[]> => {
       try {
         const assistance = await getFormAssistance(formType, currentData);
@@ -84,7 +84,7 @@ export function AIWebProvider({ children }: { children: ReactNode }) {
         return [];
       }
     },
-    []
+    [],
   );
 
   // Enhanced search with AI
@@ -98,7 +98,7 @@ export function AIWebProvider({ children }: { children: ReactNode }) {
         return { results: [], suggestions: [] };
       }
     },
-    []
+    [],
   );
 
   // Load user personalization

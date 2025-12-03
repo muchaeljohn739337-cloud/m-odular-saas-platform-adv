@@ -100,10 +100,12 @@ Open **[Link](http://localhost:3000**) to see your dashboard!
 The frontend automatically connects to your backend at `http://localhost:4000`:
 
 **API Endpoints Used:**
+
 - `GET /api/transactions/balance/:userId`
 - `GET /api/transactions/recent/:userId`
 
 **Socket.IO Events:**
+
 - `join-room` - Join user-specific room
 - `transaction-created` - Real-time transaction notifications
 - `global-transaction` - Global broadcasts
@@ -157,6 +159,7 @@ Manages transaction list with real-time updates via Socket.IO. Includes mock dat
 ### useSoundFeedback()
 
 Provides audio and haptic feedback:
+
 - `playClick()` - Button clicks
 - `playSuccess()` - Successful actions
 - `playError()` - Error states
@@ -165,12 +168,14 @@ Provides audio and haptic feedback:
 ## 🎭 Animations
 
 **Framer Motion Variants:**
+
 - `initial` → `animate` for entry animations
 - `whileHover` for interactive states
 - `exit` for leave animations
 - Staggered delays for list items
 
 **Custom CSS Animations:**
+
 - `pulse-glow` - Pulsing glow effect
 - `slide-in` - Smooth slide transitions
 - `fade-in` - Opacity transitions
@@ -187,6 +192,7 @@ Provides audio and haptic feedback:
 ### Environment Variables
 
 Create `frontend/.env.local`:
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
@@ -194,6 +200,7 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 ### Tailwind Custom Config
 
 **Custom Colors:**
+
 - `primary-500` - Main blue (#1890ff)
 - `teal-500` - Secondary teal (#13c2c2)
 - Custom gradients for each card type
@@ -204,18 +211,21 @@ Configured in `tailwind.config.js` with keyframes
 ## 🧪 Testing the Dashboard
 
 1. **Start Backend** (if not running):
+
 ```bash
 cd backend
 npm run dev
 ```
 
 2. **Start Frontend**:
+
 ```bash
 cd frontend
 npm run dev
 ```
 
 3. **Test Interactions**:
+
 - Click "Net Balance" card → Balance modal opens
 - Hover "Bonus Earnings" card → Tooltip appears
 - Filter transactions → List updates
@@ -226,6 +236,7 @@ npm run dev
 ### Change Color Theme
 
 Edit `tailwind.config.js`:
+
 ```javascript
 colors: {
   primary: { /* your colors */ },
@@ -236,6 +247,7 @@ colors: {
 ### Adjust Animation Speed
 
 Modify Framer Motion `transition` props:
+
 ```typescript
 transition={{ duration: 0.5, delay: 0.2 }}
 ```
@@ -270,6 +282,7 @@ Run `npm install` to install all dependencies including type definitions.
 ### Socket.IO Not Connecting
 
 Verify backend is running on port 4000:
+
 ```bash
 curl http://localhost:4000/health
 ```
@@ -277,6 +290,7 @@ curl http://localhost:4000/health
 ### Tailwind Classes Not Working
 
 Ensure `globals.css` imports are correct:
+
 ```css
 @tailwind base;
 @tailwind components;

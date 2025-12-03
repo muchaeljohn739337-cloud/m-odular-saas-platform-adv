@@ -26,15 +26,32 @@ export default function RealtimeDemoPage() {
       socket.on("connect", () => setConnected(true));
       socket.on("disconnect", () => setConnected(false));
       const add = (type: string, payload: unknown) =>
-        setEvents((prev) => [{ ts: new Date().toISOString(), type, payload }, ...prev].slice(0, 200));
+        setEvents((prev) =>
+          [{ ts: new Date().toISOString(), type, payload }, ...prev].slice(
+            0,
+            200,
+          ),
+        );
       socket.on("notification", (p: unknown) => add("notification", p));
-      socket.on("notifications:read", (p: unknown) => add("notifications:read", p));
-      socket.on("notifications:all-read", () => add("notifications:all-read", {}));
-      socket.on("notifications:unread-count", (p: unknown) => add("notifications:unread-count", p));
-      socket.on("transaction-created", (p: unknown) => add("transaction-created", p));
-      socket.on("global-transaction", (p: unknown) => add("global-transaction", p));
-      socket.on("admin:transaction", (p: unknown) => add("admin:transaction", p));
-  socket.on("balance-updated", (p: unknown) => add("balance-updated", p));
+      socket.on("notifications:read", (p: unknown) =>
+        add("notifications:read", p),
+      );
+      socket.on("notifications:all-read", () =>
+        add("notifications:all-read", {}),
+      );
+      socket.on("notifications:unread-count", (p: unknown) =>
+        add("notifications:unread-count", p),
+      );
+      socket.on("transaction-created", (p: unknown) =>
+        add("transaction-created", p),
+      );
+      socket.on("global-transaction", (p: unknown) =>
+        add("global-transaction", p),
+      );
+      socket.on("admin:transaction", (p: unknown) =>
+        add("admin:transaction", p),
+      );
+      socket.on("balance-updated", (p: unknown) => add("balance-updated", p));
     } catch (e) {
       console.error(e);
     }
@@ -48,7 +65,9 @@ export default function RealtimeDemoPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Realtime Demo</h1>
-      <p className="text-sm text-gray-600 mb-4">Provide a JWT, then connect to see live notifications and transactions.</p>
+      <p className="text-sm text-gray-600 mb-4">
+        Provide a JWT, then connect to see live notifications and transactions.
+      </p>
       <div className="flex gap-2 mb-4">
         <input
           className="flex-1 border rounded px-3 py-2"
@@ -57,24 +76,36 @@ export default function RealtimeDemoPage() {
           onChange={(e) => setToken(e.target.value)}
         />
         {!connected ? (
-          <button className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50" onClick={connect} disabled={disabled}>
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            onClick={connect}
+            disabled={disabled}
+          >
             Connect
           </button>
         ) : (
-          <button className="px-4 py-2 bg-gray-700 text-white rounded" onClick={disconnect}>
+          <button
+            className="px-4 py-2 bg-gray-700 text-white rounded"
+            onClick={disconnect}
+          >
             Disconnect
           </button>
         )}
       </div>
       <div className="border rounded p-3 h-[480px] overflow-auto bg-gray-50">
         {events.length === 0 ? (
-          <div className="text-gray-500">No events yet. Create a transaction or trigger a notification.</div>
+          <div className="text-gray-500">
+            No events yet. Create a transaction or trigger a notification.
+          </div>
         ) : (
           <ul className="space-y-2">
             {events.map((e, i) => (
               <li key={i} className="text-sm">
-                <span className="text-gray-400">[{e.ts}]</span> <span className="font-mono text-blue-700">{e.type}</span>
-                <pre className="whitespace-pre-wrap break-all bg-white border rounded p-2 text-xs mt-1">{JSON.stringify(e.payload, null, 2)}</pre>
+                <span className="text-gray-400">[{e.ts}]</span>{" "}
+                <span className="font-mono text-blue-700">{e.type}</span>
+                <pre className="whitespace-pre-wrap break-all bg-white border rounded p-2 text-xs mt-1">
+                  {JSON.stringify(e.payload, null, 2)}
+                </pre>
               </li>
             ))}
           </ul>

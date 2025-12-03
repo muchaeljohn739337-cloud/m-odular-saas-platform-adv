@@ -28,10 +28,12 @@ export default function TextGeneratorTab() {
       await generateTextContent({
         prompt,
         model,
-        captchaToken: "bypass", // TODO: Implement real CAPTCHA
+        // CAPTCHA validation required - implement client-side CAPTCHA widget
+        // captchaToken: getCaptchaToken(),
       });
     } catch (err) {
       console.error("Generation error:", err);
+      alert("Generation failed. Please ensure CAPTCHA is configured.");
     }
   };
 

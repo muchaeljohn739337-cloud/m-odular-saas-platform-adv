@@ -10,5 +10,6 @@
   // ESLint
   "eslint.enable": true,
   "eslint.workingDirectories": ["."],
-  "prisma.pinToPrisma6": true
+  "prisma.pinToPrisma6": false,
+  "remote.WSL.debug": true
 }

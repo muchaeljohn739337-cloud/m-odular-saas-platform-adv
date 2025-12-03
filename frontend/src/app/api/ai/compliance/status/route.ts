@@ -20,25 +20,25 @@ export async function GET(request: NextRequest) {
         KYC: {
           status: "compliant",
           lastCheck: new Date(
-            Date.now() - 7 * 24 * 60 * 60 * 1000
+            Date.now() - 7 * 24 * 60 * 60 * 1000,
           ).toISOString(),
           nextReview: new Date(
-            Date.now() + 23 * 24 * 60 * 60 * 1000
+            Date.now() + 23 * 24 * 60 * 60 * 1000,
           ).toISOString(),
         },
         AML: {
           status: "compliant",
           lastCheck: new Date(
-            Date.now() - 3 * 24 * 60 * 60 * 1000
+            Date.now() - 3 * 24 * 60 * 60 * 1000,
           ).toISOString(),
           nextReview: new Date(
-            Date.now() + 27 * 24 * 60 * 60 * 1000
+            Date.now() + 27 * 24 * 60 * 60 * 1000,
           ).toISOString(),
         },
         REGULATORY: {
           status: "pending",
           lastCheck: new Date(
-            Date.now() - 1 * 24 * 60 * 60 * 1000
+            Date.now() - 1 * 24 * 60 * 60 * 1000,
           ).toISOString(),
           pendingActions: 1,
           description: "Annual compliance filing due",
@@ -46,10 +46,10 @@ export async function GET(request: NextRequest) {
       },
       pendingAlerts: Math.floor(Math.random() * 3),
       lastFullAudit: new Date(
-        Date.now() - 30 * 24 * 60 * 60 * 1000
+        Date.now() - 30 * 24 * 60 * 60 * 1000,
       ).toISOString(),
       nextScheduledAudit: new Date(
-        Date.now() + 60 * 24 * 60 * 60 * 1000
+        Date.now() + 60 * 24 * 60 * 60 * 1000,
       ).toISOString(),
       timestamp: new Date().toISOString(),
     });
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     console.error("Compliance status error:", error);
     return NextResponse.json(
       { error: "Failed to fetch compliance status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,23 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { safeRedirect, TRUSTED_REDIRECT_DOMAINS } from "@/utils/security";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
-  Heart,
-  Brain,
-  Zap,
-  Calendar,
-  Clock,
-  CheckCircle,
   AlertCircle,
-  TrendingUp,
+  Brain,
+  Calendar,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Heart,
   Shield,
   Sparkles,
-  X,
-  DollarSign,
+  TrendingUp,
   Wallet,
+  X,
+  Zap,
 } from "lucide-react";
+import React, { useState } from "react";
 
 interface Chamber {
   id: string;
@@ -189,7 +190,11 @@ export default function MedBeds() {
 
       if (paymentMethod === "stripe" && data.checkoutUrl) {
         // Redirect to Stripe checkout
-        window.location.href = data.checkoutUrl;
+        try {
+          safeRedirect(data.checkoutUrl, TRUSTED_REDIRECT_DOMAINS);
+        } catch {
+          throw new Error("Invalid checkout URL received");
+        }
       } else {
         // Balance payment successful
         const newSession: Session = {
@@ -403,8 +408,8 @@ export default function MedBeds() {
                     session.status === "completed"
                       ? "bg-green-100 text-green-600"
                       : session.status === "in-progress"
-                      ? "bg-blue-100 text-blue-600"
-                      : "bg-yellow-100 text-yellow-600"
+                        ? "bg-blue-100 text-blue-600"
+                        : "bg-yellow-100 text-yellow-600"
                   }`}
                 >
                   {session.status === "completed" ? (
@@ -672,8 +677,8 @@ export default function MedBeds() {
                   {isProcessing
                     ? "Processing..."
                     : paymentMethod === "stripe"
-                    ? "Pay with Card"
-                    : "Confirm Booking"}
+                      ? "Pay with Card"
+                      : "Confirm Booking"}
                 </button>
               </div>
 

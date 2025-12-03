@@ -63,7 +63,7 @@ const MobileInput = forwardRef<HTMLInputElement, MobileInputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 MobileInput.displayName = "MobileInput";

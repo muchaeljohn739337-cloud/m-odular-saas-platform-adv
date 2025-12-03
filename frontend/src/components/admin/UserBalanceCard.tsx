@@ -113,7 +113,7 @@ export default function UserBalanceCard({
             </label>
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase ${getTierColor(
-                tier.currentTier
+                tier.currentTier,
               )}`}
             >
               {tier.currentTier}

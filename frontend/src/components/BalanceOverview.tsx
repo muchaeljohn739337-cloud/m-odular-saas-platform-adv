@@ -61,10 +61,14 @@ export default function BalanceOverview() {
       };
 
       tokensData.forEach((token: TokenBalance) => {
-        if (token.tokenType === "BTC") tokenBalances.btcBalance = parseFloat(token.balance);
-        if (token.tokenType === "ETH") tokenBalances.ethBalance = parseFloat(token.balance);
-        if (token.tokenType === "USDT") tokenBalances.usdtBalance = parseFloat(token.balance);
-        if (token.tokenType === "LTC") tokenBalances.ltcBalance = parseFloat(token.balance);
+        if (token.tokenType === "BTC")
+          tokenBalances.btcBalance = parseFloat(token.balance);
+        if (token.tokenType === "ETH")
+          tokenBalances.ethBalance = parseFloat(token.balance);
+        if (token.tokenType === "USDT")
+          tokenBalances.usdtBalance = parseFloat(token.balance);
+        if (token.tokenType === "LTC")
+          tokenBalances.ltcBalance = parseFloat(token.balance);
       });
 
       setBalances({
@@ -82,7 +86,7 @@ export default function BalanceOverview() {
     try {
       const response = await fetch("/api/crypto/prices");
       const data = await response.json();
-      
+
       const priceMap: Record<string, number> = {};
       data.forEach((item: PriceData) => {
         priceMap[item.symbol] = parseFloat(item.price);
@@ -98,7 +102,7 @@ export default function BalanceOverview() {
     const ethValue = balances.ethBalance * (prices.ETH || 0);
     const usdtValue = balances.usdtBalance * (prices.USDT || 1);
     const ltcValue = balances.ltcBalance * (prices.LTC || 0);
-    
+
     return balances.usdBalance + btcValue + ethValue + usdtValue + ltcValue;
   };
 
@@ -156,7 +160,10 @@ export default function BalanceOverview() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 animate-pulse">
+          <div
+            key={i}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 animate-pulse"
+          >
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-4"></div>
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
             <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
@@ -172,7 +179,9 @@ export default function BalanceOverview() {
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-indigo-100 text-sm font-medium mb-1">Total Portfolio Value</p>
+            <p className="text-indigo-100 text-sm font-medium mb-1">
+              Total Portfolio Value
+            </p>
             <h2 className="text-4xl font-bold">${totalValue.toFixed(2)}</h2>
           </div>
           <div className="text-5xl opacity-20">💰</div>
@@ -191,9 +200,13 @@ export default function BalanceOverview() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                   {card.name}
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{card.symbol}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {card.symbol}
+                </p>
               </div>
-              <div className={`${card.color} w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white`}>
+              <div
+                className={`${card.color} w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white`}
+              >
                 {card.icon}
               </div>
             </div>
@@ -201,7 +214,7 @@ export default function BalanceOverview() {
             <div className="space-y-2">
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {card.symbol === "USD" 
+                  {card.symbol === "USD"
                     ? `$${card.balance.toFixed(card.decimals)}`
                     : card.balance.toFixed(card.decimals)}
                 </p>
@@ -214,7 +227,9 @@ export default function BalanceOverview() {
 
               {card.symbol !== "USD" && (
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">USD Value</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    USD Value
+                  </p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     ${card.value.toFixed(2)}
                   </p>

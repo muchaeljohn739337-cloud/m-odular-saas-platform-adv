@@ -193,6 +193,8 @@ router.post("/rollback", authenticateToken, requireAdmin, async (req: Request, r
         id: crypto.randomUUID(),
         action: "manual_rollback",
         userId: req.user?.id || "admin",
+        resourceType: "SYSTEM",
+        resourceId: "deployment",
         changes: JSON.stringify({
           reason: reason || "Manual rollback requested",
           timestamp: new Date().toISOString(),

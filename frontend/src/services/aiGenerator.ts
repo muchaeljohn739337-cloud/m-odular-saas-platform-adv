@@ -83,7 +83,7 @@ export interface BuildProjectRequest {
  * Generate text using AI
  */
 export async function generateText(
-  request: AIGenerationRequest
+  request: AIGenerationRequest,
 ): Promise<{ success: boolean; data: AIGeneration }> {
   return api.post("/api/ai-generator/text", request);
 }
@@ -92,7 +92,7 @@ export async function generateText(
  * Generate code using AI
  */
 export async function generateCode(
-  request: CodeGenerationRequest
+  request: CodeGenerationRequest,
 ): Promise<{ success: boolean; data: AIGeneration }> {
   return api.post("/api/ai-generator/code", request);
 }
@@ -101,7 +101,7 @@ export async function generateCode(
  * Generate image using DALL-E 3
  */
 export async function generateImage(
-  request: ImageGenerationRequest
+  request: ImageGenerationRequest,
 ): Promise<{ success: boolean; data: AIGeneration }> {
   return api.post("/api/ai-generator/image", request);
 }
@@ -112,7 +112,7 @@ export async function generateImage(
 export async function getHistory(
   limit = 50,
   offset = 0,
-  type?: "text" | "code" | "image"
+  type?: "text" | "code" | "image",
 ): Promise<GenerationHistoryResponse> {
   const params = new URLSearchParams({
     limit: limit.toString(),
@@ -129,7 +129,7 @@ export async function getHistory(
 export async function getMetrics(
   mfaToken: string,
   days = 30,
-  userId?: string
+  userId?: string,
 ): Promise<MetricsResponse> {
   const params = new URLSearchParams({
     mfaToken,
@@ -145,7 +145,7 @@ export async function getMetrics(
  */
 export async function deleteGeneration(
   id: string,
-  mfaToken: string
+  mfaToken: string,
 ): Promise<{ success: boolean; message: string }> {
   return api.delete(`/api/ai-generator/${id}?mfaToken=${mfaToken}`);
 }
@@ -154,7 +154,7 @@ export async function deleteGeneration(
  * Build a complete project using AI Builder Agent (Admin only)
  */
 export async function buildProject(
-  request: BuildProjectRequest
+  request: BuildProjectRequest,
 ): Promise<{ success: boolean; message: string; buildId?: string }> {
   return api.post("/api/ai-generator/build-project", request);
 }

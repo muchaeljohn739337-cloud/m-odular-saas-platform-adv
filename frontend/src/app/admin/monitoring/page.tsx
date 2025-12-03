@@ -110,7 +110,7 @@ export default function SystemMonitoringPage() {
 
       // Fetch monitoring data
       const monitoringResponse = await fetch(
-        `${API_URL}/api/system/monitoring`
+        `${API_URL}/api/system/monitoring`,
       );
       if (monitoringResponse.ok) {
         const monitoringData = await monitoringResponse.json();
@@ -208,21 +208,21 @@ export default function SystemMonitoringPage() {
             <div
               className={`p-6 rounded-2xl border-2 mb-6 ${getStatusColor(
                 systemStatus.overall.status,
-                systemStatus.overall.alertLevel
+                systemStatus.overall.alertLevel,
               )}`}
             >
               <div className="flex items-center gap-4">
                 {getStatusIcon(
                   systemStatus.overall.status,
-                  systemStatus.overall.alertLevel
+                  systemStatus.overall.alertLevel,
                 )}
                 <div>
                   <h2 className="text-2xl font-bold">
                     {systemStatus.overall.status === "operational"
                       ? "All Systems Operational"
                       : systemStatus.overall.status === "degraded"
-                      ? "System Performance Degraded"
-                      : "System Down"}
+                        ? "System Performance Degraded"
+                        : "System Down"}
                   </h2>
                   <p className="text-sm opacity-80">
                     Last updated:{" "}
@@ -318,7 +318,7 @@ export default function SystemMonitoringPage() {
                       key={index}
                       className={`p-4 rounded-xl border-2 ${getStatusColor(
                         service.status,
-                        service.alertLevel
+                        service.alertLevel,
                       )}`}
                     >
                       <div className="flex items-center justify-between">
@@ -376,7 +376,7 @@ export default function SystemMonitoringPage() {
                           <div className="flex items-center gap-2 mb-2">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-semibold ${getSeverityColor(
-                                alert.severity
+                                alert.severity,
                               )}`}
                             >
                               {alert.severity.toUpperCase()}

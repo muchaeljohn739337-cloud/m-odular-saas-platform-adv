@@ -42,7 +42,7 @@ export async function assessLoginRisk(credentials: {
 
 export async function detectAnomaly(
   action: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ): Promise<AnomalyDetection> {
   return api.post("/api/ai/security/detect-anomaly", {
     action,
@@ -52,7 +52,7 @@ export async function detectAnomaly(
 }
 
 export async function scanForBots(
-  requestData: Record<string, unknown>
+  requestData: Record<string, unknown>,
 ): Promise<{
   isBot: boolean;
   confidence: number;
@@ -73,7 +73,7 @@ export async function generateInsights(context: string): Promise<AIInsight[]> {
 }
 
 export async function getRecommendations(
-  category?: string
+  category?: string,
 ): Promise<SmartRecommendation[]> {
   const url = category
     ? `/api/ai/insights/recommendations?category=${category}`
@@ -83,13 +83,13 @@ export async function getRecommendations(
 
 export async function predictMetric(
   metric: string,
-  timeframe: string
+  timeframe: string,
 ): Promise<PredictiveAnalysis> {
   return api.post("/api/ai/insights/predict", { metric, timeframe });
 }
 
 export async function getSmartDateRange(
-  purpose: string
+  purpose: string,
 ): Promise<SmartDateRange> {
   return api.post("/api/ai/insights/smart-date-range", { purpose });
 }
@@ -99,7 +99,7 @@ export async function getUserPersonalization(): Promise<UIPersonalization> {
 }
 
 export async function updateUserPersonalization(
-  preferences: Partial<UIPersonalization["preferences"]>
+  preferences: Partial<UIPersonalization["preferences"]>,
 ): Promise<UIPersonalization> {
   return api.put("/api/ai/insights/personalization", { preferences });
 }
@@ -110,20 +110,20 @@ export async function updateUserPersonalization(
 
 export async function checkCompliance(
   entity: string,
-  type: string
+  type: string,
 ): Promise<ComplianceAlert[]> {
   return api.post("/api/ai/compliance/check", { entity, type });
 }
 
 export async function detectFraud(
-  transactionData: Record<string, unknown>
+  transactionData: Record<string, unknown>,
 ): Promise<FraudDetection> {
   return api.post("/api/ai/compliance/detect-fraud", transactionData);
 }
 
 export async function assessRisk(
   operation: string,
-  context: Record<string, unknown>
+  context: Record<string, unknown>,
 ): Promise<{ riskScore: RiskScore }> {
   return api.post("/api/ai/compliance/assess-risk", { operation, context });
 }
@@ -151,7 +151,7 @@ export async function getGeographyInsights(dateRange?: {
 }
 
 export async function getRevenueForecast(
-  days: number = 30
+  days: number = 30,
 ): Promise<RevenueForecast> {
   return api.get(`/api/ai/analytics/revenue-forecast?days=${days}`);
 }
@@ -176,7 +176,7 @@ export async function getSmartMetrics(userId?: string): Promise<{
 export async function getAutoComplete(
   field: string,
   currentValue: string,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): Promise<AutoCompleteContext> {
   return api.post("/api/ai/ui/autocomplete", {
     field,
@@ -187,7 +187,7 @@ export async function getAutoComplete(
 
 export async function getFormAssistance(
   formType: string,
-  currentData: Record<string, unknown>
+  currentData: Record<string, unknown>,
 ): Promise<FormAssistance[]> {
   return api.post("/api/ai/ui/form-assist", {
     formType,
@@ -197,7 +197,7 @@ export async function getFormAssistance(
 
 export async function getSmartSearch(
   query: string,
-  filters?: Record<string, unknown>
+  filters?: Record<string, unknown>,
 ): Promise<{
   results: Array<{
     id: string;
@@ -217,7 +217,7 @@ export async function getSmartSearch(
 // ============================================
 
 export async function performAIAnalysis<T = unknown>(
-  request: AIAnalysisRequest
+  request: AIAnalysisRequest,
 ): Promise<AIAnalysisResponse<T>> {
   return api.post("/api/ai/analyze", request);
 }
@@ -227,7 +227,7 @@ export async function performAIAnalysis<T = unknown>(
 // ============================================
 
 export async function batchAnalyze(
-  requests: AIAnalysisRequest[]
+  requests: AIAnalysisRequest[],
 ): Promise<AIAnalysisResponse[]> {
   return api.post("/api/ai/batch-analyze", { requests });
 }

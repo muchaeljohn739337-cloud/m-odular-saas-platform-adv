@@ -61,7 +61,7 @@ export default function SendTransaction({ onSuccess }: SendTransactionProps) {
         `/api/users/search?email=${encodeURIComponent(recipient)}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (!userSearchResponse.ok) {
@@ -97,7 +97,7 @@ export default function SendTransaction({ onSuccess }: SendTransactionProps) {
       console.log(result); // Use result for debugging or remove if unnecessary
 
       setSuccess(
-        `✅ Successfully sent ${amountNum} ${currency} to ${recipient}`
+        `✅ Successfully sent ${amountNum} ${currency} to ${recipient}`,
       );
 
       // Reset form

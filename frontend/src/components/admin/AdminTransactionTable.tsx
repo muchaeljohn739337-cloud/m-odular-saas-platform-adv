@@ -33,7 +33,7 @@ const AdminTransactionTable: React.FC = () => {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
           },
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Failed to fetch transactions");
@@ -61,7 +61,7 @@ const AdminTransactionTable: React.FC = () => {
       list = list.filter(
         (t) =>
           t.adminUser?.toLowerCase().includes(admin.toLowerCase()) ||
-          t.description?.toLowerCase().includes(admin.toLowerCase())
+          t.description?.toLowerCase().includes(admin.toLowerCase()),
       );
     }
     setFiltered(list);

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       }
       if (!formData.address) {
         assistance.validationWarnings.push(
-          "Address field is recommended for verification"
+          "Address field is recommended for verification",
         );
       }
     }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const totalFields = Object.keys(formData).length;
     const filledFields = Object.values(formData).filter((v) => v).length;
     assistance.completionStatus = Math.round(
-      (filledFields / totalFields) * 100
+      (filledFields / totalFields) * 100,
     );
 
     return NextResponse.json({
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     console.error("Form assistance error:", error);
     return NextResponse.json(
       { error: "Failed to provide form assistance" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

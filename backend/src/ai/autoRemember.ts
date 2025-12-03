@@ -69,6 +69,8 @@ class AutoRememberSystem {
             ipAddress: "internal",
             userAgent: "Auto-Remember System",
             metadata: fullEntry.data,
+            resourceType: "system",
+            resourceId: "auto-remember",
           },
         });
       } catch (dbError) {

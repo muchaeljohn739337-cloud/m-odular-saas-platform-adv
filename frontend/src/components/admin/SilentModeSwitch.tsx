@@ -38,7 +38,7 @@ export default function SilentModeSwitch() {
   const toggleSilentMode = async (enabled: boolean) => {
     if (config?.autoEnabled && !enabled) {
       toast.error(
-        "Cannot disable Silent Mode in production. This is enforced for security."
+        "Cannot disable Silent Mode in production. This is enforced for security.",
       );
       return;
     }

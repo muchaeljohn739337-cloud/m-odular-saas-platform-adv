@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     console.error("Prediction error:", error);
     return NextResponse.json(
       { error: "Failed to generate prediction" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

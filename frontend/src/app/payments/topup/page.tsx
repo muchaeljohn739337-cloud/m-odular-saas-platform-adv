@@ -1,4 +1,5 @@
 "use client";
+import { safeRedirect, TRUSTED_REDIRECT_DOMAINS } from "@/utils/security";
 import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -27,7 +28,11 @@ export default function TopUpPage() {
       }
       const data = await res.json();
       if (data?.url) {
-        window.location.href = data.url;
+        try {
+          safeRedirect(data.url, TRUSTED_REDIRECT_DOMAINS);
+        } catch {
+          throw new Error("Invalid checkout URL received");
+        }
       } else {
         throw new Error("No checkout URL returned");
       }
@@ -42,7 +47,10 @@ export default function TopUpPage() {
   return (
     <div className="max-w-md mx-auto p-6 space-y-4">
       <h1 className="text-2xl font-semibold">Top Up Balance</h1>
-      <p className="text-sm text-gray-600">Enter an amount in USD, provide your JWT, and create a Stripe Checkout session.</p>
+      <p className="text-sm text-gray-600">
+        Enter an amount in USD, provide your JWT, and create a Stripe Checkout
+        session.
+      </p>
       {/* Premium quick amounts */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-gray-500 mr-2">Premium amounts:</span>
@@ -53,7 +61,7 @@ export default function TopUpPage() {
             onClick={() => setAmount(String(amt))}
             className="px-3 py-1.5 text-sm rounded border border-indigo-200 text-indigo-700 hover:bg-indigo-50"
           >
-            ${'{'}amt.toLocaleString(){'}'}
+            ${"{"}amt.toLocaleString(){"}"}
           </button>
         ))}
       </div>

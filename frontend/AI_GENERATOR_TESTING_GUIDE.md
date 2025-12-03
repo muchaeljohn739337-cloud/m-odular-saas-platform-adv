@@ -535,7 +535,7 @@ POST /api/ai-generator/image
 
 ---
 
-**Test Execution Date:** ********\_********  
-**Tester Name:** ********\_********  
-**Build Version:** ********\_********  
+**Test Execution Date:** **\*\*\*\***\_**\*\*\*\***  
+**Tester Name:** **\*\*\*\***\_**\*\*\*\***  
+**Build Version:** **\*\*\*\***\_**\*\*\*\***  
 **Test Environment:** Development / Staging / Production

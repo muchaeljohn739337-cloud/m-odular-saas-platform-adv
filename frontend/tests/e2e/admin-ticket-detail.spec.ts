@@ -8,7 +8,7 @@ const ADMIN_PASS = process.env.ADMIN_PASS || "Admin123!@#";
 const ADMIN_PHONE = process.env.ADMIN_PHONE || "+15551234567";
 
 async function fetchDevOtpCode(
-  request: import("@playwright/test").APIRequestContext
+  request: import("@playwright/test").APIRequestContext,
 ) {
   const res = await request.post(`${API_URL}/api/auth/admin/login`, {
     headers: { "Content-Type": "application/json" },
@@ -22,10 +22,10 @@ async function fetchDevOtpCode(
 async function createTestTicket(
   page: import("@playwright/test").Page,
   subject: string,
-  message: string
+  message: string,
 ) {
   const adminToken = await page.evaluate(() =>
-    localStorage.getItem("adminToken")
+    localStorage.getItem("adminToken"),
   );
   if (!adminToken)
     throw new Error("Missing adminToken in localStorage after login");
@@ -44,7 +44,7 @@ async function createTestTicket(
   const json = await res.json();
   if (!res.ok()) {
     throw new Error(
-      `Failed to create ticket: ${res.status()} ${JSON.stringify(json)}`
+      `Failed to create ticket: ${res.status()} ${JSON.stringify(json)}`,
     );
   }
   return json?.ticket?.id as string | undefined;
@@ -74,7 +74,7 @@ test("Admin ticket detail toggles related data", async ({ page, request }) => {
 
   // Verify OTP step visible
   await expect(
-    page.getByRole("heading", { name: /verify otp/i })
+    page.getByRole("heading", { name: /verify otp/i }),
   ).toBeVisible();
 
   // Fetch dev OTP code (overwrites/ensures a recent one)
@@ -93,7 +93,7 @@ test("Admin ticket detail toggles related data", async ({ page, request }) => {
   await createTestTicket(
     page,
     subject,
-    "Automated test ticket for detail view"
+    "Automated test ticket for detail view",
   );
 
   // Navigate to Tickets list and filter by subject
@@ -114,7 +114,7 @@ test("Admin ticket detail toggles related data", async ({ page, request }) => {
 
   // Ensure Ticket Details header is visible
   await expect(
-    page.getByRole("heading", { name: /ticket details/i })
+    page.getByRole("heading", { name: /ticket details/i }),
   ).toBeVisible();
 
   // Related section should be visible
@@ -124,7 +124,7 @@ test("Admin ticket detail toggles related data", async ({ page, request }) => {
   await page.getByLabel(/Include related user\/crypto/i).uncheck();
   await Promise.all([
     page.waitForResponse((r) =>
-      r.url().includes("/api/support/admin/tickets/")
+      r.url().includes("/api/support/admin/tickets/"),
     ),
     page.getByRole("button", { name: /^Refresh$/ }).click(),
   ]);
@@ -134,7 +134,7 @@ test("Admin ticket detail toggles related data", async ({ page, request }) => {
   await page.getByLabel(/Include related user\/crypto/i).check();
   await Promise.all([
     page.waitForResponse((r) =>
-      r.url().includes("/api/support/admin/tickets/")
+      r.url().includes("/api/support/admin/tickets/"),
     ),
     page.getByRole("button", { name: /^Refresh$/ }).click(),
   ]);

@@ -9,7 +9,11 @@ interface LogoProps {
   variant?: "light" | "dark" | "gradient";
 }
 
-export default function Logo({ size = "md", showText = true, variant = "gradient" }: LogoProps) {
+export default function Logo({
+  size = "md",
+  showText = true,
+  variant = "gradient",
+}: LogoProps) {
   const sizes = {
     sm: { icon: 24, text: "text-lg", container: "w-8 h-8" },
     md: { icon: 32, text: "text-xl", container: "w-10 h-10" },
@@ -19,7 +23,8 @@ export default function Logo({ size = "md", showText = true, variant = "gradient
   const variants = {
     light: "bg-white text-blue-600 border-blue-200",
     dark: "bg-slate-900 text-white border-slate-700",
-    gradient: "bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white border-transparent",
+    gradient:
+      "bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white border-transparent",
   };
 
   return (
@@ -30,7 +35,9 @@ export default function Logo({ size = "md", showText = true, variant = "gradient
       transition={{ duration: 0.5 }}
     >
       {/* Logo Icon */}
-      <div className={`${sizes[size].container} ${variants[variant]} border-2 rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden`}>
+      <div
+        className={`${sizes[size].container} ${variants[variant]} border-2 rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden`}
+      >
         {/* Animated background shimmer */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -43,11 +50,17 @@ export default function Logo({ size = "md", showText = true, variant = "gradient
             ease: "linear",
           }}
         />
-        
+
         {/* Triple icon stack for fintech feel */}
         <div className="relative flex items-center justify-center">
-          <Wallet size={sizes[size].icon * 0.6} className="absolute opacity-30 -translate-x-1" />
-          <Shield size={sizes[size].icon * 0.7} className="absolute opacity-50" />
+          <Wallet
+            size={sizes[size].icon * 0.6}
+            className="absolute opacity-30 -translate-x-1"
+          />
+          <Shield
+            size={sizes[size].icon * 0.7}
+            className="absolute opacity-50"
+          />
           <Zap size={sizes[size].icon * 0.5} className="relative z-10" />
         </div>
       </div>

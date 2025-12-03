@@ -41,7 +41,7 @@ export default {
             readTest: success ? "passed" : "failed",
             timestamp: new Date().toISOString(),
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -62,7 +62,7 @@ export default {
             complete: list.list_complete,
             cursor: list.cursor,
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -75,7 +75,7 @@ export default {
             {
               status: 400,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+            },
           );
         }
 
@@ -83,7 +83,7 @@ export default {
 
         return new Response(
           JSON.stringify({ key, value, exists: value !== null }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -119,7 +119,7 @@ export default {
             {
               status: 400,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+            },
           );
         }
 
@@ -147,7 +147,7 @@ export default {
             categories,
             timestamp: new Date().toISOString(),
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -166,7 +166,7 @@ export default {
         {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {

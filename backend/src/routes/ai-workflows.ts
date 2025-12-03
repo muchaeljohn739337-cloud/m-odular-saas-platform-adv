@@ -388,7 +388,7 @@ router.get("/suggestions", authenticateToken, requireAdmin, async (req: Request,
 
     const suggestions = await prisma.ai_suggestions.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { timestamp: "desc" },
       take: parseInt(limit as string),
     });
 

@@ -84,8 +84,8 @@ export default function SupportPage() {
               Contact Support
             </h1>
             <p className="text-xl text-slate-600">
-              Have a question or issue? We&apos;re here to help. Submit a support
-              ticket and our team will respond within 24 hours.
+              Have a question or issue? We&apos;re here to help. Submit a
+              support ticket and our team will respond within 24 hours.
             </p>
           </div>
 
@@ -224,7 +224,8 @@ export default function SupportPage() {
                 <li className="flex gap-3">
                   <span className="text-blue-600 font-bold">✓</span>
                   <span>
-                    You&apos;ll receive updates via email as your ticket progresses
+                    You&apos;ll receive updates via email as your ticket
+                    progresses
                   </span>
                 </li>
                 <li className="flex gap-3">

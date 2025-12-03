@@ -33,22 +33,22 @@ interface AIInsightsContextType {
   getRecommendations: (category?: string) => Promise<void>;
   predictMetric: (
     metric: string,
-    timeframe: string
+    timeframe: string,
   ) => Promise<PredictiveAnalysis | null>;
   getSuggestedDateRange: (purpose: string) => Promise<SmartDateRange | null>;
   updatePersonalization: (
-    preferences: Partial<UIPersonalization["preferences"]>
+    preferences: Partial<UIPersonalization["preferences"]>,
   ) => Promise<void>;
 }
 
 const AIInsightsContext = createContext<AIInsightsContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function AIInsightsProvider({ children }: { children: ReactNode }) {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [recommendations, setRecommendations] = useState<SmartRecommendation[]>(
-    []
+    [],
   );
   const [predictions, setPredictions] = useState<PredictiveAnalysis[]>([]);
   const [personalization, setPersonalization] =
@@ -73,7 +73,7 @@ export function AIInsightsProvider({ children }: { children: ReactNode }) {
           // Keep only unique insights, max 20
           const unique = combined.filter(
             (insight, index, self) =>
-              index === self.findIndex((i) => i.id === insight.id)
+              index === self.findIndex((i) => i.id === insight.id),
           );
           return unique.slice(-20);
         });
@@ -113,7 +113,7 @@ export function AIInsightsProvider({ children }: { children: ReactNode }) {
   const predictMetric = useCallback(
     async (
       metric: string,
-      timeframe: string
+      timeframe: string,
     ): Promise<PredictiveAnalysis | null> => {
       try {
         const response = await fetch("/api/ai/insights/predict", {
@@ -137,7 +137,7 @@ export function AIInsightsProvider({ children }: { children: ReactNode }) {
 
       return null;
     },
-    []
+    [],
   );
 
   // Get AI-suggested optimal date range for analytics
@@ -161,7 +161,7 @@ export function AIInsightsProvider({ children }: { children: ReactNode }) {
 
       return null;
     },
-    []
+    [],
   );
 
   // Update user personalization preferences
@@ -183,7 +183,7 @@ export function AIInsightsProvider({ children }: { children: ReactNode }) {
         console.error("Failed to update personalization:", error);
       }
     },
-    []
+    [],
   );
 
   // Load initial personalization on mount

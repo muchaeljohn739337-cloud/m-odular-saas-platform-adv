@@ -43,7 +43,7 @@ export default function TransactionHistory() {
         `${API_URL}/api/transactions?userId=${userId}&limit=50`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Failed to fetch transactions");
@@ -246,7 +246,7 @@ export default function TransactionHistory() {
                         </h3>
                         <span
                           className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(
-                            tx.status
+                            tx.status,
                           )}`}
                         >
                           {tx.status}

@@ -143,7 +143,7 @@ async function generateImage(
   });
 
   return {
-    imageUrl: response.data?.[0]?.url || \"\",
+    imageUrl: response.data?.[0]?.url || "",
     tokensUsed: 0, // DALL-E pricing is per image, not per token
   };
 }

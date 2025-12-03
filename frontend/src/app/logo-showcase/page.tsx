@@ -40,7 +40,9 @@ export default function LogoShowcase() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <p className="text-sm font-semibold text-gray-500 uppercase">Small</p>
+              <p className="text-sm font-semibold text-gray-500 uppercase">
+                Small
+              </p>
               <FinShapeLogo size="sm" animated={false} showText={true} />
             </motion.div>
 
@@ -51,7 +53,9 @@ export default function LogoShowcase() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <p className="text-sm font-semibold text-gray-500 uppercase">Medium</p>
+              <p className="text-sm font-semibold text-gray-500 uppercase">
+                Medium
+              </p>
               <FinShapeLogo size="md" animated={false} showText={true} />
             </motion.div>
 
@@ -62,7 +66,9 @@ export default function LogoShowcase() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <p className="text-sm font-semibold text-gray-500 uppercase">Large</p>
+              <p className="text-sm font-semibold text-gray-500 uppercase">
+                Large
+              </p>
               <FinShapeLogo size="lg" animated={false} showText={true} />
             </motion.div>
 
@@ -73,7 +79,9 @@ export default function LogoShowcase() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <p className="text-sm font-semibold text-gray-500 uppercase">Extra Large</p>
+              <p className="text-sm font-semibold text-gray-500 uppercase">
+                Extra Large
+              </p>
               <FinShapeLogo size="xl" animated={false} showText={true} />
             </motion.div>
           </div>
@@ -91,7 +99,9 @@ export default function LogoShowcase() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}
               >
-                <p className="text-sm font-semibold text-gray-500 uppercase">{size}</p>
+                <p className="text-sm font-semibold text-gray-500 uppercase">
+                  {size}
+                </p>
                 <FinShapeLogo size={size} animated={false} showText={false} />
               </motion.div>
             ))}
@@ -100,7 +110,9 @@ export default function LogoShowcase() {
 
         {/* Background Variations */}
         <div className="space-y-6">
-          <h2 className="text-3xl font-bold text-gray-800">On Different Backgrounds</h2>
+          <h2 className="text-3xl font-bold text-gray-800">
+            On Different Backgrounds
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Light Background */}
             <motion.div
@@ -109,7 +121,9 @@ export default function LogoShowcase() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <p className="text-sm font-semibold text-gray-500 uppercase">Light</p>
+              <p className="text-sm font-semibold text-gray-500 uppercase">
+                Light
+              </p>
               <FinShapeLogo size="lg" animated={false} showText={true} />
             </motion.div>
 
@@ -120,7 +134,9 @@ export default function LogoShowcase() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <p className="text-sm font-semibold text-gray-400 uppercase">Dark</p>
+              <p className="text-sm font-semibold text-gray-400 uppercase">
+                Dark
+              </p>
               <FinShapeLogo size="lg" animated={false} showText={true} />
             </motion.div>
 
@@ -131,7 +147,9 @@ export default function LogoShowcase() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <p className="text-sm font-semibold text-white uppercase">Gradient</p>
+              <p className="text-sm font-semibold text-white uppercase">
+                Gradient
+              </p>
               <div className="filter brightness-150">
                 <FinShapeLogo size="lg" animated={false} showText={true} />
               </div>
@@ -160,44 +178,68 @@ export default function LogoShowcase() {
           <h2 className="text-3xl font-bold text-gray-800">Logo Concept</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-blue-600">Design Elements</h3>
+              <h3 className="text-xl font-semibold text-blue-600">
+                Design Elements
+              </h3>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Hexagon:</strong> Represents structure, stability, and blockchain technology</span>
+                  <span>
+                    <strong>Hexagon:</strong> Represents structure, stability,
+                    and blockchain technology
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Chart Line:</strong> Symbolizes financial growth and market analysis</span>
+                  <span>
+                    <strong>Chart Line:</strong> Symbolizes financial growth and
+                    market analysis
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Dollar Sign:</strong> Merges traditional finance with modern crypto</span>
+                  <span>
+                    <strong>Dollar Sign:</strong> Merges traditional finance
+                    with modern crypto
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Gradient Colors:</strong> Blue → Cyan → Teal represents trust, innovation, and growth</span>
+                  <span>
+                    <strong>Gradient Colors:</strong> Blue → Cyan → Teal
+                    represents trust, innovation, and growth
+                  </span>
                 </li>
               </ul>
             </div>
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-blue-600">Brand Values</h3>
+              <h3 className="text-xl font-semibold text-blue-600">
+                Brand Values
+              </h3>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Professional:</strong> Clean, modern design</span>
+                  <span>
+                    <strong>Professional:</strong> Clean, modern design
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Trustworthy:</strong> Stable geometric shapes</span>
+                  <span>
+                    <strong>Trustworthy:</strong> Stable geometric shapes
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Innovative:</strong> Tech-forward aesthetic</span>
+                  <span>
+                    <strong>Innovative:</strong> Tech-forward aesthetic
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-500 mt-1">•</span>
-                  <span><strong>Dynamic:</strong> Growth-oriented imagery</span>
+                  <span>
+                    <strong>Dynamic:</strong> Growth-oriented imagery
+                  </span>
                 </li>
               </ul>
             </div>
@@ -208,10 +250,22 @@ export default function LogoShowcase() {
         <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 space-y-4">
           <h2 className="text-3xl font-bold text-gray-800">Usage Guidelines</h2>
           <div className="space-y-3 text-gray-700">
-            <p><strong>Clear Space:</strong> Maintain minimum padding equal to the height of one letter around the logo.</p>
-            <p><strong>Minimum Size:</strong> Never display the logo smaller than 24px height for digital or 0.5 inches for print.</p>
-            <p><strong>Color Variations:</strong> Use the gradient version on light backgrounds, white version on dark backgrounds.</p>
-            <p><strong>Animation:</strong> Use animated version for splash screens and main landing pages only.</p>
+            <p>
+              <strong>Clear Space:</strong> Maintain minimum padding equal to
+              the height of one letter around the logo.
+            </p>
+            <p>
+              <strong>Minimum Size:</strong> Never display the logo smaller than
+              24px height for digital or 0.5 inches for print.
+            </p>
+            <p>
+              <strong>Color Variations:</strong> Use the gradient version on
+              light backgrounds, white version on dark backgrounds.
+            </p>
+            <p>
+              <strong>Animation:</strong> Use animated version for splash
+              screens and main landing pages only.
+            </p>
           </div>
         </div>
 
@@ -221,8 +275,18 @@ export default function LogoShowcase() {
             href="/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:scale-105"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             Back to Dashboard
           </a>

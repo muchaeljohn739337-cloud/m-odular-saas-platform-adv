@@ -33,7 +33,8 @@ export const useNotifications = (userId?: string) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const [preferences, setPreferences] =
+    useState<NotificationPreferences | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -56,14 +57,21 @@ export const useNotifications = (userId?: string) => {
 
     socket.on("notification", (notification: Notification) => {
       console.log("📬 Received notification:", notification);
-      
+
       // Add to notifications list
       setNotifications((prev) => [notification, ...prev]);
       setUnreadCount((prev) => prev + 1);
 
       // Show toast
       toast(notification.message, {
-        type: notification.type === "error" ? "error" : notification.type === "warning" ? "warning" : notification.type === "success" ? "success" : "info",
+        type:
+          notification.type === "error"
+            ? "error"
+            : notification.type === "warning"
+              ? "warning"
+              : notification.type === "success"
+                ? "success"
+                : "info",
         autoClose: notification.priority === "urgent" ? false : 5000,
       });
     });
@@ -74,48 +82,54 @@ export const useNotifications = (userId?: string) => {
   }, [userId, API_URL]);
 
   // Fetch notifications
-  const fetchNotifications = useCallback(async (options?: {
-    page?: number;
-    limit?: number;
-    unreadOnly?: boolean;
-    category?: string;
-  }) => {
-    if (!userId) return;
+  const fetchNotifications = useCallback(
+    async (options?: {
+      page?: number;
+      limit?: number;
+      unreadOnly?: boolean;
+      category?: string;
+    }) => {
+      if (!userId) return;
 
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: String(options?.page || 1),
-        limit: String(options?.limit || 20),
-        ...(options?.unreadOnly && { unreadOnly: "true" }),
-        ...(options?.category && { category: options.category }),
-      });
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: String(options?.page || 1),
+          limit: String(options?.limit || 20),
+          ...(options?.unreadOnly && { unreadOnly: "true" }),
+          ...(options?.category && { category: options.category }),
+        });
 
-      const response = await fetch(`${API_URL}/api/notifications?${params}`, {
-        credentials: "include",
-      });
+        const response = await fetch(`${API_URL}/api/notifications?${params}`, {
+          credentials: "include",
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications);
-        setUnreadCount(data.pagination.unread);
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data.notifications);
+          setUnreadCount(data.pagination.unread);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+        toast.error("Failed to load notifications");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-      toast.error("Failed to load notifications");
-    } finally {
-      setLoading(false);
-    }
-  }, [userId, API_URL]);
+    },
+    [userId, API_URL],
+  );
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
     if (!userId) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/notifications/unread-count`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API_URL}/api/notifications/unread-count`,
+        {
+          credentials: "include",
+        },
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -127,23 +141,31 @@ export const useNotifications = (userId?: string) => {
   }, [userId, API_URL]);
 
   // Mark as read
-  const markAsRead = useCallback(async (notificationId: string) => {
-    try {
-      const response = await fetch(`${API_URL}/api/notifications/${notificationId}/read`, {
-        method: "PATCH",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/notifications/${notificationId}/read`,
+          {
+            method: "PATCH",
+            credentials: "include",
+          },
         );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+
+        if (response.ok) {
+          setNotifications((prev) =>
+            prev.map((n) =>
+              n.id === notificationId ? { ...n, isRead: true } : n,
+            ),
+          );
+          setUnreadCount((prev) => Math.max(0, prev - 1));
+        }
+      } catch (error) {
+        console.error("Failed to mark as read:", error);
       }
-    } catch (error) {
-      console.error("Failed to mark as read:", error);
-    }
-  }, [API_URL]);
+    },
+    [API_URL],
+  );
 
   // Mark all as read
   const markAllAsRead = useCallback(async () => {
@@ -165,22 +187,30 @@ export const useNotifications = (userId?: string) => {
   }, [API_URL]);
 
   // Delete notification
-  const deleteNotification = useCallback(async (notificationId: string) => {
-    try {
-      const response = await fetch(`${API_URL}/api/notifications/${notificationId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+  const deleteNotification = useCallback(
+    async (notificationId: string) => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/notifications/${notificationId}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          },
+        );
 
-      if (response.ok) {
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        toast.success("Notification deleted");
+        if (response.ok) {
+          setNotifications((prev) =>
+            prev.filter((n) => n.id !== notificationId),
+          );
+          toast.success("Notification deleted");
+        }
+      } catch (error) {
+        console.error("Failed to delete notification:", error);
+        toast.error("Failed to delete notification");
       }
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-      toast.error("Failed to delete notification");
-    }
-  }, [API_URL]);
+    },
+    [API_URL],
+  );
 
   // Fetch preferences
   const fetchPreferences = useCallback(async () => {
@@ -201,25 +231,31 @@ export const useNotifications = (userId?: string) => {
   }, [userId, API_URL]);
 
   // Update preferences
-  const updatePreferences = useCallback(async (updates: Partial<NotificationPreferences>) => {
-    try {
-      const response = await fetch(`${API_URL}/api/notifications/preferences`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(updates),
-      });
+  const updatePreferences = useCallback(
+    async (updates: Partial<NotificationPreferences>) => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/notifications/preferences`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(updates),
+          },
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        setPreferences(data);
-        toast.success("Preferences updated");
+        if (response.ok) {
+          const data = await response.json();
+          setPreferences(data);
+          toast.success("Preferences updated");
+        }
+      } catch (error) {
+        console.error("Failed to update preferences:", error);
+        toast.error("Failed to update preferences");
       }
-    } catch (error) {
-      console.error("Failed to update preferences:", error);
-      toast.error("Failed to update preferences");
-    }
-  }, [API_URL]);
+    },
+    [API_URL],
+  );
 
   // Subscribe to push notifications
   const subscribeToPush = useCallback(async () => {
@@ -235,19 +271,30 @@ export const useNotifications = (userId?: string) => {
         applicationServerKey: process.env.NEXT_PUBLIC_VAPID_KEY,
       });
 
-      const response = await fetch(`${API_URL}/api/notifications/subscribe-push`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          endpoint: subscription.endpoint,
-          keys: {
-            p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("p256dh")!))),
-            auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("auth")!))),
-          },
-          deviceInfo: navigator.userAgent,
-        }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/notifications/subscribe-push`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: btoa(
+                String.fromCharCode(
+                  ...new Uint8Array(subscription.getKey("p256dh")!),
+                ),
+              ),
+              auth: btoa(
+                String.fromCharCode(
+                  ...new Uint8Array(subscription.getKey("auth")!),
+                ),
+              ),
+            },
+            deviceInfo: navigator.userAgent,
+          }),
+        },
+      );
 
       if (response.ok) {
         toast.success("Push notifications enabled");

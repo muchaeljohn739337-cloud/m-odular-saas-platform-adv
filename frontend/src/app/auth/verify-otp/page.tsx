@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export default function VerifyOtpPage() {
   const router = useRouter();
-  
+
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"request" | "verify" | "done">("request");

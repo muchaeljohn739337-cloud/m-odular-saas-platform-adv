@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
       setError(
         `Too many attempts. Please try again ${
           rateLimitReset ? `at ${rateLimitReset.toLocaleTimeString()}` : "later"
-        }.`
+        }.`,
       );
       return;
     }
@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
           resetTime.setMinutes(resetTime.getMinutes() + 30);
           setRateLimitReset(resetTime);
           setError(
-            "Too many verification attempts. Please try again in 30 minutes."
+            "Too many verification attempts. Please try again in 30 minutes.",
           );
           return;
         }

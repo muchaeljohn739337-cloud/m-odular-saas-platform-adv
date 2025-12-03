@@ -12,7 +12,9 @@ interface CryptoPrice {
 
 export default function CryptoTrading() {
   const [prices, setPrices] = useState<CryptoPrice[]>([]);
-  const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(null);
+  const [selectedCrypto, setSelectedCrypto] = useState<CryptoPrice | null>(
+    null,
+  );
   const [action, setAction] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
   const [usdAmount, setUsdAmount] = useState("");
@@ -109,7 +111,7 @@ export default function CryptoTrading() {
       setMessage(
         `✅ Successfully ${action === "buy" ? "bought" : "sold"} ${cryptoAmount} ${
           selectedCrypto.symbol
-        }`
+        }`,
       );
       setAmount("");
       setUsdAmount("");
@@ -147,7 +149,9 @@ export default function CryptoTrading() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Crypto Selection */}
         <div className="lg:col-span-1 space-y-3">
-          <h3 className="font-semibold text-gray-700 mb-3">Select Cryptocurrency</h3>
+          <h3 className="font-semibold text-gray-700 mb-3">
+            Select Cryptocurrency
+          </h3>
           {prices.map((crypto) => (
             <button
               key={crypto.symbol}
@@ -321,8 +325,8 @@ export default function CryptoTrading() {
               {/* Info */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  💡 <strong>Note:</strong> Trades are executed at current market
-                  prices. Fees may apply based on your tier level.
+                  💡 <strong>Note:</strong> Trades are executed at current
+                  market prices. Fees may apply based on your tier level.
                 </p>
               </div>
             </div>

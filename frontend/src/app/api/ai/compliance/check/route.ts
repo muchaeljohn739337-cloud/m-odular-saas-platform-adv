@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     console.error("Compliance check error:", error);
     return NextResponse.json(
       { error: "Failed to check compliance" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

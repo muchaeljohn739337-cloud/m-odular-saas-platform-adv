@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     console.error("Session analysis error:", error);
     return NextResponse.json(
       { error: "Failed to analyze session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

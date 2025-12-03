@@ -14,22 +14,14 @@
  */
 
 import { Server as SocketIOServer } from "socket.io";
-import {
-  getConnectorMetrics,
-  getResourceMetrics,
-} from "../middleware/aiRateLimiter";
+import { getConnectorMetrics, getResourceMetrics } from "../middleware/aiRateLimiter";
 import prisma from "../prismaClient";
 import { guardianAI } from "./guardian_integration";
 import { taskOrchestratorAI } from "./taskOrchestratorAI";
 
 interface SecurityEvent {
   id: string;
-  type:
-    | "intrusion"
-    | "anomaly"
-    | "suspicious_activity"
-    | "performance_degradation"
-    | "unauthorized_access";
+  type: "intrusion" | "anomaly" | "suspicious_activity" | "performance_degradation" | "unauthorized_access";
   severity: "critical" | "high" | "medium" | "low";
   description: string;
   timestamp: Date;
@@ -90,9 +82,7 @@ class SurveillanceAI {
       await this.performMonitoringCycle();
     }, this.MONITOR_INTERVAL_MS);
 
-    console.log(
-      `📊 Monitoring cycle started (every ${this.MONITOR_INTERVAL_MS}ms)`
-    );
+    console.log(`📊 Monitoring cycle started (every ${this.MONITOR_INTERVAL_MS}ms)`);
   }
 
   /**
@@ -137,20 +127,20 @@ class SurveillanceAI {
       resources.cpuUsage > 90
         ? "critical"
         : resources.cpuUsage > 80
-        ? "warning"
-        : resources.cpuUsage > 60
-        ? "elevated"
-        : "normal";
+          ? "warning"
+          : resources.cpuUsage > 60
+            ? "elevated"
+            : "normal";
 
     // Memory status
     const memoryStatus =
       resources.memoryPercent > 90
         ? "critical"
         : resources.memoryPercent > 85
-        ? "warning"
-        : resources.memoryPercent > 70
-        ? "elevated"
-        : "normal";
+          ? "warning"
+          : resources.memoryPercent > 70
+            ? "elevated"
+            : "normal";
 
     // Database status
     const dbConnected = await this.checkDatabaseConnection();
@@ -161,39 +151,23 @@ class SurveillanceAI {
       orchestratorStats.availableWorkers === 0
         ? "critical"
         : orchestratorStats.availableWorkers < 3
-        ? "warning"
-        : "normal";
+          ? "warning"
+          : "normal";
 
     // Tasks status
     const taskStatus =
-      orchestratorStats.pendingTasks > 100
-        ? "critical"
-        : orchestratorStats.pendingTasks > 50
-        ? "warning"
-        : "normal";
+      orchestratorStats.pendingTasks > 100 ? "critical" : orchestratorStats.pendingTasks > 50 ? "warning" : "normal";
 
     // Overall health
-    const criticalCount = [
-      cpuStatus,
-      memoryStatus,
-      dbStatus,
-      workerStatus,
-      taskStatus,
-    ].filter((s) => s === "critical").length;
-    const warningCount = [
-      cpuStatus,
-      memoryStatus,
-      dbStatus,
-      workerStatus,
-      taskStatus,
-    ].filter((s) => s === "warning").length;
+    const criticalCount = [cpuStatus, memoryStatus, dbStatus, workerStatus, taskStatus].filter(
+      (s) => s === "critical"
+    ).length;
+    const warningCount = [cpuStatus, memoryStatus, dbStatus, workerStatus, taskStatus].filter(
+      (s) => s === "warning"
+    ).length;
 
     const overallHealth: SystemHealth["overall"] =
-      criticalCount > 0
-        ? "critical"
-        : warningCount > 1
-        ? "degraded"
-        : "healthy";
+      criticalCount > 0 ? "critical" : warningCount > 1 ? "degraded" : "healthy";
 
     return {
       overall: overallHealth,
@@ -227,11 +201,7 @@ class SurveillanceAI {
 
     // Alert if no workers available
     if (stats.availableWorkers === 0) {
-      this.createAlert(
-        "critical",
-        "workers",
-        "No workers available - system overloaded"
-      );
+      this.createAlert("critical", "workers", "No workers available - system overloaded");
 
       // Create security event
       this.createSecurityEvent({
@@ -243,11 +213,7 @@ class SurveillanceAI {
 
     // Alert if too many pending tasks
     if (stats.pendingTasks > 100) {
-      this.createAlert(
-        "warning",
-        "workers",
-        `High task queue: ${stats.pendingTasks} pending tasks`
-      );
+      this.createAlert("warning", "workers", `High task queue: ${stats.pendingTasks} pending tasks`);
     }
   }
 
@@ -269,11 +235,7 @@ class SurveillanceAI {
 
       // Alert if connector has too many active calls
       if (metrics.activeCalls > 10) {
-        this.createAlert(
-          "warning",
-          "connectors",
-          `Connector ${connector} has ${metrics.activeCalls} active calls`
-        );
+        this.createAlert("warning", "connectors", `Connector ${connector} has ${metrics.activeCalls} active calls`);
       }
     }
   }
@@ -284,9 +246,14 @@ class SurveillanceAI {
   private async monitorJobExecution(): Promise<void> {
     try {
       // Check for stuck jobs (running > 30 minutes)
-      const stuckJobs = await prisma.job.findMany({
+      // Note: Using AITask model as 'job' model doesn't exist in schema
+      if (!prisma.aITask) {
+        return; // Skip if model not available
+      }
+
+      const stuckJobs = await prisma.aITask.findMany({
         where: {
-          status: "running",
+          status: "in_progress",
           updatedAt: {
             lt: new Date(Date.now() - 30 * 60 * 1000),
           },
@@ -294,11 +261,7 @@ class SurveillanceAI {
       });
 
       if (stuckJobs.length > 0) {
-        this.createAlert(
-          "error",
-          "jobs",
-          `${stuckJobs.length} jobs appear stuck (running > 30 minutes)`
-        );
+        this.createAlert("error", "jobs", `${stuckJobs.length} jobs appear stuck (running > 30 minutes)`);
 
         // Create security event
         this.createSecurityEvent({
@@ -309,19 +272,14 @@ class SurveillanceAI {
         });
 
         // Alert Guardian AI
-        await guardianAI.logAction(
-          "surveillance-ai",
-          "stuck_jobs_detected",
-          "Stuck jobs detected",
-          {
-            count: stuckJobs.length,
-            jobs: stuckJobs,
-          }
-        );
+        await guardianAI.logAction("surveillance-ai", "stuck_jobs_detected", "Stuck jobs detected", {
+          count: stuckJobs.length,
+          jobs: stuckJobs,
+        });
       }
 
       // Check for high failure rate
-      const recentJobs = await prisma.job.count({
+      const recentJobs = await prisma.aITask.count({
         where: {
           createdAt: {
             gte: new Date(Date.now() - 60 * 60 * 1000), // Last hour
@@ -329,7 +287,7 @@ class SurveillanceAI {
         },
       });
 
-      const failedJobs = await prisma.job.count({
+      const failedJobs = await prisma.aITask.count({
         where: {
           status: "failed",
           createdAt: {
@@ -344,9 +302,7 @@ class SurveillanceAI {
         this.createAlert(
           "error",
           "jobs",
-          `High job failure rate: ${failureRate.toFixed(
-            1
-          )}% (${failedJobs}/${recentJobs})`
+          `High job failure rate: ${failureRate.toFixed(1)}% (${failedJobs}/${recentJobs})`
         );
       }
     } catch (error) {
@@ -428,9 +384,7 @@ class SurveillanceAI {
       this.createSecurityEvent({
         type: "anomaly",
         severity: "critical",
-        description: `Critical memory usage: ${health.memory.usage.toFixed(
-          2
-        )}%`,
+        description: `Critical memory usage: ${health.memory.usage.toFixed(2)}%`,
       });
     }
 
@@ -443,14 +397,9 @@ class SurveillanceAI {
       });
 
       // Alert Guardian AI
-      await guardianAI.logAction(
-        "surveillance-ai",
-        "anomaly",
-        "Database connection lost",
-        {
-          timestamp: new Date(),
-        }
-      );
+      await guardianAI.logAction("surveillance-ai", "anomaly", "Database connection lost", {
+        timestamp: new Date(),
+      });
     }
 
     // Anomaly 4: All workers busy
@@ -466,9 +415,7 @@ class SurveillanceAI {
   /**
    * Create security event
    */
-  private createSecurityEvent(
-    event: Omit<SecurityEvent, "id" | "timestamp">
-  ): void {
+  private createSecurityEvent(event: Omit<SecurityEvent, "id" | "timestamp">): void {
     const securityEvent: SecurityEvent = {
       id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       ...event,
@@ -483,12 +430,7 @@ class SurveillanceAI {
     }
 
     // Log to Guardian AI
-    guardianAI.logAction(
-      "security",
-      event.type,
-      event.description,
-      event.metadata
-    );
+    guardianAI.logAction("security", event.type, event.description, event.metadata);
 
     // Broadcast to admins
     if (this.io) {
@@ -501,11 +443,7 @@ class SurveillanceAI {
   /**
    * Create monitoring alert
    */
-  private createAlert(
-    level: MonitoringAlert["level"],
-    component: string,
-    message: string
-  ): void {
+  private createAlert(level: MonitoringAlert["level"], component: string, message: string): void {
     const alert: MonitoringAlert = {
       id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       level,
@@ -601,9 +539,7 @@ class SurveillanceAI {
       activeAlerts,
       stats: {
         totalEvents: this.securityEvents.length,
-        criticalEvents: this.securityEvents.filter(
-          (e) => e.severity === "critical"
-        ).length,
+        criticalEvents: this.securityEvents.filter((e) => e.severity === "critical").length,
         totalAlerts: this.alerts.length,
         unacknowledged: activeAlerts.length,
       },

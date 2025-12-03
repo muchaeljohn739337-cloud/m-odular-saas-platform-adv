@@ -58,7 +58,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to send reset email. Please try again."
+          : "Failed to send reset email. Please try again.",
       );
     } finally {
       setIsLoading(false);

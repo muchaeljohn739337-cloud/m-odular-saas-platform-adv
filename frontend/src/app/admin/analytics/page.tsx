@@ -31,7 +31,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 interface PlatformSummary {
@@ -84,7 +84,7 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<PlatformSummary | null>(null);
   const [transactions, setTransactions] = useState<TransactionData | null>(
-    null
+    null,
   );
   const [users, setUsers] = useState<UserData | null>(null);
   const [revenue, setRevenue] = useState<RevenueData | null>(null);
@@ -349,7 +349,7 @@ export default function AnalyticsDashboard() {
                       new Date(d).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
-                      })
+                      }),
                     ),
                     datasets: [
                       {
@@ -402,7 +402,7 @@ export default function AnalyticsDashboard() {
                       new Date(d).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
-                      })
+                      }),
                     ),
                     datasets: [
                       {
@@ -446,7 +446,7 @@ export default function AnalyticsDashboard() {
                       new Date(d).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
-                      })
+                      }),
                     ),
                     datasets: [
                       {

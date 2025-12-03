@@ -49,7 +49,7 @@ export const isSilentMode = (): boolean => {
 
 export const showToastIfAllowed = (
   toastFn: () => void,
-  isBackendError = false
+  isBackendError = false,
 ): void => {
   // Only suppress backend errors in silent mode
   if (silentModeEnabled && isBackendError) {

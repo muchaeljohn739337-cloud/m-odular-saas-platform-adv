@@ -77,7 +77,7 @@ export default function AdminTokenFlowPage() {
 
       // Fetch recent activities
       const activityResponse: any = await adminApi.get(
-        "/tokens/admin/recent-activity?limit=20"
+        "/tokens/admin/recent-activity?limit=20",
       );
       if (activityResponse.data?.activities) {
         setActivities(activityResponse.data.activities);
@@ -85,7 +85,7 @@ export default function AdminTokenFlowPage() {
 
       // Fetch top holders
       const holdersResponse: any = await adminApi.get(
-        "/tokens/admin/top-holders?limit=10"
+        "/tokens/admin/top-holders?limit=10",
       );
       if (holdersResponse.data?.holders) {
         setTopHolders(holdersResponse.data.holders);
@@ -115,7 +115,7 @@ export default function AdminTokenFlowPage() {
     try {
       const response: any = await adminApi.post(
         "/rewards/admin/send",
-        sendRewardForm
+        sendRewardForm,
       );
 
       if (response.data.success) {
@@ -420,8 +420,8 @@ export default function AdminTokenFlowPage() {
                               activity.status === "COMPLETED"
                                 ? "bg-green-500/20 text-green-300"
                                 : activity.status === "PENDING"
-                                ? "bg-yellow-500/20 text-yellow-300"
-                                : "bg-red-500/20 text-red-300"
+                                  ? "bg-yellow-500/20 text-yellow-300"
+                                  : "bg-red-500/20 text-red-300"
                             }`}
                           >
                             {activity.status}

@@ -71,7 +71,7 @@ export default function SidebarLayout({
     if (!parts.length) return "";
     const primary = parts[0]?.[0] ?? "";
     const secondary =
-      parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : "";
+      parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
     return `${primary}${secondary}`.toUpperCase();
   }, [displayName]);
 

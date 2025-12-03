@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Bell, CalendarDays, Eye, EyeOff, MessageCircle, Sparkles, Wallet } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Eye,
+  EyeOff,
+  MessageCircle,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 
 interface ProfileOverviewCardProps {
   name?: string;
@@ -71,7 +79,7 @@ export default function ProfileOverviewCard({
         minute: "2-digit",
         second: "2-digit",
       }),
-    [now]
+    [now],
   );
 
   const formattedDate = useMemo(
@@ -82,7 +90,7 @@ export default function ProfileOverviewCard({
         month: "long",
         year: "numeric",
       }).format(now),
-    [now]
+    [now],
   );
 
   const displayBalance = useMemo(() => {
@@ -99,17 +107,24 @@ export default function ProfileOverviewCard({
 
   const maskedAccountNumber = useMemo(
     () => maskAccountNumber(accountNumber, email || name),
-    [accountNumber, email, name]
+    [accountNumber, email, name],
   );
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 text-white shadow-2xl">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.2),_transparent_50%)]" aria-hidden />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.2),_transparent_50%)]"
+        aria-hidden
+      />
       <div className="relative z-10 p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm uppercase tracking-wider text-blue-100">{greeting}</p>
-            <h2 className="mt-1 text-2xl font-semibold">{name || "Advancia User"}</h2>
+            <p className="text-sm uppercase tracking-wider text-blue-100">
+              {greeting}
+            </p>
+            <h2 className="mt-1 text-2xl font-semibold">
+              {name || "Advancia User"}
+            </h2>
             {email && <p className="text-sm text-blue-100">{email}</p>}
           </div>
           <div className="flex flex-col items-end gap-3 text-right">
@@ -139,7 +154,9 @@ export default function ProfileOverviewCard({
                   if (typeof window !== "undefined" && window.smartsupp) {
                     window.smartsupp("chat:open");
                   } else {
-                    alert("Live support is getting ready. Please try again shortly.");
+                    alert(
+                      "Live support is getting ready. Please try again shortly.",
+                    );
                   }
                 }}
                 className="rounded-full bg-white/15 p-2 text-white transition hover:bg-white/30"
@@ -150,7 +167,9 @@ export default function ProfileOverviewCard({
             </div>
             <div className="flex flex-col text-right">
               <span className="text-xs text-blue-100">{formattedDate}</span>
-              <span className="text-lg font-semibold tracking-wide">{formattedTime}</span>
+              <span className="text-lg font-semibold tracking-wide">
+                {formattedTime}
+              </span>
             </div>
           </div>
         </div>
@@ -180,14 +199,19 @@ export default function ProfileOverviewCard({
                   className="rounded-full bg-white/10 p-2 transition hover:bg-white/20"
                   aria-label={showBalance ? "Hide balance" : "Show balance"}
                 >
-                  {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showBalance ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               <div className="mt-2 flex items-center gap-2 text-sm text-blue-100">
                 <Wallet className="h-4 w-4" />
                 <span>{maskedAccountNumber}</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-100">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Active
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />{" "}
+                  Active
                 </span>
               </div>
             </div>
@@ -207,7 +231,8 @@ export default function ProfileOverviewCard({
               disabled={topUpLoading}
               className="flex items-center justify-center gap-2 rounded-xl border border-white/70 px-6 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <CalendarDays className="h-4 w-4" /> {topUpLoading ? "Opening checkout…" : "Top up"}
+              <CalendarDays className="h-4 w-4" />{" "}
+              {topUpLoading ? "Opening checkout…" : "Top up"}
             </button>
           </div>
         </div>

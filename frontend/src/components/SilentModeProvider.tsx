@@ -19,7 +19,7 @@ export default function SilentModeProvider() {
           `${API_URL}/api/admin/config/silent-mode`,
           {
             credentials: "include",
-          }
+          },
         );
 
         // Silently handle 404/502 - endpoint not yet available or failing

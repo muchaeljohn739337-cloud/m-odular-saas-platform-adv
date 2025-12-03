@@ -176,7 +176,7 @@ export default function SystemFeedbackBanner() {
 
   // Get affected services
   const affectedServices = systemStatus.services.filter(
-    (s) => s.alertLevel !== "none" || s.status !== "operational"
+    (s) => s.alertLevel !== "none" || s.status !== "operational",
   );
 
   return (

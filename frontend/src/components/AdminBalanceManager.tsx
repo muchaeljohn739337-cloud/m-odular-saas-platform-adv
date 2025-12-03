@@ -40,7 +40,7 @@ export default function AdminBalanceManager({
           currency,
           amount: parseFloat(amount),
           description: description || `Admin added ${amount} ${currency}`,
-        }
+        },
       );
 
       if (response.data.success) {
@@ -181,5 +181,3 @@ export default function AdminBalanceManager({
     </div>
   );
 }
-
-

@@ -24,18 +24,18 @@ interface AIComplianceContextType {
   // Methods
   checkCompliance: (entity: string, type: string) => Promise<ComplianceAlert[]>;
   detectFraud: (
-    transactionData: Record<string, unknown>
+    transactionData: Record<string, unknown>,
   ) => Promise<FraudDetection | null>;
   assessRisk: (
     operation: string,
-    context: Record<string, unknown>
+    context: Record<string, unknown>,
   ) => Promise<RiskScore>;
   dismissAlert: (alertId: string) => void;
   refreshMonitoring: () => Promise<void>;
 }
 
 const AIComplianceContext = createContext<AIComplianceContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function AIComplianceProvider({ children }: { children: ReactNode }) {
@@ -64,7 +64,7 @@ export function AIComplianceProvider({ children }: { children: ReactNode }) {
             const combined = [...prev, ...data];
             const unique = combined.filter(
               (alert, index, self) =>
-                index === self.findIndex((a) => a.id === alert.id)
+                index === self.findIndex((a) => a.id === alert.id),
             );
             return unique;
           });
@@ -79,13 +79,13 @@ export function AIComplianceProvider({ children }: { children: ReactNode }) {
 
       return [];
     },
-    []
+    [],
   );
 
   // Detect fraud in transaction
   const detectFraud = useCallback(
     async (
-      transactionData: Record<string, unknown>
+      transactionData: Record<string, unknown>,
     ): Promise<FraudDetection | null> => {
       try {
         const response = await fetch("/api/ai/compliance/detect-fraud", {
@@ -110,14 +110,14 @@ export function AIComplianceProvider({ children }: { children: ReactNode }) {
 
       return null;
     },
-    []
+    [],
   );
 
   // Assess risk for an operation
   const assessRisk = useCallback(
     async (
       operation: string,
-      context: Record<string, unknown>
+      context: Record<string, unknown>,
     ): Promise<RiskScore> => {
       try {
         const response = await fetch("/api/ai/compliance/assess-risk", {
@@ -143,7 +143,7 @@ export function AIComplianceProvider({ children }: { children: ReactNode }) {
 
       return 0;
     },
-    [overallRisk]
+    [overallRisk],
   );
 
   // Dismiss a compliance alert

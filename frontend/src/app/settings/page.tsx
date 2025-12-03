@@ -99,7 +99,7 @@ export default function SettingsPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ role: newRole }),
-        }
+        },
       );
 
       const data = await response.json();

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     console.error("Anomaly detection error:", error);
     return NextResponse.json(
       { error: "Failed to detect anomalies" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

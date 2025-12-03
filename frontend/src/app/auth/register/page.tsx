@@ -23,7 +23,7 @@ export default function RegisterPage() {
     // Validation
     if (!termsAccepted) {
       setError(
-        "Please accept the Terms of Service and Privacy Policy to continue."
+        "Please accept the Terms of Service and Privacy Policy to continue.",
       );
       return;
     }
@@ -73,13 +73,13 @@ export default function RegisterPage() {
       router.push(
         `/auth/verify-otp?email=${encodeURIComponent(email)}${
           callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""
-        }`
+        }`,
       );
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Registration failed. Please try again."
+          : "Registration failed. Please try again.",
       );
     } finally {
       setLoading(false);

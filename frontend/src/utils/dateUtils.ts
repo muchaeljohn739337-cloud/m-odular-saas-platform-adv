@@ -11,17 +11,17 @@
  */
 export function formatDateTime(
   date: Date | string,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+
   const defaultOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     ...options,
   };
 
@@ -36,14 +36,14 @@ export function formatDateTime(
  */
 export function formatTime(
   date: Date | string,
-  includeSeconds: boolean = true
+  includeSeconds: boolean = true,
 ): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+
   const options: Intl.DateTimeFormatOptions = {
-    hour: '2-digit',
-    minute: '2-digit',
-    ...(includeSeconds && { second: '2-digit' }),
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(includeSeconds && { second: "2-digit" }),
   };
 
   return dateObj.toLocaleTimeString(undefined, options);
@@ -57,32 +57,32 @@ export function formatTime(
  */
 export function formatDate(
   date: Date | string,
-  format: 'short' | 'medium' | 'long' | 'full' = 'medium'
+  format: "short" | "medium" | "long" | "full" = "medium",
 ): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+
   const formatMap: Record<string, Intl.DateTimeFormatOptions> = {
     short: {
-      month: 'numeric',
-      day: 'numeric',
-      year: '2-digit',
+      month: "numeric",
+      day: "numeric",
+      year: "2-digit",
     },
     medium: {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     },
     long: {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     },
     full: {
-      weekday: 'long',
-      month: 'long',
-      day: '2-digit',
-      year: 'numeric',
+      weekday: "long",
+      month: "long",
+      day: "2-digit",
+      year: "numeric",
     },
   };
 
@@ -95,23 +95,23 @@ export function formatDate(
  * @returns Relative time string
  */
 export function formatRelativeTime(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
 
   if (Math.abs(diffInSeconds) < 60) {
-    return 'just now';
+    return "just now";
   }
 
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
 
   const timeUnits: Array<[Intl.RelativeTimeFormatUnit, number]> = [
-    ['year', 31536000],
-    ['month', 2592000],
-    ['week', 604800],
-    ['day', 86400],
-    ['hour', 3600],
-    ['minute', 60],
+    ["year", 31536000],
+    ["month", 2592000],
+    ["week", 604800],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
   ];
 
   for (const [unit, secondsInUnit] of timeUnits) {
@@ -121,7 +121,7 @@ export function formatRelativeTime(date: Date | string): string {
     }
   }
 
-  return 'just now';
+  return "just now";
 }
 
 /**
@@ -130,10 +130,7 @@ export function formatRelativeTime(date: Date | string): string {
  * @param decimals - Number of decimal places (default: 2)
  * @returns Formatted number string
  */
-export function formatNumber(
-  value: number,
-  decimals: number = 2
-): string {
+export function formatNumber(value: number, decimals: number = 2): string {
   return new Intl.NumberFormat(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -148,10 +145,10 @@ export function formatNumber(
  */
 export function formatCurrency(
   value: number,
-  currency: string = 'USD'
+  currency: string = "USD",
 ): string {
   return new Intl.NumberFormat(undefined, {
-    style: 'currency',
+    style: "currency",
     currency,
   }).format(value);
 }
@@ -161,10 +158,10 @@ export function formatCurrency(
  * @returns User's locale string (e.g., 'en-US', 'fr-FR')
  */
 export function getUserLocale(): string {
-  if (typeof window !== 'undefined') {
-    return window.navigator.language || 'en-US';
+  if (typeof window !== "undefined") {
+    return window.navigator.language || "en-US";
   }
-  return 'en-US';
+  return "en-US";
 }
 
 /**

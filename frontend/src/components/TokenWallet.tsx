@@ -61,7 +61,7 @@ export default function TokenWallet({ userId }: TokenWalletProps) {
   const fetchTransactions = useCallback(async () => {
     try {
       const res = await fetch(
-        `${API_URL}/api/tokens/history/${userId}?limit=20`
+        `${API_URL}/api/tokens/history/${userId}?limit=20`,
       );
       const data = await res.json();
       setTransactions(data.transactions || []);

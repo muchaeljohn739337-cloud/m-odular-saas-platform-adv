@@ -23,7 +23,7 @@ test.describe("Admin User Detail", () => {
 
     // Fetch OTP via dev helper endpoint
     const codeResp = await page.request.get(
-      "http://localhost:4000/api/auth/admin/dev/get-otp?email=admin@advancia.com"
+      "http://localhost:4000/api/auth/admin/dev/get-otp?email=admin@advancia.com",
     );
     expect(codeResp.ok()).toBeTruthy();
     const codeData = await codeResp.json();
@@ -95,7 +95,7 @@ test.describe("Admin User Detail", () => {
     // 12. Test suspend toggle
     const suspendButton = page
       .locator(
-        'button:has-text("Suspend User"), button:has-text("Activate User")'
+        'button:has-text("Suspend User"), button:has-text("Activate User")',
       )
       .first();
     await expect(suspendButton).toBeVisible({ timeout: 5000 });
@@ -106,7 +106,7 @@ test.describe("Admin User Detail", () => {
 
     // Verify confirmation modal appears
     await expect(
-      page.locator("text=/Suspend User\\?|Activate User\\?|Are you sure/i")
+      page.locator("text=/Suspend User\\?|Activate User\\?|Are you sure/i"),
     ).toBeVisible({ timeout: 3000 });
 
     // Click confirm button in modal
@@ -117,7 +117,7 @@ test.describe("Admin User Detail", () => {
 
     // Wait for toast notification
     await expect(
-      page.locator("text=/user suspended|user activated/i")
+      page.locator("text=/user suspended|user activated/i"),
     ).toBeVisible({ timeout: 10000 });
 
     // Verify button text changed

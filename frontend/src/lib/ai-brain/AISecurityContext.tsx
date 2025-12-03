@@ -31,11 +31,11 @@ interface AISecurityContextType {
   // Methods
   analyzeSession: () => Promise<void>;
   assessLoginRisk: (
-    credentials: LoginCredentials
+    credentials: LoginCredentials,
   ) => Promise<LoginRiskAssessment>;
   checkForAnomalies: (
     action: string,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ) => Promise<AnomalyDetection | null>;
   clearAlerts: () => void;
 }
@@ -48,12 +48,12 @@ interface LoginCredentials {
 }
 
 const AISecurityContext = createContext<AISecurityContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function AISecurityProvider({ children }: { children: ReactNode }) {
   const [sessionRisk, setSessionRisk] = useState<SessionRiskAnalysis | null>(
-    null
+    null,
   );
   const [loginRisk, setLoginRisk] = useState<LoginRiskAssessment | null>(null);
   const [anomalies, setAnomalies] = useState<AnomalyDetection[]>([]);
@@ -117,14 +117,14 @@ export function AISecurityProvider({ children }: { children: ReactNode }) {
 
       return defaultRisk;
     },
-    []
+    [],
   );
 
   // Check for anomalies in user actions
   const checkForAnomalies = useCallback(
     async (
       action: string,
-      metadata?: Record<string, unknown>
+      metadata?: Record<string, unknown>,
     ): Promise<AnomalyDetection | null> => {
       try {
         const response = await fetch("/api/ai/security/detect-anomaly", {
@@ -150,7 +150,7 @@ export function AISecurityProvider({ children }: { children: ReactNode }) {
               anomaly.severity === "high"
             ) {
               setThreatLevel(
-                anomaly.severity === "critical" ? "CRITICAL" : "HIGH"
+                anomaly.severity === "critical" ? "CRITICAL" : "HIGH",
               );
             }
           }
@@ -163,7 +163,7 @@ export function AISecurityProvider({ children }: { children: ReactNode }) {
 
       return null;
     },
-    []
+    [],
   );
 
   // Clear security alerts
@@ -200,7 +200,7 @@ export function AISecurityProvider({ children }: { children: ReactNode }) {
     return () =>
       window.removeEventListener(
         "ai:security:event" as any,
-        handleSecurityEvent
+        handleSecurityEvent,
       );
   }, [analyzeSession]);
 

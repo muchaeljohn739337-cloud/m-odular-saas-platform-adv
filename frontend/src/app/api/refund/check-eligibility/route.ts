@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     if (!userId || !transactionId) {
       return NextResponse.json(
         { error: "userId and transactionId are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       id: transactionId,
       userId,
       purchaseDate: new Date(
-        Date.now() - 15 * 24 * 60 * 60 * 1000
+        Date.now() - 15 * 24 * 60 * 60 * 1000,
       ).toISOString(), // 15 days ago
       amount: 99.99,
       type: "subscription",
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const purchaseDate = new Date(mockTransaction.purchaseDate);
     const now = new Date();
     const daysSincePurchase = Math.floor(
-      (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)
+      (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24),
     );
     const REFUND_WINDOW_DAYS = 30;
     const daysRemaining = Math.max(0, REFUND_WINDOW_DAYS - daysSincePurchase);
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     console.error("Refund eligibility check error:", error);
     return NextResponse.json(
       { error: "Failed to check refund eligibility" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

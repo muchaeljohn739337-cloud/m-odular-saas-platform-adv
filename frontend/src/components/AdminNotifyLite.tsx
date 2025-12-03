@@ -21,7 +21,8 @@ export default function AdminNotifyLite() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
         const response = await fetch(`${apiUrl}/api/notify/stats`);
         const data = await response.json();
         setStats(data);
@@ -39,7 +40,7 @@ export default function AdminNotifyLite() {
   }, []);
 
   const handleExport = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
     window.open(`${apiUrl}/api/notify/export`, "_blank");
   };
 
@@ -91,16 +92,24 @@ export default function AdminNotifyLite() {
       ) : (
         <div className="space-y-2">
           <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span className="text-sm text-gray-600">📩 Total Notifications</span>
-            <span className="font-bold text-lg text-gray-800">{stats.total}</span>
+            <span className="text-sm text-gray-600">
+              📩 Total Notifications
+            </span>
+            <span className="font-bold text-lg text-gray-800">
+              {stats.total}
+            </span>
           </div>
           <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
             <span className="text-sm text-blue-600">🔔 Unread</span>
-            <span className="font-bold text-lg text-blue-700">{stats.unread}</span>
+            <span className="font-bold text-lg text-blue-700">
+              {stats.unread}
+            </span>
           </div>
           <div className="flex justify-between items-center p-2 bg-red-50 rounded">
             <span className="text-sm text-red-600">⚠️ Email Failures</span>
-            <span className="font-bold text-lg text-red-700">{stats.failedEmails}</span>
+            <span className="font-bold text-lg text-red-700">
+              {stats.failedEmails}
+            </span>
           </div>
         </div>
       )}

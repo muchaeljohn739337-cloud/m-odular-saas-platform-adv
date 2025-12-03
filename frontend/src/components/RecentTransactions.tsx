@@ -125,8 +125,18 @@ export default function RecentTransactions() {
           className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium flex items-center"
         >
           View All
-          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-4 h-4 ml-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </Link>
       </div>
@@ -176,7 +186,7 @@ export default function RecentTransactions() {
                     </p>
                     <span
                       className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusBadge(
-                        transaction.status
+                        transaction.status,
                       )}`}
                     >
                       {transaction.status}
@@ -194,13 +204,17 @@ export default function RecentTransactions() {
                 <div className="text-right">
                   <p
                     className={`text-sm font-bold ${
-                      transaction.type === "DEPOSIT" || transaction.type === "REWARD"
+                      transaction.type === "DEPOSIT" ||
+                      transaction.type === "REWARD"
                         ? "text-green-600 dark:text-green-400"
                         : "text-gray-900 dark:text-white"
                     }`}
                   >
-                    {transaction.type === "DEPOSIT" || transaction.type === "REWARD" ? "+" : ""}$
-                    {transaction.amount.toFixed(2)}
+                    {transaction.type === "DEPOSIT" ||
+                    transaction.type === "REWARD"
+                      ? "+"
+                      : ""}
+                    ${transaction.amount.toFixed(2)}
                   </p>
                 </div>
               </div>

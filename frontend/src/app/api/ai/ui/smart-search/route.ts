@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     console.error("Smart search error:", error);
     return NextResponse.json(
       { error: "Failed to perform search" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

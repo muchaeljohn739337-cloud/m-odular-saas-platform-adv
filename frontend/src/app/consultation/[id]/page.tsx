@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { sanitizeExternalUrl } from "@/utils/security";
 import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 interface Message {
   id: string;
@@ -213,10 +214,10 @@ export default function ConsultationPage() {
                   consultation.status === "COMPLETED"
                     ? "bg-green-100 text-green-800"
                     : consultation.status === "IN_PROGRESS"
-                    ? "bg-blue-100 text-blue-800"
-                    : consultation.status === "CANCELLED"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-yellow-100 text-yellow-800"
+                      ? "bg-blue-100 text-blue-800"
+                      : consultation.status === "CANCELLED"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
                 }`}
               >
                 {consultation.status}
@@ -258,12 +259,19 @@ export default function ConsultationPage() {
               </button>
             </div>
             <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              <iframe
-                src={videoUrl}
-                allow="camera; microphone; fullscreen; display-capture"
-                className="w-full h-full"
-                title="Video Consultation"
-              />
+              {sanitizeExternalUrl(videoUrl) ? (
+                <iframe
+                  src={sanitizeExternalUrl(videoUrl) || ""}
+                  allow="camera; microphone; fullscreen; display-capture"
+                  className="w-full h-full"
+                  title="Video Consultation"
+                  sandbox="allow-scripts allow-same-origin allow-forms"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white">
+                  Invalid video URL
+                </div>
+              )}
             </div>
           </div>
         )}

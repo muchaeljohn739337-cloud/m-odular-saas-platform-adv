@@ -28,7 +28,7 @@ export default function RealTimeNotifications() {
       {
         auth: { token },
         transports: ["websocket", "polling"],
-      }
+      },
     );
 
     socketInstance.on("connect", () => {
@@ -96,7 +96,7 @@ export default function RealTimeNotifications() {
 
   const markAsRead = (id: string) => {
     setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
+      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)),
     );
   };
 
@@ -210,7 +210,7 @@ export default function RealTimeNotifications() {
                 >
                   <div
                     className={`flex items-start gap-3 p-3 rounded-lg border ${getNotificationColor(
-                      notification.type
+                      notification.type,
                     )}`}
                   >
                     <span className="text-2xl">

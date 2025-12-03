@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const totalScore = riskFactors.reduce(
       (sum, factor) => sum + factor.score * factor.weight,
-      0
+      0,
     );
 
     const riskLevel =
@@ -69,19 +69,22 @@ export async function POST(request: NextRequest) {
               "Additional verification needed",
             ]
           : riskLevel === "MEDIUM"
-          ? [
-              "Standard monitoring applies",
-              "Review periodically",
-              "Watch for pattern changes",
-            ]
-          : ["Low risk - standard processing", "Routine monitoring sufficient"],
+            ? [
+                "Standard monitoring applies",
+                "Review periodically",
+                "Watch for pattern changes",
+              ]
+            : [
+                "Low risk - standard processing",
+                "Routine monitoring sufficient",
+              ],
       assessmentDate: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Risk assessment error:", error);
     return NextResponse.json(
       { error: "Failed to assess risk" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

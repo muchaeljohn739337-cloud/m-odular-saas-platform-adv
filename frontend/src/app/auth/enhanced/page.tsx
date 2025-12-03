@@ -80,7 +80,7 @@ export default function EnhancedAuthPage() {
       }
     } catch (err) {
       setLoginError(
-        err instanceof Error ? err.message : "Login failed. Please try again."
+        err instanceof Error ? err.message : "Login failed. Please try again.",
       );
     } finally {
       setIsLoginLoading(false);

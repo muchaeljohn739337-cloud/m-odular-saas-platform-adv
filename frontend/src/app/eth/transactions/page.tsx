@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import DashboardRouteGuard from "@/components/DashboardRouteGuard";
+import { sanitizeTxHash } from "@/utils/security";
 import {
-  ArrowLeft,
   ArrowDownLeft,
+  ArrowLeft,
   ArrowUpRight,
   ExternalLink,
   Filter,
   Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import DashboardRouteGuard from "@/components/DashboardRouteGuard";
+import { useEffect, useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
 interface EthActivityItem {
@@ -38,16 +39,22 @@ const humanizeTime = (timestamp: string) => {
 };
 
 const statusStyles: Record<string, string> = {
-  CONFIRMED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  COMPLETED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  PENDING: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-  PROCESSING: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  CONFIRMED:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  COMPLETED:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  PENDING:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+  PROCESSING:
+    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   FAILED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
 };
 
 const typeStyles: Record<"DEPOSIT" | "WITHDRAWAL", string> = {
-  DEPOSIT: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-  WITHDRAWAL: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  DEPOSIT:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  WITHDRAWAL:
+    "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
 };
 
 const defaultAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
@@ -106,7 +113,8 @@ export default function EthTransactionsPage() {
   const fetchTransactions = async (walletAddress: string) => {
     setLoading(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const response = await fetch(
         `${API_URL}/api/eth/transactions?address=${encodeURIComponent(walletAddress)}`
       );
@@ -146,7 +154,12 @@ export default function EthTransactionsPage() {
   };
 
   const renderTypeBadge = (type: "DEPOSIT" | "WITHDRAWAL") => {
-    const icon = type === "DEPOSIT" ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />;
+    const icon =
+      type === "DEPOSIT" ? (
+        <ArrowDownLeft className="w-4 h-4" />
+      ) : (
+        <ArrowUpRight className="w-4 h-4" />
+      );
     return (
       <span
         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${typeStyles[type]}`}
@@ -177,14 +190,18 @@ export default function EthTransactionsPage() {
                   ETH Transaction History
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Track every deposit and withdrawal associated with your wallet.
+                  Track every deposit and withdrawal associated with your
+                  wallet.
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  Wallet: <span className="font-mono">{address || defaultAddress}</span>
+                  Wallet:{" "}
+                  <span className="font-mono">{address || defaultAddress}</span>
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Filter</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Filter
+                </span>
                 <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                   {["ALL", "DEPOSIT", "WITHDRAWAL"].map((option) => (
                     <button
@@ -219,7 +236,8 @@ export default function EthTransactionsPage() {
                 No activity found
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Deposits and withdrawals will appear here once they are initiated.
+                Deposits and withdrawals will appear here once they are
+                initiated.
               </p>
             </div>
           ) : (
@@ -248,14 +266,16 @@ export default function EthTransactionsPage() {
                         {item.amountEth.toFixed(4)} ETH
                       </p>
                       {item.note && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{item.note}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {item.note}
+                        </p>
                       )}
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {item.txHash ? (
+                      {item.txHash && sanitizeTxHash(item.txHash) ? (
                         <a
-                          href={`https://etherscan.io/tx/${item.txHash}`}
+                          href={`https://etherscan.io/tx/${sanitizeTxHash(item.txHash)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
@@ -269,7 +289,9 @@ export default function EthTransactionsPage() {
                         </span>
                       )}
                       <div className="text-xs text-gray-500 dark:text-gray-400 font-mono break-all">
-                        {item.txHash ? `TX: ${item.txHash}` : "Awaiting broadcast"}
+                        {item.txHash
+                          ? `TX: ${item.txHash}`
+                          : "Awaiting broadcast"}
                       </div>
                     </div>
                   </div>

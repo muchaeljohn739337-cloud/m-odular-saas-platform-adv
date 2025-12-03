@@ -98,7 +98,7 @@ export const showToast = {
       success: string;
       error: string;
     },
-    options?: any
+    options?: any,
   ) => {
     if (typeof window !== "undefined" && window.__SILENT_MODE__) {
       // In Silent Mode, only show loading, suppress success/error

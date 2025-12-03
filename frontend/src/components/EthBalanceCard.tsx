@@ -14,7 +14,10 @@ interface EthData {
   priceChange24h: number;
 }
 
-export default function EthBalanceCard({ walletAddress, className = "" }: EthBalanceCardProps) {
+export default function EthBalanceCard({
+  walletAddress,
+  className = "",
+}: EthBalanceCardProps) {
   const [ethData, setEthData] = useState<EthData>({
     balance: 0,
     usdValue: 0,
@@ -28,7 +31,7 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
   const fetchEthPrice = async () => {
     try {
       const response = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true"
+        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true",
       );
       const data = await response.json();
       return {
@@ -57,8 +60,11 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
       setEthPrice(priceData.price);
 
       // Fetch balance from backend
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      const response = await fetch(`${API_URL}/api/eth/balance/${walletAddress}`);
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const response = await fetch(
+        `${API_URL}/api/eth/balance/${walletAddress}`,
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch ETH balance");
@@ -91,7 +97,9 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
 
   if (!walletAddress) {
     return (
-      <div className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 ${className}`}>
+      <div
+        className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 ${className}`}
+      >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Ethereum (ETH)</h3>
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -108,7 +116,9 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
 
   if (loading) {
     return (
-      <div className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 ${className} animate-pulse`}>
+      <div
+        className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 ${className} animate-pulse`}
+      >
         <div className="flex items-center justify-between mb-4">
           <div className="h-6 bg-white/20 rounded w-32"></div>
           <div className="w-10 h-10 bg-white/20 rounded-full"></div>
@@ -121,7 +131,9 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
 
   if (error) {
     return (
-      <div className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 ${className}`}>
+      <div
+        className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 ${className}`}
+      >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Ethereum (ETH)</h3>
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -142,7 +154,9 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
   const isPositiveChange = ethData.priceChange24h >= 0;
 
   return (
-    <div className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${className}`}>
+    <div
+      className={`bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${className}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Ethereum (ETH)</h3>
@@ -161,11 +175,17 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
       {/* USD Value */}
       <div className="flex items-center justify-between">
         <p className="text-white/90 text-lg font-medium">
-          ${ethData.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          $
+          {ethData.usdValue.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </p>
 
         {/* 24h Change */}
-        <div className={`flex items-center gap-1 ${isPositiveChange ? "text-green-200" : "text-red-200"}`}>
+        <div
+          className={`flex items-center gap-1 ${isPositiveChange ? "text-green-200" : "text-red-200"}`}
+        >
           {isPositiveChange ? (
             <TrendingUp className="w-4 h-4" />
           ) : (
@@ -181,7 +201,11 @@ export default function EthBalanceCard({ walletAddress, className = "" }: EthBal
       {/* ETH Price */}
       <div className="mt-3 pt-3 border-t border-white/20">
         <p className="text-white/70 text-xs">
-          1 ETH = ${ethPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          1 ETH = $
+          {ethPrice.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </p>
       </div>
 

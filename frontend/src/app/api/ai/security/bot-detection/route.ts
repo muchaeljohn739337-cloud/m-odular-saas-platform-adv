@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     console.error("Bot detection error:", error);
     return NextResponse.json(
       { error: "Failed to detect bot" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

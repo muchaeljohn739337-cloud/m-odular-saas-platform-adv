@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (!userId || !transactionId) {
       return NextResponse.json(
         { error: "userId and transactionId are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
           error:
             "Please provide a reason for the refund (minimum 10 characters)",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!eligibilityCheck.eligible) {
       return NextResponse.json(
         { error: eligibilityCheck.reason },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     console.error("Refund request error:", error);
     return NextResponse.json(
       { error: "Failed to submit refund request" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "userId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         reason: "Service did not meet expectations",
         status: "pending",
         requestedAt: new Date(
-          Date.now() - 2 * 24 * 60 * 60 * 1000
+          Date.now() - 2 * 24 * 60 * 60 * 1000,
         ).toISOString(),
       },
     ];
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     console.error("Get refund requests error:", error);
     return NextResponse.json(
       { error: "Failed to fetch refund requests" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -128,7 +128,7 @@ async function checkEligibility(userId: string, transactionId: string) {
   const purchaseDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
   const now = new Date();
   const daysSincePurchase = Math.floor(
-    (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   return {

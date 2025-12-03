@@ -15,7 +15,7 @@ interface RecommendationFilters {
 
 export function useAIRecommendations(filters?: RecommendationFilters) {
   const [recommendations, setRecommendations] = useState<SmartRecommendation[]>(
-    []
+    [],
   );
   const [filteredRecommendations, setFilteredRecommendations] = useState<
     SmartRecommendation[]
@@ -31,7 +31,7 @@ export function useAIRecommendations(filters?: RecommendationFilters) {
       setRecommendations(data);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to fetch recommendations"
+        err instanceof Error ? err.message : "Failed to fetch recommendations",
       );
     } finally {
       setLoading(false);
@@ -48,7 +48,7 @@ export function useAIRecommendations(filters?: RecommendationFilters) {
 
     if (filters?.minRelevance !== undefined) {
       filtered = filtered.filter(
-        (r) => r.relevanceScore >= filters.minRelevance!
+        (r) => r.relevanceScore >= filters.minRelevance!,
       );
     }
 
@@ -77,7 +77,7 @@ export function useAIRecommendations(filters?: RecommendationFilters) {
     (type: SmartRecommendation["type"]) => {
       return filteredRecommendations.filter((r) => r.type === type);
     },
-    [filteredRecommendations]
+    [filteredRecommendations],
   );
 
   return {

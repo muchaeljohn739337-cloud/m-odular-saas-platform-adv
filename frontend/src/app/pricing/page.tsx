@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import SidebarLayout from '@/components/SidebarLayout'
-import { motion } from 'framer-motion'
-import { Check, Zap, Crown, Rocket, Shield, Clock, Globe } from 'lucide-react'
+import SidebarLayout from "@/components/SidebarLayout";
+import { motion } from "framer-motion";
+import { Check, Zap, Crown, Rocket, Shield, Clock, Globe } from "lucide-react";
 
 export default function PricingPage() {
   const plans = [
@@ -11,25 +11,27 @@ export default function PricingPage() {
       icon: Zap,
       price: "Free",
       period: "forever",
-      description: "Perfect for individuals getting started with digital finance",
+      description:
+        "Perfect for individuals getting started with digital finance",
       features: [
         "Up to 10 transactions per month",
         "Basic dashboard analytics",
         "Standard security features",
         "Email support",
         "Mobile app access",
-        "1 linked bank account"
+        "1 linked bank account",
       ],
       color: "from-blue-500 to-cyan-500",
       bgColor: "from-blue-50 to-cyan-50",
-      popular: false
+      popular: false,
     },
     {
       name: "Professional",
       icon: Crown,
       price: "$19",
       period: "per month",
-      description: "For power users who need advanced features and priority support",
+      description:
+        "For power users who need advanced features and priority support",
       features: [
         "Unlimited transactions",
         "Advanced analytics & insights",
@@ -39,18 +41,19 @@ export default function PricingPage() {
         "Up to 5 linked bank accounts",
         "Crypto trading integration",
         "API access",
-        "Custom reports"
+        "Custom reports",
       ],
       color: "from-purple-500 to-pink-500",
       bgColor: "from-purple-50 to-pink-50",
-      popular: true
+      popular: true,
     },
     {
       name: "Enterprise",
       icon: Rocket,
       price: "Custom",
       period: "contact us",
-      description: "For businesses requiring custom solutions and dedicated support",
+      description:
+        "For businesses requiring custom solutions and dedicated support",
       features: [
         "Everything in Professional",
         "Dedicated account manager",
@@ -61,34 +64,34 @@ export default function PricingPage() {
         "Advanced compliance tools",
         "Custom API limits",
         "On-premise deployment option",
-        "Training & onboarding"
+        "Training & onboarding",
       ],
       color: "from-orange-500 to-red-500",
       bgColor: "from-orange-50 to-red-50",
-      popular: false
-    }
-  ]
+      popular: false,
+    },
+  ];
 
   const addons = [
     {
       icon: Shield,
       title: "Enhanced Security",
       price: "$5/month",
-      description: "2FA, biometric authentication, and security alerts"
+      description: "2FA, biometric authentication, and security alerts",
     },
     {
       icon: Clock,
       title: "Transaction History",
       price: "$3/month",
-      description: "Extended history beyond 90 days, up to 10 years"
+      description: "Extended history beyond 90 days, up to 10 years",
     },
     {
       icon: Globe,
       title: "Multi-Currency",
       price: "$8/month",
-      description: "Support for 100+ currencies with real-time conversion"
-    }
-  ]
+      description: "Support for 100+ currencies with real-time conversion",
+    },
+  ];
 
   return (
     <SidebarLayout>
@@ -104,17 +107,20 @@ export default function PricingPage() {
             >
               <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-100 to-blue-100 rounded-full">
                 <Zap className="h-5 w-5 text-green-600" />
-                <span className="text-green-900 font-semibold">Simple, Transparent Pricing</span>
+                <span className="text-green-900 font-semibold">
+                  Simple, Transparent Pricing
+                </span>
               </div>
-              
+
               <h1 className="text-5xl md:text-6xl font-bold">
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   Choose Your Plan
                 </span>
               </h1>
-              
+
               <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-                Start free and upgrade as you grow. No hidden fees, cancel anytime.
+                Start free and upgrade as you grow. No hidden fees, cancel
+                anytime.
               </p>
             </motion.div>
           </div>
@@ -130,7 +136,9 @@ export default function PricingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 className={`relative bg-white rounded-3xl shadow-xl border-2 ${
-                  plan.popular ? 'border-purple-500 scale-105' : 'border-slate-200'
+                  plan.popular
+                    ? "border-purple-500 scale-105"
+                    : "border-slate-200"
                 } hover:shadow-2xl transition-all`}
               >
                 {plan.popular && (
@@ -143,14 +151,16 @@ export default function PricingPage() {
 
                 <div className="p-8">
                   {/* Header */}
-                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${plan.color} mb-6`}>
+                  <div
+                    className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${plan.color} mb-6`}
+                  >
                     <plan.icon className="h-8 w-8 text-white" />
                   </div>
-                  
+
                   <h3 className="text-2xl font-bold text-slate-900 mb-2">
                     {plan.name}
                   </h3>
-                  
+
                   <p className="text-slate-600 mb-6 min-h-[48px]">
                     {plan.description}
                   </p>
@@ -158,7 +168,9 @@ export default function PricingPage() {
                   {/* Price */}
                   <div className="mb-8">
                     <div className="flex items-baseline gap-2">
-                      <span className={`text-5xl font-bold bg-gradient-to-r ${plan.color} bg-clip-text text-transparent`}>
+                      <span
+                        className={`text-5xl font-bold bg-gradient-to-r ${plan.color} bg-clip-text text-transparent`}
+                      >
                         {plan.price}
                       </span>
                       <span className="text-slate-500">/{plan.period}</span>
@@ -169,18 +181,22 @@ export default function PricingPage() {
                   <button
                     className={`w-full py-4 px-6 rounded-xl font-semibold transition-all mb-8 ${
                       plan.popular
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
-                        : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg"
+                        : "bg-slate-100 text-slate-900 hover:bg-slate-200"
                     }`}
                   >
-                    {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
+                    {plan.name === "Enterprise"
+                      ? "Contact Sales"
+                      : "Get Started"}
                   </button>
 
                   {/* Features */}
                   <div className="space-y-4">
                     {plan.features.map((feature, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        <div className={`flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br ${plan.color} flex items-center justify-center mt-0.5`}>
+                        <div
+                          className={`flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br ${plan.color} flex items-center justify-center mt-0.5`}
+                        >
                           <Check className="h-4 w-4 text-white" />
                         </div>
                         <span className="text-slate-700">{feature}</span>
@@ -218,15 +234,13 @@ export default function PricingPage() {
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 mb-4">
                   <addon.icon className="h-6 w-6 text-white" />
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-slate-900 mb-2">
                   {addon.title}
                 </h3>
-                
-                <p className="text-slate-600 mb-4">
-                  {addon.description}
-                </p>
-                
+
+                <p className="text-slate-600 mb-4">{addon.description}</p>
+
                 <div className="text-2xl font-bold text-purple-600">
                   {addon.price}
                 </div>
@@ -246,42 +260,46 @@ export default function PricingPage() {
             <h2 className="text-3xl font-bold text-center mb-8">
               Frequently Asked Questions
             </h2>
-            
+
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">
                   Can I change plans anytime?
                 </h3>
                 <p className="text-slate-600">
-                  Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, 
-                  and we&apos;ll prorate any charges accordingly.
+                  Yes! You can upgrade or downgrade your plan at any time.
+                  Changes take effect immediately, and we&apos;ll prorate any
+                  charges accordingly.
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">
                   Is there a long-term commitment?
                 </h3>
                 <p className="text-slate-600">
-                  No commitments required. All plans are billed monthly and you can cancel anytime with no penalties.
+                  No commitments required. All plans are billed monthly and you
+                  can cancel anytime with no penalties.
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">
                   What payment methods do you accept?
                 </h3>
                 <p className="text-slate-600">
-                  We accept all major credit cards, debit cards, PayPal, and cryptocurrency payments.
+                  We accept all major credit cards, debit cards, PayPal, and
+                  cryptocurrency payments.
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">
                   Do you offer refunds?
                 </h3>
                 <p className="text-slate-600">
-                  Yes, we offer a 30-day money-back guarantee. If you&apos;re not satisfied, we&apos;ll refund your payment in full.
+                  Yes, we offer a 30-day money-back guarantee. If you&apos;re
+                  not satisfied, we&apos;ll refund your payment in full.
                 </p>
               </div>
             </div>
@@ -289,5 +307,5 @@ export default function PricingPage() {
         </div>
       </div>
     </SidebarLayout>
-  )
+  );
 }

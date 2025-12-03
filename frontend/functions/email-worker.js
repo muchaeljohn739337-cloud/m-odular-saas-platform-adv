@@ -85,7 +85,7 @@ export default {
             service: "email-worker",
             timestamp: new Date().toISOString(),
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -155,7 +155,7 @@ async function handleAIEmail(message, env) {
 
   await env.ADVANCIA_DATA.put(
     `ai:request:${aiRequest.id}`,
-    JSON.stringify(aiRequest)
+    JSON.stringify(aiRequest),
   );
 }
 

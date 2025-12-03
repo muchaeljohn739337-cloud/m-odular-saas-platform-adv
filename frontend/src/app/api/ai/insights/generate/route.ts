@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     // Filter by context if provided
     const filteredInsights = context
       ? insights.filter((i) =>
-          i.category.toLowerCase().includes(context.toLowerCase())
+          i.category.toLowerCase().includes(context.toLowerCase()),
         )
       : insights;
 
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     console.error("Insights generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate insights" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

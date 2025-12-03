@@ -55,7 +55,7 @@ const ProductManagementTab = () => {
         lastUpdated: "2024-10-02",
       },
     ],
-    []
+    [],
   );
 
   const categoryOptions = [
@@ -321,7 +321,7 @@ const ProductManagementTab = () => {
                         onClick={() =>
                           handleStatusChange(
                             product.id,
-                            product.status === "active" ? "inactive" : "active"
+                            product.status === "active" ? "inactive" : "active",
                           )
                         }
                         className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
@@ -411,7 +411,7 @@ const ProductManagementTab = () => {
                 onClick={() =>
                   handleStatusChange(
                     product.id,
-                    product.status === "active" ? "inactive" : "active"
+                    product.status === "active" ? "inactive" : "active",
                   )
                 }
                 className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"

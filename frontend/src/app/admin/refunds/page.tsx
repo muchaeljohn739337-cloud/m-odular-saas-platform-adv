@@ -66,7 +66,7 @@ export default function AdminRefundsPage() {
     "all" | "pending" | "approved" | "rejected"
   >("all");
   const [selectedRefund, setSelectedRefund] = useState<RefundRequest | null>(
-    null
+    null,
   );
   const [adminNotes, setAdminNotes] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -137,7 +137,12 @@ export default function AdminRefundsPage() {
       const data = await response.json();
       setRefunds(data.refundRequests || []);
       setSummary(
-        data.summary || { pending: 0, approved: 0, rejected: 0, totalAmount: 0 }
+        data.summary || {
+          pending: 0,
+          approved: 0,
+          rejected: 0,
+          totalAmount: 0,
+        },
       );
     } catch (error) {
       console.error("Failed to fetch refunds:", error);
@@ -181,7 +186,7 @@ export default function AdminRefundsPage() {
 
       setBulkProcessing(true);
       const selectedRefunds = refunds.filter(
-        (r) => selectedIds.has(r.id) && r.status === "pending"
+        (r) => selectedIds.has(r.id) && r.status === "pending",
       );
 
       try {
@@ -221,7 +226,7 @@ export default function AdminRefundsPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedIds, refunds]
+    [selectedIds, refunds],
   );
 
   // Toggle selection
@@ -290,7 +295,7 @@ export default function AdminRefundsPage() {
       ]);
 
       const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join(
-        "\n"
+        "\n",
       );
       downloadFile(csv, `refunds-export-${Date.now()}.csv`, "text/csv");
     } else {
@@ -308,7 +313,7 @@ export default function AdminRefundsPage() {
       downloadFile(
         json,
         `refunds-export-${Date.now()}.json`,
-        "application/json"
+        "application/json",
       );
     }
     setShowExportMenu(false);
@@ -662,7 +667,7 @@ export default function AdminRefundsPage() {
                   >
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </button>
-                )
+                ),
               )}
             </div>
           </div>
@@ -936,7 +941,7 @@ export default function AdminRefundsPage() {
                               </p>
                               <p className="text-sm text-gray-900 dark:text-white">
                                 {new Date(
-                                  selectedRefund.processedAt
+                                  selectedRefund.processedAt,
                                 ).toLocaleString()}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1076,7 +1081,7 @@ export default function AdminRefundsPage() {
                         downloadFile(
                           json,
                           `audit-log-${Date.now()}.json`,
-                          "application/json"
+                          "application/json",
                         );
                       }}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"

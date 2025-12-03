@@ -20,7 +20,7 @@ export function useSmartSuggestions(category?: string) {
       setSuggestions(data);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to fetch suggestions"
+        err instanceof Error ? err.message : "Failed to fetch suggestions",
       );
     } finally {
       setLoading(false);

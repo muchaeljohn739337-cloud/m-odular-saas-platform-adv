@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ArrowLeft, AlertTriangle, CheckCircle, ExternalLink, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import DashboardRouteGuard from "@/components/DashboardRouteGuard";
+import { sanitizeTxHash } from "@/utils/security";
 import { ethers } from "ethers";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle,
+  ExternalLink,
+  Loader2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
 interface WithdrawalEstimate {
@@ -16,29 +23,29 @@ interface WithdrawalEstimate {
 
 export default function EthWithdrawPage() {
   const router = useRouter();
-  
+
   // Form state
   const [destinationAddress, setDestinationAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  
+
   // User data
   const [userBalance, setUserBalance] = useState(0);
   const [ethPrice, setEthPrice] = useState(0);
-  
+
   // UI state
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [estimating, setEstimating] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  
+
   // Validation
   const [addressError, setAddressError] = useState("");
   const [amountError, setAmountError] = useState("");
-  
+
   // Estimate
   const [estimate, setEstimate] = useState<WithdrawalEstimate | null>(null);
-  
+
   // Success
   const [withdrawalSuccess, setWithdrawalSuccess] = useState(false);
   const [txHash, setTxHash] = useState("");
@@ -61,7 +68,7 @@ export default function EthWithdrawPage() {
         await response.json(); // userData for future use
         // Mock balance for demo - in production, fetch from blockchain
         setUserBalance(2.5); // Demo: 2.5 ETH
-        
+
         // In production, fetch real balance:
         // const userData = await response.json();
         // if (userData.ethWalletAddress) {
@@ -138,7 +145,8 @@ export default function EthWithdrawPage() {
 
     setEstimating(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const response = await fetch(`${API_URL}/api/eth/estimate-cost`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -155,7 +163,7 @@ export default function EthWithdrawPage() {
       }
 
       const data = await response.json();
-      
+
       setEstimate({
         gasLimit: data.gasLimit,
         gasPriceGwei: data.gasPriceGwei,
@@ -189,7 +197,8 @@ export default function EthWithdrawPage() {
     try {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId");
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
       const response = await fetch(`${API_URL}/api/eth/withdrawal`, {
         method: "POST",
@@ -211,12 +220,12 @@ export default function EthWithdrawPage() {
       }
 
       const data = await response.json();
-      
+
       // Show success
       setTxHash(data.txHash || "pending");
       setWithdrawalSuccess(true);
       toast.success("Withdrawal submitted for processing");
-      
+
       // Reset form
       setDestinationAddress("");
       setAmount("");
@@ -257,30 +266,35 @@ export default function EthWithdrawPage() {
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
               </div>
-              
+
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Withdrawal Submitted!
               </h2>
-              
+
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Your ETH withdrawal has been submitted and is being processed.
               </p>
 
               {txHash && txHash !== "pending" && (
                 <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Transaction Hash:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Transaction Hash:
+                  </p>
                   <div className="flex items-center justify-center gap-2">
                     <code className="text-sm font-mono text-gray-900 dark:text-white break-all">
                       {txHash}
                     </code>
-                    <a
-                      href={`https://etherscan.io/tx/${txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-shrink-0 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                    {sanitizeTxHash(txHash) && (
+                      <a
+                        href={`https://etherscan.io/tx/${sanitizeTxHash(txHash)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
+                        title="View transaction on Etherscan"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
@@ -339,7 +353,8 @@ export default function EthWithdrawPage() {
                   {/* Destination Address */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Destination Address <span className="text-red-500">*</span>
+                      Destination Address{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -357,10 +372,13 @@ export default function EthWithdrawPage() {
                       } dark:bg-gray-700 dark:text-white focus:ring-2 focus:border-transparent transition-colors`}
                     />
                     {addressError && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{addressError}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {addressError}
+                      </p>
                     )}
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Enter the Ethereum wallet address where you want to send ETH
+                      Enter the Ethereum wallet address where you want to send
+                      ETH
                     </p>
                   </div>
 
@@ -399,12 +417,16 @@ export default function EthWithdrawPage() {
                       </div>
                     </div>
                     {amountError && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{amountError}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {amountError}
+                      </p>
                     )}
                     <div className="mt-1 flex items-center justify-between text-sm">
                       <span className="text-gray-500 dark:text-gray-400">
                         {amount && ethPrice ? (
-                          <>≈ ${(parseFloat(amount) * ethPrice).toFixed(2)} USD</>
+                          <>
+                            ≈ ${(parseFloat(amount) * ethPrice).toFixed(2)} USD
+                          </>
                         ) : (
                           <span className="invisible">placeholder</span>
                         )}
@@ -434,7 +456,13 @@ export default function EthWithdrawPage() {
                     <button
                       type="button"
                       onClick={estimateWithdrawal}
-                      disabled={estimating || !destinationAddress || !amount || !!addressError || !!amountError}
+                      disabled={
+                        estimating ||
+                        !destinationAddress ||
+                        !amount ||
+                        !!addressError ||
+                        !!amountError
+                      }
                       className="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
                     >
                       {estimating ? (
@@ -456,25 +484,33 @@ export default function EthWithdrawPage() {
                       </h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-blue-800 dark:text-blue-300">Amount:</span>
+                          <span className="text-blue-800 dark:text-blue-300">
+                            Amount:
+                          </span>
                           <span className="font-medium text-blue-900 dark:text-blue-200">
                             {amount} ETH
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-blue-800 dark:text-blue-300">Gas Price:</span>
+                          <span className="text-blue-800 dark:text-blue-300">
+                            Gas Price:
+                          </span>
                           <span className="font-medium text-blue-900 dark:text-blue-200">
                             {estimate.gasPriceGwei.toFixed(2)} Gwei
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-blue-800 dark:text-blue-300">Est. Gas Fee:</span>
+                          <span className="text-blue-800 dark:text-blue-300">
+                            Est. Gas Fee:
+                          </span>
                           <span className="font-medium text-blue-900 dark:text-blue-200">
                             {estimate.estimatedCostEth.toFixed(6)} ETH
                           </span>
                         </div>
                         <div className="pt-2 border-t border-blue-200 dark:border-blue-800 flex justify-between">
-                          <span className="font-semibold text-blue-900 dark:text-blue-100">Total:</span>
+                          <span className="font-semibold text-blue-900 dark:text-blue-100">
+                            Total:
+                          </span>
                           <span className="font-bold text-blue-900 dark:text-blue-100">
                             {estimate.totalCostEth.toFixed(6)} ETH
                           </span>
@@ -503,7 +539,13 @@ export default function EthWithdrawPage() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={submitting || !destinationAddress || !amount || !!addressError || !!amountError}
+                    disabled={
+                      submitting ||
+                      !destinationAddress ||
+                      !amount ||
+                      !!addressError ||
+                      !!amountError
+                    }
                     className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 dark:disabled:text-gray-500 text-white px-6 py-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
                   >
                     {submitting ? (
@@ -523,8 +565,12 @@ export default function EthWithdrawPage() {
             <div className="space-y-6">
               {/* Balance Card */}
               <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
-                <p className="text-purple-100 text-sm mb-2">Available Balance</p>
-                <p className="text-3xl font-bold mb-1">{userBalance.toFixed(4)} ETH</p>
+                <p className="text-purple-100 text-sm mb-2">
+                  Available Balance
+                </p>
+                <p className="text-3xl font-bold mb-1">
+                  {userBalance.toFixed(4)} ETH
+                </p>
                 <p className="text-purple-100 text-sm">
                   ≈ ${(userBalance * ethPrice).toLocaleString()}
                 </p>
@@ -537,18 +583,28 @@ export default function EthWithdrawPage() {
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Minimum</p>
-                    <p className="text-base font-medium text-gray-900 dark:text-white">0.001 ETH</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Minimum
+                    </p>
+                    <p className="text-base font-medium text-gray-900 dark:text-white">
+                      0.001 ETH
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Maximum</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Maximum
+                    </p>
                     <p className="text-base font-medium text-gray-900 dark:text-white">
                       {userBalance.toFixed(4)} ETH
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Processing Time</p>
-                    <p className="text-base font-medium text-gray-900 dark:text-white">3-5 minutes</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Processing Time
+                    </p>
+                    <p className="text-base font-medium text-gray-900 dark:text-white">
+                      3-5 minutes
+                    </p>
                   </div>
                 </div>
               </div>
@@ -576,17 +632,21 @@ export default function EthWithdrawPage() {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 Confirm Withdrawal
               </h3>
-              
+
               <div className="space-y-3 mb-6">
                 <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">To Address:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    To Address:
+                  </p>
                   <p className="text-sm font-mono text-gray-900 dark:text-white break-all">
                     {destinationAddress}
                   </p>
                 </div>
-                
+
                 <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Amount:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    Amount:
+                  </p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
                     {amount} ETH
                   </p>
@@ -600,7 +660,8 @@ export default function EthWithdrawPage() {
 
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-6">
                 <p className="text-sm text-red-800 dark:text-red-300">
-                  ⚠️ This action cannot be undone. Please verify all details are correct.
+                  ⚠️ This action cannot be undone. Please verify all details are
+                  correct.
                 </p>
               </div>
 

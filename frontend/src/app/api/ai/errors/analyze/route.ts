@@ -25,25 +25,25 @@ export async function POST(request: NextRequest) {
       suggestions.push(
         "Check if the variable or property exists before accessing it",
         "Use optional chaining (?.) to safely access nested properties",
-        "Add null/undefined checks in your code"
+        "Add null/undefined checks in your code",
       );
     } else if (errorMessage.includes("network")) {
       suggestions.push(
         "Check your internet connection",
         "Verify the API endpoint is accessible",
-        "Try refreshing the page"
+        "Try refreshing the page",
       );
     } else if (errorMessage.includes("permission")) {
       suggestions.push(
         "Check user authentication status",
         "Verify user has required permissions",
-        "Try logging out and back in"
+        "Try logging out and back in",
       );
     } else {
       suggestions.push(
         "Try refreshing the page",
         "Clear browser cache and cookies",
-        "Check browser console for more details"
+        "Check browser console for more details",
       );
     }
 
@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
     const severity = errorName.includes("Critical")
       ? "critical"
       : errorMessage.includes("network")
-      ? "high"
-      : errorMessage.includes("warning")
-      ? "low"
-      : "medium";
+        ? "high"
+        : errorMessage.includes("warning")
+          ? "low"
+          : "medium";
 
     return NextResponse.json({
       analysis: {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     console.error("Error analysis error:", error);
     return NextResponse.json(
       { error: "Failed to analyze error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

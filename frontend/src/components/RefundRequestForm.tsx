@@ -26,10 +26,10 @@ export default function RefundRequestForm({
   onCancel,
 }: RefundRequestFormProps) {
   const [step, setStep] = useState<"check" | "form" | "success" | "error">(
-    "check"
+    "check",
   );
   const [eligibility, setEligibility] = useState<RefundEligibility | null>(
-    null
+    null,
   );
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);

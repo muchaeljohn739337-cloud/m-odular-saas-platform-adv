@@ -129,7 +129,7 @@ export default function AIInsightsWidget() {
 
   const getInsightColor = (
     type: AIInsight["type"],
-    priority: AIInsight["priority"]
+    priority: AIInsight["priority"],
   ) => {
     if (priority === "high") {
       return "text-red-500 bg-red-100 dark:bg-red-900/30";

@@ -96,22 +96,22 @@ async function storeSMSPoolCredentials() {
     console.log("📊 Recent Vault activity:");
     const auditLogs = await prisma.vault_audit_logs.findMany({
       where: {
-        userId: admin.id,
+        user_id: admin.id,
         action: { in: ["create", "read"] },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { timestamp: "desc" },
       take: 5,
       select: {
         action: true,
-        secretKey: true,
+        secret_key: true,
         success: true,
-        createdAt: true,
+        timestamp: true,
       },
     });
 
     auditLogs.forEach((log) => {
       const status = log.success ? "✅" : "❌";
-      console.log(`   ${status} ${log.action.toUpperCase()} ${log.secretKey} at ${log.createdAt.toISOString()}`);
+      console.log(`   ${status} ${log.action.toUpperCase()} ${log.secret_key} at ${log.timestamp.toISOString()}`);
     });
 
     process.exit(0);

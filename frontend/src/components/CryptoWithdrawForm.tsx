@@ -114,7 +114,7 @@ export default function CryptoWithdrawForm({
       case "BTC":
         if (
           !/(^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$)|(^bc1[a-z0-9]{39,87}$)/.test(
-            trimmed
+            trimmed,
           )
         ) {
           setAddressError("Invalid Bitcoin address format");
@@ -129,7 +129,7 @@ export default function CryptoWithdrawForm({
       case "LTC":
         if (
           !/(^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$)|(^ltc1[a-z0-9]{39,87}$)/.test(
-            trimmed
+            trimmed,
           )
         ) {
           setAddressError("Invalid Litecoin address format");

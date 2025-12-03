@@ -18,7 +18,8 @@ export default function GasPriceWidget() {
 
   const fetchGasPrice = async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const response = await fetch(`${API_URL}/api/eth/gas-price`);
 
       if (!response.ok) {
@@ -89,7 +90,10 @@ export default function GasPriceWidget() {
 
   if (error) {
     return (
-      <div className="bg-gray-800 rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors" onClick={fetchGasPrice}>
+      <div
+        className="bg-gray-800 rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-gray-700 transition-colors"
+        onClick={fetchGasPrice}
+      >
         <Flame className="w-4 h-4 text-gray-400" />
         <span className="text-sm text-gray-400">Gas: --</span>
       </div>
@@ -99,20 +103,28 @@ export default function GasPriceWidget() {
   const priceLevel = getGasPriceLevel(gasPrice);
 
   return (
-    <div className="bg-gray-800 rounded-lg px-4 py-2 flex items-center gap-3 hover:bg-gray-700 transition-colors cursor-pointer group" title="Click to refresh">
+    <div
+      className="bg-gray-800 rounded-lg px-4 py-2 flex items-center gap-3 hover:bg-gray-700 transition-colors cursor-pointer group"
+      title="Click to refresh"
+    >
       {/* Gas Icon */}
       <Flame className="w-4 h-4 text-orange-400" />
 
       {/* Gas Price */}
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-white">{gasPrice.toFixed(1)} <span className="text-xs text-gray-400">Gwei</span></span>
-        
+        <span className="text-sm font-semibold text-white">
+          {gasPrice.toFixed(1)}{" "}
+          <span className="text-xs text-gray-400">Gwei</span>
+        </span>
+
         {/* Trend Indicator */}
         {getTrendIcon()}
       </div>
 
       {/* Price Level Badge */}
-      <span className={`text-xs font-medium ${priceLevel.color}`}>{priceLevel.label}</span>
+      <span className={`text-xs font-medium ${priceLevel.color}`}>
+        {priceLevel.label}
+      </span>
 
       {/* Mini Sparkline (optional visual) */}
       {history.length > 1 && (
@@ -121,8 +133,9 @@ export default function GasPriceWidget() {
             const maxPrice = Math.max(...history);
             const minPrice = Math.min(...history);
             const range = maxPrice - minPrice;
-            const normalizedHeight = range > 0 ? ((price - minPrice) / range) * 100 : 50;
-            
+            const normalizedHeight =
+              range > 0 ? ((price - minPrice) / range) * 100 : 50;
+
             return (
               <div
                 key={index}

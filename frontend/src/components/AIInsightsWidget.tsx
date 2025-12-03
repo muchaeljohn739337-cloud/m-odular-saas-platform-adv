@@ -22,7 +22,7 @@ export default function AIInsightsWidget() {
     // Filter for high-impact insights
     const filtered = insights
       .filter(
-        (insight) => insight.impact === "high" || insight.impact === "medium"
+        (insight) => insight.impact === "high" || insight.impact === "medium",
       )
       .slice(0, 3);
     setDisplayedInsights(filtered);
@@ -93,7 +93,7 @@ export default function AIInsightsWidget() {
                   </h3>
                   <span
                     className={`px-2 py-0.5 text-xs font-medium rounded-full border ${getImpactColor(
-                      insight.impact
+                      insight.impact,
                     )}`}
                   >
                     {insight.impact.toUpperCase()}

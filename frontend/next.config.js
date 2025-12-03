@@ -6,11 +6,12 @@ const nextConfig = {
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
   typescript: {
-    // Skip type checking during build (types checked separately in CI)
-    ignoreBuildErrors: true,
+    // Enable type checking in production builds for security
+    ignoreBuildErrors: process.env.NODE_ENV !== "production",
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    // Enable ESLint checking in production builds for security
+    ignoreDuringBuilds: process.env.NODE_ENV !== "production",
   },
   experimental: {
     turbo: {

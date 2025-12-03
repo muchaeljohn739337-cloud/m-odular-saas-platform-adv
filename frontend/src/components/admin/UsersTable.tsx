@@ -50,7 +50,7 @@ export default function UsersTable() {
         if (debouncedSearch) params.search = debouncedSearch;
         const { data } = await adminApi.get<UsersApiResponse>(
           "/api/admin/users",
-          { params }
+          { params },
         );
         if (!cancelled) {
           setItems(data.items || []);
@@ -70,7 +70,7 @@ export default function UsersTable() {
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(total / pageSize)),
-    [total, pageSize]
+    [total, pageSize],
   );
 
   async function toggleRole(u: AdminUserRow) {
@@ -84,7 +84,7 @@ export default function UsersTable() {
       if (debouncedSearch) params.search = debouncedSearch;
       const { data } = await adminApi.get<UsersApiResponse>(
         "/api/admin/users",
-        { params }
+        { params },
       );
       setItems(data.items || []);
       setTotal(data.total || 0);

@@ -91,7 +91,7 @@ export default function AdminUserDetailPage() {
     try {
       setLoading(true);
       const response = await adminApi.get<UserData>(
-        `/api/admin/users/${userId}`
+        `/api/admin/users/${userId}`,
       );
       setUserData(response.data);
     } catch (error) {
@@ -107,7 +107,7 @@ export default function AdminUserDetailPage() {
       setActivityLoading(true);
       const response = await adminApi.get<ActivityResponse>(
         `/api/admin/users/${userId}/activity`,
-        { params: { page: activityPage, pageSize: 10 } }
+        { params: { page: activityPage, pageSize: 10 } },
       );
       setActivityLogs(response.data.items);
       setActivityTotal(response.data.total);
@@ -313,32 +313,32 @@ export default function AdminUserDetailPage() {
                           userData.kyc.status === "APPROVED"
                             ? "bg-green-100 text-green-800"
                             : userData.kyc.status === "REJECTED"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         {userData.kyc.status}
                       </span>
                     </div>
                     {userData.kyc.status === "PENDING" && (
-                          <div className="flex gap-2">
-                          <button
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
-                            onClick={() =>
+                      <div className="flex gap-2">
+                        <button
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
+                          onClick={() =>
                             toast("KYC approval not yet implemented")
-                            }
-                          >
-                            Approve
-                          </button>
-                          <button
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
-                            onClick={() => {
+                          }
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+                          onClick={() => {
                             toast("KYC rejection not yet implemented");
-                            }}
-                          >
-                            Reject
-                          </button>
-                          </div>
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </div>
                     )}
                   </div>
                   {userData.kyc.documents.length === 0 && (
@@ -413,8 +413,8 @@ export default function AdminUserDetailPage() {
                                 tx.status === "completed"
                                   ? "bg-green-100 text-green-800"
                                   : tx.status === "pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
                               }`}
                             >
                               {tx.status}
@@ -589,8 +589,8 @@ export default function AdminUserDetailPage() {
                 {isSuspending
                   ? "Processing..."
                   : userData.profile.status === "ACTIVE"
-                  ? "Suspend"
-                  : "Activate"}
+                    ? "Suspend"
+                    : "Activate"}
               </button>
             </div>
           </motion.div>

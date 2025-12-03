@@ -63,11 +63,11 @@ function analyzeTransactionRisk(data: TransactionData): {
 
   const totalScore = riskFactors.reduce(
     (sum, f) => sum + f.score * f.weight,
-    0
+    0,
   );
   const maxPossibleScore = riskFactors.reduce(
     (sum, f) => sum + 100 * f.weight,
-    0
+    0,
   );
 
   return { riskFactors, totalScore, maxPossibleScore };
@@ -133,7 +133,7 @@ function analyzeVelocityRisk(userId: string, timestamp?: string): RiskFactor {
 
 function analyzeGeographicRisk(
   location?: { country: string; city: string },
-  ipAddress?: string
+  ipAddress?: string,
 ): RiskFactor {
   // High-risk countries (simplified for demo)
   const highRiskCountries = ["NG", "RU", "CN", "IR", "KP"];
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
     if (!transactionId || !userId || amount === undefined) {
       return NextResponse.json(
         { error: "transactionId, userId, and amount are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -334,7 +334,7 @@ export async function POST(request: NextRequest) {
     console.error("Fraud detection error:", error);
     return NextResponse.json(
       { error: "Failed to detect fraud" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

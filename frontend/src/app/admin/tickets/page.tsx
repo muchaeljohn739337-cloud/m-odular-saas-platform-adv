@@ -97,7 +97,7 @@ export default function AdminTicketsPage() {
                   onClick={async () => {
                     await adminApi.post(
                       `/api/support/admin/tickets/${t.id}/status`,
-                      { status: "IN_PROGRESS" }
+                      { status: "IN_PROGRESS" },
                     );
                     load();
                   }}
@@ -109,7 +109,7 @@ export default function AdminTicketsPage() {
                   onClick={async () => {
                     await adminApi.post(
                       `/api/support/admin/tickets/${t.id}/status`,
-                      { status: "RESOLVED" }
+                      { status: "RESOLVED" },
                     );
                     load();
                   }}

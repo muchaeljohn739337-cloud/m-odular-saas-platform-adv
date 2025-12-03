@@ -119,7 +119,7 @@ function generateFinanceReportHTML(data: ReportData): string {
             </div>
             <div class="transaction-amount ${t.type}">${t.type === "income" ? "+" : "-"}$${t.amount.toLocaleString()}</div>
           </li>
-        `
+        `,
           )
           .join("")}
       </ul>
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
     if (!to || !reportType) {
       return NextResponse.json(
         { error: "Missing required fields: to, reportType" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(to)) {
       return NextResponse.json(
         { error: "Invalid email address" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
       console.error("Resend API error:", errorData);
       return NextResponse.json(
         { error: "Failed to send email", details: errorData },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
     console.error("Email send error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

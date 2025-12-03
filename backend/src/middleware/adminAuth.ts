@@ -1,15 +1,11 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 /**
  * Middleware to verify admin access via x-admin-key header
  * Compares against ADMIN_KEY environment variable
  */
-export const adminAuth = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const adminAuth = (req: Request, res: Response, next: NextFunction): void => {
   const adminKey = req.headers["x-admin-key"];
   const expectedKey = process.env.ADMIN_KEY;
 
@@ -39,7 +35,8 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
     if (!token) return res.status(401).json({ error: "Missing token" });
 
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    if (decoded.role !== "admin") {
+    // Check for admin role (case-insensitive)
+    if (decoded.role?.toUpperCase() !== "ADMIN") {
       return res.status(403).json({ error: "Admin access required" });
     }
 
@@ -55,11 +52,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
  * Optional: Combined admin auth that also checks JWT for admin role
  * Use this if you want both x-admin-key AND valid admin JWT
  */
-export const adminAuthWithToken = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const adminAuthWithToken = (req: Request, res: Response, next: NextFunction): void => {
   const adminKey = req.headers["x-admin-key"];
   const expectedKey = process.env.ADMIN_KEY;
 

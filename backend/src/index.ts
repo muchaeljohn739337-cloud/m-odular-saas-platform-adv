@@ -14,13 +14,23 @@ import { surveillanceAI } from "./ai/surveillanceAI";
 import app from "./app";
 import { config } from "./config";
 import { activityLogger } from "./middleware/activityLogger";
+import { cloudflareMiddleware } from "./middleware/cloudflare";
 import { applySecurityMiddleware, forceHTTPS } from "./middleware/httpsEnforcement";
+import { initializeIPTables, ipFilterMiddleware } from "./middleware/ipFilter";
+import { checkIPRoute, ipWhitelistMiddleware } from "./middleware/ipWhitelist";
+import {
+  initializeSecretProtection,
+  protectConsoleLogs,
+  secretProtectionMiddleware,
+} from "./middleware/secretProtection";
 import { rateLimit, validateInput } from "./middleware/security";
+import { requireTailscale } from "./middleware/tailscaleAuth";
 import prisma from "./prismaClient";
 import adminRouter from "./routes/admin";
 import adminAIRouter from "./routes/adminAI";
 import adminDoctorsRouter from "./routes/adminDoctors";
 import adminSecurityRouter from "./routes/adminSecurity";
+import adminSecurityManagementRouter from "./routes/adminSecurityManagement";
 import aiAnalyticsRouter from "./routes/aiAnalytics";
 import aiSolverRouter from "./routes/aiSolver";
 import aiTrainingRouter from "./routes/aiTraining";
@@ -29,13 +39,19 @@ import authRouter from "./routes/auth";
 import authAdminRouter, { activeSessions, setBroadcastSessions as setAuthBroadcast } from "./routes/authAdmin";
 import botCheckRouter from "./routes/botCheck";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
+import momAIRouter from "./routes/mom-ai";
+import securityAdminRouter from "./routes/security-admin";
+import siemRouter from "./routes/siem";
 import web3AuthRouter from "./routes/web3-auth";
+import { activateShield, initializeShield } from "./security/comprehensive-shield";
+import { sandboxRunner } from "./services/SandboxRunner";
 // AI system imports for initialization
 import { aiCore } from "./ai-core";
 import { copilotService } from "./ai/copilot/CopilotService";
 import aiGeneratorRouter, { setAIGeneratorSocketIO } from "./routes/ai-generator";
 import aiWorkflowsRouter from "./routes/ai-workflows";
 import aiWorkersRouter, { setAIWorkersSocketIO } from "./routes/aiWorkers";
+import blogRouter from "./routes/blog";
 import consultationRouter from "./routes/consultation";
 import copilotRouter, { setCopilotSocketIO } from "./routes/copilot";
 import cryptoRouter, { setCryptoSocketIO } from "./routes/crypto";
@@ -43,6 +59,7 @@ import debitCardRouter, { setDebitCardSocketIO } from "./routes/debitCard";
 import deploymentRouter from "./routes/deployment";
 import exchangeRouter from "./routes/exchange";
 import filesRouter from "./routes/files";
+import googleAuthRouter from "./routes/google-auth";
 import governanceRouter from "./routes/governance";
 import healthRouter from "./routes/health";
 import healthReadingsRouter from "./routes/health-readings";
@@ -54,10 +71,13 @@ import marketingRouter from "./routes/marketing";
 import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
 import paymentsRouter, { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
+import projectRouter from "./routes/project";
 import rewardsRouter, { setRewardSocketIO } from "./routes/rewards";
 import rpaRouter, { setRPASocketIO } from "./routes/rpa";
 import securityLevelRouter from "./routes/securityLevel";
+import seoRouter from "./routes/seo";
 import sessionsRouter, { setBroadcastSessions as setSessionsBroadcast } from "./routes/sessions";
+import socialMediaRouter from "./routes/socialMedia";
 import subscribersRouter from "./routes/subscribers";
 import supportRouter, { setSupportSocketIO } from "./routes/support";
 import systemRouter from "./routes/system";
@@ -74,12 +94,27 @@ dotenv.config();
 // Initialize Sentry for error tracking and monitoring
 initSentry();
 
+// 🔒 SECURITY: Initialize secret protection system (MUST be early)
+initializeSecretProtection();
+protectConsoleLogs();
+
+console.log("🛡️  150% Security Mode: Secret auto-correction enabled");
+
 // Create HTTP server and attach Socket.IO
 // Create server
 const server = http.createServer(app);
 
 // Trust proxy (needed when behind Cloudflare/NGINX for correct IPs and HTTPS)
 app.set("trust proxy", 1);
+
+// Cloudflare integration - MUST be first to properly extract real IPs
+app.use(cloudflareMiddleware);
+
+// 🔒 SECURITY: IP-based access control (blacklist enforcement)
+app.use(ipFilterMiddleware);
+
+// 🔒 SECURITY: Secret exposure prevention (auto-correction)
+app.use(secretProtectionMiddleware);
 
 // SECURITY: Force HTTPS in production with HSTS and enhanced security headers
 app.use(forceHTTPS);
@@ -100,10 +135,17 @@ app.post("/api/payments/webhook", express.raw({ type: "application/json" }), han
 app.use(express.json());
 app.use(validateInput);
 app.use(activityLogger);
+
+// 🛡️ SHIELD SECURITY SYSTEM - Multi-Layer Defense (MOM AI + DAD Admin Control)
+app.use(activateShield());
+
 app.use("/api", rateLimit({ windowMs: 60_000, maxRequests: 300 }));
 
 // Health check endpoint (critical for production monitoring)
 app.use("/api", healthRouter);
+
+// IP check endpoint for debugging (shows real IP and whitelist status)
+app.get("/api/check-ip", checkIPRoute);
 
 // robots.txt - SEO & crawler control
 app.get("/robots.txt", (req, res) => {
@@ -136,14 +178,21 @@ app.use("/api/crypto", cryptoRouter);
 app.use("/api/debit-card", debitCardRouter);
 app.use("/api/medbeds", medbedsRouter);
 app.use("/api/support", supportRouter);
-app.use("/api/admin/analytics", analyticsRouter);
+app.use("/api/admin/analytics", ipWhitelistMiddleware, analyticsRouter);
 app.use("/api/ai-analytics", aiAnalyticsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/auth/web3", web3AuthRouter); // Web3 Wallet Authentication (SIWE)
-app.use("/api/admin", adminUsersRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/admin/security", adminSecurityRouter); // AI & Security Monitoring
-app.use("/api/admin/ai", adminAIRouter); // AI System Monitoring & Management
+app.use("/api/auth/google", googleAuthRouter); // Google OAuth Authentication
+app.use("/api/admin", ipWhitelistMiddleware, adminUsersRouter);
+app.use("/api/admin", ipWhitelistMiddleware, adminRouter);
+app.use("/api/admin/security", ipWhitelistMiddleware, adminSecurityRouter); // AI & Security Monitoring
+app.use("/api/admin/shield", requireTailscale, securityAdminRouter); // SHIELD Security System Dashboard (Tailscale-protected)
+app.use("/api/mom", momAIRouter); // Mom AI Core - Autonomous incident handling
+app.use("/api/sandbox", sandboxRouter); // Sandbox Testing Environment
+app.use("/api/siem", siemRouter); // SIEM Analytics & Threat Intelligence
+app.use("/api/dad", ipWhitelistMiddleware, require("./routes/dad-console").default); // Dad Admin Console - Approval workflows & oversight
+app.use("/api/admin/security-management", ipWhitelistMiddleware, adminSecurityManagementRouter); // IP Whitelist/Blacklist & Secret Management
+app.use("/api/admin/ai", ipWhitelistMiddleware, adminAIRouter); // AI System Monitoring & Management
 app.use("/api/markdown-fixer", markdownFixerRouter); // AI-Powered Markdown Auto-Fixer
 app.use("/api/ai-solver", aiSolverRouter); // Prisma AI Solver & Multi-Brain Agent
 app.use("/api/transactions", transactionsRouter);
@@ -176,6 +225,10 @@ app.use("/api/vault", vaultRouter); // HashiCorp Vault Integration - Admin Secre
 app.use("/api/copilot", copilotRouter); // AI Copilot - LLM-Powered Code Generation & Task Automation
 app.use("/api/ai-generator", aiGeneratorRouter); // AI Generator - Text/Code/Image Generation with Multi-Model Support
 app.use("/api/ai-workflows", aiWorkflowsRouter); // AI Core - Half Brain Cell Workflows & Task Automation
+app.use("/api/blog", blogRouter); // Blog & CMS System with AI Content Generation
+app.use("/api/seo", seoRouter); // SEO Automation & Sitemap Generation
+app.use("/api/social-media", socialMediaRouter); // Multi-Channel Auto-Posting (Twitter, LinkedIn, Facebook)
+app.use("/api/projects", projectRouter); // Project Management (Projects, Tasks, Sprints, Kanban)
 app.use("/api/exchange", exchangeRouter);
 
 const io = new SocketIOServer(server, {
@@ -307,6 +360,11 @@ async function startServer() {
     await initializeClients();
     console.log("✅ AI Generator models initialized");
 
+    // Initialize Social Media worker
+    const { initializeSocialMediaWorker } = require("./services/socialMediaService");
+    initializeSocialMediaWorker();
+    console.log("✅ Social Media worker initialized");
+
     // Initialize AI Copilot
     copilotService.initialize().catch((err) => {
       console.error("⚠️  Failed to initialize Copilot:", err);
@@ -322,11 +380,20 @@ async function startServer() {
       }
     }
 
+    // 🔒 SECURITY: Initialize IP whitelist/blacklist tables
+    try {
+      await initializeIPTables();
+      console.log("✅ IP access control system initialized");
+    } catch (err) {
+      console.error("⚠️  Failed to initialize IP tables:", err);
+    }
+
     // Start HTTP server
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`   Environment: ${config.nodeEnv}`);
       console.log(`   Frontend URL: ${config.frontendUrl}`);
+      console.log(`   🛡️  150% Security Mode: ACTIVE`);
     });
 
     server.on("error", (error: NodeJS.ErrnoException) => {
@@ -384,6 +451,18 @@ process.on("SIGINT", async () => {
 
   process.exit(0);
 });
+
+// Initialize SHIELD security system with moderation
+initializeShield().catch(console.error);
+
+// Initialize Sandbox Runner
+sandboxRunner.initialize().catch((error) => {
+  console.warn("⚠️  Sandbox Runner initialization failed (Docker may not be available):", error.message);
+});
+
+// Initialize Mom AI Core
+import { momAICore } from "./ai/mom-core";
+momAICore.initialize().catch(console.error);
 
 // Initialize Prisma AI Solver and Multi-Brain Agent
 initializePrismaSolver().catch(console.error);

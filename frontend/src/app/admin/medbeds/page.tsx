@@ -231,8 +231,8 @@ export default function AdminMedbedsPage() {
                               b.paymentStatus === "paid"
                                 ? "bg-green-100 text-green-800"
                                 : b.paymentStatus === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
                             }`}
                           >
                             {b.paymentStatus}
@@ -248,10 +248,10 @@ export default function AdminMedbedsPage() {
                             b.status === "completed"
                               ? "bg-blue-100 text-blue-800"
                               : b.status === "in-progress"
-                              ? "bg-purple-100 text-purple-800"
-                              : b.status === "cancelled"
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-yellow-100 text-yellow-800"
+                                ? "bg-purple-100 text-purple-800"
+                                : b.status === "cancelled"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-yellow-100 text-yellow-800"
                           }`}
                         >
                           {b.status}
@@ -278,7 +278,7 @@ export default function AdminMedbedsPage() {
                               <button
                                 onClick={() => {
                                   const effectiveness = prompt(
-                                    "Enter effectiveness score (0-100):"
+                                    "Enter effectiveness score (0-100):",
                                   );
                                   if (
                                     effectiveness &&
@@ -288,8 +288,8 @@ export default function AdminMedbedsPage() {
                                       b.id,
                                       Math.min(
                                         100,
-                                        Math.max(0, Number(effectiveness))
-                                      )
+                                        Math.max(0, Number(effectiveness)),
+                                      ),
                                     );
                                     updateStatus(b.id, "completed");
                                   }

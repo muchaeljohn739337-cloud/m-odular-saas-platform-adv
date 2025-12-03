@@ -123,7 +123,7 @@ export function useAIGenerator() {
         throw err;
       }
     },
-    []
+    [],
   );
 
   const generateCodeContent = useCallback(
@@ -147,7 +147,7 @@ export function useAIGenerator() {
         throw err;
       }
     },
-    []
+    [],
   );
 
   const generateImageContent = useCallback(
@@ -171,7 +171,7 @@ export function useAIGenerator() {
         throw err;
       }
     },
-    []
+    [],
   );
 
   const resetState = useCallback(() => {
@@ -201,7 +201,7 @@ export function useGenerationHistory(initialType?: "text" | "code" | "image") {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [type, setType] = useState<"text" | "code" | "image" | undefined>(
-    initialType
+    initialType,
   );
 
   const limit = 20;
@@ -246,7 +246,7 @@ export function useGenerationHistory(initialType?: "text" | "code" | "image") {
       setType(newType);
       setPage(0);
     },
-    []
+    [],
   );
 
   return {

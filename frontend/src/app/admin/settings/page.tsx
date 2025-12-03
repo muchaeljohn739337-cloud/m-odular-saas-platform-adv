@@ -179,7 +179,7 @@ export default function AdminSettingsPage() {
                 >
                   {tab}
                 </button>
-              )
+              ),
             )}
           </motion.div>
 

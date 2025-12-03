@@ -219,6 +219,7 @@ model audit_logs {
   metadata       Json?
   ipAddress      String?
   userAgent      String?
+  severity       String?
   timestamp      DateTime @default(now())
   createdAt      DateTime @default(now())
 
@@ -1083,13 +1084,16 @@ model users {
   btcBalance         Decimal              @default(0)
   ethBalance         Decimal              @default(0)
   usdtBalance        Decimal              @default(0)
+  // Google OAuth fields
+  googleId           String?              @unique
+  profilePicture     String?
   // Block/Ban tracking
   blockedAt          DateTime?
   blockedReason      String?
-  blockedBy          String?              // Admin user ID who blocked
+  blockedBy          String? // Admin user ID who blocked
   // Soft delete support
   deletedAt          DateTime?
-  deletedBy          String?              // Admin user ID who deleted
+  deletedBy          String? // Admin user ID who deleted
   RPAWorkflow        RPAWorkflow[]
   ai_generations     ai_generations[]
   ai_usage_metrics   ai_usage_metrics[]
@@ -1097,6 +1101,17 @@ model users {
   medbeds_bookings   medbeds_bookings[]
   uploaded_files     uploaded_files[]
   subscriptions      Subscription[]
+  blogPosts          BlogPost[]           @relation("BlogAuthor")
+  blogComments       BlogComment[]        @relation("BlogCommentAuthor")
+  
+  // Project Management Relations
+  ownedProjects      Project[]            @relation("ProjectOwner")
+  projectMemberships ProjectMember[]      @relation("ProjectMembership")
+  assignedTasks      Task[]               @relation("TaskAssignee")
+  reportedTasks      Task[]               @relation("TaskReporter")
+  taskComments       TaskComment[]        @relation("TaskComments")
+  taskAttachments    TaskAttachment[]     @relation("TaskAttachments")
+  timeEntries        TimeEntry[]          @relation("TimeEntries")
 }
 
 model vault_audit_logs {
@@ -1140,23 +1155,23 @@ model vault_secrets {
 
 // Workflow definitions - what the AI can do
 model AIWorkflow {
-  id              String              @id @default(uuid())
-  name            String              @unique
-  description     String
-  category        String              // "automation", "monitoring", "code_suggestion", "data_collection", "orchestration"
-  triggerType     String              // "event", "scheduled", "manual"
-  cronSchedule    String?             // for scheduled triggers
-  enabled         Boolean             @default(true)
-  requiresApproval Boolean            @default(true) // critical tasks need human approval
-  riskLevel       String              @default("medium") // "low", "medium", "high", "critical"
-  aiModel         String              @default("gpt-4") // "gpt-4", "gpt-3.5-turbo", "claude-3"
-  config          String              // JSON configuration
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
-  tasks           AITask[]
-  executions      AIWorkflowExecution[]
-  
+  id               String   @id @default(uuid())
+  name             String   @unique
+  description      String
+  category         String // "automation", "monitoring", "code_suggestion", "data_collection", "orchestration"
+  triggerType      String // "event", "scheduled", "manual"
+  cronSchedule     String? // for scheduled triggers
+  enabled          Boolean  @default(true)
+  requiresApproval Boolean  @default(true) // critical tasks need human approval
+  riskLevel        String   @default("medium") // "low", "medium", "high", "critical"
+  aiModel          String   @default("gpt-4") // "gpt-4", "gpt-3.5-turbo", "claude-3"
+  config           String // JSON configuration
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tasks      AITask[]
+  executions AIWorkflowExecution[]
+
   @@index([category])
   @@index([enabled])
   @@index([triggerType])
@@ -1165,41 +1180,41 @@ model AIWorkflow {
 
 // Task queue - individual units of work
 model AITask {
-  id              String              @id @default(uuid())
-  workflowId      String
-  workflow        AIWorkflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  executionId     String?
-  execution       AIWorkflowExecution? @relation(fields: [executionId], references: [id], onDelete: SetNull)
-  
-  taskType        String              // "email", "report", "code_fix", "monitoring", "data_collection"
-  priority        Int                 @default(5) // 1-10, higher = more urgent
-  status          String              @default("pending") // "pending", "in_progress", "awaiting_approval", "approved", "rejected", "completed", "failed"
-  
-  input           String              // JSON input data
-  aiSuggestion    String?             // AI's proposed action/solution
-  aiReasoning     String?             // Why AI suggests this
-  aiConfidence    Decimal?            @default(0) // 0-1 confidence score
-  
-  output          String?             // Result after execution
+  id          String               @id @default(uuid())
+  workflowId  String
+  workflow    AIWorkflow           @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  executionId String?
+  execution   AIWorkflowExecution? @relation(fields: [executionId], references: [id], onDelete: SetNull)
+
+  taskType String // "email", "report", "code_fix", "monitoring", "data_collection"
+  priority Int    @default(5) // 1-10, higher = more urgent
+  status   String @default("pending") // "pending", "in_progress", "awaiting_approval", "approved", "rejected", "completed", "failed"
+
+  input        String // JSON input data
+  aiSuggestion String? // AI's proposed action/solution
+  aiReasoning  String? // Why AI suggests this
+  aiConfidence Decimal? @default(0) // 0-1 confidence score
+
+  output          String? // Result after execution
   error           String?
   executionTimeMs Int?
-  
+
   // Human feedback
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  approvalStatus  String?             // "approved", "rejected", "modified"
-  humanFeedback   String?             // Learning data
-  humanModification String?           // What human changed
-  
-  attempts        Int                 @default(0)
-  maxRetries      Int                 @default(3)
-  
-  scheduledFor    DateTime?
-  startedAt       DateTime?
-  completedAt     DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  approvalStatus    String? // "approved", "rejected", "modified"
+  humanFeedback     String? // Learning data
+  humanModification String? // What human changed
+
+  attempts   Int @default(0)
+  maxRetries Int @default(3)
+
+  scheduledFor DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
   @@index([workflowId])
   @@index([executionId])
   @@index([status])
@@ -1211,26 +1226,26 @@ model AITask {
 
 // Workflow execution tracking
 model AIWorkflowExecution {
-  id              String              @id @default(uuid())
-  workflowId      String
-  workflow        AIWorkflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  
-  status          String              @default("running") // "running", "completed", "failed", "cancelled"
-  triggeredBy     String              // "system", "user:{userId}", "event:{eventType}"
-  triggerData     String?             // JSON data that triggered this
-  
-  tasksTotal      Int                 @default(0)
-  tasksCompleted  Int                 @default(0)
-  tasksFailed     Int                 @default(0)
-  
-  startedAt       DateTime            @default(now())
-  completedAt     DateTime?
-  duration        Int?                // milliseconds
-  
-  error           String?
-  
-  tasks           AITask[]
-  
+  id         String     @id @default(uuid())
+  workflowId String
+  workflow   AIWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  status      String  @default("running") // "running", "completed", "failed", "cancelled"
+  triggeredBy String // "system", "user:{userId}", "event:{eventType}"
+  triggerData String? // JSON data that triggered this
+
+  tasksTotal     Int @default(0)
+  tasksCompleted Int @default(0)
+  tasksFailed    Int @default(0)
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  duration    Int? // milliseconds
+
+  error String?
+
+  tasks AITask[]
+
   @@index([workflowId])
   @@index([status])
   @@index([startedAt])
@@ -1239,23 +1254,23 @@ model AIWorkflowExecution {
 
 // AI learning database - feedback loop
 model AILearning {
-  id              String              @id @default(uuid())
-  taskId          String              @unique
-  
-  taskType        String
-  aiSuggestion    String              // What AI proposed
-  humanDecision   String              // What human chose (approved/rejected/modified)
-  humanModification String?           // What human changed
-  feedback        String?             // Human's explanation
-  
-  wasCorrect      Boolean?            // Did AI suggestion work out?
-  outcomeNotes    String?             // Post-execution notes
-  
-  context         String              // JSON - situational context
-  patterns        String?             // JSON - identified patterns
-  
-  createdAt       DateTime            @default(now())
-  
+  id     String @id @default(uuid())
+  taskId String @unique
+
+  taskType          String
+  aiSuggestion      String // What AI proposed
+  humanDecision     String // What human chose (approved/rejected/modified)
+  humanModification String? // What human changed
+  feedback          String? // Human's explanation
+
+  wasCorrect   Boolean? // Did AI suggestion work out?
+  outcomeNotes String? // Post-execution notes
+
+  context  String // JSON - situational context
+  patterns String? // JSON - identified patterns
+
+  createdAt DateTime @default(now())
+
   @@index([taskType])
   @@index([humanDecision])
   @@index([wasCorrect])
@@ -1265,32 +1280,32 @@ model AILearning {
 
 // System monitoring - AI watches for issues
 model AIMonitoringAlert {
-  id              String              @id @default(uuid())
-  
-  alertType       String              // "error", "downtime", "performance", "security", "anomaly"
-  severity        String              // "info", "warning", "error", "critical"
-  source          String              // where the issue was detected
-  
-  title           String
-  description     String
-  detectedBy      String              @default("ai_monitor") // "ai_monitor", "system", "user"
-  
-  aiAnalysis      String?             // AI's analysis of the issue
-  aiSuggestion    String?             // AI's suggested fix
-  aiConfidence    Decimal?            @default(0)
-  
-  status          String              @default("open") // "open", "investigating", "resolved", "false_positive"
-  assignedTo      String?
-  
-  resolvedBy      String?
-  resolvedAt      DateTime?
-  resolution      String?             // How it was fixed
-  
-  metadata        String?             // JSON - additional data
-  
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
+  id String @id @default(uuid())
+
+  alertType String // "error", "downtime", "performance", "security", "anomaly"
+  severity  String // "info", "warning", "error", "critical"
+  source    String // where the issue was detected
+
+  title       String
+  description String
+  detectedBy  String @default("ai_monitor") // "ai_monitor", "system", "user"
+
+  aiAnalysis   String? // AI's analysis of the issue
+  aiSuggestion String? // AI's suggested fix
+  aiConfidence Decimal? @default(0)
+
+  status     String  @default("open") // "open", "investigating", "resolved", "false_positive"
+  assignedTo String?
+
+  resolvedBy String?
+  resolvedAt DateTime?
+  resolution String? // How it was fixed
+
+  metadata String? // JSON - additional data
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([alertType])
   @@index([severity])
   @@index([status])
@@ -1300,18 +1315,18 @@ model AIMonitoringAlert {
 
 // Monitoring rules
 model AIMonitoringRule {
-  id              String              @id @default(uuid())
-  name            String
-  description     String?
-  type            String              // "error", "performance", "security", "usage", "custom"
-  condition       String              // JSON condition
-  threshold       Float?
-  severity        String              @default("medium")
-  enabled         Boolean             @default(true)
-  lastCheck       DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  type        String // "error", "performance", "security", "usage", "custom"
+  condition   String // JSON condition
+  threshold   Float?
+  severity    String    @default("medium")
+  enabled     Boolean   @default(true)
+  lastCheck   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@index([type])
   @@index([enabled])
   @@map("ai_monitoring_rules")
@@ -1319,14 +1334,14 @@ model AIMonitoringRule {
 
 // Alerts table (distinct from AIMonitoringAlert)
 model AIAlert {
-  id              String              @id @default(uuid())
-  ruleId          String
-  message         String
-  metadata        String              // JSON metadata
-  severity        String
-  status          String              @default("open")
-  createdAt       DateTime            @default(now())
-  
+  id        String   @id @default(uuid())
+  ruleId    String
+  message   String
+  metadata  String // JSON metadata
+  severity  String
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+
   @@index([ruleId])
   @@index([status])
   @@index([severity])
@@ -1335,39 +1350,39 @@ model AIAlert {
 
 // AI-generated reports
 model AIReport {
-  id              String              @id @default(uuid())
-  
-  reportType      String              // "daily", "weekly", "monthly", "incident", "custom"
-  category        String              // "usage", "performance", "security", "business", "technical"
-  
-  title           String
-  summary         String              // Executive summary
-  content         String              // Full report content (Markdown)
-  
-  format          String              @default("markdown") // "markdown", "json", "html"
-  
-  generatedBy     String              @default("ai_core") // "ai_core", "scheduled_job"
-  aiModel         String              @default("gpt-4")
-  
+  id String @id @default(uuid())
+
+  reportType String // "daily", "weekly", "monthly", "incident", "custom"
+  category   String // "usage", "performance", "security", "business", "technical"
+
+  title   String
+  summary String // Executive summary
+  content String // Full report content (Markdown)
+
+  format String @default("markdown") // "markdown", "json", "html"
+
+  generatedBy String @default("ai_core") // "ai_core", "scheduled_job"
+  aiModel     String @default("gpt-4")
+
   // Data sources
-  dataFrom        DateTime            // Period start
-  dataTo          DateTime            // Period end
-  dataSources     String              // JSON - what data was used
-  
+  dataFrom    DateTime // Period start
+  dataTo      DateTime // Period end
+  dataSources String // JSON - what data was used
+
   // Insights and recommendations
-  insights        String?             // JSON array of key insights
-  recommendations String?             // JSON array of recommendations
-  
-  status          String              @default("generated") // "generated", "reviewed", "published", "archived"
-  
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  publishedAt     DateTime?
-  
-  recipients      String?             // JSON array of who received this
-  
-  createdAt       DateTime            @default(now())
-  
+  insights        String? // JSON array of key insights
+  recommendations String? // JSON array of recommendations
+
+  status String @default("generated") // "generated", "reviewed", "published", "archived"
+
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  publishedAt DateTime?
+
+  recipients String? // JSON array of who received this
+
+  createdAt DateTime @default(now())
+
   @@index([reportType])
   @@index([category])
   @@index([status])
@@ -1377,20 +1392,20 @@ model AIReport {
 
 // AI system configuration and settings
 model AISystemConfig {
-  id              String              @id @default(uuid())
-  
-  key             String              @unique // config key
-  value           String              // config value (JSON)
-  
-  category        String              // "llm", "queue", "monitoring", "workflow", "learning"
-  description     String
-  
-  isEncrypted     Boolean             @default(false)
-  
-  updatedBy       String?
-  updatedAt       DateTime            @updatedAt
-  createdAt       DateTime            @default(now())
-  
+  id String @id @default(uuid())
+
+  key   String @unique // config key
+  value String // config value (JSON)
+
+  category    String // "llm", "queue", "monitoring", "workflow", "learning"
+  description String
+
+  isEncrypted Boolean @default(false)
+
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
   @@index([category])
   @@map("ai_system_config")
 }
@@ -1401,42 +1416,42 @@ model AISystemConfig {
 
 // Pricing plans for SaaS subscription tiers
 model PricingPlan {
-  id                  String              @id @default(uuid())
-  
-  name                String              @unique  // "Free", "Starter", "Pro", "Enterprise"
-  slug                String              @unique  // "free", "starter", "pro", "enterprise"
-  description         String?
-  
+  id String @id @default(uuid())
+
+  name        String  @unique // "Free", "Starter", "Pro", "Enterprise"
+  slug        String  @unique // "free", "starter", "pro", "enterprise"
+  description String?
+
   // Pricing
-  priceMonthly        Decimal             @default(0)
-  priceYearly         Decimal             @default(0)
-  currency            String              @default("USD")
-  
+  priceMonthly Decimal @default(0)
+  priceYearly  Decimal @default(0)
+  currency     String  @default("USD")
+
   // Stripe integration
-  stripePriceIdMonthly  String?           @unique
-  stripePriceIdYearly   String?           @unique
-  stripeProductId       String?           @unique
-  
+  stripePriceIdMonthly String? @unique
+  stripePriceIdYearly  String? @unique
+  stripeProductId      String? @unique
+
   // Limits
-  aiRequestsPerDay    Int                 @default(50)
-  aiRequestsPerMonth  Int                 @default(1500)
-  storageGb           Int                 @default(1)
-  maxTeamMembers      Int                 @default(1)
-  
+  aiRequestsPerDay   Int @default(50)
+  aiRequestsPerMonth Int @default(1500)
+  storageGb          Int @default(1)
+  maxTeamMembers     Int @default(1)
+
   // Feature flags (JSON)
-  features            String              @default("{}") // JSON: {"api_access": true, "priority_support": false}
-  
+  features String @default("{}") // JSON: {"api_access": true, "priority_support": false}
+
   // Meta
-  isActive            Boolean             @default(true)
-  displayOrder        Int                 @default(0)
-  badge               String?             // "POPULAR", "BEST VALUE"
-  
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  
+  isActive     Boolean @default(true)
+  displayOrder Int     @default(0)
+  badge        String? // "POPULAR", "BEST VALUE"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  subscriptions       Subscription[]
-  
+  subscriptions Subscription[]
+
   @@index([isActive])
   @@index([displayOrder])
   @@map("pricing_plans")
@@ -1444,43 +1459,43 @@ model PricingPlan {
 
 // User subscriptions
 model Subscription {
-  id                    String              @id @default(uuid())
-  
-  userId                String
-  planId                String
-  
+  id String @id @default(uuid())
+
+  userId String
+  planId String
+
   // Status
-  status                String              @default("active") // active, cancelled, past_due, paused, trialing
-  
+  status String @default("active") // active, cancelled, past_due, paused, trialing
+
   // Billing period
-  currentPeriodStart    DateTime
-  currentPeriodEnd      DateTime
-  
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+
   // Trial
-  trialStart            DateTime?
-  trialEnd              DateTime?
-  
+  trialStart DateTime?
+  trialEnd   DateTime?
+
   // Stripe
-  stripeSubscriptionId  String?             @unique
-  stripeCustomerId      String?
-  
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+
   // Cancellation
-  cancelAtPeriodEnd     Boolean             @default(false)
-  cancelledAt           DateTime?
-  cancellationReason    String?
-  
+  cancelAtPeriodEnd  Boolean   @default(false)
+  cancelledAt        DateTime?
+  cancellationReason String?
+
   // Metadata
-  metadata              String?             // JSON for custom fields
-  
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  
+  metadata String? // JSON for custom fields
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  user                  users               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan                  PricingPlan         @relation(fields: [planId], references: [id])
-  invoices              Invoice[]
-  usageRecords          UsageRecord[]
-  
+  user         users         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan         PricingPlan   @relation(fields: [planId], references: [id])
+  invoices     Invoice[]
+  usageRecords UsageRecord[]
+
   @@unique([userId, status]) // Only one active subscription per user
   @@index([userId])
   @@index([planId])
@@ -1491,38 +1506,38 @@ model Subscription {
 
 // Invoices for subscription billing
 model Invoice {
-  id                    String              @id @default(uuid())
-  
-  subscriptionId        String
-  userId                String
-  
+  id String @id @default(uuid())
+
+  subscriptionId String
+  userId         String
+
   // Amount
-  amountDue             Decimal
-  amountPaid            Decimal             @default(0)
-  currency              String              @default("USD")
-  
+  amountDue  Decimal
+  amountPaid Decimal @default(0)
+  currency   String  @default("USD")
+
   // Status
-  status                String              @default("draft") // draft, open, paid, void, uncollectible
-  
+  status String @default("draft") // draft, open, paid, void, uncollectible
+
   // Stripe
-  stripeInvoiceId       String?             @unique
+  stripeInvoiceId       String? @unique
   stripePaymentIntentId String?
   hostedInvoiceUrl      String?
   invoicePdfUrl         String?
-  
+
   // Dates
-  dueDate               DateTime?
-  paidAt                DateTime?
-  
+  dueDate DateTime?
+  paidAt  DateTime?
+
   // Line items (JSON)
-  lineItems             String              @default("[]")
-  
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  
+  lineItems String @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  subscription          Subscription        @relation(fields: [subscriptionId], references: [id])
-  
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
   @@index([subscriptionId])
   @@index([userId])
   @@index([status])
@@ -1532,39 +1547,39 @@ model Invoice {
 
 // Usage-based billing records
 model UsageRecord {
-  id                    String              @id @default(uuid())
-  
-  subscriptionId        String
-  userId                String
-  
+  id String @id @default(uuid())
+
+  subscriptionId String
+  userId         String
+
   // Usage metrics
-  resourceType          String              // "ai_request", "storage", "api_call", "agent_execution"
-  quantity              Int                 @default(1)
-  
+  resourceType String // "ai_request", "storage", "api_call", "agent_execution"
+  quantity     Int    @default(1)
+
   // Billing
-  unitPrice             Decimal?
-  totalPrice            Decimal?
-  
+  unitPrice  Decimal?
+  totalPrice Decimal?
+
   // Period
-  periodStart           DateTime
-  periodEnd             DateTime
-  
+  periodStart DateTime
+  periodEnd   DateTime
+
   // Status
-  billed                Boolean             @default(false)
-  billedAt              DateTime?
-  invoiceId             String?
-  
+  billed    Boolean   @default(false)
+  billedAt  DateTime?
+  invoiceId String?
+
   // Stripe
-  stripeUsageRecordId   String?
-  
+  stripeUsageRecordId String?
+
   // Metadata
-  metadata              String?             // JSON: {"model": "gpt-4", "tokens": 1500}
-  
-  createdAt             DateTime            @default(now())
-  
+  metadata String? // JSON: {"model": "gpt-4", "tokens": 1500}
+
+  createdAt DateTime @default(now())
+
   // Relations
-  subscription          Subscription        @relation(fields: [subscriptionId], references: [id])
-  
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
   @@index([subscriptionId])
   @@index([userId])
   @@index([resourceType])
@@ -1575,29 +1590,551 @@ model UsageRecord {
 
 // AI usage tracking for billing and limits
 model AIUsageQuota {
-  id                    String              @id @default(uuid())
-  
-  userId                String              @unique
-  
+  id String @id @default(uuid())
+
+  userId String @unique
+
   // Current period usage
-  aiRequestsToday       Int                 @default(0)
-  aiRequestsThisMonth   Int                 @default(0)
-  
+  aiRequestsToday     Int @default(0)
+  aiRequestsThisMonth Int @default(0)
+
   // Limits (cached from plan)
-  dailyLimit            Int                 @default(50)
-  monthlyLimit          Int                 @default(1500)
-  
+  dailyLimit   Int @default(50)
+  monthlyLimit Int @default(1500)
+
   // Reset tracking
-  lastDailyReset        DateTime            @default(now())
-  lastMonthlyReset      DateTime            @default(now())
-  
+  lastDailyReset   DateTime @default(now())
+  lastMonthlyReset DateTime @default(now())
+
   // Overage
-  overageAllowed        Boolean             @default(false)
-  overageRate           Decimal?            // Price per additional request
-  
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  
+  overageAllowed Boolean  @default(false)
+  overageRate    Decimal? // Price per additional request
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@map("ai_usage_quotas")
+}
+
+// ============================================================================
+// BLOG & CMS SYSTEM
+// ============================================================================
+
+model BlogCategory {
+  id             String         @id @default(uuid())
+  name           String         @unique
+  slug           String         @unique
+  description    String?
+  parentId       String?
+  parent         BlogCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children       BlogCategory[] @relation("CategoryHierarchy")
+  posts          BlogPost[]
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id String @id @default(uuid())
+
+  // Basic fields
+  title           String
+  slug            String  @unique
+  excerpt         String?
+  contentMarkdown String // Markdown source
+  contentHtml     String // Rendered HTML
+
+  // Author & category
+  authorId   String
+  author     users         @relation("BlogAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  categoryId String?
+  category   BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags       String? // Comma-separated tags
+
+  // Publishing workflow
+  status       String    @default("DRAFT") // DRAFT, SCHEDULED, PUBLISHED, ARCHIVED
+  publishedAt  DateTime?
+  scheduledFor DateTime?
+  archivedAt   DateTime?
+
+  // SEO & Analytics
+  seoTitle        String?
+  seoDescription  String?
+  seoKeywords     String? // Comma-separated
+  canonicalUrl    String?
+  structuredData  String? // JSON-LD schema
+  readTimeMinutes Int?
+  viewCount       Int     @default(0)
+
+  // AI Generation tracking
+  aiGenerated Boolean @default(false)
+  aiModel     String? // "gpt-4", "claude-3-sonnet", etc.
+  aiPrompt    String?
+  aiJobId     String?
+
+  // Featured & pinned
+  featured Boolean @default(false)
+  pinned   Boolean @default(false)
+
+  // Relations
+  media       BlogMedia[]
+  comments    BlogComment[]
+  socialPosts SocialMediaPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([featured])
+  @@map("blog_posts")
+}
+
+model BlogMedia {
+  id     String   @id @default(uuid())
+  postId String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  url      String
+  type     String // "image", "video", "file"
+  filename String
+  mimeType String
+  size     Int // bytes
+  width    Int?
+  height   Int?
+  altText  String?
+  caption  String?
+
+  // Storage
+  s3Key  String?
+  cdnUrl String?
+
+  // AI generated
+  aiGenerated Boolean @default(false)
+  aiPrompt    String?
+
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+  @@index([type])
+  @@map("blog_media")
+}
+
+model BlogComment {
+  id     String   @id @default(uuid())
+  postId String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId    String?
+  author      users?  @relation("BlogCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorName  String // For guest comments
+  authorEmail String? // For guest comments
+
+  content  String
+  parentId String?
+  parent   BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  BlogComment[] @relation("CommentReplies")
+
+  status     String    @default("PENDING") // PENDING, APPROVED, SPAM, DELETED
+  approved   Boolean   @default(false)
+  approvedBy String?
+  approvedAt DateTime?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("blog_comments")
+}
+
+// ============================================================================
+// SEO AUTOMATION
+// ============================================================================
+
+model SEOAudit {
+  id     String  @id @default(uuid())
+  postId String?
+  url    String
+
+  // Scores
+  overallScore   Int // 0-100
+  technicalScore Int
+  contentScore   Int
+  mobileFriendly Boolean
+  pageSpeed      Int? // 0-100
+
+  // Issues found
+  missingMetaTags String? // JSON array
+  brokenLinks     String? // JSON array
+  missingAltText  String? // JSON array
+  keywordIssues   String? // JSON array
+
+  // Recommendations
+  suggestions String? // JSON array of fixes
+
+  // Status
+  status       String  @default("PENDING") // PENDING, COMPLETED, FAILED
+  errorMessage String?
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([postId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("seo_audits")
+}
+
+model Sitemap {
+  id String @id @default(uuid())
+
+  urls      String // JSON array of sitemap entries
+  totalUrls Int
+
+  generated   Boolean   @default(false)
+  generatedAt DateTime?
+  submitted   Boolean   @default(false)
+  submittedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("sitemaps")
+}
+
+// ============================================================================
+// SOCIAL MEDIA AUTO-POSTING
+// ============================================================================
+
+model SocialMediaAccount {
+  id     String @id @default(uuid())
+  userId String
+
+  platform    String // "twitter", "linkedin", "facebook", "instagram"
+  accountName String
+  accountId   String // Platform-specific ID
+
+  // OAuth tokens (encrypted in vault)
+  vaultKeyAccess  String // Reference to vault_secrets
+  vaultKeyRefresh String?
+
+  active   Boolean @default(true)
+  verified Boolean @default(false)
+
+  // Metadata
+  profileImageUrl String?
+  followerCount   Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts SocialMediaPost[]
+
+  @@unique([userId, platform, accountId])
+  @@index([userId])
+  @@index([platform])
+  @@map("social_media_accounts")
+}
+
+model SocialMediaPost {
+  id String @id @default(uuid())
+
+  // Source
+  blogPostId String?
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id], onDelete: SetNull)
+
+  // Account
+  accountId String
+  account   SocialMediaAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // Content
+  content   String
+  mediaUrls String? // JSON array
+  hashtags  String? // Comma-separated
+
+  // Scheduling
+  status       String    @default("DRAFT") // DRAFT, SCHEDULED, POSTED, FAILED
+  scheduledFor DateTime?
+  postedAt     DateTime?
+
+  // Platform response
+  platformPostId String? // Twitter tweet ID, LinkedIn post URN, etc.
+  platformUrl    String?
+  errorMessage   String?
+
+  // Analytics
+  likes        Int       @default(0)
+  shares       Int       @default(0)
+  comments     Int       @default(0)
+  clicks       Int       @default(0)
+  impressions  Int       @default(0)
+  lastSyncedAt DateTime?
+
+  // AI generated content
+  aiGenerated Boolean @default(false)
+  aiModel     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId])
+  @@index([blogPostId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([postedAt])
+  @@map("social_media_posts")
+}
+
+// Project Management Models
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  status      String   @default("PLANNING") // PLANNING, ACTIVE, ON_HOLD, COMPLETED, ARCHIVED
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  startDate   DateTime?
+  endDate     DateTime?
+  budget      Float?
+  progress    Int      @default(0) // 0-100
+  visibility  String   @default("PRIVATE") // PRIVATE, TEAM, PUBLIC
+  metadata    String?  // JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       users    @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  tasks       Task[]
+  sprints     Sprint[]
+  boards      KanbanBoard[]
+  members     ProjectMember[]
+  tags        ProjectTag[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([priority])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  role      String   @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER
+  joinedAt  DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      users    @relation("ProjectMembership", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Task {
+  id              String    @id @default(uuid())
+  projectId       String
+  sprintId        String?
+  boardId         String?
+  columnId        String?
+  title           String
+  description     String?
+  status          String    @default("TODO") // TODO, IN_PROGRESS, IN_REVIEW, DONE, BLOCKED
+  priority        String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  assigneeId      String?
+  reporterId      String
+  estimatedHours  Float?
+  actualHours     Float?
+  dueDate         DateTime?
+  completedAt     DateTime?
+  position        Int       @default(0)
+  aiGenerated     Boolean   @default(false)
+  aiSuggestions   String?   // JSON
+  metadata        String?   // JSON
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sprint          Sprint?   @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  board           KanbanBoard? @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  assignee        users?    @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  reporter        users     @relation("TaskReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  dependencies    TaskDependency[] @relation("DependentTask")
+  dependents      TaskDependency[] @relation("BlockingTask")
+  comments        TaskComment[]
+  attachments     TaskAttachment[]
+  timeEntries     TimeEntry[]
+  tags            TaskTag[]
+
+  @@index([projectId])
+  @@index([sprintId])
+  @@index([boardId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+  @@map("tasks")
+}
+
+model TaskDependency {
+  id              String   @id @default(uuid())
+  taskId          String
+  dependsOnTaskId String
+  type            String   @default("BLOCKS") // BLOCKS, RELATED_TO
+  createdAt       DateTime @default(now())
+
+  task            Task     @relation("DependentTask", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnTask   Task     @relation("BlockingTask", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnTaskId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
+  @@map("task_dependencies")
+}
+
+model Sprint {
+  id          String    @id @default(uuid())
+  projectId   String
+  name        String
+  goal        String?
+  startDate   DateTime
+  endDate     DateTime
+  status      String    @default("PLANNED") // PLANNED, ACTIVE, COMPLETED, CANCELLED
+  velocity    Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("sprints")
+}
+
+model KanbanBoard {
+  id          String   @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns     KanbanColumn[]
+  tasks       Task[]
+
+  @@index([projectId])
+  @@map("kanban_boards")
+}
+
+model KanbanColumn {
+  id          String   @id @default(uuid())
+  boardId     String
+  name        String
+  position    Int
+  limit       Int?     // WIP limit
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  board       KanbanBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId])
+  @@map("kanban_columns")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      users    @relation("TaskComments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  filename  String
+  fileUrl   String
+  fileSize  Int
+  mimeType  String
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      users    @relation("TaskAttachments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_attachments")
+}
+
+model TimeEntry {
+  id          String   @id @default(uuid())
+  taskId      String
+  userId      String
+  hours       Float
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        users    @relation("TimeEntries", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([date])
+  @@map("time_entries")
+}
+
+model ProjectTag {
+  id        String   @id @default(uuid())
+  projectId String
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_tags")
+}
+
+model TaskTag {
+  id        String   @id @default(uuid())
+  taskId    String
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_tags")
 }

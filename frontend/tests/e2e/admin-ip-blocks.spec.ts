@@ -17,7 +17,7 @@ async function getDevOtpCode(request: APIRequestContext) {
     return json.code as string;
   }
   throw new Error(
-    "No dev OTP code returned; ensure NODE_ENV=development on backend"
+    "No dev OTP code returned; ensure NODE_ENV=development on backend",
   );
 }
 
@@ -44,7 +44,7 @@ test("Admin can login and view/unblock IP blocks", async ({
 
   // Verify we're on OTP step
   await expect(
-    page.getByRole("heading", { name: /verify otp/i })
+    page.getByRole("heading", { name: /verify otp/i }),
   ).toBeVisible();
 
   // Fetch dev OTP code directly from backend (overwrites any existing OTP)

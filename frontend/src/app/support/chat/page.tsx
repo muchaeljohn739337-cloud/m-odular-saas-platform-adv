@@ -62,7 +62,7 @@ export default function AIChatSupportPage() {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(
-    () => `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    () => `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

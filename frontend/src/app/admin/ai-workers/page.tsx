@@ -66,7 +66,7 @@ export default function AIWorkersPage() {
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
       {
         transports: ["websocket"],
-      }
+      },
     );
 
     newSocket.on("connect", () => {
@@ -76,7 +76,9 @@ export default function AIWorkersPage() {
     newSocket.on("ai-worker:status-change", (data: any) => {
       console.log("Worker status changed:", data);
       setWorkers((prev) =>
-        prev.map((w) => (w.id === data.workerId ? { ...w, ...data.worker } : w))
+        prev.map((w) =>
+          w.id === data.workerId ? { ...w, ...data.worker } : w,
+        ),
       );
     });
 
@@ -102,7 +104,7 @@ export default function AIWorkersPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -128,7 +130,7 @@ export default function AIWorkersPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -153,13 +155,13 @@ export default function AIWorkersPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
         const data = await response.json();
         alert(
-          `TypeScript Fixer Complete\nErrors: ${data.result.totalErrors}\nFixes Applied: ${data.result.fixesApplied}`
+          `TypeScript Fixer Complete\nErrors: ${data.result.totalErrors}\nFixes Applied: ${data.result.fixesApplied}`,
         );
       } else {
         alert("Failed to run TypeScript fixer");
@@ -254,8 +256,8 @@ export default function AIWorkersPage() {
             systemHealth.color === "blue"
               ? "bg-blue-100 border-blue-500"
               : systemHealth.color === "yellow"
-              ? "bg-yellow-100 border-yellow-500"
-              : "bg-red-100 border-red-500"
+                ? "bg-yellow-100 border-yellow-500"
+                : "bg-red-100 border-red-500"
           } border-4`}
         >
           <div className="flex items-center justify-between">
@@ -275,15 +277,15 @@ export default function AIWorkersPage() {
                   systemHealth.color === "blue"
                     ? "bg-blue-500"
                     : systemHealth.color === "yellow"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                      ? "bg-yellow-500"
+                      : "bg-red-500"
                 } flex items-center justify-center text-white text-4xl`}
               >
                 {systemHealth.color === "blue"
                   ? "✓"
                   : systemHealth.color === "yellow"
-                  ? "⚠"
-                  : "✗"}
+                    ? "⚠"
+                    : "✗"}
               </div>
             </div>
           </div>
@@ -372,8 +374,8 @@ export default function AIWorkersPage() {
                   alert.severity === "critical"
                     ? "bg-red-50 border-red-500"
                     : alert.severity === "warning"
-                    ? "bg-yellow-50 border-yellow-500"
-                    : "bg-blue-50 border-blue-500"
+                      ? "bg-yellow-50 border-yellow-500"
+                      : "bg-blue-50 border-blue-500"
                 }`}
               >
                 <div className="flex justify-between items-start">
@@ -382,8 +384,8 @@ export default function AIWorkersPage() {
                       {alert.severity === "critical"
                         ? "🚨"
                         : alert.severity === "warning"
-                        ? "⚠️"
-                        : "ℹ️"}{" "}
+                          ? "⚠️"
+                          : "ℹ️"}{" "}
                       {alert.message}
                     </span>
                   </div>
@@ -406,8 +408,8 @@ export default function AIWorkersPage() {
               worker.health.status === "operational"
                 ? "border-blue-500"
                 : worker.health.status === "degraded"
-                ? "border-yellow-500"
-                : "border-red-500"
+                  ? "border-yellow-500"
+                  : "border-red-500"
             }`}
           >
             {/* Worker Header */}
@@ -430,7 +432,7 @@ export default function AIWorkersPage() {
             <div className="mb-4">
               <span
                 className={`inline-block px-3 py-1 rounded-full text-white text-sm font-semibold ${getStatusColor(
-                  worker.health.status
+                  worker.health.status,
                 )}`}
               >
                 {worker.health.status.toUpperCase()}
@@ -478,8 +480,8 @@ export default function AIWorkersPage() {
                     worker.circuitBreaker.state === "closed"
                       ? "text-green-600"
                       : worker.circuitBreaker.state === "half-open"
-                      ? "text-yellow-600"
-                      : "text-red-600"
+                        ? "text-yellow-600"
+                        : "text-red-600"
                   }`}
                 >
                   {worker.circuitBreaker.state.toUpperCase()}

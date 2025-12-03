@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
           value: `${query}@outlook.com`,
           confidence: 0.7,
           reason: "Popular choice",
-        }
+        },
       );
     } else if (field === "address") {
       suggestions.push(
@@ -37,12 +37,12 @@ export async function POST(request: NextRequest) {
           confidence: 0.75,
           reason: "Common pattern",
         },
-        { value: `${query} Avenue`, confidence: 0.7, reason: "Frequent usage" }
+        { value: `${query} Avenue`, confidence: 0.7, reason: "Frequent usage" },
       );
     } else {
       suggestions.push(
         { value: `${query}123`, confidence: 0.6, reason: "User history" },
-        { value: `${query}_test`, confidence: 0.5, reason: "Common suffix" }
+        { value: `${query}_test`, confidence: 0.5, reason: "Common suffix" },
       );
     }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     console.error("Autocomplete error:", error);
     return NextResponse.json(
       { error: "Failed to generate suggestions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

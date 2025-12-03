@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     if (!termsAccepted) {
       setError(
-        "Please accept the Terms of Service and Privacy Policy to continue."
+        "Please accept the Terms of Service and Privacy Policy to continue.",
       );
       return;
     }

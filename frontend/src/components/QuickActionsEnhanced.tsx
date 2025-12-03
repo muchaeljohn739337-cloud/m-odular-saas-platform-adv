@@ -1,5 +1,6 @@
 "use client";
 
+import { safeRedirect, TRUSTED_REDIRECT_DOMAINS } from "@/utils/security";
 import { useEffect, useState } from "react";
 import SendTransaction from "./SendTransaction";
 
@@ -60,7 +61,11 @@ export default function QuickActions() {
 
       const data = await response.json();
       if (data.url) {
-        window.location.href = data.url;
+        try {
+          safeRedirect(data.url, TRUSTED_REDIRECT_DOMAINS);
+        } catch {
+          alert("Invalid checkout URL received. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Top-up error:", error);

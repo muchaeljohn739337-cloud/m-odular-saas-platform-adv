@@ -43,139 +43,150 @@ export default function AssetsPage() {
   const { data: session } = useSession();
   const sessionUser = session?.user as SessionUser | undefined;
   const [hideBalances, setHideBalances] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "fiat" | "crypto" | "cards" | "medbed">("all");
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "fiat" | "crypto" | "cards" | "medbed"
+  >("all");
 
   // Mock assets data - would come from API in production
-  const assets: Asset[] = useMemo(() => [
-    // Fiat/Cash
-    {
-      id: "fiat-1",
-      category: "fiat",
-      name: "Main Balance",
-      value: 5250.00,
-      currency: "USD",
-      icon: Wallet,
-      color: "from-blue-500 to-cyan-600",
-      change: 12.5,
-    },
-    {
-      id: "fiat-2",
-      category: "fiat",
-      name: "Bonus Earnings",
-      value: 842.50,
-      currency: "USD",
-      icon: DollarSign,
-      color: "from-amber-500 to-yellow-600",
-      change: 8.3,
-    },
-    
-    // Crypto
-    {
-      id: "crypto-1",
-      category: "crypto",
-      name: "Bitcoin",
-      value: 0.15,
-      currency: "BTC",
-      icon: Bitcoin,
-      color: "from-orange-500 to-amber-600",
-      change: 5.2,
-    },
-    {
-      id: "crypto-2",
-      category: "crypto",
-      name: "Ethereum",
-      value: 2.5,
-      currency: "ETH",
-      icon: Coins,
-      color: "from-purple-500 to-indigo-600",
-      change: -2.1,
-    },
-    {
-      id: "crypto-3",
-      category: "crypto",
-      name: "Stellar",
-      value: 15420.50,
-      currency: "XLM",
-      icon: Coins,
-      color: "from-blue-400 to-cyan-500",
-      change: 15.7,
-    },
-    {
-      id: "crypto-4",
-      category: "crypto",
-      name: "Ripple",
-      value: 2850.75,
-      currency: "XRP",
-      icon: Coins,
-      color: "from-gray-600 to-slate-700",
-      change: 3.4,
-    },
-    {
-      id: "crypto-5",
-      category: "crypto",
-      name: "Trump Coin",
-      value: 100000,
-      currency: "TRUMP",
-      icon: Coins,
-      color: "from-red-500 to-orange-600",
-      change: 45.8,
-    },
+  const assets: Asset[] = useMemo(
+    () => [
+      // Fiat/Cash
+      {
+        id: "fiat-1",
+        category: "fiat",
+        name: "Main Balance",
+        value: 5250.0,
+        currency: "USD",
+        icon: Wallet,
+        color: "from-blue-500 to-cyan-600",
+        change: 12.5,
+      },
+      {
+        id: "fiat-2",
+        category: "fiat",
+        name: "Bonus Earnings",
+        value: 842.5,
+        currency: "USD",
+        icon: DollarSign,
+        color: "from-amber-500 to-yellow-600",
+        change: 8.3,
+      },
 
-    // Debit Cards
-    {
-      id: "card-1",
-      category: "cards",
-      name: "Virtual Card",
-      value: 2500.00,
-      currency: "USD",
-      icon: CreditCard,
-      color: "from-green-500 to-emerald-600",
-      status: "Active",
-    },
-    {
-      id: "card-2",
-      category: "cards",
-      name: "Physical Card",
-      value: 1200.00,
-      currency: "USD",
-      icon: CreditCard,
-      color: "from-violet-500 to-purple-600",
-      status: "Active",
-    },
+      // Crypto
+      {
+        id: "crypto-1",
+        category: "crypto",
+        name: "Bitcoin",
+        value: 0.15,
+        currency: "BTC",
+        icon: Bitcoin,
+        color: "from-orange-500 to-amber-600",
+        change: 5.2,
+      },
+      {
+        id: "crypto-2",
+        category: "crypto",
+        name: "Ethereum",
+        value: 2.5,
+        currency: "ETH",
+        icon: Coins,
+        color: "from-purple-500 to-indigo-600",
+        change: -2.1,
+      },
+      {
+        id: "crypto-3",
+        category: "crypto",
+        name: "Stellar",
+        value: 15420.5,
+        currency: "XLM",
+        icon: Coins,
+        color: "from-blue-400 to-cyan-500",
+        change: 15.7,
+      },
+      {
+        id: "crypto-4",
+        category: "crypto",
+        name: "Ripple",
+        value: 2850.75,
+        currency: "XRP",
+        icon: Coins,
+        color: "from-gray-600 to-slate-700",
+        change: 3.4,
+      },
+      {
+        id: "crypto-5",
+        category: "crypto",
+        name: "Trump Coin",
+        value: 100000,
+        currency: "TRUMP",
+        icon: Coins,
+        color: "from-red-500 to-orange-600",
+        change: 45.8,
+      },
 
-    // Med Bed Rewards
-    {
-      id: "medbed-1",
-      category: "medbed",
-      name: "Recovery Rewards",
-      value: 450.00,
-      currency: "USD",
-      icon: Heart,
-      color: "from-pink-500 to-rose-600",
-      status: "Available",
-    },
-    {
-      id: "medbed-2",
-      category: "medbed",
-      name: "Session Credits",
-      value: 3,
-      currency: "Credits",
-      icon: Activity,
-      color: "from-teal-500 to-cyan-600",
-      status: "3 Sessions",
-    },
-  ], []);
+      // Debit Cards
+      {
+        id: "card-1",
+        category: "cards",
+        name: "Virtual Card",
+        value: 2500.0,
+        currency: "USD",
+        icon: CreditCard,
+        color: "from-green-500 to-emerald-600",
+        status: "Active",
+      },
+      {
+        id: "card-2",
+        category: "cards",
+        name: "Physical Card",
+        value: 1200.0,
+        currency: "USD",
+        icon: CreditCard,
+        color: "from-violet-500 to-purple-600",
+        status: "Active",
+      },
+
+      // Med Bed Rewards
+      {
+        id: "medbed-1",
+        category: "medbed",
+        name: "Recovery Rewards",
+        value: 450.0,
+        currency: "USD",
+        icon: Heart,
+        color: "from-pink-500 to-rose-600",
+        status: "Available",
+      },
+      {
+        id: "medbed-2",
+        category: "medbed",
+        name: "Session Credits",
+        value: 3,
+        currency: "Credits",
+        icon: Activity,
+        color: "from-teal-500 to-cyan-600",
+        status: "3 Sessions",
+      },
+    ],
+    [],
+  );
 
   // Calculate totals
   const totals = useMemo(() => {
     const fiatTotal = assets
-      .filter(a => a.category === "fiat" || a.category === "cards" || a.category === "medbed")
-      .filter(a => a.currency === "USD")
+      .filter(
+        (a) =>
+          a.category === "fiat" ||
+          a.category === "cards" ||
+          a.category === "medbed",
+      )
+      .filter((a) => a.currency === "USD")
       .reduce((sum, asset) => sum + asset.value, 0);
 
-    const cryptoCount = assets.filter(a => a.category === "crypto").length;
-    const cardsCount = assets.filter(a => a.category === "cards").length;
-    const medbedRewards = assets.filter(a => a.category === "medbed" && a.currency === "USD")
+    const cryptoCount = assets.filter((a) => a.category === "crypto").length;
+    const cardsCount = assets.filter((a) => a.category === "cards").length;
+    const medbedRewards = assets
+      .filter((a) => a.category === "medbed" && a.currency === "USD")
       .reduce((sum, asset) => sum + asset.value, 0);
 
     return {
@@ -186,9 +197,10 @@ export default function AssetsPage() {
     };
   }, [assets]);
 
-  const filteredAssets = selectedCategory === "all" 
-    ? assets 
-    : assets.filter(a => a.category === selectedCategory);
+  const filteredAssets =
+    selectedCategory === "all"
+      ? assets
+      : assets.filter((a) => a.category === selectedCategory);
 
   const categories = [
     { id: "all" as const, label: "All Assets", icon: PieChart },
@@ -200,7 +212,7 @@ export default function AssetsPage() {
 
   const formatValue = (value: number, currency: string) => {
     if (hideBalances) return "••••••";
-    
+
     if (currency === "USD") {
       return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     } else if (currency === "BTC" || currency === "ETH") {
@@ -223,8 +235,11 @@ export default function AssetsPage() {
                   My Assets
                 </h1>
                 <p className="text-slate-600 mt-2">
-                  Welcome back, {sessionUser?.name || sessionUser?.email?.split('@')[0] || "User"}! 
-                  Here&apos;s your complete portfolio overview.
+                  Welcome back,{" "}
+                  {sessionUser?.name ||
+                    sessionUser?.email?.split("@")[0] ||
+                    "User"}
+                  ! Here&apos;s your complete portfolio overview.
                 </p>
               </div>
               <motion.button
@@ -248,11 +263,16 @@ export default function AssetsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <Wallet size={32} className="opacity-80" />
-                <RefreshCw size={20} className="opacity-60 hover:opacity-100 cursor-pointer" />
+                <RefreshCw
+                  size={20}
+                  className="opacity-60 hover:opacity-100 cursor-pointer"
+                />
               </div>
               <p className="text-sm opacity-90 mb-1">Total Balance</p>
               <p className="text-3xl font-bold">
-                {hideBalances ? "••••••" : `$${totals.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                {hideBalances
+                  ? "••••••"
+                  : `$${totals.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               </p>
               <div className="flex items-center gap-1 mt-2 text-sm">
                 <TrendingUp size={16} />
@@ -268,7 +288,9 @@ export default function AssetsPage() {
             >
               <Bitcoin size={32} className="text-orange-500 mb-4" />
               <p className="text-sm text-slate-600 mb-1">Crypto Assets</p>
-              <p className="text-3xl font-bold text-slate-900">{totals.cryptoAssets}</p>
+              <p className="text-3xl font-bold text-slate-900">
+                {totals.cryptoAssets}
+              </p>
               <p className="text-sm text-slate-500 mt-2">Cryptocurrencies</p>
             </motion.div>
 
@@ -280,7 +302,9 @@ export default function AssetsPage() {
             >
               <CreditCard size={32} className="text-green-500 mb-4" />
               <p className="text-sm text-slate-600 mb-1">Active Cards</p>
-              <p className="text-3xl font-bold text-slate-900">{totals.activeCards}</p>
+              <p className="text-3xl font-bold text-slate-900">
+                {totals.activeCards}
+              </p>
               <p className="text-sm text-slate-500 mt-2">Debit Cards</p>
             </motion.div>
 
@@ -333,12 +357,16 @@ export default function AssetsPage() {
                   className="bg-white rounded-2xl p-6 border-2 border-slate-200 shadow-lg hover:shadow-xl transition-all cursor-pointer"
                 >
                   {/* Asset Icon */}
-                  <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${asset.color} mb-4`}>
+                  <div
+                    className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${asset.color} mb-4`}
+                  >
                     <asset.icon size={28} className="text-white" />
                   </div>
 
                   {/* Asset Name */}
-                  <h3 className="text-lg font-bold text-slate-800 mb-2">{asset.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-800 mb-2">
+                    {asset.name}
+                  </h3>
 
                   {/* Asset Value */}
                   <p className="text-3xl font-bold text-slate-900 mb-3">
@@ -348,10 +376,16 @@ export default function AssetsPage() {
                   {/* Additional Info */}
                   <div className="flex items-center justify-between">
                     {asset.change !== undefined && (
-                      <div className={`flex items-center gap-1 text-sm font-semibold ${
-                        asset.change >= 0 ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {asset.change >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                      <div
+                        className={`flex items-center gap-1 text-sm font-semibold ${
+                          asset.change >= 0 ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {asset.change >= 0 ? (
+                          <TrendingUp size={16} />
+                        ) : (
+                          <TrendingDown size={16} />
+                        )}
                         {Math.abs(asset.change)}%
                       </div>
                     )}
@@ -361,7 +395,9 @@ export default function AssetsPage() {
                       </span>
                     )}
                     {!asset.change && !asset.status && (
-                      <span className="text-sm text-slate-500">{asset.currency}</span>
+                      <span className="text-sm text-slate-500">
+                        {asset.currency}
+                      </span>
                     )}
                     <ArrowUpRight size={20} className="text-slate-400" />
                   </div>

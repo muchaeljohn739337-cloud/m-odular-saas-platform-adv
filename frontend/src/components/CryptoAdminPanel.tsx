@@ -102,7 +102,7 @@ export default function CryptoAdminPanel() {
   const completeOrder = async (
     orderId: string,
     txHash: string,
-    notes: string
+    notes: string,
   ) => {
     try {
       const response = await fetch(
@@ -115,7 +115,7 @@ export default function CryptoAdminPanel() {
             txHash,
             adminNotes: notes,
           }),
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Failed to complete order");
@@ -130,7 +130,7 @@ export default function CryptoAdminPanel() {
   const approveWithdrawal = async (
     withdrawalId: string,
     approved: boolean,
-    notes: string
+    notes: string,
   ) => {
     try {
       const response = await fetch(
@@ -143,7 +143,7 @@ export default function CryptoAdminPanel() {
             adminNotes: notes,
             adminApprovedBy: "admin-id-here", // TODO: Get from session
           }),
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Failed to update withdrawal");

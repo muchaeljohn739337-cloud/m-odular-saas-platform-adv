@@ -64,7 +64,7 @@ export function AIThreatMonitor() {
           </span>
           <span
             className={`px-3 py-1 text-xs font-bold text-white rounded-full ${getThreatColor(
-              threatLevel
+              threatLevel,
             )}`}
           >
             {threatLevel}
@@ -84,7 +84,7 @@ export function AIThreatMonitor() {
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className={`h-2 rounded-full transition-all ${getThreatColor(
-                  threatLevel
+                  threatLevel,
                 )}`}
                 style={{ width: `${sessionRisk.riskScore}%` }}
               />

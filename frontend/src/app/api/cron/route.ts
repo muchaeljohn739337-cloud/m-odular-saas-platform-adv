@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         console.warn(
           "⚠️ Could not reach backend during cron job:",
-          error instanceof Error ? error.message : String(error)
+          error instanceof Error ? error.message : String(error),
         );
       }
     }
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         timestamp: new Date().toISOString(),
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

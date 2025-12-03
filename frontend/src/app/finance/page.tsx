@@ -47,7 +47,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 // Animation Variants
@@ -299,7 +299,7 @@ export default function FinancePage() {
   const shareToSocial = (platform: string) => {
     const shareUrl = encodeURIComponent(window.location.href);
     const shareText = encodeURIComponent(
-      `Check out my finance dashboard at Advancia! Net Cash Flow: $${summary.netCashFlow.toLocaleString()}`
+      `Check out my finance dashboard at Advancia! Net Cash Flow: $${summary.netCashFlow.toLocaleString()}`,
     );
 
     const urls: Record<string, string> = {

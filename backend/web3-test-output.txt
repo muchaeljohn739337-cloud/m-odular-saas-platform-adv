@@ -1,3 +1,0 @@
-Testing Web3 nonce endpoint...
-
-ERROR: 

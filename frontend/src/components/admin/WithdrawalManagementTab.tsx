@@ -149,7 +149,7 @@ const WithdrawalManagementTab = () => {
         },
       },
     ],
-    []
+    [],
   );
 
   const statusOptions = [
@@ -602,7 +602,7 @@ const WithdrawalManagementTab = () => {
                     <p className="text-xs text-gray-600">
                       Member since{" "}
                       {new Date(
-                        selectedRequest.userSpendingHistory.memberSince
+                        selectedRequest.userSpendingHistory.memberSince,
                       ).toLocaleDateString()}
                     </p>
                   </div>
@@ -627,7 +627,7 @@ const WithdrawalManagementTab = () => {
                     <p className="text-sm text-gray-600 mt-1">
                       Requested on{" "}
                       {new Date(
-                        selectedRequest.requestDate
+                        selectedRequest.requestDate,
                       ).toLocaleDateString()}
                     </p>
                   </div>
@@ -641,7 +641,7 @@ const WithdrawalManagementTab = () => {
                   <div className="flex gap-4 mb-3">
                     {getRiskBadge(selectedRequest.aiAnalysis.riskScore)}
                     {getRecommendationBadge(
-                      selectedRequest.aiAnalysis.recommendation
+                      selectedRequest.aiAnalysis.recommendation,
                     )}
                   </div>
                   <p className="text-sm text-gray-600">
@@ -673,7 +673,7 @@ const WithdrawalManagementTab = () => {
                       <p className="font-mono text-gray-900">
                         $
                         {selectedRequest.userSpendingHistory.avgOrderValue.toFixed(
-                          2
+                          2,
                         )}
                       </p>
                     </div>
@@ -681,7 +681,7 @@ const WithdrawalManagementTab = () => {
                       <p className="text-xs text-gray-600">Last Purchase</p>
                       <p className="text-sm text-gray-900">
                         {new Date(
-                          selectedRequest.userSpendingHistory.lastPurchase
+                          selectedRequest.userSpendingHistory.lastPurchase,
                         ).toLocaleDateString()}
                       </p>
                     </div>

@@ -11,6 +11,9 @@
         "ignoreRestSiblings": true
       }
     ],
-    "react/no-unescaped-entities": "warn"
+    "@typescript-eslint/no-require-imports": "off",
+    "import/no-anonymous-default-export": "off",
+    "react/no-unescaped-entities": "warn",
+    "react-hooks/exhaustive-deps": "warn"
   }
 }

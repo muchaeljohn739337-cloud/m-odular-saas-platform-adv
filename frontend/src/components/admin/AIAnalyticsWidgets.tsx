@@ -66,7 +66,7 @@ export function AIRevenueForecast() {
               >
                 {scenario.charAt(0).toUpperCase() + scenario.slice(1)}
               </button>
-            )
+            ),
           )}
         </div>
       </div>

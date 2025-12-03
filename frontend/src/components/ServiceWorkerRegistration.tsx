@@ -6,7 +6,10 @@ export default function ServiceWorkerRegistration() {
   useEffect(() => {
     // Only register service worker in development or when sw.js exists
     // Skip in production until we create a proper service worker
-    if (process.env.NODE_ENV === "development" && "serviceWorker" in navigator) {
+    if (
+      process.env.NODE_ENV === "development" &&
+      "serviceWorker" in navigator
+    ) {
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
@@ -17,7 +20,10 @@ export default function ServiceWorkerRegistration() {
             const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener("statechange", () => {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                if (
+                  newWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
                   // New version available
                   console.log("New service worker version available");
                   // You could show a notification to the user here

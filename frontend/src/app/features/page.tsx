@@ -11,14 +11,31 @@ import { CreditCard, Activity, Shield, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function FeaturesPage() {
-  const [activeTab, setActiveTab] = useState<"cards" | "medbeds" | "crypto">("cards");
+  const [activeTab, setActiveTab] = useState<"cards" | "medbeds" | "crypto">(
+    "cards",
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
   const tabs = [
-    { id: "cards" as const, label: "Debit Cards", icon: CreditCard, color: "from-blue-600 to-purple-600" },
-    { id: "medbeds" as const, label: "Med Beds", icon: Activity, color: "from-purple-600 to-pink-600" },
-    { id: "crypto" as const, label: "Crypto Recovery", icon: Shield, color: "from-green-600 to-emerald-600" },
+    {
+      id: "cards" as const,
+      label: "Debit Cards",
+      icon: CreditCard,
+      color: "from-blue-600 to-purple-600",
+    },
+    {
+      id: "medbeds" as const,
+      label: "Med Beds",
+      icon: Activity,
+      color: "from-purple-600 to-pink-600",
+    },
+    {
+      id: "crypto" as const,
+      label: "Crypto Recovery",
+      icon: Shield,
+      color: "from-green-600 to-emerald-600",
+    },
   ];
 
   // Initial page load
@@ -42,7 +59,9 @@ export default function FeaturesPage() {
 
   // Show loading on initial load
   if (initialLoad) {
-    return <LoadingSpinner size="lg" variant="both" message="Loading Features..." />;
+    return (
+      <LoadingSpinner size="lg" variant="both" message="Loading Features..." />
+    );
   }
 
   return (
@@ -99,7 +118,7 @@ export default function FeaturesPage() {
                   transition={{
                     duration: 1.5,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                 />
                 {/* Spinning Triangle */}
@@ -109,13 +128,13 @@ export default function FeaturesPage() {
                   transition={{
                     duration: 2,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                 >
-                  <div 
+                  <div
                     className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-b-[35px] border-b-indigo-600"
                     style={{
-                      filter: "drop-shadow(0 0 10px rgba(79, 70, 229, 0.5))"
+                      filter: "drop-shadow(0 0 10px rgba(79, 70, 229, 0.5))",
                     }}
                   />
                 </motion.div>
@@ -124,12 +143,12 @@ export default function FeaturesPage() {
                   className="absolute inset-0 m-auto w-3 h-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"
                   animate={{
                     scale: [1, 1.5, 1],
-                    opacity: [1, 0.5, 1]
+                    opacity: [1, 0.5, 1],
                   }}
                   transition={{
                     duration: 1.5,
                     repeat: Infinity,
-                    ease: "easeInOut"
+                    ease: "easeInOut",
                   }}
                 />
               </div>

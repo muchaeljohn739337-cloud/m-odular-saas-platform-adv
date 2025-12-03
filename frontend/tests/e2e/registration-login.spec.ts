@@ -58,7 +58,7 @@ test.describe("Registration Flow", () => {
 
     // Check if validation error appears
     const errorMessage = page.locator(
-      "text=/invalid email|please enter|required/i"
+      "text=/invalid email|please enter|required/i",
     );
     const isErrorVisible = await errorMessage.isVisible().catch(() => false);
 

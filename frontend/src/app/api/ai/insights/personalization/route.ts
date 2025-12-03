@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     console.error("Personalization fetch error:", error);
     return NextResponse.json(
       { error: "Failed to fetch personalization" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest) {
     console.error("Personalization update error:", error);
     return NextResponse.json(
       { error: "Failed to update personalization" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

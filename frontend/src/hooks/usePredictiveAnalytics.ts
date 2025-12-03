@@ -36,7 +36,7 @@ export function usePredictiveAnalytics() {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const forecastRevenue = useCallback(async (days: number = 30) => {
@@ -60,7 +60,7 @@ export function usePredictiveAnalytics() {
     (metric: string): PredictiveAnalysis | undefined => {
       return predictions.get(metric);
     },
-    [predictions]
+    [predictions],
   );
 
   return {

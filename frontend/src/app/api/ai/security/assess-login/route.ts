@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     console.error("Login assessment error:", error);
     return NextResponse.json(
       { error: "Failed to assess login risk" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

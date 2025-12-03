@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import DashboardRouteGuard from "@/components/DashboardRouteGuard";
+import { sanitizeDataUrl, sanitizeTxHash } from "@/utils/security";
 import {
-  Copy,
-  Check,
   AlertCircle,
-  ExternalLink,
-  QrCode,
   ArrowLeft,
+  Check,
+  Copy,
+  ExternalLink,
   Loader2,
+  QrCode,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import DashboardRouteGuard from "@/components/DashboardRouteGuard";
 import QRCode from "qrcode";
+import { useEffect, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
 interface DepositTransaction {
@@ -31,7 +32,9 @@ export default function EthDepositPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [ethPrice, setEthPrice] = useState(0);
-  const [recentDeposits, setRecentDeposits] = useState<DepositTransaction[]>([]);
+  const [recentDeposits, setRecentDeposits] = useState<DepositTransaction[]>(
+    []
+  );
   const [showQR, setShowQR] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const [qrLoading, setQrLoading] = useState(false);
@@ -98,7 +101,7 @@ export default function EthDepositPage() {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId");
 
-       if (!token || !userId) {
+      if (!token || !userId) {
         setUserAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
         setLoading(false);
         toast("Using demo wallet address", { icon: "ℹ️" });
@@ -112,7 +115,9 @@ export default function EthDepositPage() {
       if (response.ok) {
         const data = await response.json();
         // For demo, use a sample address if none exists
-        setUserAddress(data.ethWalletAddress || "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
+        setUserAddress(
+          data.ethWalletAddress || "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+        );
       } else {
         toast.error("Unable to load wallet address");
         setUserAddress("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
@@ -142,7 +147,8 @@ export default function EthDepositPage() {
   const fetchRecentDeposits = async (address: string) => {
     try {
       setDepositLoading(true);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
       const response = await fetch(
         `${API_URL}/api/eth/deposits?address=${encodeURIComponent(address)}`
       );
@@ -289,10 +295,10 @@ export default function EthDepositPage() {
                     <div className="w-48 h-48 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
                       {qrLoading ? (
                         <Loader2 className="w-8 h-8 text-gray-500 dark:text-gray-300 animate-spin" />
-                      ) : qrCodeDataUrl ? (
+                      ) : qrCodeDataUrl && sanitizeDataUrl(qrCodeDataUrl) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={qrCodeDataUrl}
+                          src={sanitizeDataUrl(qrCodeDataUrl) || ""}
                           alt="Deposit QR code"
                           className="w-full h-full object-contain"
                         />
@@ -301,7 +307,9 @@ export default function EthDepositPage() {
                       )}
                     </div>
                     {qrError ? (
-                      <p className="text-sm text-red-500 dark:text-red-400 text-center">{qrError}</p>
+                      <p className="text-sm text-red-500 dark:text-red-400 text-center">
+                        {qrError}
+                      </p>
                     ) : (
                       <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
                         Scan this QR code with your wallet app
@@ -321,9 +329,14 @@ export default function EthDepositPage() {
                       <ul className="space-y-1 text-sm text-yellow-800 dark:text-yellow-300">
                         <li>• Only send Ethereum (ETH) to this address</li>
                         <li>• Minimum deposit: 0.001 ETH</li>
-                        <li>• Deposits require 12 confirmations (~3 minutes)</li>
+                        <li>
+                          • Deposits require 12 confirmations (~3 minutes)
+                        </li>
                         <li>• Do not send tokens (ERC-20) to this address</li>
-                        <li>• Your balance will update automatically after confirmation</li>
+                        <li>
+                          • Your balance will update automatically after
+                          confirmation
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -346,7 +359,9 @@ export default function EthDepositPage() {
                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-3xl">📭</span>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400">No deposits yet</p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      No deposits yet
+                    </p>
                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
                       Send ETH to the address above to get started
                     </p>
@@ -386,9 +401,9 @@ export default function EthDepositPage() {
                             </p>
                           </div>
 
-                          {deposit.txHash ? (
+                          {deposit.txHash && sanitizeTxHash(deposit.txHash) ? (
                             <a
-                              href={`https://etherscan.io/tx/${deposit.txHash}`}
+                              href={`https://etherscan.io/tx/${sanitizeTxHash(deposit.txHash)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
@@ -405,7 +420,9 @@ export default function EthDepositPage() {
 
                         <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                           <p className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">
-                            {deposit.txHash ? `TX: ${deposit.txHash}` : "Awaiting broadcast"}
+                            {deposit.txHash
+                              ? `TX: ${deposit.txHash}`
+                              : "Awaiting broadcast"}
                           </p>
                           {deposit.memo && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -429,31 +446,41 @@ export default function EthDepositPage() {
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Network</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Network
+                    </p>
                     <p className="text-base font-medium text-gray-900 dark:text-white">
                       Ethereum Mainnet
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Minimum Deposit</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Minimum Deposit
+                    </p>
                     <p className="text-base font-medium text-gray-900 dark:text-white">
                       0.001 ETH
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Confirmations</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Confirmations
+                    </p>
                     <p className="text-base font-medium text-gray-900 dark:text-white">
                       12 blocks
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Est. Time</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Est. Time
+                    </p>
                     <p className="text-base font-medium text-gray-900 dark:text-white">
                       ~3 minutes
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Current ETH Price</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Current ETH Price
+                    </p>
                     <p className="text-base font-medium text-gray-900 dark:text-white">
                       ${ethPrice.toLocaleString()}
                     </p>
@@ -467,7 +494,8 @@ export default function EthDepositPage() {
                   Need Help?
                 </h3>
                 <p className="text-sm text-indigo-800 dark:text-indigo-300 mb-4">
-                  Having trouble with deposits? Our support team is here to help.
+                  Having trouble with deposits? Our support team is here to
+                  help.
                 </p>
                 <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium">
                   Contact Support

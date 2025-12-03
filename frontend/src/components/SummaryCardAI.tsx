@@ -85,16 +85,16 @@ export default function SummaryCard({
               } by ${Math.abs(
                 ((prediction.predictedValue - prediction.currentValue) /
                   prediction.currentValue) *
-                  100
-              ).toFixed(1)}%`
+                  100,
+              ).toFixed(1)}%`,
             );
           } else if (prediction.trend === "down") {
             setAIInsight(
               `Trending down ${Math.abs(
                 ((prediction.predictedValue - prediction.currentValue) /
                   prediction.currentValue) *
-                  100
-              ).toFixed(1)}%`
+                  100,
+              ).toFixed(1)}%`,
             );
           }
         }

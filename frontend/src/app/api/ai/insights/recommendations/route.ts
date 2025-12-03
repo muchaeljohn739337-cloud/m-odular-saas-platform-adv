@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
       .filter(
         (r) =>
           context === "general" ||
-          r.category.toLowerCase().includes(context.toLowerCase())
+          r.category.toLowerCase().includes(context.toLowerCase()),
       )
       .slice(0, limit);
 
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     console.error("Recommendations error:", error);
     return NextResponse.json(
       { error: "Failed to get recommendations" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
