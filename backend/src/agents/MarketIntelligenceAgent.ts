@@ -51,7 +51,7 @@ export class MarketIntelligenceAgent extends BaseAgent {
             timestamp: new Date()
           },
           confidence: 0.85,
-          analyzedAt: new Date()
+          analyzed_at: new Date()
         }
       });
       itemsProcessed++;
