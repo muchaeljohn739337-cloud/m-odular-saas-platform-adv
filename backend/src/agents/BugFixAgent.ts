@@ -97,8 +97,8 @@ export class BugFixAgent extends BaseAgent {
                 type: "error",
                 title: "Critical Bug Detected",
                 message: `Error occurred ${pattern.occurrences} times in 20 minutes`,
-                patch_id: patch.patchId,
-                severity: patch.severity,
+                patch_id: patch.id,
+                occurrences: pattern.occurrences,
                 timestamp: new Date(),
               });
             });
