@@ -4,11 +4,12 @@ import { PrismaService } from "../prisma/prisma.service";
 export interface UserProfile {
   id: string;
   email: string;
-  name: string | null;
+  firstName: string | null;
+  lastName: string | null;
   role: string;
-  status: string;
+  active: boolean;
   createdAt: Date;
-  lastLoginAt: Date | null;
+  lastLogin: Date | null;
 }
 
 export interface PaginatedUsers {
@@ -23,35 +24,30 @@ export interface PaginatedUsers {
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private readonly userSelect = {
+    id: true,
+    email: true,
+    firstName: true,
+    lastName: true,
+    role: true,
+    active: true,
+    createdAt: true,
+    lastLogin: true,
+  } as const;
+
   async findById(id: string): Promise<UserProfile | null> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        lastLoginAt: true,
-      },
+      select: this.userSelect,
     });
 
     return user;
   }
 
   async findByEmail(email: string): Promise<UserProfile | null> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        lastLoginAt: true,
-      },
+      select: this.userSelect,
     });
 
     return user;
@@ -61,21 +57,13 @@ export class UserService {
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
-      this.prisma.user.findMany({
+      this.prisma.users.findMany({
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          lastLoginAt: true,
-        },
+        select: this.userSelect,
       }),
-      this.prisma.user.count(),
+      this.prisma.users.count(),
     ]);
 
     return {
@@ -87,63 +75,39 @@ export class UserService {
     };
   }
 
-  async updateProfile(id: string, data: { name?: string }): Promise<UserProfile> {
-    const user = await this.prisma.user.update({
+  async updateProfile(id: string, data: { firstName?: string; lastName?: string }): Promise<UserProfile> {
+    const user = await this.prisma.users.update({
       where: { id },
       data,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        lastLoginAt: true,
-      },
+      select: this.userSelect,
     });
 
     return user;
   }
 
   async approveUser(id: string): Promise<UserProfile> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.users.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    return this.prisma.user.update({
+    return this.prisma.users.update({
       where: { id },
-      data: { status: "ACTIVE" },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        lastLoginAt: true,
-      },
+      data: { active: true },
+      select: this.userSelect,
     });
   }
 
   async suspendUser(id: string): Promise<UserProfile> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.users.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    return this.prisma.user.update({
+    return this.prisma.users.update({
       where: { id },
-      data: { status: "SUSPENDED" },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        lastLoginAt: true,
-      },
+      data: { active: false },
+      select: this.userSelect,
     });
   }
 }

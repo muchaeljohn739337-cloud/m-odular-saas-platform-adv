@@ -15,7 +15,8 @@ export interface AuthResponse {
   user: {
     id: string;
     email: string;
-    name: string | null;
+    firstName: string | null;
+    lastName: string | null;
     role: string;
   };
   accessToken: string;
@@ -31,7 +32,7 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
     // Check if user exists
-    const existingUser = await this.prisma.user.findUnique({
+    const existingUser = await this.prisma.users.findUnique({
       where: { email: dto.email },
     });
 
@@ -39,17 +40,29 @@ export class AuthService {
       throw new ConflictException("Email already registered");
     }
 
+    // Check username
+    const existingUsername = await this.prisma.users.findUnique({
+      where: { username: dto.username || dto.email.split("@")[0] },
+    });
+
+    if (existingUsername) {
+      throw new ConflictException("Username already taken");
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 12);
 
     // Create user
-    const user = await this.prisma.user.create({
+    const user = await this.prisma.users.create({
       data: {
         email: dto.email,
-        password: hashedPassword,
-        name: dto.name,
+        username: dto.username || dto.email.split("@")[0],
+        passwordHash: hashedPassword,
+        firstName: dto.firstName || null,
+        lastName: dto.lastName || null,
         role: "USER",
-        status: "PENDING", // Requires admin approval
+        active: false, // Requires admin approval
+        updatedAt: new Date(),
       },
     });
 
@@ -60,7 +73,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
       },
       accessToken,
@@ -68,7 +82,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResponse> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { email: dto.email },
     });
 
@@ -77,24 +91,25 @@ export class AuthService {
     }
 
     // Check password
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    // Check account status
-    if (user.status === "SUSPENDED") {
+    // Check if account is blocked
+    if (user.blockedAt) {
       throw new UnauthorizedException("Account suspended");
     }
 
-    if (user.status === "PENDING") {
+    // Check if account is active
+    if (!user.active) {
       throw new UnauthorizedException("Account pending approval");
     }
 
     // Update last login
-    await this.prisma.user.update({
+    await this.prisma.users.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+      data: { lastLogin: new Date() },
     });
 
     // Generate token
@@ -104,7 +119,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
       },
       accessToken,
@@ -112,11 +128,11 @@ export class AuthService {
   }
 
   async validateUser(payload: JwtPayload) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id: payload.sub },
     });
 
-    if (!user || user.status !== "ACTIVE") {
+    if (!user || !user.active || user.blockedAt) {
       throw new UnauthorizedException();
     }
 

@@ -10,7 +10,15 @@ export class RegisterDto {
 
   @IsString()
   @IsOptional()
-  name?: string;
+  username?: string;
+
+  @IsString()
+  @IsOptional()
+  firstName?: string;
+
+  @IsString()
+  @IsOptional()
+  lastName?: string;
 }
 
 export class LoginDto {
