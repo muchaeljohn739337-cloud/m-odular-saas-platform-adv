@@ -1,0 +1,57 @@
+# Advancia Pay Ledger - Kubernetes API Service
+# ================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: advancia-api
+  namespace: advancia
+  labels:
+    app: advancia-api
+    tier: backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 4000
+      protocol: TCP
+      name: http
+    - port: 443
+      targetPort: 4000
+      protocol: TCP
+      name: https
+  selector:
+    app: advancia-api
+---
+# LoadBalancer Service for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: advancia-api-lb
+  namespace: advancia
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 443
+      targetPort: 4000
+      protocol: TCP
+      name: https
+  selector:
+    app: advancia-api
+---
+# Headless service for StatefulSet (if needed)
+apiVersion: v1
+kind: Service
+metadata:
+  name: advancia-api-headless
+  namespace: advancia
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 4000
+      name: http
+  selector:
+    app: advancia-api

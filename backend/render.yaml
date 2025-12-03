@@ -1,0 +1,92 @@
+# Advancia Pay Ledger - Render Blueprint
+# ================================================
+# Deploy: https://render.com/deploy
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ================================================
+  # Backend API Service
+  # ================================================
+  - type: web
+    name: advancia-pay-ledger-backend
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: FRONTEND_URL
+        value: https://advanciapayledger.com
+      - key: DATABASE_URL
+        sync: false # Set manually for security
+      - key: JWT_SECRET
+        generateValue: true
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: advancia-redis
+          type: redis
+          property: connectionString
+      - key: SENTRY_DSN
+        sync: false
+    autoDeploy: true
+    branch: main
+    rootDir: backend
+
+  # ================================================
+  # Redis for caching and queues
+  # ================================================
+  - type: redis
+    name: advancia-redis
+    region: oregon
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  # ================================================
+  # Background Worker (optional)
+  # ================================================
+  - type: worker
+    name: advancia-worker
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/workers/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: advancia-redis
+          type: redis
+          property: connectionString
+    autoDeploy: true
+    branch: main
+    rootDir: backend
+
+databases:
+  # ================================================
+  # PostgreSQL Database
+  # ================================================
+  - name: advancia-db
+    databaseName: advancia_production
+    user: advancia
+    region: oregon
+    plan: starter
+    postgresMajorVersion: 15
+    ipAllowList: []
