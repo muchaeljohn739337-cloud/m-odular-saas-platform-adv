@@ -274,10 +274,10 @@ Reply with ONLY a number (e.g., 8)\`;
             },
           });
 
-          this.context.logger.info(`[ProjectPlannerAgent] Estimated ${estimate}h for task: ${task.title}`);
+          this.context.logger.info("[ProjectPlannerAgent] Estimated " + estimate + "h for task: " + task.title);
         }
       } catch (error: any) {
-        this.context.logger.warn(`[ProjectPlannerAgent] Failed to estimate time for task ${task.id}: ${error.message}`);
+        this.context.logger.warn("[ProjectPlannerAgent] Failed to estimate time for task " + task.id + ": " + error.message);
       }
     }
   }
@@ -311,11 +311,11 @@ Reply with ONLY a number (e.g., 8)\`;
     });
 
     if (overdueTasks.length > 0) {
-      this.context.logger.info(`[ProjectPlannerAgent] Found ${overdueTasks.length} overdue tasks`);
+      this.context.logger.info("[ProjectPlannerAgent] Found " + overdueTasks.length + " overdue tasks");
 
       for (const task of overdueTasks) {
         if (this.context.io && task.assignee) {
-          this.context.io.to(`user:${task.assignee.id}`).emit("task:overdue", {
+          this.context.io.to("user:" + task.assignee.id).emit("task:overdue", {
             taskId: task.id,
             title: task.title,
             dueDate: task.dueDate,
@@ -357,22 +357,11 @@ Reply with ONLY a number (e.g., 8)\`;
       if (independentTasks.length >= 2) {
         try {
           // Ask AI to suggest dependencies
-          const taskList = independentTasks.map((t: any) => `- ${t.id}: ${t.title}`).join("\n");
+          const taskList = independentTasks.map((t: any) => "- " + t.id + ": " + t.title).join("\n");\n");
 
-          const prompt = `Analyze these project tasks and suggest which tasks should depend on others (blocking relationships):
-
-${taskList}
-
-Reply with JSON array of dependencies:
-[
-  {
-    "taskId": "uuid-of-dependent-task",
-    "dependsOnTaskId": "uuid-of-blocking-task",
-    "reason": "Brief explanation"
-  }
-]
-
-Only suggest dependencies if there's a clear logical sequence. If no dependencies are needed, return empty array [].`;
+          const prompt = "Analyze these project tasks and suggest which tasks should depend on others (blocking relationships):\n\n" +
+            taskList +
+            "\n\nReply with JSON array of dependencies:\n[\n  {\n    \"taskId\": \"uuid-of-dependent-task\",\n    \"dependsOnTaskId\": \"uuid-of-blocking-task\",\n    \"reason\": \"Brief explanation\"\n  }\n]\n\nOnly suggest dependencies if there's a clear logical sequence. If no dependencies are needed, return empty array [].";
 
           const response = await getOpenAI().chat.completions.create({
             model: "gpt-4",
