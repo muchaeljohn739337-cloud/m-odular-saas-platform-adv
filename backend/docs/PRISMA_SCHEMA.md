@@ -1,6 +1,6 @@
 # Prisma Database Schema Documentation
 
-Generated: 2025-12-03T07:22:37.880Z
+Generated: 2025-12-03T13:08:12.966Z
 
 ## Models
 
@@ -256,6 +256,11 @@ Generated: 2025-12-03T07:22:37.880Z
 | violations | Json? | auto_corrected    Boolean  @default(false) |
 | timestamp | DateTime | @default(now()) |
 | created_at | DateTime | @default(now()) |
+| transaction_id | String? | currency                String? |
+| amount | Float? | risk_level              String? |
+| requires_reporting | Boolean | @default(false) |
+| reporting_threshold_type | String? | details                 String? |
+| ip_address | String? | user_agent              String? |
 
 ### consultation_messages
 
@@ -765,7 +770,12 @@ Generated: 2025-12-03T07:22:37.880Z
 | blockedAt | DateTime? | blockedReason      String? |
 | blockedBy | String? | // Admin user ID who blocked |
 | deletedAt | DateTime? | deletedBy          String? // Admin user ID who deleted |
-| RPAWorkflow | RPAWorkflow | [] |
+| preferredCurrency | String? | @default("USD") |
+| country | String? | detectedCurrency   String? |
+| kycVerified | Boolean | @default(false) |
+| kycLevel | String? | @default("none") |
+| annualTransactionVolume | Decimal? | @default(0) |
+| lastTransactionDate | DateTime? | RPAWorkflow        RPAWorkflow[] |
 | ai_generations | ai_generations | [] |
 | ai_usage_metrics | ai_usage_metrics | [] |
 | crypto_withdrawals | crypto_withdrawals | [] |
@@ -1351,4 +1361,68 @@ Generated: 2025-12-03T07:22:37.880Z
 | taskId | String | name      String |
 | color | String? | createdAt DateTime @default(now()) |
 | task | Task | @relation(fields: [taskId], references: [id], onDelete: Cascade) |
+
+### currency_rates
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id |
+| fromCurrency | String | @map("from_currency") |
+| toCurrency | String | @map("to_currency") |
+| rate | Float | lastUpdated  DateTime @default(now()) @map("last_updated") |
+| source | String | @default("manual") |
+
+### user_balances
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id |
+| userId | String | @map("user_id") |
+| currency | String | balance       Float    @default(0.0) |
+| lockedBalance | Float | @default(0.0) @map("locked_balance") |
+| lastUpdated | DateTime | @default(now()) @map("last_updated") |
+| createdAt | DateTime | @default(now()) @map("created_at") |
+
+### currency_conversions
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id |
+| userId | String | @map("user_id") |
+| fromCurrency | String | @map("from_currency") |
+| toCurrency | String | @map("to_currency") |
+| fromAmount | Float | @map("from_amount") |
+| toAmount | Float | @map("to_amount") |
+| exchangeRate | Float | @map("exchange_rate") |
+| fee | Float | @default(0.0) |
+| status | String | @default("completed") |
+| createdAt | DateTime | @default(now()) @map("created_at") |
+
+### crypto_purchases
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id |
+| userId | String | @map("user_id") |
+| cryptoType | String | @map("crypto_type") |
+| amount | Float | currency                String |
+| fiatAmount | Float | @map("fiat_amount") |
+| exchangeRate | Float | @map("exchange_rate") |
+| status | String | @default("pending_compliance") |
+| complianceCheckPassed | Boolean | @default(false) @map("compliance_check_passed") |
+| requiresKyc | Boolean | @default(false) @map("requires_kyc") |
+| requiresManualApproval | Boolean | @default(false) @map("requires_manual_approval") |
+| riskLevel | String | @default("LOW") @map("risk_level") |
+| wireReference | String? | @map("wire_reference") |
+| wireVerified | Boolean | @default(false) @map("wire_verified") |
+| wireVerifiedAt | DateTime? | @map("wire_verified_at") |
+| wireVerifiedBy | String? | @map("wire_verified_by") |
+| adminApproved | Boolean | @default(false) @map("admin_approved") |
+| adminApprovedAt | DateTime? | @map("admin_approved_at") |
+| adminApprovedBy | String? | @map("admin_approved_by") |
+| completedAt | DateTime? | @map("completed_at") |
+| failureReason | String? | @map("failure_reason") |
+| complianceNotes | String? | @map("compliance_notes") |
+| createdAt | DateTime | @default(now()) @map("created_at") |
+| updatedAt | DateTime | @default(now()) @map("updated_at") |
 

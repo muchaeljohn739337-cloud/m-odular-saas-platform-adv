@@ -6,7 +6,9 @@ import jwt from "jsonwebtoken";
 import { Server as SocketIOServer } from "socket.io";
 import agentRoutes from "./agents/routes";
 import { getAgentScheduler } from "./agents/scheduler";
+import { aiCore } from "./ai-core";
 import { autoRemember } from "./ai/autoRemember";
+import { copilotService } from "./ai/copilot/CopilotService";
 import { initializeMultiBrainAgent, multiBrainAgent } from "./ai/prisma/multiBrainAgent";
 import { initializePrismaSolver } from "./ai/prisma/prismaSolverCore";
 import { recordCleanupAI } from "./ai/recordCleanupAI";
@@ -15,6 +17,8 @@ import app from "./app";
 import { config } from "./config";
 import { activityLogger } from "./middleware/activityLogger";
 import { cloudflareMiddleware } from "./middleware/cloudflare";
+import { detectCurrency } from "./middleware/currencyDetection";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { applySecurityMiddleware, forceHTTPS } from "./middleware/httpsEnforcement";
 import { initializeIPTables, ipFilterMiddleware } from "./middleware/ipFilter";
 import { checkIPRoute, ipWhitelistMiddleware } from "./middleware/ipWhitelist";
@@ -31,27 +35,18 @@ import adminAIRouter from "./routes/adminAI";
 import adminDoctorsRouter from "./routes/adminDoctors";
 import adminSecurityRouter from "./routes/adminSecurity";
 import adminSecurityManagementRouter from "./routes/adminSecurityManagement";
+import aiGeneratorRouter, { setAIGeneratorSocketIO } from "./routes/ai-generator";
+import aiWorkflowsRouter from "./routes/ai-workflows";
 import aiAnalyticsRouter from "./routes/aiAnalytics";
 import aiSolverRouter from "./routes/aiSolver";
 import aiTrainingRouter from "./routes/aiTraining";
+import aiWorkersRouter, { setAIWorkersSocketIO } from "./routes/aiWorkers";
 import analyticsRouter from "./routes/analytics";
 import authRouter from "./routes/auth";
 import authAdminRouter, { activeSessions, setBroadcastSessions as setAuthBroadcast } from "./routes/authAdmin";
+import blogRouter from "./routes/blog";
 import botCheckRouter from "./routes/botCheck";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
-import momAIRouter from "./routes/mom-ai";
-import securityAdminRouter from "./routes/security-admin";
-import siemRouter from "./routes/siem";
-import web3AuthRouter from "./routes/web3-auth";
-import { activateShield, initializeShield } from "./security/comprehensive-shield";
-import { sandboxRunner } from "./services/SandboxRunner";
-// AI system imports for initialization
-import { aiCore } from "./ai-core";
-import { copilotService } from "./ai/copilot/CopilotService";
-import aiGeneratorRouter, { setAIGeneratorSocketIO } from "./routes/ai-generator";
-import aiWorkflowsRouter from "./routes/ai-workflows";
-import aiWorkersRouter, { setAIWorkersSocketIO } from "./routes/aiWorkers";
-import blogRouter from "./routes/blog";
 import consultationRouter from "./routes/consultation";
 import copilotRouter, { setCopilotSocketIO } from "./routes/copilot";
 import cryptoRouter, { setCryptoSocketIO } from "./routes/crypto";
@@ -68,15 +63,19 @@ import ipBlocksRouter from "./routes/ipBlocks";
 import jobsRouter from "./routes/jobs";
 import markdownFixerRouter from "./routes/markdownFixer";
 import marketingRouter from "./routes/marketing";
-import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds";
+import medbedsRouter, { setMedbedsSocketIO } from "./routes/medbeds-readonly";
+import momAIRouter from "./routes/mom-ai";
 import oalRouter, { setOALSocketIO } from "./routes/oal";
 import paymentsRouter, { handleStripeWebhook, setPaymentsSocketIO } from "./routes/payments";
 import projectRouter from "./routes/project";
 import rewardsRouter, { setRewardSocketIO } from "./routes/rewards";
 import rpaRouter, { setRPASocketIO } from "./routes/rpa";
+import sandboxRouter from "./routes/sandbox";
+import securityAdminRouter from "./routes/security-admin";
 import securityLevelRouter from "./routes/securityLevel";
 import seoRouter from "./routes/seo";
 import sessionsRouter, { setBroadcastSessions as setSessionsBroadcast } from "./routes/sessions";
+import siemRouter from "./routes/siem";
 import socialMediaRouter from "./routes/socialMedia";
 import subscribersRouter from "./routes/subscribers";
 import supportRouter, { setSupportSocketIO } from "./routes/support";
@@ -85,8 +84,11 @@ import tokensRouter, { setTokenSocketIO } from "./routes/tokens";
 import transactionsRouter, { setTransactionSocketIO } from "./routes/transactions";
 import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
 import vaultRouter, { setVaultSocketIO } from "./routes/vault";
+import web3AuthRouter from "./routes/web3-auth";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
+import { activateShield, initializeShield } from "./security/comprehensive-shield";
 import { setSocketIO as setNotificationSocket } from "./services/notificationService";
+import { sandboxRunner } from "./services/SandboxRunner";
 import { initSentry } from "./utils/sentry";
 // Load environment variables
 dotenv.config();
@@ -135,6 +137,7 @@ app.post("/api/payments/webhook", express.raw({ type: "application/json" }), han
 app.use(express.json());
 app.use(validateInput);
 app.use(activityLogger);
+app.use(detectCurrency); // Detect user's currency from IP for multi-currency support
 
 // 🛡️ SHIELD SECURITY SYSTEM - Multi-Layer Defense (MOM AI + DAD Admin Control)
 app.use(activateShield());
@@ -175,6 +178,7 @@ Allow: /api/health
 // Regular routes
 app.use("/api/payments", paymentsRouter);
 app.use("/api/crypto", cryptoRouter);
+app.use("/api/currency", require("./routes/currency").default); // Multi-Currency & Bank-Compliant Crypto Purchases
 app.use("/api/debit-card", debitCardRouter);
 app.use("/api/medbeds", medbedsRouter);
 app.use("/api/support", supportRouter);
@@ -318,9 +322,8 @@ recordCleanupAI.scheduleAutomaticCleanup();
 // Initialize agent scheduler
 const agentScheduler = getAgentScheduler(prisma);
 agentScheduler.initialize();
-agentScheduler.setSocketIO(io);
 
-import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { momAICore } from "./ai/mom-core";
 
 // Wire up session broadcasting
 setAuthBroadcast(broadcastSessions);
@@ -459,9 +462,7 @@ initializeShield().catch(console.error);
 sandboxRunner.initialize().catch((error) => {
   console.warn("⚠️  Sandbox Runner initialization failed (Docker may not be available):", error.message);
 });
-
 // Initialize Mom AI Core
-import { momAICore } from "./ai/mom-core";
 momAICore.initialize().catch(console.error);
 
 // Initialize Prisma AI Solver and Multi-Brain Agent
