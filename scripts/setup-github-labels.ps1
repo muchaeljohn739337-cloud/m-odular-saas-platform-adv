@@ -1,7 +1,7 @@
 # GitHub Label Setup for Advancia Platform
 # Creates standardized labels for better issue and PR organization
 param(
-  [string]$repo = "pdtribe181-prog/-modular-saas-platform"
+  [string]$repo = "muchaeljohn739337-cloud/-modular-saas-platform"
 )
 
 Write-Host "🏷️  GitHub Label Setup for Advancia Pay Ledger`n" -ForegroundColor Cyan

@@ -51,7 +51,7 @@
 ## 🚀 How to Use
 
 ### View Workflows:
-Visit: https://github.com/pdtribe181-prog/modular-saas-platform/actions
+Visit: https://github.com/muchaeljohn739337-cloud/modular-saas-platform/actions
 
 ### Trigger a Workflow:
 ```bash
@@ -94,7 +94,7 @@ Edit `.github/workflows/deploy.yml` and replace the deployment section:
 
 ### Add More Secrets:
 
-1. Go to: https://github.com/pdtribe181-prog/modular-saas-platform/settings/secrets/actions
+1. Go to: https://github.com/muchaeljohn739337-cloud/modular-saas-platform/settings/secrets/actions
 2. Click "New repository secret"
 3. Add name and value
 4. Update workflow to use it: `${{ secrets.YOUR_SECRET }}`
@@ -106,8 +106,8 @@ Edit `.github/workflows/deploy.yml` and replace the deployment section:
 Add to your README.md:
 
 ```markdown
-![Deploy](https://github.com/pdtribe181-prog/modular-saas-platform/workflows/Deploy%20Advancia%20Pay%20Ledger/badge.svg)
-![CI](https://github.com/pdtribe181-prog/modular-saas-platform/workflows/CI%20-%20Test%20%26%20Build/badge.svg)
+![Deploy](https://github.com/muchaeljohn739337-cloud/modular-saas-platform/workflows/Deploy%20Advancia%20Pay%20Ledger/badge.svg)
+![CI](https://github.com/muchaeljohn739337-cloud/modular-saas-platform/workflows/CI%20-%20Test%20%26%20Build/badge.svg)
 ```
 
 ---
@@ -183,7 +183,7 @@ npm run lint
 ### Common Issues:
 
 **Missing Secrets:**
-- Add them at: https://github.com/pdtribe181-prog/modular-saas-platform/settings/secrets/actions
+- Add them at: https://github.com/muchaeljohn739337-cloud/modular-saas-platform/settings/secrets/actions
 
 **Test Failures:**
 - Check if tests pass locally first
@@ -205,4 +205,4 @@ npm run lint
 
 **Created:** October 15, 2025  
 **Project:** Advancia Pay Ledger - Modular SaaS Platform  
-**Repository:** https://github.com/pdtribe181-prog/modular-saas-platform
+**Repository:** https://github.com/muchaeljohn739337-cloud/modular-saas-platform

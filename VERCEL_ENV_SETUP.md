@@ -207,7 +207,7 @@ Your deployment is successful when:
 - [Vercel Dashboard](https://vercel.com/dashboard)
 - [Render Dashboard](https://dashboard.render.com)
 - [Cloudflare Pages Dashboard](https://dash.cloudflare.com)
-- [GitHub Repository](https://github.com/pdtribe181-prog/-modular-saas-platform)
+- [GitHub Repository](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform)
 
 ---
 

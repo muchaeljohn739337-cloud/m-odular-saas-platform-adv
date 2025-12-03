@@ -35,7 +35,7 @@ CLOUDFLARE_API_TOKEN=your-token-here
 
 Add as a repository secret:
 
-1. Go to: https://github.com/pdtribe181-prog/-modular-saas-platform/settings/secrets/actions
+1. Go to: https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/settings/secrets/actions
 2. Click "New repository secret"
 3. Add:
 
@@ -171,7 +171,7 @@ npx wrangler deploy
 # Total Upload: XX.XX KiB / gzip: XX.XX KiB
 # Uploaded advanciafrontend (X.XX sec)
 # Published advanciafrontend (X.XX sec)
-#   https://advanciafrontend.pdtribe181.workers.dev
+#   https://advanciafrontend.mucha.workers.dev
 # Current Deployment ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
 
@@ -179,7 +179,7 @@ npx wrangler deploy
 
 ```powershell
 # Test Workers.dev URL
-curl https://advanciafrontend.pdtribe181.workers.dev
+curl https://advanciafrontend.mucha.workers.dev
 
 # Should return HTML from Next.js homepage
 ```

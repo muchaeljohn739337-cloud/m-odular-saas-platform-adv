@@ -111,7 +111,7 @@ function New-RenderService {
     $body = @{
         "type" = "web_service"
         "name" = "advancia-frontend"
-        "repo" = "https://github.com/pdtribe181-prog/-modular-saas-platform"
+        "repo" = "https://github.com/muchaeljohn739337-cloud/-modular-saas-platform"
         "branch" = "main"
         "rootDir" = "frontend"
         "env" = "node"

@@ -6,7 +6,7 @@
 
 ### Copy & Paste This:
 ```
-https://github.com/pdtribe181-prog/-modular-saas-platform.git
+https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 ```
 
 **Important:** Notice the hyphen `-` at the start!
@@ -79,7 +79,7 @@ C:\Users\mucha.DESKTOP-H7T9NPM\
 
 **URL:**
 ```
-https://github.com/pdtribe181-prog/-modular-saas-platform.git
+https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 ```
 
 **Location:**

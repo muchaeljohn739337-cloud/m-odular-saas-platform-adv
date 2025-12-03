@@ -4,7 +4,7 @@
 
 Deploy both frontend (Next.js) and backend (Node/Prisma) to Render with a single click:
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pdtribe181-prog/-modular-saas-platform)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/muchaeljohn739337-cloud/-modular-saas-platform)
 
 ### What Gets Deployed
 
@@ -43,7 +43,7 @@ The `render.yaml` blueprint automatically creates:
 ```bash
 # Fork the repository on GitHub
 # Or clone and push to your own repo
-git clone https://github.com/pdtribe181-prog/-modular-saas-platform.git
+git clone https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 cd -modular-saas-platform
 ```
 
@@ -384,7 +384,7 @@ const prisma = new PrismaClient({
 
 - **Documentation**: This file
 - **Render Docs**: [render.com/docs](https://render.com/docs)
-- **GitHub Issues**: [Report bugs](https://github.com/pdtribe181-prog/-modular-saas-platform/issues)
+- **GitHub Issues**: [Report bugs](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/issues)
 - **Community**: [Render Community](https://community.render.com)
 
 ---

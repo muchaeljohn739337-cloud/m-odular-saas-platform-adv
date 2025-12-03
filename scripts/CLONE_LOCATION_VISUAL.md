@@ -80,7 +80,7 @@ C:\Users\mucha.DESKTOP-H7T9NPM\
 ├──────────────────────────────────────────────┤
 │ URL                                          │
 │ ┌────────────────────────────────────────┐  │
-│ │ https://github.com/pdtribe181-prog/   │  │
+│ │ https://github.com/muchaeljohn739337-cloud/   │  │
 │ │ -modular-saas-platform.git             │  │
 │ └────────────────────────────────────────┘  │
 │                                              │
@@ -111,7 +111,7 @@ Menu:
 
 ### Step 3: Paste URL
 ```
-URL: https://github.com/pdtribe181-prog/-modular-saas-platform.git
+URL: https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 ```
 
 ### Step 4: Choose Location (IMPORTANT!)
@@ -208,7 +208,7 @@ C:\Users\mucha.DESKTOP-H7T9NPM\Documents\Projects\
 ### In GitHub Desktop:
 ```
 1. File → Clone Repository
-2. URL: https://github.com/pdtribe181-prog/-modular-saas-platform.git
+2. URL: https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 3. Path: C:\Users\mucha.DESKTOP-H7T9NPM\  ← THIS IS THE KEY!
 4. Click Clone
 5. Wait 2-5 minutes
@@ -236,7 +236,7 @@ C:\Users\mucha.DESKTOP-H7T9NPM\-modular-saas-platform\
    (or the clone inside app-3.5.3 folder)
 
 2. Clone again with correct path:
-   URL: https://github.com/pdtribe181-prog/-modular-saas-platform.git
+   URL: https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
    Path: C:\Users\mucha.DESKTOP-H7T9NPM\
 
 3. Verify in Windows Explorer:
@@ -250,7 +250,7 @@ C:\Users\mucha.DESKTOP-H7T9NPM\-modular-saas-platform\
 
 **The URL stays the same:**
 ```
-https://github.com/pdtribe181-prog/-modular-saas-platform.git
+https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 ```
 
 **Just pick the RIGHT location:**

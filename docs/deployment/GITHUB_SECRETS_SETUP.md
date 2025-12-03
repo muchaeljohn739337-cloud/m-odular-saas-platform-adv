@@ -8,7 +8,7 @@
 
 ## 📋 How to Add Secrets to GitHub
 
-1. Go to: `https://github.com/pdtribe181-prog/-modular-saas-platform`
+1. Go to: `https://github.com/muchaeljohn739337-cloud/-modular-saas-platform`
 2. Click: **Settings** → **Secrets and variables** → **Actions**
 3. Click: **New repository secret** for each variable below
 4. Or add to **Render Dashboard** → **Environment** tab
