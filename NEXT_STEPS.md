@@ -76,7 +76,7 @@ az webapp deployment source config-local-git --name AdvanciaCoreApp --resource-g
 
 # Option B: Connect to GitHub
 az webapp deployment source config --name AdvanciaCoreApp --resource-group AdvanciaRG `
-  --repo-url https://github.com/pdtribe181-prog/-modular-saas-platform `
+  --repo-url https://github.com/muchaeljohn739337-cloud/-modular-saas-platform `
   --branch main --manual-integration
 ```
 

@@ -4,7 +4,7 @@ This guide shows you how to configure GitHub Secrets for automated CI/CD deploym
 
 ## 📋 Prerequisites
 
-- GitHub repository: `pdtribe181-prog/-modular-saas-platform`
+- GitHub repository: `muchaeljohn739337-cloud/-modular-saas-platform`
 - Render account with frontend and backend services deployed
 - Admin access to your GitHub repository
 
@@ -38,7 +38,7 @@ This guide shows you how to configure GitHub Secrets for automated CI/CD deploym
 
 ### Step 2: Add Secrets to GitHub
 
-1. Go to your GitHub repository: https://github.com/pdtribe181-prog/-modular-saas-platform
+1. Go to your GitHub repository: https://github.com/muchaeljohn739337-cloud/-modular-saas-platform
 2. Click **Settings** tab (top menu)
 3. Click **Secrets and variables** → **Actions** (left sidebar)
 4. Click **New repository secret** button

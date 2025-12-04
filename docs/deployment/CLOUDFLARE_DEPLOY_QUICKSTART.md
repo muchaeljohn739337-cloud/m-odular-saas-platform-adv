@@ -13,7 +13,7 @@
 
 ### Step 1: Add API Token to GitHub Secrets
 
-1. Go to: https://github.com/pdtribe181-prog/-modular-saas-platform/settings/secrets/actions
+1. Go to: https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/settings/secrets/actions
 2. Click "**New repository secret**"
 3. Add these secrets:
 
@@ -60,7 +60,7 @@ GitHub Actions will automatically:
 
 1. Build the frontend with `CF_PAGES=true`
 2. Deploy to Cloudflare Workers
-3. Make it live at: https://advanciafrontend.pdtribe181.workers.dev
+3. Make it live at: https://advanciafrontend.mucha.workers.dev
 
 ---
 
@@ -68,7 +68,7 @@ GitHub Actions will automatically:
 
 ### Check Build Status
 
-1. Go to: https://github.com/pdtribe181-prog/-modular-saas-platform/actions
+1. Go to: https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/actions
 2. Look for "Deploy Frontend to Cloudflare Workers" workflow
 3. Click to see logs
 
@@ -76,7 +76,7 @@ GitHub Actions will automatically:
 
 ```powershell
 # Test Workers URL
-curl https://advanciafrontend.pdtribe181.workers.dev
+curl https://advanciafrontend.mucha.workers.dev
 
 # Should return Next.js HTML
 ```
@@ -102,7 +102,7 @@ npx wrangler deploy
 
 # Output will show:
 # ✅ Published advanciafrontend
-# https://advanciafrontend.pdtribe181.workers.dev
+# https://advanciafrontend.mucha.workers.dev
 ```
 
 ---
@@ -199,7 +199,7 @@ npx wrangler deployments list
 - [ ] Committed wrangler.toml and workflow file
 - [ ] Pushed to main branch
 - [ ] GitHub Actions workflow succeeded
-- [ ] Site accessible at: https://advanciafrontend.pdtribe181.workers.dev
+- [ ] Site accessible at: https://advanciafrontend.mucha.workers.dev
 - [ ] DNS propagation complete (check with whatsmydns.net)
 - [ ] Custom domain added: advanciapayledger.com
 - [ ] SSL/TLS configured (Full strict mode)

@@ -3,12 +3,38 @@
 Purpose: give AI coding agents the minimum, specific context to be productive in this repo without guesswork.
 
 ### Architecture and boundaries
-- Backend: Node.js + Express + TypeScript, Prisma ORM, Socket.IO. Entry: `backend/src/index.ts`.
-- Frontend: Next.js 14 (App Router) in `frontend/` consuming `/api/**` from backend.
-- Database: PostgreSQL via Prisma with many models (see `backend/prisma/schema.prisma`). Use `backend/src/prismaClient.ts` to import a singleton PrismaClient.
-- Realtime: Socket.IO on the same HTTP server. Clients join per-user rooms: `join-room` → room `user-${userId}`. Server emits domain-specific events (transactions, notifications).
-- Notifications: web push + email + socket broadcast in `backend/src/services/notificationService.ts`. Socket instance is injected via `setSocketIO(io)` from `index.ts`.
-- Config/CORS: `backend/src/config/index.ts` computes `allowedOrigins` and other runtime config. CORS uses this list; add new origins there.
+- **Backend**: Node.js + Express + TypeScript, Prisma ORM, Socket.IO. Entry: `backend/src/index.ts`.
+- **Frontend**: Next.js 14 (App Router) in `frontend/` consuming `/api/**` from backend.
+- **Database**: PostgreSQL via Prisma with many models (see `backend/prisma/schema.prisma`). Use `backend/src/prismaClient.ts` to import a singleton PrismaClient.
+- **Realtime**: Socket.IO on the same HTTP server. Clients join per-user rooms: `join-room` → room `user-${userId}`. Server emits domain-specific events (transactions, notifications).
+- **Notifications**: web push + email + socket broadcast in `backend/src/services/notificationService.ts`. Socket instance is injected via `setSocketIO(io)` from `index.ts`.
+- **Config/CORS**: `backend/src/config/index.ts` computes `allowedOrigins` and other runtime config. CORS uses this list; add new origins there.
+
+### Mom-Shield-Dad Architecture (Critical)
+This platform implements autonomous AI security + incident response via 5 core systems working together:
+
+1. **Mom AI Core** (`backend/src/ai/mom-core/`) - Autonomous incident handling with 4 specialized agents:
+   - `analyzer.ts`: Root cause analysis, pattern matching (~300 lines)
+   - `problem-solver.ts`: Generate fix proposals (~350 lines)
+   - `decision.ts`: Risk evaluation, approval routing (~400 lines)
+   - `learner.ts`: Track outcomes, improve over time (~300 lines)
+   - Workflow: Analyze → Solve → Decide → Learn. API: `POST /api/mom/handle-incident`
+
+2. **SHIELD** (`backend/src/security/comprehensive-shield.ts`) - 8-layer security middleware:
+   - Rate limiting, IP blacklist, API key validation, SQL/XSS detection, content moderation
+   - All `/api/**` routes protected. Activated via `activateShield()` in `index.ts`
+
+3. **SIEM** (`backend/src/services/SIEMIntegration.ts`) - Threat correlation with 5 rules:
+   - Brute force, suspicious withdrawals, API key compromise, DDoS, coordinated attacks
+   - Creates incidents, multi-channel alerts (Slack, Email, PagerDuty). API: `/api/siem`
+
+4. **Sandbox Runner** (`backend/src/services/SandboxRunner.ts`) - Docker isolation:
+   - Executes untrusted code in isolated containers (no network, read-only, limits)
+   - Requires Docker daemon. API: `POST /api/sandbox/execute`
+
+5. **Dad Admin Console** (`backend/src/routes/dad-console.ts`) - Human oversight:
+   - Approval workflows (RBAC-based), emergency kill-switch, rollback capabilities
+   - IP-whitelisted. API: `/api/dad/*` (requires admin role)
 
 ### Key runtime behaviors and cross-cutting concerns
 - Rate limiting applies to all `/api/**` (see `rateLimit` middleware in `backend/src/index.ts`).
@@ -40,8 +66,15 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
   - Password login with bcrypt hashing
   - TOTP 2FA (Time-based One-Time Password)
   - Required env vars: `EMAIL_USER`, `EMAIL_PASSWORD`, `SMTP_HOST` (smtp.gmail.com), `SMTP_PORT` (587)
-- Stripe payments webhook in `routes/payments.ts`: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
-- Ethereum gateway endpoints in `routes/ethereum.ts` (ethers v5 on backend; ethers v6 in frontend).
+- **Stripe** payments webhook in `routes/payments.ts`: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
+- **Ethereum** gateway endpoints in `routes/ethereum.ts` (ethers v5 on backend; ethers v6 in frontend).
+- **Unified AI Gateway** (`backend/src/services/UnifiedAIGateway.ts`) - 7 AI providers from one interface:
+  - OpenAI (GPT-4o, GPT-4o-mini), Anthropic (Claude 3.5), DeepSeek, Gemini (FREE), Ollama (local/free), Cohere, Cloudflare AI Workers (FREE)
+  - Auto-failover, cost optimization, response caching. API: `POST /api/ai-gateway/chat`
+- **Cloudflare Services**:
+  - R2 Storage (`backend/src/services/r2Storage.ts`): Zero-egress file storage. API: `/api/files/*`
+  - AI Workers: Free Llama 3.1 models. Env: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`
+  - Middleware (`backend/src/middleware/cloudflare.ts`): Real IP detection, security headers
 
 ### Production domains and URLs
 - **Primary production domain**: `https://www.advanciapayledger.com` (redirects to `https://advanciapayledger.com`)
@@ -75,19 +108,69 @@ Purpose: give AI coding agents the minimum, specific context to be productive in
   - Alternatively run backend with tsx register: runtimeArgs `["--inspect=9229", "-r", "tsx/register", "backend/src/index.ts"]`.
 - Use `debugger` inside route handlers to break, e.g. in `router.post(...)`.
 
+### AI Agent System (47+ agents)
+- **Mom AI Core**: 5 agents (AnalysisAgent, SolutionAgent, DecisionAgent, LearningAgent, MomAICore orchestrator)
+- **Multi-Agent Orchestrator** (`backend/src/ai-expansion/orchestrator/MultiAgentOrchestrator.ts`): 6 agents (analyst, coder, writer, researcher, planner, reviewer)
+- **Business Agents** (`backend/src/agents/`): 21+ specialized agents (AIBuilderAgent, BugFixAgent, SecurityFraudAgent, TransactionAuditAgent, etc.)
+- **RPA Agents** (`backend/src/agents/rpa/`): 9 monitoring agents (Agent1-9)
+- Agent scheduler (`backend/src/agents/AgentScheduler.ts`) manages all agents with cron schedules
+- Agents extend `BaseAgent` class with `execute()` method. API: `GET /api/agents/rpa/status`, `POST /api/agents/rpa/trigger`
+
 ### Implementation tips specific to this repo
 - Always import Prisma via `backend/src/prismaClient.ts` to avoid multiple clients.
 - Convert Prisma Decimal to string in responses using `backend/src/utils/decimal.ts` helpers.
 - When adding a new route that emits events, inject `io` via helper (see `setSocketIO` in notification service or `setTokenSocketIO` in `routes/tokens.ts`).
 - Respect CORS policy: add new dev origins in `backend/src/config/index.ts` so the middleware allows them.
 - Keep `/api/payments/webhook` raw-body middleware before any JSON parser.
+- When creating AI incidents, use Mom AI Core workflow: `momAICore.handleIncident()` returns decision with risk level and approval requirements.
+- For secure file uploads, use R2 Storage with user isolation: `uploadToR2({ userId, category, filename, buffer })` - files stored as `category/userId/timestamp-filename`.
+- Wrangler commands available via `npx wrangler` for Cloudflare operations (R2, Workers, AI).
+
+### Key commands for development
+**Backend:**
+```bash
+cd backend && npm install          # Install dependencies
+npm run dev                        # Start dev server (ts-node-dev, port 4000)
+npx prisma migrate dev             # Create/apply database migration
+npx prisma studio                  # Open Prisma Studio GUI
+npx prisma generate                # Regenerate Prisma Client after schema changes
+npm test                           # Run tests
+node --inspect=9229 -r ts-node/register src/index.ts  # Debug mode
+```
+
+**Frontend:**
+```bash
+cd frontend && npm install         # Install dependencies
+npm run dev                        # Start Next.js (port 3000)
+npm run build                      # Production build
+npm run lint                       # ESLint check
+```
+
+**Deployment:**
+```bash
+./scripts/ADVANCIA-FULL-DEPLOY.ps1  # Full stack deployment (Windows)
+cd backend && render deploy          # Backend only (Render)
+cd frontend && vercel --prod         # Frontend only (Vercel)
+npx wrangler r2 bucket list         # List Cloudflare R2 buckets
+npx wrangler deploy backend/cloudflare-worker.js  # Deploy Worker
+```
 
 ### Files to read first for context
-- `backend/src/index.ts` (server, middleware order, route wiring, Socket.IO, cron)
+- `backend/src/index.ts` (server, middleware order, route wiring, Socket.IO, cron, agent initialization)
 - `backend/src/config/index.ts` (origins, ports, env derivation)
+- `backend/src/ai/mom-core/index.ts` (Mom AI workflow: analyze → solve → decide → learn)
+- `backend/src/services/UnifiedAIGateway.ts` (7 AI providers, failover, cost optimization)
 - `backend/src/services/notificationService.ts` (push/email/socket pattern)
 - `backend/src/utils/decimal.ts` (Decimal serialization helpers)
 - `backend/prisma/schema.prisma` (entities & relations)
+- `backend/PROJECT_README.md` (Mom-Shield-Dad architecture diagram)
 - `frontend/README.md` and `backend/README.md` (commands and structure)
+
+### Critical documentation
+- `MOM_SHIELD_DAD_COMPLETE.md` - Complete architecture guide (827 lines)
+- `DAD_CONSOLE_GUIDE.md` - Admin oversight system (535 lines)
+- `UNIFIED_AI_GATEWAY_SETUP.md` - Multi-provider AI integration
+- `CLOUDFLARE_COMPLETE_CONFIG.md` - R2, AI Workers, CDN setup
+- `.github/copilot-deployment-instructions.md` - Automated deployment guide
 
 If anything here is unclear or you need deeper conventions (tests, logging fields, error formats), ask and we'll refine this guide.

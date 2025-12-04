@@ -75,6 +75,7 @@ interface AuditLogData {
 }
 
 export class VaultService {
+  private static instance: VaultService;
   private vaultClient: any = null;
   private algorithm = "aes-256-cbc";
   private encryptionKey: Buffer;
@@ -89,6 +90,13 @@ export class VaultService {
     } else {
       console.log("🔐 Vault disabled - using encrypted database fallback");
     }
+  }
+
+  static getInstance(): VaultService {
+    if (!VaultService.instance) {
+      VaultService.instance = new VaultService();
+    }
+    return VaultService.instance;
   }
 
   private async initializeVault() {
@@ -329,7 +337,7 @@ export class VaultService {
           id: true,
           key: true,
           version: true,
-          createdAt: true,
+          created_at: true,
           last_rotated: true,
           metadata: true,
           rotationPolicy: true,

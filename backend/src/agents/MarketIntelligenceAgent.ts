@@ -2,8 +2,8 @@
 // Monitors crypto prices, news sentiment, and detects market crises
 // Runs every 15 minutes
 
-import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 import axios from "axios";
+import { AgentConfig, AgentContext, AgentResult, BaseAgent } from "./BaseAgent";
 
 export class MarketIntelligenceAgent extends BaseAgent {
   constructor(context: AgentContext) {
@@ -51,7 +51,7 @@ export class MarketIntelligenceAgent extends BaseAgent {
             timestamp: new Date()
           },
           confidence: 0.85,
-          analyzedAt: new Date()
+          analyzed_at: new Date()
         }
       });
       itemsProcessed++;

@@ -7,9 +7,9 @@
 
 ## 🎯 Test Account Details:
 
-**Email:** pdtribe181@gmail.com  
+**Email:** mucha@example.com  
 **Test Password:** [You'll create this during registration]  
-**Username:** pdtribe181 (or whatever you choose)
+**Username:** mucha (or whatever you choose)
 
 ---
 
@@ -44,8 +44,8 @@ Fill out the registration form:
 
 | Field | Value |
 |-------|-------|
-| **Username** | `pdtribe181` (or any username you want) |
-| **Email** | `pdtribe181@gmail.com` |
+| **Username** | `mucha` (or any username you want) |
+| **Email** | `mucha@example.com` |
 | **Password** | Choose a strong password (min 6 chars) |
 | **Confirm Password** | Same password |
 | **Accept Terms** | ✅ Check the box |
@@ -64,14 +64,14 @@ Fill out the registration form:
 On login page (`/auth/login`):
 
 **Option A - Email/Password Login:**
-1. Enter email: `pdtribe181@gmail.com`
+1. Enter email: `mucha@example.com`
 2. Enter your password
 3. Click "Sign In"
 4. **Expected:** Redirect to `/dashboard` ✅
 
 **Option B - One-Time Code (OTP) Login:**
 1. Click "Login with One-Time Code" button
-2. Enter email: `pdtribe181@gmail.com`
+2. Enter email: `mucha@example.com`
 3. Click "Send Code"
 4. **Expected:** 
    - OTP sent to your email (if email service configured)
@@ -119,7 +119,7 @@ After successful login:
 ## 🔍 What to Check:
 
 ### **✅ Registration Works:**
-- [ ] Can create account with pdtribe181@gmail.com
+- [ ] Can create account with mucha@example.com
 - [ ] Password validation works (min 6 chars)
 - [ ] Password confirmation matches
 - [ ] Terms checkbox required
@@ -241,7 +241,7 @@ Dashboard displays! (✅)
 
 1. [ ] Open `https://advanciapayledger.com` → Redirects to login ✅
 2. [ ] Click "Create Account" → Goes to register page ✅
-3. [ ] Register with `pdtribe181@gmail.com` → Success ✅
+3. [ ] Register with `mucha@example.com` → Success ✅
 4. [ ] Redirects to login → See login page ✅
 5. [ ] Login with credentials → Success ✅
 6. [ ] Redirects to dashboard → See full dashboard ✅
@@ -296,7 +296,7 @@ Once you confirm registration and login work:
 
 ---
 
-**Go ahead and test with `pdtribe181@gmail.com`!** 🎉
+**Go ahead and test with `mucha@example.com`!** 🎉
 
 Let me know:
 - ✅ What works

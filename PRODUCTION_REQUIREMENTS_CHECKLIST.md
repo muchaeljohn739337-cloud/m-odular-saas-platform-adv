@@ -31,9 +31,9 @@ JWT_SECRET=advancia-pay-ledger-jwt-secret-2025-production-secure-key-32-chars-mi
 API_KEY=dev-api-key-123-change-in-production
 
 # Email (Gmail SMTP)
-EMAIL_USER=pdtribe181@gmail.com
+EMAIL_USER=mucha@example.com
 EMAIL_PASSWORD=ppoguzuqtrljyvim
-EMAIL_FROM=pdtribe181@gmail.com
+EMAIL_FROM=mucha@example.com
 EMAIL_REPLY_TO=advanciapayledger@gmail.com
 
 # Stripe

@@ -2,7 +2,7 @@ name: Advancia Full Build & Deploy Orchestrator
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/eslint-revert-20251201]
   workflow_dispatch:
 
 permissions:

@@ -68,10 +68,10 @@ export class BlockchainVerificationAgent extends BaseAgent {
       await this.context.prisma.blockchain_verifications.create({
         data: {
           manifest_hash: localHash,
-          isVerified: verificationResult.isValid,
+          is_verified: verificationResult.isValid,
           blockchain: "Polygon",
-          txHash: verificationResult.isValid ? "verified" : null,
-          verifiedAt: new Date(),
+          tx_hash: verificationResult.isValid ? "verified" : null,
+          verified_at: new Date(),
           metadata: {
             storedHash: verificationResult.storedHash || null,
             timestamp: verificationResult.timestamp || null,
@@ -178,10 +178,10 @@ export class BlockchainVerificationAgent extends BaseAgent {
       await this.context.prisma.blockchain_verifications.create({
         data: {
           manifest_hash: hash,
-          isVerified: true,
+          is_verified: true,
           blockchain: "Polygon",
-          txHash: result.txHash,
-          verifiedAt: new Date(),
+          tx_hash: result.txHash,
+          verified_at: new Date(),
           metadata: { version, recordId: result.recordId },
         },
       });

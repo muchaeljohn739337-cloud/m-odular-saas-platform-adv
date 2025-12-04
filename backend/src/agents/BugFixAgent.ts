@@ -67,12 +67,12 @@ export class BugFixAgent extends BaseAgent {
           const patch = await this.context.prisma.security_patches.create({
             data: {
               id: `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              issueDescription: pattern.errorMessage,
-              severity: pattern.occurrences >= 10 ? "CRITICAL" : pattern.occurrences >= 5 ? "HIGH" : "MEDIUM",
-              patchType: "BUG_FIX",
+              type: "BUG_FIX",
               status: "PENDING",
-              suggestedFix: solutions.join("\n\n"),
-              appliedAt: null,
+              vulnerability: pattern.errorMessage,
+              fix: solutions.join("\n\n"),
+              applied_by: null,
+              applied_at: null,
               metadata: {
                 occurrences: pattern.occurrences,
                 firstSeen: pattern.firstSeen,
@@ -97,8 +97,8 @@ export class BugFixAgent extends BaseAgent {
                 type: "error",
                 title: "Critical Bug Detected",
                 message: `Error occurred ${pattern.occurrences} times in 20 minutes`,
-                patch_id: patch.patchId,
-                severity: patch.severity,
+                patch_id: patch.id,
+                occurrences: pattern.occurrences,
                 timestamp: new Date(),
               });
             });

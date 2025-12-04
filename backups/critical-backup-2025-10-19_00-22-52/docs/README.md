@@ -68,7 +68,7 @@
 
 ```bash
 # 1️⃣ Clone
-git clone https://github.com/pdtribe181-prog/-modular-saas-platform.git
+git clone https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 cd -modular-saas-platform
 
 # 2️⃣ Install Dependencies
@@ -912,14 +912,14 @@ pg_restore -U <user> -d advancia_ledger backup_20240101.dump
 **Before reaching out, please:**
 1. Check this README thoroughly
 2. Review the [TROUBLESHOOTING.md](TROUBLESHOOTING.md) guide
-3. Search [existing GitHub issues](https://github.com/pdtribe181-prog/-modular-saas-platform/issues)
+3. Search [existing GitHub issues](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/issues)
 4. Check feature-specific documentation in the `/docs` folder
 
 ### 📧 Contact Methods
 
 **GitHub Issues (Preferred)**  
 For bugs, feature requests, and technical questions:  
-🔗 [https://github.com/pdtribe181-prog/-modular-saas-platform/issues](https://github.com/pdtribe181-prog/-modular-saas-platform/issues)
+🔗 [https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/issues](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/issues)
 
 **Response Time:**
 - 🟢 Critical bugs: 24-48 hours
@@ -931,7 +931,7 @@ For sensitive issues, security concerns, or business inquiries:
 📧 [support@advancia-platform.com](mailto:support@advancia-platform.com)
 
 **Repository Owner**  
-GitHub: [@pdtribe181-prog](https://github.com/pdtribe181-prog)
+GitHub: [@muchaeljohn739337-cloud](https://github.com/muchaeljohn739337-cloud)
 
 ### 🛠️ Support Resources
 
@@ -951,9 +951,9 @@ GitHub: [@pdtribe181-prog](https://github.com/pdtribe181-prog)
 - 📖 [Quick Reference](QUICK_REFERENCE.md) - Common commands
 
 **Community & Discussions:**
-- 💬 [GitHub Discussions](https://github.com/pdtribe181-prog/-modular-saas-platform/discussions) - Ask questions, share ideas
-- 🐛 [Report a Bug](https://github.com/pdtribe181-prog/-modular-saas-platform/issues/new?template=bug_report.md)
-- ✨ [Request a Feature](https://github.com/pdtribe181-prog/-modular-saas-platform/issues/new?template=feature_request.md)
+- 💬 [GitHub Discussions](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/discussions) - Ask questions, share ideas
+- 🐛 [Report a Bug](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/issues/new?template=bug_report.md)
+- ✨ [Request a Feature](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/issues/new?template=feature_request.md)
 
 ### 🤝 Contributing Support
 
@@ -1020,10 +1020,10 @@ Contact: [licensing@advancia-platform.com](mailto:licensing@advancia-platform.co
 
 ### 📊 Project Statistics
 
-![GitHub Stars](https://img.shields.io/github/stars/pdtribe181-prog/-modular-saas-platform?style=social)
-![GitHub Forks](https://img.shields.io/github/forks/pdtribe181-prog/-modular-saas-platform?style=social)
-![GitHub Issues](https://img.shields.io/github/issues/pdtribe181-prog/-modular-saas-platform)
-![GitHub Pull Requests](https://img.shields.io/github/issues-pr/pdtribe181-prog/-modular-saas-platform)
+![GitHub Stars](https://img.shields.io/github/stars/muchaeljohn739337-cloud/-modular-saas-platform?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/muchaeljohn739337-cloud/-modular-saas-platform?style=social)
+![GitHub Issues](https://img.shields.io/github/issues/muchaeljohn739337-cloud/-modular-saas-platform)
+![GitHub Pull Requests](https://img.shields.io/github/issues-pr/muchaeljohn739337-cloud/-modular-saas-platform)
 
 **Thank you for using Advancia Pay Ledger!**  
 Your feedback helps us improve. Don't hesitate to reach out!
@@ -1048,9 +1048,9 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ## 🔗 GitHub Links
 
-- **Main Repository**: [https://github.com/pdtribe181-prog/-modular-saas-platform](https://github.com/pdtribe181-prog/-modular-saas-platform)
-- **View README on GitHub**: [README.md](https://github.com/pdtribe181-prog/-modular-saas-platform/blob/main/README.md)
-- **Issues**: [Report bugs or request features](https://github.com/pdtribe181-prog/-modular-saas-platform/issues)
+- **Main Repository**: [https://github.com/muchaeljohn739337-cloud/-modular-saas-platform](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform)
+- **View README on GitHub**: [README.md](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/blob/main/README.md)
+- **Issues**: [Report bugs or request features](https://github.com/muchaeljohn739337-cloud/-modular-saas-platform/issues)
 - **Documentation**: See `/docs` folder for detailed guides
 
 ---

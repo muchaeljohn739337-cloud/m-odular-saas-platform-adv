@@ -87,4 +87,4 @@ npm run lint
 ---
 
 **Last Updated:** 2025-10-28
-**Repository:** <https://github.com/pdtribe181-prog/-modular-saas-platform>
+**Repository:** <https://github.com/muchaeljohn739337-cloud/-modular-saas-platform>

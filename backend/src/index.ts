@@ -23,9 +23,9 @@ import { applySecurityMiddleware, forceHTTPS } from "./middleware/httpsEnforceme
 import { initializeIPTables, ipFilterMiddleware } from "./middleware/ipFilter";
 import { checkIPRoute, ipWhitelistMiddleware } from "./middleware/ipWhitelist";
 import {
-  initializeSecretProtection,
-  protectConsoleLogs,
-  secretProtectionMiddleware,
+    initializeSecretProtection,
+    protectConsoleLogs,
+    secretProtectionMiddleware,
 } from "./middleware/secretProtection";
 import { rateLimit, validateInput } from "./middleware/security";
 import { requireTailscale } from "./middleware/tailscaleAuth";
@@ -47,6 +47,13 @@ import authAdminRouter, { activeSessions, setBroadcastSessions as setAuthBroadca
 import blogRouter from "./routes/blog";
 import botCheckRouter from "./routes/botCheck";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
+import momAIRouter from "./routes/mom-ai";
+import sandboxRouter from "./routes/sandbox";
+import securityAdminRouter from "./routes/security-admin";
+import siemRouter from "./routes/siem";
+import web3AuthRouter from "./routes/web3-auth";
+import { activateShield, initializeShield } from "./security/comprehensive-shield";
+import { sandboxRunner } from "./services/SandboxRunner";
 import consultationRouter from "./routes/consultation";
 import copilotRouter, { setCopilotSocketIO } from "./routes/copilot";
 import cryptoRouter, { setCryptoSocketIO } from "./routes/crypto";
@@ -199,6 +206,7 @@ app.use("/api/admin/security-management", ipWhitelistMiddleware, adminSecurityMa
 app.use("/api/admin/ai", ipWhitelistMiddleware, adminAIRouter); // AI System Monitoring & Management
 app.use("/api/markdown-fixer", markdownFixerRouter); // AI-Powered Markdown Auto-Fixer
 app.use("/api/ai-solver", aiSolverRouter); // Prisma AI Solver & Multi-Brain Agent
+app.use("/api/ai-gateway", require("./routes/ai-gateway").default); // Unified AI Gateway - Claude, GPT, DeepSeek, Gemini, Llama, Cohere, Cloudflare
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/consultation", consultationRouter);

@@ -51,7 +51,7 @@ ab1d4df - docs: Add CI fix TL;DR
 **Both are connected to GitHub:**
 ```
 Remote URL (Both):
-https://github.com/pdtribe181-prog/-modular-saas-platform.git
+https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 ```
 
 ---
@@ -270,7 +270,7 @@ After cleanup, you should have:
 **A:** You could, but there's no reason to keep it. Better to delete.
 
 ### Q: What if I need the old commits from the Copy folder?
-**A:** They're on GitHub! You can access them anytime: `https://github.com/pdtribe181-prog/-modular-saas-platform`
+**A:** They're on GitHub! You can access them anytime: `https://github.com/muchaeljohn739337-cloud/-modular-saas-platform`
 
 ### Q: Will this affect deployment?
 **A:** No! Deployment uses GitHub (the master copy), not your local folders.

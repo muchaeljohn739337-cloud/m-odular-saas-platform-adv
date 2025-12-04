@@ -6,7 +6,7 @@ Write-Host "🤖 Linking GitHub OAuth App to Render deploy webhook..." -Foregrou
 
 # === CONFIGURATION ===
 $envFile = "$PSScriptRoot\..\backend\.env"
-$githubOrg = "pdtribe181-prog"
+$githubOrg = "muchaeljohn739337-cloud"
 $repo = "-modular-saas-platform"
 $renderServiceName = "advancia-backend"
 

@@ -64,7 +64,7 @@ export async function assessFraudRisk(
     data: {
       id: crypto.randomUUID(),
       userId,
-      transactionId,
+      transaction_id: transactionId,
       score: new Decimal(riskScore),
       factors,
       status,

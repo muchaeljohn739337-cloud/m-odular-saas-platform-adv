@@ -499,7 +499,7 @@ npm run lint
 ---
 
 **Last Updated:** $(Get-Date -Format 'yyyy-MM-dd')
-**Repository:** <https://github.com/pdtribe181-prog/-modular-saas-platform>
+**Repository:** <https://github.com/muchaeljohn739337-cloud/-modular-saas-platform>
 "@
 
 Set-Content -Path "docs\README.md" -Value $indexContent -Encoding UTF8

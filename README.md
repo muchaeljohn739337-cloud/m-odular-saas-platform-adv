@@ -1,3 +1,5 @@
+# Hello World
+
 ![Node.js](https://img.shields.io/badge/Node.js-v22-green)
 ![Next.js](https://img.shields.io/badge/Next.js-14.2-blue)
 ![Prisma](https://img.shields.io/badge/Prisma-ORM-orange)

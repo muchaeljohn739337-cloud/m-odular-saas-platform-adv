@@ -54,7 +54,7 @@ mkdir -p ~/projects
 cd ~/projects
 
 # Clone from GitHub instead (cleaner)
-git clone https://github.com/pdtribe181-prog/-modular-saas-platform.git
+git clone https://github.com/muchaeljohn739337-cloud/-modular-saas-platform.git
 cd -modular-saas-platform
 ```
 
@@ -130,7 +130,7 @@ cat ~/.ssh/id_ed25519.pub
 
 ```bash
 ssh -T git@github.com
-# Should output: "Hi pdtribe181-prog! You've successfully authenticated..."
+# Should output: "Hi muchaeljohn739337-cloud! You've successfully authenticated..."
 ```
 
 ---
@@ -142,7 +142,7 @@ ssh -T git@github.com
 cd ~/projects
 
 # Clone your repository
-git clone git@github.com:pdtribe181-prog/-modular-saas-platform.git
+git clone git@github.com:muchaeljohn739337-cloud/-modular-saas-platform.git
 
 # Navigate into project
 cd -modular-saas-platform
@@ -414,7 +414,7 @@ cd ~/projects
 
 # Clone project
 echo "⬇️ Cloning project from GitHub..."
-git clone git@github.com:pdtribe181-prog/-modular-saas-platform.git
+git clone git@github.com:muchaeljohn739337-cloud/-modular-saas-platform.git
 cd -modular-saas-platform
 
 # Install dependencies
@@ -494,10 +494,10 @@ cd ~/projects/-modular-saas-platform
 git remote -v
 
 # Should show:
-# origin  git@github.com:pdtribe181-prog/-modular-saas-platform.git
+# origin  git@github.com:muchaeljohn739337-cloud/-modular-saas-platform.git
 
 # If using HTTPS, switch to SSH:
-git remote set-url origin git@github.com:pdtribe181-prog/-modular-saas-platform.git
+git remote set-url origin git@github.com:muchaeljohn739337-cloud/-modular-saas-platform.git
 ```
 
 ### 2. Sync Latest Changes

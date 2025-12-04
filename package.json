@@ -55,6 +55,7 @@
     "url": "https://github.com/muchaeljohn739337-cloud/modular-saas-platform.git"
   },
   "devDependencies": {
-    "sharp": "^0.34.4"
+    "sharp": "^0.34.4",
+    "wrangler": "^4.52.1"
   }
 }

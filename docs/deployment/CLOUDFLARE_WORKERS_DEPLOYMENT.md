@@ -4,7 +4,7 @@
 
 **Worker Name**: `advanciafrontend`  
 **Account ID**: `74ecde4d46d4b399c7295cf599d2886b`  
-**Production URL**: https://advanciafrontend.pdtribe181.workers.dev  
+**Production URL**: https://advanciafrontend.mucha.workers.dev  
 **Custom Domain**: advanciapayledger.com (pending DNS setup)
 
 ---
@@ -142,7 +142,7 @@ Cloudflare Pages = Workers + automatic Git integration.
 1. Go to: https://dash.cloudflare.com/[account-id]/pages
 2. Click "Create application"
 3. Select "Connect to Git"
-4. Choose repository: `pdtribe181-prog/-modular-saas-platform`
+4. Choose repository: `muchaeljohn739337-cloud/-modular-saas-platform`
 5. Select branch: `main`
 
 #### 2. Configure Build Settings
@@ -195,7 +195,7 @@ Cloudflare automatically creates DNS records:
 ```
 Type: CNAME
 Name: advanciapayledger.com
-Content: advanciafrontend.pdtribe181.workers.dev
+Content: advanciafrontend.mucha.workers.dev
 Proxied: Yes
 ```
 
@@ -214,7 +214,7 @@ nslookup advanciapayledger.com
 
 # Test endpoints
 curl https://advanciapayledger.com
-curl https://advanciafrontend.pdtribe181.workers.dev
+curl https://advanciafrontend.mucha.workers.dev
 ```
 
 ---
@@ -325,7 +325,7 @@ CLOUDFLARE_ACCOUNT_ID - 74ecde4d46d4b399c7295cf599d2886b
 
 ```powershell
 # Production
-curl https://advanciafrontend.pdtribe181.workers.dev
+curl https://advanciafrontend.mucha.workers.dev
 
 # Should return Next.js homepage HTML
 ```
@@ -405,7 +405,7 @@ wrangler secret put DATABASE_URL
 1. ✅ **Verify Current Deployment**
 
    ```powershell
-   curl https://advanciafrontend.pdtribe181.workers.dev
+   curl https://advanciafrontend.mucha.workers.dev
    ```
 
 2. ⏳ **Wait for DNS Propagation** (if nameservers changed)
@@ -442,7 +442,7 @@ wrangler secret put DATABASE_URL
 
 ## 💡 Pro Tips
 
-1. **Use Preview Deployments**: Test changes on `*-advanciafrontend.pdtribe181.workers.dev` before production
+1. **Use Preview Deployments**: Test changes on `*-advanciafrontend.mucha.workers.dev` before production
 2. **Enable Caching**: Configure cache rules in Cloudflare dashboard for static assets
 3. **Set Up Alerts**: Get notified of deployment failures or errors
 4. **Use `wrangler tail`**: Debug issues in real-time
@@ -451,5 +451,5 @@ wrangler secret put DATABASE_URL
 ---
 
 **Last Updated**: October 21, 2025  
-**Worker Status**: ✅ Deployed at `advanciafrontend.pdtribe181.workers.dev`  
+**Worker Status**: ✅ Deployed at `advanciafrontend.mucha.workers.dev`  
 **Custom Domain Status**: ⏳ Pending DNS setup

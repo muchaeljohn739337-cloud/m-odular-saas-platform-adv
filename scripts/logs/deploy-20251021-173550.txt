@@ -35,7 +35,7 @@ WSManStackVersion: 3.0
 ✅ Frontend UI healthy
 ℹ No RENDER_DEPLOY_STATUS_WEBHOOK set; skipping webhook.
 WARNING: The command 'Send-MailMessage' is obsolete. This cmdlet does not guarantee secure connections to SMTP servers. While there is no immediate replacement available in PowerShell, we recommend you do not use Send-MailMessage at this time. See https://aka.ms/SendMailMessage for more information.
-📧 Email notification sent to pdtribe181@gmail.com
+📧 Email notification sent to mucha@example.com
 🎉 All systems operational.
 **********************
 PowerShell transcript end
