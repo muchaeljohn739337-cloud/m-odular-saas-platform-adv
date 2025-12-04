@@ -2,7 +2,7 @@ name: Advancia RPA Auto Deploy & Self-Heal
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, fix/eslint-revert-20251201 ]
   schedule:
     - cron: "0 */4 * * *"  # Health check every 4 hours
   workflow_dispatch:  # Manual trigger

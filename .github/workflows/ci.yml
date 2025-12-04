@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/eslint-revert-20251201]
   pull_request:
     branches: [main]
 
