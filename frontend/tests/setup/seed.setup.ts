@@ -3,19 +3,19 @@
  * Seeds database before Playwright tests run
  */
 
-import { test as setup } from "@playwright/test";
 import path from "path";
 import { execSync } from "child_process";
-
-const STORAGE_STATE = path.join(__dirname, "../.auth/user.json");
 
 /**
  * Global setup - seed database before all E2E tests
  */
-setup("seed test database", async () => {
+export default async function globalSetup() {
   console.log("🌱 Seeding database for E2E tests...");
 
   try {
+    // Wait a bit for backend server to be ready
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     // Call backend seeding endpoint
     const response = await fetch("http://localhost:4000/api/test/seed", {
       method: "POST",
@@ -42,25 +42,4 @@ setup("seed test database", async () => {
     console.error("❌ Error seeding database:", error);
     // Don't fail tests if seeding fails - tests should handle missing data gracefully
   }
-});
-
-/**
- * Authenticate as test user and save state
- */
-setup("authenticate as test user", async ({ page }) => {
-  console.log("🔐 Authenticating test user...");
-
-  await page.goto("http://localhost:3000/login");
-
-  await page.fill('input[type="email"]', "user@test.com");
-  await page.fill('input[type="password"]', "testpassword123");
-  await page.click('button[type="submit"]');
-
-  // Wait for navigation to dashboard
-  await page.waitForURL("**/dashboard");
-
-  // Save authenticated state
-  await page.context().storageState({ path: STORAGE_STATE });
-
-  console.log("✅ Test user authenticated and state saved");
-});
+}

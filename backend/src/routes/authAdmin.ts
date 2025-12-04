@@ -4,6 +4,7 @@ import { timingSafeEqual } from "crypto";
 import express from "express";
 import jwt from "jsonwebtoken";
 import twilio from "twilio";
+import { config } from "../config";
 import prisma from "../prismaClient";
 import { logAdminLogin } from "../utils/logger";
 import { sendAlert } from "../utils/mailer";
@@ -13,7 +14,7 @@ const router = express.Router();
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@advancia.com";
 const ADMIN_PASS = process.env.ADMIN_PASS || "Admin@123";
 const ADMIN_PASS_IS_HASHED = /^\$2[aby]\$/.test(ADMIN_PASS);
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = config.jwtSecret;
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "refresh_secret_key";
 
 async function verifyAdminPassword(candidate: string) {
@@ -192,28 +193,31 @@ router.post("/verify-otp", async (req, res) => {
   // OTP verified successfully
   delete otpStore[email];
 
-  // Locate an ADMIN user so downstream auth middleware can validate userId
-  let adminUser = await prisma.users.findFirst({
-    where: { role: "ADMIN", active: true },
-    select: { id: true, email: true, role: true },
+  // Locate the specific ADMIN user who logged in
+  let adminUser = await prisma.users.findUnique({
+    where: { email: email },
+    select: { id: true, email: true, role: true, active: true },
   });
+  
+  // Validate that the user exists, is active, and is an admin
   if (!adminUser) {
-    const fallback = await prisma.users.findUnique({
-      where: { email: ADMIN_EMAIL },
-      select: { id: true, email: true, role: true, active: true },
+    return res.status(404).json({
+      error: "User not found",
+      message: "No user found with this email address",
     });
-    if (fallback && fallback.active !== false) {
-      adminUser = {
-        id: fallback.id,
-        email: fallback.email,
-        role: fallback.role,
-      } as any;
-    }
   }
-  if (!adminUser) {
-    return res.status(500).json({
-      error: "No admin user found in database",
-      message: "Seed or create an ADMIN user to enable admin API access (e.g., npm run db:seed)",
+  
+  if (!adminUser.active) {
+    return res.status(403).json({
+      error: "Account disabled",
+      message: "This account has been deactivated",
+    });
+  }
+  
+  if (adminUser.role !== "ADMIN") {
+    return res.status(403).json({
+      error: "Insufficient permissions",
+      message: "This account does not have admin privileges",
     });
   }
 

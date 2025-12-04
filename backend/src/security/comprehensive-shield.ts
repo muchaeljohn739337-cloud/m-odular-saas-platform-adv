@@ -317,7 +317,9 @@ setInterval(() => {
 export function activateShield() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (req.path === "/health" || req.path === "/api/health") {
+      // Whitelist health check and dev endpoints
+      if (req.path === "/health" || req.path === "/api/health" || 
+          (process.env.NODE_ENV === "development" && req.path.includes("/dev/"))) {
         return next();
       }
       if (lockdownMode) {

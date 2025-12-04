@@ -1,13 +1,23 @@
 import bcrypt from "bcryptjs";
 import prisma from "../../src/prismaClient";
+import { randomUUID } from "crypto";
+
+// Test credentials constants
+const TEST_ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || "Admin123!@#";
+const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "User123!@#";
 
 export async function seedCompleteTestData() {
   console.log("🌱 Seeding test data...");
+  
+  // Ensure Prisma is connected
+  await prisma.$connect();
+  
   await cleanTestData();
 
   const adminPassword = await bcrypt.hash("Admin123!@#", 10);
-  const admin = await prisma.User.create({
+  const admin = await prisma.users.create({
     data: {
+      id: randomUUID(),
       email: "admin@test.com",
       username: "testadmin",
       passwordHash: adminPassword,
@@ -16,15 +26,16 @@ export async function seedCompleteTestData() {
       role: "ADMIN",
       emailVerified: true,
       active: true,
-      usdBalance: 10000.0,
       termsAccepted: true,
       termsAcceptedAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 
   const userPassword = await bcrypt.hash("User123!@#", 10);
-  const user = await prisma.User.create({
+  const user = await prisma.users.create({
     data: {
+      id: randomUUID(),
       email: "user@test.com",
       username: "testuser",
       passwordHash: userPassword,
@@ -33,13 +44,17 @@ export async function seedCompleteTestData() {
       role: "USER",
       emailVerified: true,
       active: true,
-      usdBalance: 1000.0,
       termsAccepted: true,
       termsAcceptedAt: new Date(),
+      updatedAt: new Date(),
     },
   });
 
   console.log("✅ Test users created");
+  
+  // Keep connection open for tests
+  // await prisma.$disconnect();
+  
   return { admin, user };
 }
 
@@ -47,7 +62,7 @@ export async function cleanTestData() {
   console.log("�� Cleaning test data...");
 
   try {
-    const testUsers = await prisma.User.findMany({
+    const testUsers = await prisma.users.findMany({
       where: {
         email: {
           in: ["admin@test.com", "user@test.com"],
@@ -63,39 +78,39 @@ export async function cleanTestData() {
       return;
     }
 
-    await prisma.SupportTicket.deleteMany({
+    await prisma.support_tickets.deleteMany({
       where: { userId: { in: testUserIds } },
     });
 
-    await prisma.UserTier.deleteMany({
+    await prisma.user_tiers.deleteMany({
       where: { userId: { in: testUserIds } },
     });
 
-    await prisma.Reward.deleteMany({
+    await prisma.rewards.deleteMany({
       where: { userId: { in: testUserIds } },
     });
 
-    const wallets = await prisma.TokenWallet.findMany({
+    const wallets = await prisma.token_wallets.findMany({
       where: { userId: { in: testUserIds } },
       select: { id: true },
     });
     const walletIds = wallets.map((w) => w.id);
 
     if (walletIds.length > 0) {
-      await prisma.TokenTransaction.deleteMany({
+      await prisma.token_transactions.deleteMany({
         where: { walletId: { in: walletIds } },
       });
     }
 
-    await prisma.TokenWallet.deleteMany({
+    await prisma.token_wallets.deleteMany({
       where: { userId: { in: testUserIds } },
     });
 
-    await prisma.Transaction.deleteMany({
+    await prisma.transactions.deleteMany({
       where: { userId: { in: testUserIds } },
     });
 
-    await prisma.User.deleteMany({
+    await prisma.users.deleteMany({
       where: { id: { in: testUserIds } },
     });
 

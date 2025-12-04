@@ -202,6 +202,13 @@ CODE_OF_CONDUCT.md
 *.bak
 *.old
 
+# Large binary files
+*.deb
+*.rpm
+*.dmg
+*.exe
+*.msi
+*.iso
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .github/instructions/snyk_rules.instructions.md

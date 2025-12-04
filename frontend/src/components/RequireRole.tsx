@@ -45,7 +45,8 @@ export default function RequireRole({
           return;
         }
 
-        const user = await response.json();
+        const data = await response.json();
+        const user = data.user || data; // Handle both { user: {...} } and direct user object
 
         // Check if user has required role
         if (user?.role && roles.includes(user.role)) {

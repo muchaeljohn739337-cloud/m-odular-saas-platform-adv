@@ -146,6 +146,12 @@
 
   // ESLint Settings
   "eslint.workingDirectories": ["backend", "frontend"],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
 
   // Search Settings
   "search.exclude": {

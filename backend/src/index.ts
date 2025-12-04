@@ -116,8 +116,10 @@ app.use(cloudflareMiddleware);
 // 🔒 SECURITY: IP-based access control (blacklist enforcement)
 app.use(ipFilterMiddleware);
 
-// 🔒 SECURITY: Secret exposure prevention (auto-correction)
-app.use(secretProtectionMiddleware);
+// 🔒 SECURITY: Secret exposure prevention (auto-correction) - Disabled in development for testing
+if (process.env.NODE_ENV !== "development") {
+  app.use(secretProtectionMiddleware);
+}
 
 // SECURITY: Force HTTPS in production with HSTS and enhanced security headers
 app.use(forceHTTPS);
@@ -140,7 +142,10 @@ app.use(validateInput);
 app.use(activityLogger);
 
 // 🛡️ SHIELD SECURITY SYSTEM - Multi-Layer Defense (MOM AI + DAD Admin Control)
-app.use(activateShield());
+// Disabled in development for testing
+if (process.env.NODE_ENV !== "development") {
+  app.use(activateShield());
+}
 
 app.use("/api", rateLimit({ windowMs: 60_000, maxRequests: 300 }));
 

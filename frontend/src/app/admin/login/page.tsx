@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 /**
  * Admin OTP login page
@@ -109,7 +109,10 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Store tokens and redirect
+      // Store tokens and redirect (using 'token' key for compatibility with RequireRole)
+      localStorage.setItem("token", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      // Also store as adminToken for backward compatibility
       localStorage.setItem("adminToken", data.accessToken);
       localStorage.setItem("adminRefreshToken", data.refreshToken);
       router.push("/admin/sessions");
