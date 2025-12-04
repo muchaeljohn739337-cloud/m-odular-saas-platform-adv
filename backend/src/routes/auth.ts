@@ -123,6 +123,8 @@ router.post("/login", validateApiKey, async (req, res) => {
         usdBalance: true,
         active: true,
         emailVerified: true,
+        totpEnabled: true,
+        totpVerified: true,
       },
     });
     if (!user || !user.passwordHash) {
@@ -145,6 +147,23 @@ router.post("/login", validateApiKey, async (req, res) => {
       return res.status(403).json({
         error: "Account pending admin approval.",
         status: "pending_approval",
+      });
+    }
+
+    // Check if TOTP is enabled - require 2FA
+    if (user.totpEnabled && user.totpVerified) {
+      // Return temporary token for TOTP verification
+      const tempToken = jwt.sign(
+        { userId: user.id, email: user.email, requireTotp: true },
+        config.jwtSecret,
+        { expiresIn: "5m" } // Short expiry for TOTP step
+      );
+
+      return res.json({
+        message: "TOTP required",
+        status: "totp_required",
+        tempToken,
+        userId: user.id,
       });
     }
 
@@ -175,6 +194,94 @@ router.post("/login", validateApiKey, async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ error: "Failed to login" });
+  }
+});
+
+// ============================================
+// TOTP LOGIN COMPLETION
+// ============================================
+router.post("/login/totp", validateApiKey, async (req, res) => {
+  try {
+    const { tempToken, totpCode } = req.body;
+
+    if (!tempToken || !totpCode) {
+      return res.status(400).json({ error: "tempToken and totpCode required" });
+    }
+
+    // Verify temp token
+    let decoded: any;
+    try {
+      decoded = jwt.verify(tempToken, config.jwtSecret);
+      if (!decoded.requireTotp) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch {
+      return res.status(401).json({ error: "Token expired or invalid" });
+    }
+
+    // Get user and verify TOTP
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        usdBalance: true,
+        totpSecret: true,
+        totpEnabled: true,
+      },
+    });
+
+    if (!user || !user.totpSecret || !user.totpEnabled) {
+      return res.status(400).json({ error: "TOTP not configured" });
+    }
+
+    // Verify TOTP code
+    const speakeasy = require("speakeasy");
+    const verified = speakeasy.totp.verify({
+      secret: user.totpSecret,
+      encoding: "base32",
+      token: totpCode,
+      window: 2,
+    });
+
+    if (!verified) {
+      return res.status(401).json({ 
+        error: "Invalid TOTP code",
+        message: "Incorrect code. Please try again."
+      });
+    }
+
+    // Update last login
+    try {
+      await prisma.users.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() },
+      });
+    } catch {}
+
+    // Generate full session token
+    const token = jwt.sign({ userId: user.id, email: user.email }, config.jwtSecret, {
+      expiresIn: "7d",
+    });
+
+    return res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        usdBalance: (user as any).usdBalance?.toString?.() ?? "0",
+      },
+    });
+  } catch (err) {
+    console.error("TOTP login error:", err);
+    return res.status(500).json({ error: "Failed to complete TOTP login" });
   }
 });
 

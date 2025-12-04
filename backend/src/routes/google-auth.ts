@@ -154,6 +154,27 @@ router.get("/callback", async (req: Request, res: Response) => {
       });
     }
 
+    // Check if TOTP is enabled - require 2FA even for Google OAuth
+    if (user.totpEnabled && user.totpVerified) {
+      const jwt = require("jsonwebtoken");
+      const config = require("../config").config;
+      
+      // Generate temporary token for TOTP verification
+      const tempToken = jwt.sign(
+        { userId: user.id, email: user.email, requireTotp: true, provider: "google" },
+        config.jwtSecret,
+        { expiresIn: "5m" }
+      );
+
+      return res.json({
+        success: false,
+        status: "totp_required",
+        message: "TOTP verification required",
+        tempToken,
+        userId: user.id,
+      });
+    }
+
     // Generate JWT token
     const token = generateGoogleJWT(user);
 

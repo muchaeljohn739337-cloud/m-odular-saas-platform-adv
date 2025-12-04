@@ -38,6 +38,7 @@ import aiTrainingRouter from "./routes/aiTraining";
 import analyticsRouter from "./routes/analytics";
 import authRouter from "./routes/auth";
 import authAdminRouter, { activeSessions, setBroadcastSessions as setAuthBroadcast } from "./routes/authAdmin";
+import totpRouter from "./routes/totp";
 import botCheckRouter from "./routes/botCheck";
 import chatRouter, { setChatSocketIO } from "./routes/chat";
 import momAIRouter from "./routes/mom-ai";
@@ -190,6 +191,7 @@ app.use("/api/support", supportRouter);
 app.use("/api/admin/analytics", ipWhitelistMiddleware, analyticsRouter);
 app.use("/api/ai-analytics", aiAnalyticsRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/auth/totp", totpRouter); // TOTP/2FA Management
 app.use("/api/auth/web3", web3AuthRouter); // Web3 Wallet Authentication (SIWE)
 app.use("/api/auth/google", googleAuthRouter); // Google OAuth Authentication
 app.use("/api/admin", ipWhitelistMiddleware, adminUsersRouter);
