@@ -1,6 +1,6 @@
 # Prisma Database Schema Documentation
 
-Generated: 2025-12-03T07:22:37.880Z
+Generated: 2025-12-04T03:32:35.290Z
 
 ## Models
 

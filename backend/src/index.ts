@@ -24,6 +24,7 @@ import {
     secretProtectionMiddleware,
 } from "./middleware/secretProtection";
 import { rateLimit, validateInput } from "./middleware/security";
+import { requireTailscaleAccess } from "./middleware/tailscale";
 import { requireTailscale } from "./middleware/tailscaleAuth";
 import prisma from "./prismaClient";
 import adminRouter from "./routes/admin";
@@ -43,6 +44,7 @@ import momAIRouter from "./routes/mom-ai";
 import sandboxRouter from "./routes/sandbox";
 import securityAdminRouter from "./routes/security-admin";
 import siemRouter from "./routes/siem";
+import tailscaleAdminRouter from "./routes/tailscale-admin";
 import web3AuthRouter from "./routes/web3-auth";
 import { activateShield, initializeShield } from "./security/comprehensive-shield";
 import { sandboxRunner } from "./services/SandboxRunner";
@@ -191,7 +193,8 @@ app.use("/api/admin/shield", requireTailscale, securityAdminRouter); // SHIELD S
 app.use("/api/mom", momAIRouter); // Mom AI Core - Autonomous incident handling
 app.use("/api/sandbox", sandboxRouter); // Sandbox Testing Environment
 app.use("/api/siem", siemRouter); // SIEM Analytics & Threat Intelligence
-app.use("/api/dad", ipWhitelistMiddleware, require("./routes/dad-console").default); // Dad Admin Console - Approval workflows & oversight
+app.use("/api/tailscale", tailscaleAdminRouter); // Tailscale VPN Admin Routes
+app.use("/api/dad", requireTailscaleAccess, require("./routes/dad-console").default); // Dad Admin Console - Approval workflows & oversight (Tailscale VPN required)
 app.use("/api/admin/security-management", ipWhitelistMiddleware, adminSecurityManagementRouter); // IP Whitelist/Blacklist & Secret Management
 app.use("/api/admin/ai", ipWhitelistMiddleware, adminAIRouter); // AI System Monitoring & Management
 app.use("/api/markdown-fixer", markdownFixerRouter); // AI-Powered Markdown Auto-Fixer

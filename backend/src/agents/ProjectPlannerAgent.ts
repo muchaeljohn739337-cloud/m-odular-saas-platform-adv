@@ -362,7 +362,7 @@ Reply with ONLY a number (e.g., 8)`;
       if (independentTasks.length >= 2) {
         try {
           // Ask AI to suggest dependencies
-          const taskList = independentTasks.map((t: any) => "- " + t.id + ": " + t.title).join("\n");\n");
+          const taskList = independentTasks.map((t: any) => "- " + t.id + ": " + t.title).join("\n");
 
           const prompt = "Analyze these project tasks and suggest which tasks should depend on others (blocking relationships):\n\n" +
             taskList +

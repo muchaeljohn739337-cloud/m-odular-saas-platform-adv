@@ -9,8 +9,16 @@ const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
 const vapidSubject = process.env.VAPID_SUBJECT || "mailto:support@advanciapayledger.com";
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+// Only set VAPID if both keys are valid (65+ chars for public key)
+if (vapidPublicKey && vapidPrivateKey && vapidPublicKey.length >= 65) {
+  try {
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+    console.log("✅ Web Push VAPID configured");
+  } catch (error: any) {
+    console.warn("⚠️  VAPID configuration skipped:", error.message);
+  }
+} else {
+  console.warn("⚠️  Web Push notifications disabled - VAPID keys not configured");
 }
 
 // Email configuration
