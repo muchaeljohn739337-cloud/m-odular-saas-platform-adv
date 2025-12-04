@@ -51,6 +51,7 @@ import { sandboxRunner } from "./services/SandboxRunner";
 // AI system imports for initialization
 import { aiCore } from "./ai-core";
 import { copilotService } from "./ai/copilot/CopilotService";
+import { connectMongoDB } from "./mongoClient";
 import aiGeneratorRouter, { setAIGeneratorSocketIO } from "./routes/ai-generator";
 import aiWorkflowsRouter from "./routes/ai-workflows";
 import aiWorkersRouter, { setAIWorkersSocketIO } from "./routes/aiWorkers";
@@ -350,7 +351,15 @@ async function startServer() {
   try {
     // Test database connection
     await prisma.$connect();
-    console.log("✅ Database connection successful");
+    console.log("✅ PostgreSQL database connection successful");
+
+    // Connect to MongoDB (optional - for analytics & logging)
+    const mongoDb = await connectMongoDB();
+    if (mongoDb) {
+      console.log("✅ MongoDB connected (analytics & caching enabled)");
+    } else {
+      console.log("⚠️  MongoDB not configured (optional features disabled)");
+    }
 
     // Initialize Auto-Precision Core
     const { initializeAutoPrecision } = require("./ai/auto_precision_integration");
