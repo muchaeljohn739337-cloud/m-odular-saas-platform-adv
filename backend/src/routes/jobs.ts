@@ -384,4 +384,170 @@ router.get("/health", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * JOB QUEUE API ENDPOINTS (BullMQ)
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+import { jobService } from "../services/JobService";
+import { logger } from "../utils/logger";
+
+/**
+ * POST /api/jobs/queue
+ * Add a new job to the queue
+ */
+router.post('/queue', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { type, data, options, queueName } = req.body;
+
+    if (!type) {
+      return res.status(400).json({ error: 'Job type is required' });
+    }
+
+    const job = await jobService.addJob(
+      type,
+      data || {},
+      options || {},
+      queueName || 'default'
+    );
+
+    res.status(201).json({
+      success: true,
+      job: {
+        id: job.id,
+        name: job.name,
+        queueName: queueName || 'default',
+        status: 'pending',
+      },
+    });
+  } catch (error: any) {
+    logger.error('Failed to add job:', error);
+    res.status(500).json({ error: 'Failed to add job', details: error.message });
+  }
+});
+
+/**
+ * GET /api/jobs/status/:id
+ * Get job status
+ */
+router.get('/status/:id', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { queueName = 'default' } = req.query;
+
+    const status = await jobService.getJobStatus(id, queueName as string);
+
+    res.json({
+      success: true,
+      job: status,
+    });
+  } catch (error: any) {
+    logger.error('Failed to get job status:', error);
+    res.status(404).json({ error: 'Job not found', details: error.message });
+  }
+});
+
+/**
+ * GET /api/jobs/queue/:name/metrics
+ * Get queue metrics
+ */
+router.get('/queue/:name/metrics', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { name } = req.params;
+
+    const metrics = await jobService.getQueueMetrics(name);
+
+    res.json({
+      success: true,
+      metrics,
+    });
+  } catch (error: any) {
+    logger.error('Failed to get queue metrics:', error);
+    res.status(500).json({ error: 'Failed to get queue metrics', details: error.message });
+  }
+});
+
+/**
+ * GET /api/jobs/metrics
+ * Get all queue metrics
+ */
+router.get('/metrics', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const metrics = await jobService.getAllQueueMetrics();
+
+    res.json({
+      success: true,
+      metrics,
+    });
+  } catch (error: any) {
+    logger.error('Failed to get all queue metrics:', error);
+    res.status(500).json({ error: 'Failed to get metrics', details: error.message });
+  }
+});
+
+/**
+ * POST /api/jobs/schedule
+ * Schedule a recurring job
+ */
+router.post('/schedule', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { type, cronPattern, data, jobName, queueName } = req.body;
+
+    if (!type || !cronPattern || !jobName) {
+      return res.status(400).json({ 
+        error: 'Job type, cron pattern, and job name are required' 
+      });
+    }
+
+    await jobService.scheduleJob(
+      type,
+      cronPattern,
+      data || {},
+      jobName,
+      queueName || 'default'
+    );
+
+    res.json({
+      success: true,
+      message: `Job ${jobName} scheduled successfully`,
+      schedule: {
+        jobName,
+        type,
+        cronPattern,
+        queueName: queueName || 'default',
+      },
+    });
+  } catch (error: any) {
+    logger.error('Failed to schedule job:', error);
+    res.status(500).json({ error: 'Failed to schedule job', details: error.message });
+  }
+});
+
+/**
+ * POST /api/jobs/cleanup
+ * Manually trigger cleanup job
+ */
+router.post('/cleanup', authenticateToken, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { retentionDays = 7 } = req.body;
+
+    const job = await jobService.addJob(
+      'CLEANUP_JOBS',
+      { retentionDays },
+      { priority: 1 },
+      'low-priority'
+    );
+
+    res.json({
+      success: true,
+      message: 'Cleanup job queued successfully',
+      jobId: job.id,
+    });
+  } catch (error: any) {
+    logger.error('Failed to queue cleanup job:', error);
+    res.status(500).json({ error: 'Failed to queue cleanup job', details: error.message });
+  }
+});
+
 export default router;

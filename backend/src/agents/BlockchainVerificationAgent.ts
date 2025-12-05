@@ -31,10 +31,7 @@ export class BlockchainVerificationAgent extends BaseAgent {
         );
         this.context.logger.info("BlockchainVerificationAgent initialized");
       } catch (error) {
-        this.context.logger.error(
-          "Failed to initialize blockchain client",
-          error
-        );
+        this.context.logger.error("Failed to initialize blockchain client", error);
       }
     }
   }
@@ -55,39 +52,28 @@ export class BlockchainVerificationAgent extends BaseAgent {
 
       const startTime = Date.now();
       const manifestPath = path.join(process.cwd(), "package.json");
-      const localHash = await ProjectIntegrityClient.computeFileHash(
-        manifestPath
-      );
+      const localHash = await ProjectIntegrityClient.computeFileHash(manifestPath);
       itemsProcessed++;
 
-      const verificationResult = await this.integrityClient.verifyManifest(
-        localHash
-      );
+      const verificationResult = await this.integrityClient.verifyManifest(localHash);
       itemsProcessed++;
 
       await this.context.prisma.blockchain_verifications.create({
         data: {
+          id: `verify-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           manifest_hash: localHash,
-          is_verified: verificationResult.isValid,
+          version: verificationResult.version || "1.0",
+          status: verificationResult.isValid ? "VERIFIED" : "FAILED",
           blockchain: "Polygon",
           tx_hash: verificationResult.isValid ? "verified" : null,
-          verified_at: new Date(),
-          metadata: {
-            storedHash: verificationResult.storedHash || null,
-            timestamp: verificationResult.timestamp || null,
-            uploader: verificationResult.uploader || null,
-            version: verificationResult.version || null,
-            error: verificationResult.error || null,
-          },
+          confirmed_at: new Date(),
         },
       });
       itemsProcessed++;
 
       await SafePrisma.create("audit_logs", {
         userId: null,
-        action: verificationResult.isValid
-          ? "BLOCKCHAIN_VERIFY_SUCCESS"
-          : "BLOCKCHAIN_VERIFY_FAIL",
+        action: verificationResult.isValid ? "BLOCKCHAIN_VERIFY_SUCCESS" : "BLOCKCHAIN_VERIFY_FAIL",
         resourceType: "blockchain",
         resourceId: localHash,
         ipAddress: "127.0.0.1",
@@ -101,10 +87,7 @@ export class BlockchainVerificationAgent extends BaseAgent {
       itemsProcessed++;
 
       if (!verificationResult.isValid) {
-        this.context.logger.error(
-          "SECURITY ALERT: Manifest verification failed!",
-          { localHash }
-        );
+        this.context.logger.error("SECURITY ALERT: Manifest verification failed!", { localHash });
 
         if (this.context.io) {
           const admins = await this.context.prisma.users.findMany({
@@ -161,28 +144,24 @@ export class BlockchainVerificationAgent extends BaseAgent {
     }
   }
 
-  async storeManifestHash(
-    version: string
-  ): Promise<{ success: boolean; txHash?: string }> {
+  async storeManifestHash(version: string): Promise<{ success: boolean; txHash?: string }> {
     try {
-      if (!this.integrityClient)
-        throw new Error("Blockchain client not initialized");
+      if (!this.integrityClient) throw new Error("Blockchain client not initialized");
 
       const manifestPath = path.join(process.cwd(), "package.json");
       const hash = await ProjectIntegrityClient.computeFileHash(manifestPath);
-      const result = await this.integrityClient.storeManifestHash(
-        hash,
-        version
-      );
+      const result = await this.integrityClient.storeManifestHash(hash, version);
 
       await this.context.prisma.blockchain_verifications.create({
         data: {
+          id: `chain-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           manifest_hash: hash,
-          is_verified: true,
+          version: version,
+          status: "VERIFIED",
           blockchain: "Polygon",
           tx_hash: result.txHash,
-          verified_at: new Date(),
-          metadata: { version, recordId: result.recordId },
+          confirmed_at: new Date(),
+          record_id: result.recordId,
         },
       });
 

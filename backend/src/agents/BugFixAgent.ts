@@ -73,12 +73,6 @@ export class BugFixAgent extends BaseAgent {
               fix: solutions.join("\n\n"),
               applied_by: null,
               applied_at: null,
-              metadata: {
-                occurrences: pattern.occurrences,
-                firstSeen: pattern.firstSeen,
-                lastSeen: pattern.lastSeen,
-                affectedActions: pattern.actions,
-              },
             },
           });
 

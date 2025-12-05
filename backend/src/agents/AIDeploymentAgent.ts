@@ -364,7 +364,7 @@ export class AIDeploymentAgent extends BaseAgent {
     // Factor 2: Current system health
     const activeUsers = await this.context.prisma.users.count({
       where: {
-        last_active: {
+        lastLogin: {
           gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
         },
       },

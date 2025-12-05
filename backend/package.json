@@ -20,9 +20,10 @@
     "postbuild": "echo \"Skipping postbuild in CI - database operations run on deployment\"",
     "start": "node dist/index.js",
     "start:render": "prisma generate && prisma migrate deploy && node dist/index.js",
-    "test": "jest --runInBand --detectOpenHandles --passWithNoTests",
-    "test:watch": "jest --watch --runInBand",
-    "test:coverage": "jest --coverage --runInBand",
+    "test": "jest --runInBand --detectOpenHandles --passWithNoTests --config=jest.config.js",
+    "test:watch": "jest --watch --runInBand --config=jest.config.js",
+    "test:coverage": "jest --coverage --runInBand --config=jest.config.js",
+    "test:e2e": "jest --config=test/jest-e2e.json --detectOpenHandles --forceExit",
     "lint": "echo \"✅ Backend linting passed\" && exit 0",
     "lint:md": "markdownlint \"**/*.md\" --ignore node_modules --ignore dist",
     "lint:md:fix": "markdownlint \"**/*.md\" --ignore node_modules --ignore dist --fix",
@@ -61,6 +62,54 @@
     "migrate-to-vault": "tsx src/scripts/migrate-to-vault.ts",
     "ai:analytics": "tsx -e \"import { getAgentAnalytics } from './src/ai-core/analytics'; getAgentAnalytics().analyzeAllAgents().then(d => console.log(JSON.stringify(d, null, 2)))\""
   },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/test"
+    ],
+    "testMatch": [
+      "**/*.spec.ts",
+      "**/*.test.ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json"
+    ],
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/setup.ts"
+    ],
+    "testTimeout": 30000,
+    "collectCoverageFrom": [
+      "src/**/*.{ts,js}",
+      "!src/index.ts",
+      "!src/**/*.d.ts",
+      "!src/**/*.interface.ts"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 75,
+        "lines": 75,
+        "statements": 80
+      }
+    }
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",
     "@aws-sdk/client-s3": "^3.922.0",
@@ -81,6 +130,7 @@
     "@sendgrid/mail": "^8.1.6",
     "@sentry/node": "^10.22.0",
     "@sentry/profiling-node": "^10.22.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/dockerode": "^3.3.47",
@@ -91,25 +141,28 @@
     "@types/multer": "^2.0.0",
     "@types/node-vault": "^0.9.1",
     "@types/nodemailer": "^7.0.4",
+    "@types/uuid": "^9.0.8",
     "@types/validator": "^13.12.2",
     "@types/web-push": "^3.6.3",
+    "@types/ws": "^8.18.1",
     "ajv": "^6.12.6",
     "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "bitcoin-address-validation": "^3.0.0",
-    "bullmq": "^5.65.0",
+    "bullmq": "^5.65.1",
     "chromadb": "^3.1.6",
     "cors": "^2.8.5",
     "decimal.js": "^10.6.0",
     "dockerode": "^4.0.9",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.6.1",
     "ethers": "^5.7.2",
     "express": "^4.18.2",
     "express-validator": "^7.3.1",
     "express-ws": "^5.0.2",
     "glob": "^13.0.0",
     "google-auth-library": "^9.15.1",
-    "ioredis": "^5.8.1",
+    "ioredis": "^5.8.2",
     "jose": "^6.1.0",
     "jsdom": "^27.2.0",
     "json2csv": "^6.0.0-alpha.2",
@@ -180,7 +233,7 @@
     "prettier": "^3.7.3",
     "prisma": "^6.19.0",
     "supertest": "^7.1.4",
-    "ts-jest": "^29.4.5",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.19.2",

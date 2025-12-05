@@ -1,6 +1,6 @@
 # Prisma Database Schema Documentation
 
-Generated: 2025-12-04T23:08:40.823Z
+Generated: 2025-12-05T08:04:21.111Z
 
 ## Models
 
@@ -1351,4 +1351,20 @@ Generated: 2025-12-04T23:08:40.823Z
 | taskId | String | name      String |
 | color | String? | createdAt DateTime @default(now()) |
 | task | Task | @relation(fields: [taskId], references: [id], onDelete: Cascade) |
+
+### JobLog
+
+| Field | Type | Attributes |
+|-------|------|------------|
+| id | String | @id |
+| type | String | status      String    // 'pending' | 'processing' | 'completed' | 'failed' | 'delayed' |
+| data | String? | // JSON |
+| result | String? | // JSON |
+| error | String? | attempts    Int       @default(0) |
+| maxAttempts | Int | @default(3) |
+| priority | Int | @default(1) |
+| delay | Int | @default(0) |
+| startedAt | DateTime? | completedAt DateTime? |
+| failedAt | DateTime? | createdAt   DateTime  @default(now()) |
+| updatedAt | DateTime | @@index([type]) |
 

@@ -339,6 +339,7 @@ export class TaskDistributor extends EventEmitter {
     try {
       await prisma.audit_logs.create({
         data: {
+          id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           action: "TASK_BATCH_STARTED",
           resourceType: "SECURITY",
           resourceId: batch.id,
@@ -364,6 +365,7 @@ export class TaskDistributor extends EventEmitter {
     try {
       await prisma.audit_logs.create({
         data: {
+          id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           action: batch.status === "completed" ? "TASK_BATCH_COMPLETED" : "TASK_BATCH_FAILED",
           resourceType: "SECURITY",
           resourceId: batch.id,

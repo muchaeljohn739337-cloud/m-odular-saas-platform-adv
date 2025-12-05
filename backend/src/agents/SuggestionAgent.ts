@@ -69,13 +69,11 @@ export class SuggestionAgent extends BaseAgent {
         for (const suggestion of suggestions) {
           await this.context.prisma.ai_suggestions.create({
             data: {
+              id: `sugg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               user_id: user.id,
-              suggestion_type: suggestion.type,
+              type: suggestion.type,
               content: suggestion.content,
-              priority: suggestion.priority,
-              is_approved: true,
-              is_delivered: false,
-              metadata: suggestion.metadata,
+              accepted: false,
             },
           });
           suggestionsCreated++;

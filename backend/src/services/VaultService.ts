@@ -13,6 +13,7 @@
  */
 
 import crypto from "crypto";
+import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import speakeasy from "speakeasy";
 import prisma from "../prismaClient";
@@ -22,8 +23,7 @@ const VAULT_ENABLED = process.env.VAULT_ENABLED === "true";
 const VAULT_ADDR = process.env.VAULT_ADDR || "http://localhost:8200";
 const VAULT_TOKEN = process.env.VAULT_TOKEN || "";
 const VAULT_NAMESPACE = process.env.VAULT_NAMESPACE || "";
-const ENCRYPTION_KEY =
-  process.env.VAULT_ENCRYPTION_KEY || crypto.randomBytes(32).toString("hex");
+const ENCRYPTION_KEY = process.env.VAULT_ENCRYPTION_KEY || crypto.randomBytes(32).toString("hex");
 
 interface VaultSecret {
   id: string;
@@ -180,9 +180,7 @@ export class VaultService {
       const qrCode = await QRCode.toDataURL(secret.otpauth_url || "");
 
       // Generate backup codes
-      const backupCodes = Array.from({ length: 10 }, () =>
-        crypto.randomBytes(4).toString("hex").toUpperCase()
-      );
+      const backupCodes = Array.from({ length: 10 }, () => crypto.randomBytes(4).toString("hex").toUpperCase());
 
       // Save to database
       await prisma.users.update({
@@ -234,10 +232,7 @@ export class VaultService {
 
       // Try backup codes
       if (user.backupCodes) {
-        const backupCodes =
-          typeof user.backupCodes === "string"
-            ? (JSON.parse(user.backupCodes) as string[])
-            : [];
+        const backupCodes = typeof user.backupCodes === "string" ? (JSON.parse(user.backupCodes) as string[]) : [];
         const codeIndex = backupCodes.indexOf(token.toUpperCase());
 
         if (codeIndex !== -1) {
@@ -279,9 +274,7 @@ export class VaultService {
       let nextRotation: Date | null = null;
       if (rotationPolicy?.enabled && rotationPolicy.intervalDays > 0) {
         nextRotation = new Date();
-        nextRotation.setDate(
-          nextRotation.getDate() + rotationPolicy.intervalDays
-        );
+        nextRotation.setDate(nextRotation.getDate() + rotationPolicy.intervalDays);
       }
 
       await prisma.vault_secrets.create({
@@ -292,9 +285,7 @@ export class VaultService {
           iv,
           version: 1,
           metadata: metadata ? JSON.stringify(metadata) : undefined,
-          rotationPolicy: rotationPolicy
-            ? JSON.stringify({ ...rotationPolicy, nextRotation })
-            : undefined,
+          rotationPolicy: rotationPolicy ? JSON.stringify({ ...rotationPolicy, nextRotation }) : undefined,
           created_by: userId,
           last_rotated: null,
         },
@@ -350,17 +341,14 @@ export class VaultService {
         id: s.id,
         key: s.key,
         version: s.version,
-        metadata:
-          typeof s.metadata === "string"
-            ? JSON.parse(s.metadata)
-            : (s.metadata as any) ?? {},
+        metadata: typeof s.metadata === "string" ? JSON.parse(s.metadata) : ((s.metadata as any) ?? {}),
         created_by: s.created_by,
         createdAt: s.created_at,
         last_rotated: s.last_rotated || undefined,
         rotationPolicy:
           typeof s.rotationPolicy === "string"
             ? JSON.parse(s.rotationPolicy)
-            : (s.rotationPolicy as any) ?? undefined,
+            : ((s.rotationPolicy as any) ?? undefined),
       }));
     } catch (error) {
       console.error("❌ Failed to list secrets:", error);
@@ -371,11 +359,7 @@ export class VaultService {
   /**
    * Update secret
    */
-  async updateSecret(
-    key: string,
-    newValue: string,
-    userId: string
-  ): Promise<void> {
+  async updateSecret(key: string, newValue: string, userId: string): Promise<void> {
     try {
       const existing = await prisma.vault_secrets.findUnique({
         where: { key },
@@ -510,9 +494,7 @@ export class VaultService {
         },
       });
 
-      console.log(
-        `✅ AppRole created: ${name} (expires: ${expiresAt.toISOString()})`
-      );
+      console.log(`✅ AppRole created: ${name} (expires: ${expiresAt.toISOString()})`);
 
       return {
         roleId: appRole.id,
@@ -558,43 +540,60 @@ export class VaultService {
     if (!isValid) {
       throw new Error("Invalid or expired AppRole token");
     }
-
     return await this.getSecret(key);
   }
 
   /**
-   * Create audit log
+   * Regenerate backup codes for a user
    */
-  async createAuditLog(data: AuditLogData): Promise<void> {
+  async regenerateBackupCodes(userId: string, currentPassword: string): Promise<string[]> {
     try {
-      await prisma.vault_audit_logs.create({
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { passwordHash: true, email: true },
+      });
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Verify current password
+      const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isValid) {
+        throw new Error("Invalid current password");
+      }
+
+      // Generate new backup codes
+      const backupCodes = Array.from({ length: 10 }, () => crypto.randomBytes(4).toString("hex").toUpperCase());
+
+      await prisma.users.update({
+        where: { id: userId },
         data: {
-          id: crypto.randomUUID(),
-          user_id: data.userId,
-          action: data.action,
-          secret_key: data.secretKey,
-          timestamp: new Date(),
-          ip_address: data.ipAddress || null,
-          user_agent: data.userAgent || null,
-          success: data.success,
-          error_message: data.errorMessage || null,
-          mfa_verified: data.mfaVerified,
+          backupCodes: JSON.stringify(backupCodes),
+          updatedAt: new Date(),
         },
       });
+
+      await this.createAuditLog("BACKUP_CODES_REGENERATED", userId, "MFA", userId, {
+        email: user.email,
+      });
+
+      return backupCodes;
     } catch (error) {
-      console.error("❌ Failed to create audit log:", error);
+      console.error(`❌ Failed to regenerate backup codes for user ${userId}:`, error);
+      throw error;
     }
   }
 
   /**
    * Get audit logs
    */
-  async getAuditLogs(limit: number = 100, offset: number = 0) {
+  async getAuditLogs(limit = 100, offset = 0) {
     try {
-      const logs = await prisma.vault_audit_logs.findMany({
+      const logs = await prisma.audit_logs.findMany({
         take: limit,
         skip: offset,
-        orderBy: { timestamp: "desc" },
+        orderBy: { createdAt: "desc" },
       });
 
       return logs;

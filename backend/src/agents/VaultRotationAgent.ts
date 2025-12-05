@@ -41,9 +41,7 @@ export class VaultRotationAgent extends BaseAgent {
         };
       }
 
-      this.context.logger.info(
-        `Found ${secretsDue.length} secret(s) due for rotation`
-      );
+      this.context.logger.info(`Found ${secretsDue.length} secret(s) due for rotation`);
 
       // Find all admin users
       const admins = await this.context.prisma.users.findMany({
@@ -73,38 +71,28 @@ export class VaultRotationAgent extends BaseAgent {
         try {
           // Emit real-time Socket.IO alert
           if (this.context.io) {
-            this.context.io
-              .to(`user-${admin.id}`)
-              .emit("vault:rotation-alert", {
-                count: secretsDue.length,
-                secrets: secretsDue.map((s: any) => ({
-                  key: s.key,
-                  lastRotated: s.last_rotated,
-                  rotationPolicy: s.rotationPolicy,
-                })),
-                timestamp: new Date(),
-              });
+            this.context.io.to(`user-${admin.id}`).emit("vault:rotation-alert", {
+              count: secretsDue.length,
+              secrets: secretsDue.map((s: any) => ({
+                key: s.key,
+                lastRotated: s.last_rotated,
+                rotationPolicy: s.rotationPolicy,
+              })),
+              timestamp: new Date(),
+            });
           }
 
           // Create notification in database
-          await createNotification(
-            admin.id,
-            "vault_rotation_due",
-            `🔄 Secret Rotation Alert: ${secretsDue.length} secret(s) require rotation`,
-            {
-              count: secretsDue.length,
-              keys: secretsDue.map((s) => s.key),
-              timestamp: new Date().toISOString(),
-            }
-          );
+          await createNotification({
+            userId: admin.id,
+            type: "in-app",
+            message: `🔄 Secret Rotation Alert: ${secretsDue.length} secret(s) require rotation`,
+          });
           itemsProcessed++;
 
           this.context.logger.info(`Notified admin: ${admin.email}`);
         } catch (notifyError) {
-          this.context.logger.error(
-            `Failed to notify admin ${admin.email}`,
-            notifyError
-          );
+          this.context.logger.error(`Failed to notify admin ${admin.email}`, notifyError);
           errors++;
         }
       }
@@ -112,28 +100,26 @@ export class VaultRotationAgent extends BaseAgent {
       // Create audit logs for each secret
       for (const secret of secretsDue) {
         try {
-          await vaultService.createAuditLog({
-            userId: admins[0].id,
-            action: "ROTATION_CHECK_DUE",
-            secretKey: secret.key,
-            ipAddress: "system",
-            userAgent: "VaultRotationAgent",
-            success: true,
-            mfaVerified: false,
+          await this.context.prisma.vault_audit_logs.create({
+            data: {
+              id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              user_id: admins[0].id,
+              action: "ROTATION_CHECK_DUE",
+              secret_key: secret.key,
+              ip_address: "system",
+              user_agent: "VaultRotationAgent",
+              success: true,
+              mfa_verified: false,
+            },
           });
           itemsProcessed++;
         } catch (auditError) {
-          this.context.logger.error(
-            `Failed to create audit log for ${secret.key}`,
-            auditError
-          );
+          this.context.logger.error(`Failed to create audit log for ${secret.key}`, auditError);
           errors++;
         }
       }
 
-      this.context.logger.info(
-        `Rotation check completed. ${secretsDue.length} alert(s) sent`
-      );
+      this.context.logger.info(`Rotation check completed. ${secretsDue.length} alert(s) sent`);
 
       return {
         success: errors === 0,

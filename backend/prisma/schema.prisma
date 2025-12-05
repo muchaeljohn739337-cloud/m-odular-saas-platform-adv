@@ -2138,3 +2138,31 @@ model TaskTag {
   @@index([taskId])
   @@map("task_tags")
 }
+
+// ============================================================================
+// JOB QUEUE & BACKGROUND PROCESSING
+// ============================================================================
+
+model JobLog {
+  id          String    @id
+  type        String
+  status      String    // 'pending' | 'processing' | 'completed' | 'failed' | 'delayed'
+  data        String?   // JSON
+  result      String?   // JSON
+  error       String?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  priority    Int       @default(1)
+  delay       Int       @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  failedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([priority])
+  @@map("job_logs")
+}

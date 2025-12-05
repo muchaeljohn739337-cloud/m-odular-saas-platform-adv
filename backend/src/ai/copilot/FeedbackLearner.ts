@@ -15,7 +15,7 @@ export interface LearningMetrics {
 }
 
 export class FeedbackLearner {
-  async logInteraction(userId: number, sessionId: string, message: string, response: string): Promise<void> {
+  async logInteraction(userId: string, sessionId: string, message: string, response: string): Promise<void> {
     await prisma.copilot_interactions.create({
       data: {
         userId,
@@ -28,7 +28,7 @@ export class FeedbackLearner {
   }
 
   async logTaskSuccess(taskId: string, executionTime: number): Promise<void> {
-    await prisma.copilotTask.update({
+    await prisma.copilot_tasks.update({
       where: { id: taskId },
       data: {
         status: "completed",
@@ -41,7 +41,7 @@ export class FeedbackLearner {
   }
 
   async logTaskFailure(taskId: string, error: string): Promise<void> {
-    await prisma.copilotTask.update({
+    await prisma.copilot_tasks.update({
       where: { id: taskId },
       data: {
         status: "failed",
@@ -54,7 +54,7 @@ export class FeedbackLearner {
   }
 
   async logUserFeedback(taskId: string, userId: number, rating: number, comment?: string): Promise<void> {
-    await prisma.copilotFeedback.create({
+    await prisma.copilot_feedback.create({
       data: {
         taskId,
         userId,
@@ -70,7 +70,7 @@ export class FeedbackLearner {
   }
 
   async getStatistics(): Promise<LearningMetrics> {
-    const tasks = await prisma.copilotTask.findMany();
+    const tasks = await prisma.copilot_tasks.findMany();
 
     const totalTasks = tasks.length;
     const successfulTasks = tasks.filter((t) => t.status === "completed").length;
