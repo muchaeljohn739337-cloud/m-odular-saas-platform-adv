@@ -125,6 +125,13 @@ temp/
 ehthumbs.db
 Thumbs.db
 
+# Windows paths and GitHub Desktop cache
+AppData/
+LocalAppData/
+**/AppData/
+**/.chocolatey/
+**/GitHubDesktop/
+
 # Database files
 .prisma/
 *.db
