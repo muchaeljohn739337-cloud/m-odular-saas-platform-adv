@@ -1,12 +1,24 @@
+# Advancia PayLedger - Render Configuration
+# Last Updated: 2025-12-05
+# Documentation: https://render.com/docs/yaml-spec
+
 services:
+  # Backend API Service
   - type: web
     name: advancia-backend-upnrf
     runtime: node
     plan: free
     region: oregon
+    rootDir: backend
     autoDeploy: true
-    buildCommand: "cd backend && npm ci --production=false && npm run build"
-    startCommand: "cd backend && npm run start:render"
+    # Build: Install deps + compile TypeScript + generate Prisma Client
+    buildCommand: "npm ci --production=false && npm run build"
+    # Pre-Deploy: Run database migrations before starting
+    preDeployCommand: "npx prisma migrate deploy"
+    # Start: Generate Prisma Client + deploy migrations + start server
+    startCommand: "npm run start:render"
+    # Health check endpoint for monitoring
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
@@ -34,8 +46,16 @@ services:
         sync: false
       - key: VAPID_SUBJECT
         value: "mailto:support@advanciapayledger.com"
-    healthCheckPath: /api/health
+      - key: PORT
+        value: "4000"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: API_PREFIX
+        value: "/api"
+      - key: CORS_ORIGINS
+        value: "https://www.advanciapayledger.com,https://advanciapayledger.com"
 
+  # Frontend Next.js Application
   - type: web
     name: advancia-frontend
     runtime: node
@@ -43,7 +63,9 @@ services:
     region: virginia
     rootDir: frontend
     autoDeploy: true
+    # Build: Install deps + build Next.js production bundle
     buildCommand: npm ci && npm run build
+    # Start: Run Next.js production server
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -73,9 +95,12 @@ services:
       - key: NEXTAUTH_SECRET
         sync: false
 
+# PostgreSQL Database
 databases:
   - name: advancia-db
     databaseName: advancia_prod
     user: advancia_user
     plan: free
     region: virginia
+    # Note: Use Internal Database URL for backend DATABASE_URL env var
+    # Format: postgresql://advancia_user:[password]@[internal-host]/advancia_prod

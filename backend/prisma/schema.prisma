@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // NOTE: This configuration is correct for Prisma 6.x (current version: 6.19.0)
+  // Prisma 7 will require moving connection URL to prisma.config.ts
+  // The warning can be safely ignored until we upgrade to Prisma 7
 }
 
 model RPAExecution {
