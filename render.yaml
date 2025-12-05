@@ -54,6 +54,11 @@ services:
         value: "/api"
       - key: CORS_ORIGINS
         value: "https://www.advanciapayledger.com,https://advanciapayledger.com"
+      # Email Service (Resend)
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: "noreply@advanciapayledger.com"
       # Payment Gateway Integrations
       - key: CRYPTO_COM_API_KEY
         sync: false

@@ -138,6 +138,40 @@ async function sendEmail(notificationId: string, userId: string, subject: string
       return;
     }
 
+    // Try Resend first, fallback to SMTP
+    if (resendService.isEnabled()) {
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+          <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #3B82F6; margin-top: 0;">${subject}</h2>
+            <p style="color: #374151; line-height: 1.6; font-size: 16px;">${message}</p>
+            <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;" />
+            <p style="font-size: 12px; color: #6B7280;">
+              This is an automated notification from Advancia Pay Ledger.
+              <a href="${
+                process.env.FRONTEND_URL || "http://localhost:3000"
+              }/settings/notifications" style="color: #3B82F6; text-decoration: none;">Manage preferences</a>
+            </p>
+          </div>
+        </div>
+      `;
+
+      const result = await resendService.sendEmail({
+        to: user.email,
+        subject,
+        html,
+      });
+
+      if (result.success) {
+        await logDelivery(notificationId, "email", "sent");
+        console.log(`✅ Email sent via Resend to ${user.email}`);
+        return;
+      } else {
+        console.warn(`⚠️  Resend failed, falling back to SMTP: ${result.error}`);
+      }
+    }
+
+    // Fallback to SMTP if Resend is not available or failed
     await emailTransporter.sendMail({
       from: EMAIL_FROM,
       replyTo: EMAIL_REPLY_TO,
@@ -161,7 +195,7 @@ async function sendEmail(notificationId: string, userId: string, subject: string
     });
 
     await logDelivery(notificationId, "email", "sent");
-    console.log(`✅ Email sent to ${user.email}`);
+    console.log(`✅ Email sent via SMTP to ${user.email}`);
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
     await logDelivery(notificationId, "email", "failed", errorMsg);
