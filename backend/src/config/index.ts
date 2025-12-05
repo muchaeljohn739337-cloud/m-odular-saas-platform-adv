@@ -1,104 +1,108 @@
-import crypto from "crypto";
-import dotenv from "dotenv";
+import { parseConfig } from "./schema";
 
-dotenv.config();
+// Parse and validate configuration
+const config = parseConfig();
 
-/**
- * Decrypt an encrypted JWT secret
- */
-function decryptSecret(
-  encrypted: string,
-  keyHex: string,
-  ivHex: string
-): string {
-  const algorithm = "aes-256-cbc";
-  const key = Buffer.from(keyHex, "hex");
-  const iv = Buffer.from(ivHex, "hex");
+export default config;
 
-  const decipher = crypto.createDecipheriv(algorithm, key, iv);
-  let decrypted = decipher.update(encrypted, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-
-  return decrypted;
-}
+// Legacy exports for backward compatibility
 
 /**
- * Decode a Base64 encoded secret
+ * @deprecated Use config.database.url instead
  */
-function decodeBase64Secret(base64Secret: string): string {
-  return Buffer.from(base64Secret, "base64").toString("utf8");
-}
+export const DATABASE_URL = config.database.url;
+
+/**
+ * @deprecated Use config.database.ssl instead
+ */
+export const DATABASE_SSL = config.database.ssl;
+
+/**
+ * @deprecated Use config.database.pool.min instead
+ */
+export const DATABASE_POOL_MIN = config.database.pool.min;
+
+/**
+ * @deprecated Use config.database.pool.max instead
+ */
+export const DATABASE_POOL_MAX = config.database.pool.max;
+
+/**
+ * @deprecated Use config.server.port instead
+ */
+export const PORT = config.server.port;
+
+/**
+ * @deprecated Use config.server.host instead
+ */
+export const HOST = config.server.host;
+
+/**
+ * @deprecated Use config.server.cors.origins instead
+ */
+export const CORS_ORIGINS = config.server.cors.origins;
+
+/**
+ * @deprecated Use config.auth.jwtSecret instead
+ */
+export const JWT_SECRET = config.auth.jwtSecret;
+
+/**
+ * @deprecated Use config.auth.jwtExpiresIn instead
+ */
+export const JWT_EXPIRES_IN = config.auth.jwtExpiresIn;
+
+/**
+ * @deprecated Use config.auth.refreshTokenExpiresIn instead
+ */
+export const REFRESH_TOKEN_EXPIRES_IN = config.auth.refreshTokenExpiresIn;
+
+/**
+ * @deprecated Use config.auth.passwordSaltRounds instead
+ */
+export const PASSWORD_SALT_ROUNDS = config.auth.passwordSaltRounds;
+
+/**
+ * @deprecated Use config.redis.url instead
+ */
+export const REDIS_URL = config.redis.url;
+
+/**
+ * @deprecated Use config.redis.ttl instead
+ */
+export const REDIS_TTL = config.redis.ttl;
+
+/**
+ * @deprecated Use config.redis.prefix instead
+ */
+export const REDIS_PREFIX = config.redis.prefix;
+
+/**
+ * @deprecated Use config.sentry.dsn instead
+ */
+export const SENTRY_DSN = config.sentry.dsn;
+
+/**
+ * @deprecated Use config.sentry.environment instead
+ */
+export const SENTRY_ENVIRONMENT = config.sentry.environment;
+
+// Legacy functions for backward compatibility
 
 /**
  * Get JWT secret from environment with support for encrypted values
+ * @deprecated Use config.auth.jwtSecret instead
  */
 export function getJwtSecret(): string {
-  // Priority 1: Encrypted secret
-  if (
-    process.env.JWT_SECRET_ENCRYPTED &&
-    process.env.JWT_ENCRYPTION_KEY &&
-    process.env.JWT_ENCRYPTION_IV
-  ) {
-    try {
-      const secret = decryptSecret(
-        process.env.JWT_SECRET_ENCRYPTED,
-        process.env.JWT_ENCRYPTION_KEY,
-        process.env.JWT_ENCRYPTION_IV
-      );
-      console.log("✅ Using encrypted JWT secret");
-      return secret;
-    } catch (error) {
-      console.error("❌ Failed to decrypt JWT secret:", error);
-      throw new Error("Failed to decrypt JWT secret");
-    }
-  }
-
-  // Priority 2: Base64 encoded secret
-  if (process.env.JWT_SECRET_BASE64) {
-    try {
-      const secret = decodeBase64Secret(process.env.JWT_SECRET_BASE64);
-      console.log("✅ Using Base64 encoded JWT secret");
-      return secret;
-    } catch (error) {
-      console.error("❌ Failed to decode Base64 JWT secret:", error);
-      throw new Error("Failed to decode Base64 JWT secret");
-    }
-  }
-
-  // Priority 3: Plain secret
-  if (process.env.JWT_SECRET) {
-    console.log("✅ Using plain JWT secret");
-    return process.env.JWT_SECRET;
-  }
-
-  throw new Error("No JWT secret found in environment variables");
+  return config.auth.jwtSecret;
 }
 
 /**
  * Get allowed CORS origins
- * Supports multiple origins for production domain and development
+ * @deprecated Use config.server.cors.origins instead
  */
-function getAllowedOrigins(): string[] {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const set = new Set<string>();
-  if (frontendUrl) set.add(frontendUrl);
-
-  // Add production domain defaults (legacy)
-  if (process.env.NODE_ENV === "production") {
-    set.add("https://advanciapayledger.com");
-    set.add("https://www.advanciapayledger.com");
-    set.add("https://admin.advanciapayledger.com");
-    // Add specific Vercel deployment domains
-    set.add("https://frontend-kappa-murex-46.vercel.app");
-    // Allow current Vercel deployment domain
-    set.add("https://modular-saas-platform-frontend.vercel.app");
-  }
-
-  // Add Vercel preview/production domains
-  const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) {
-    set.add(`https://${vercelUrl}`);
-  }
+export function getAllowedOrigins(): string[] {
+  return config.server.cors.origins;
   // Also check for specific Vercel deployment URL pattern
   if (frontendUrl.includes("vercel.app")) {
     set.add(frontendUrl);
@@ -106,12 +110,9 @@ function getAllowedOrigins(): string[] {
 
   // Add localhost variants for development
   if (process.env.NODE_ENV !== "production") {
-    [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://127.0.0.1:3000",
-      "http://127.0.0.1:3001",
-    ].forEach((o) => set.add(o));
+    ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"].forEach((o) =>
+      set.add(o)
+    );
   }
 
   // Merge explicit ALLOWED_ORIGINS env (comma-separated)
@@ -152,7 +153,5 @@ console.log(`   Environment: ${config.nodeEnv}`);
 console.log(`   Frontend URL: ${config.frontendUrl}`);
 console.log(`   Allowed CORS Origins: ${config.allowedOrigins.join(", ")}`);
 if (!config.stripeSecretKey) {
-  console.warn(
-    "⚠️  STRIPE_SECRET_KEY not set. Payment endpoints will be disabled."
-  );
+  console.warn("⚠️  STRIPE_SECRET_KEY not set. Payment endpoints will be disabled.");
 }
