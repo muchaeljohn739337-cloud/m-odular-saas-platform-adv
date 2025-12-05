@@ -54,6 +54,17 @@ services:
         value: "/api"
       - key: CORS_ORIGINS
         value: "https://www.advanciapayledger.com,https://advanciapayledger.com"
+      # Payment Gateway Integrations
+      - key: CRYPTO_COM_API_KEY
+        sync: false
+      - key: CRYPTO_COM_SECRET_KEY
+        sync: false
+      - key: ALCHEMY_PAY_API_KEY
+        sync: false
+      - key: ALCHEMY_PAY_SECRET_KEY
+        sync: false
+      - key: ALCHEMY_PAY_MERCHANT_ID
+        sync: false
 
   # Frontend Next.js Application
   - type: web
