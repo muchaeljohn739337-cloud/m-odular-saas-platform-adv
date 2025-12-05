@@ -263,20 +263,20 @@
       "foreground": "#00BFFF",
       "iconColour": "#00BFFF"
     },
-    "AGENT:": {
-      "icon": "robot",
-      "foreground": "#FFD700",
-      "iconColour": "#FFD700"
+    "AGENT": {
+      "icon": "🤖",
+      "foreground": "#0000FF",
+      "iconColour": "#0000FF"
     },
     "RAG:": {
       "icon": "database",
       "foreground": "#9370DB",
       "iconColour": "#9370DB"
     },
-    "LLM:": {
-      "icon": "brain",
-      "foreground": "#FF6347",
-      "iconColour": "#FF6347"
+    "LLM": {
+      "icon": "🧠",
+      "foreground": "#800080",
+      "iconColour": "#800080"
     },
     "OPTIMIZE:": {
       "icon": "zap",
@@ -422,5 +422,6 @@
     "wagmi",
     "viem",
     "trpc"
-  ]
+  ],
+  "editor.aiStats.enabled": true
 }
