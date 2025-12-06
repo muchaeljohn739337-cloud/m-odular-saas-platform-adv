@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import express from "express";
 import http from "http";
 import jwt from "jsonwebtoken";
+import path from "path";
 import { Server as SocketIOServer } from "socket.io";
 import agentRoutes from "./agents/routes";
 import { getAgentScheduler } from "./agents/scheduler";
@@ -19,15 +20,16 @@ import { applySecurityMiddleware, forceHTTPS } from "./middleware/httpsEnforceme
 import { initializeIPTables, ipFilterMiddleware } from "./middleware/ipFilter";
 import { checkIPRoute, ipWhitelistMiddleware } from "./middleware/ipWhitelist";
 import {
-    initializeSecretProtection,
-    protectConsoleLogs,
-    secretProtectionMiddleware,
+  initializeSecretProtection,
+  protectConsoleLogs,
+  secretProtectionMiddleware,
 } from "./middleware/secretProtection";
 import { rateLimit, validateInput } from "./middleware/security";
 import { requireTailscaleAccess } from "./middleware/tailscale";
 import { requireTailscale } from "./middleware/tailscaleAuth";
 import prisma from "./prismaClient";
 import adminRouter from "./routes/admin";
+import adminLedgerRouter, { setAdminLedgerSocketIO } from "./routes/admin-ledger";
 import adminAIRouter from "./routes/adminAI";
 import adminDoctorsRouter from "./routes/adminDoctors";
 import adminSecurityRouter from "./routes/adminSecurity";
@@ -91,8 +93,10 @@ import transactionsRouter, { setTransactionSocketIO } from "./routes/transaction
 import adminUsersRouter, { setAdminUsersSocketIO } from "./routes/users";
 import vaultRouter, { setVaultSocketIO } from "./routes/vault";
 import withdrawalsRouter, { setWithdrawalSocketIO } from "./routes/withdrawals";
+import { jobService } from "./services/JobService";
 import { setSocketIO as setNotificationSocket } from "./services/notificationService";
 import { initSentry } from "./utils/sentry";
+// import { registerAllWorkers } from "./workers"; // Temporarily disabled - TS compilation errors
 // Load environment variables
 dotenv.config();
 
@@ -243,6 +247,19 @@ app.use("/api/seo", seoRouter); // SEO Automation & Sitemap Generation
 app.use("/api/social-media", socialMediaRouter); // Multi-Channel Auto-Posting (Twitter, LinkedIn, Facebook)
 app.use("/api/projects", projectRouter); // Project Management (Projects, Tasks, Sprints, Kanban)
 app.use("/api/exchange", exchangeRouter);
+app.use("/api/crypto/deposits", cryptoDepositsRouter); // Crypto Deposits - User-Facing API
+app.use("/api/crypto/withdrawals", cryptoWithdrawalsRouter); // Crypto Withdrawals - User-Facing API
+app.use("/api/crypto/admin", ipWhitelistMiddleware, cryptoAdminRouter); // Crypto Admin - Dad Console Approval
+app.use("/api/admin/ledger", ipWhitelistMiddleware, adminLedgerRouter); // Admin Financial Ledger - Deductions, Credits, Adjustments
+
+// Serve admin dashboard static files (must be after all API routes)
+const publicPath = path.join(__dirname, "../../public");
+app.use(express.static(publicPath));
+
+// Catch-all route for SPA - serve index.html for any non-API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
+});
 
 const io = new SocketIOServer(server, {
   cors: {
@@ -311,6 +328,9 @@ setAdminUsersSocketIO(io);
 setDebitCardSocketIO(io);
 setMedbedsSocketIO(io);
 setCryptoSocketIO(io);
+setCryptoDepositsSocketIO(io);
+setCryptoWithdrawalsSocketIO(io);
+setAdminLedgerSocketIO(io);
 setRewardSocketIO(io);
 setChatSocketIO(io);
 setSupportSocketIO(io);
@@ -409,6 +429,16 @@ async function startServer() {
       console.error("⚠️  Failed to initialize IP tables:", err);
     }
 
+    // Initialize Job Queue System (BullMQ + Redis)
+    try {
+      await jobService.initialize();
+      // registerAllWorkers(); // Temporarily disabled - TS compilation errors
+      console.log("✅ Job queue system initialized (Redis + BullMQ)");
+    } catch (err) {
+      console.error("⚠️  Failed to initialize job queue system:", err);
+      console.error("   Ensure Redis is running and environment variables are set");
+    }
+
     // Start HTTP server
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server is running on port ${PORT}`);
@@ -447,6 +477,9 @@ process.on("SIGTERM", async () => {
   const { shutdownGovernanceAI } = require("./ai/governance_integration");
   await shutdownGovernanceAI();
 
+  // Shutdown job queue system
+  await jobService.shutdown();
+
   process.exit(0);
 });
 
@@ -460,6 +493,9 @@ process.on("SIGINT", async () => {
 
   const { shutdownGovernanceAI } = require("./ai/governance_integration");
   await shutdownGovernanceAI();
+
+  // Shutdown job queue system
+  await jobService.shutdown();
 
   // Shutdown Prisma AI Solver and Multi-Brain Agent
   await multiBrainAgent.shutdown();

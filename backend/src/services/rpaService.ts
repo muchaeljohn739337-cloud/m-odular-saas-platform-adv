@@ -39,8 +39,8 @@ export async function createWorkflow(data: RPAWorkflowData) {
       name: data.name,
       description: data.description ?? null,
       // Avoid tight Prisma JSON typing to fix compile issues
-      trigger: (data.trigger as unknown) ?? {},
-      actions: (data.actions as unknown) ?? [],
+      trigger: (data.trigger as any) ?? {},
+      actions: (data.actions as any) ?? [],
       enabled: data.enabled !== false,
       createdById: data.createdById,
       updatedAt: now,
@@ -147,8 +147,8 @@ export async function executeWorkflow(data: RPAExecutionData) {
       id: executionId,
       workflowId: data.workflowId,
       status: "RUNNING",
-      trigger: (data.result as unknown) ?? {},
-      steps: [] as unknown as any[],
+      trigger: (data.result as any) ?? {},
+      steps: [] as any,
     },
   });
 

@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "🔧 Backend: Debug (TS via tsx)",
+      "name": "🔧 Backend: Debug",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
@@ -19,47 +19,7 @@
       "program": "${workspaceFolder}/backend/src/index.ts"
     },
     {
-      "name": "🎨 Frontend: Next.js Debug",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--inspect=9230",
-        "node_modules/next/dist/bin/next",
-        "dev"
-      ],
-      "cwd": "${workspaceFolder}/frontend",
-      "skipFiles": ["<node_internals>/"],
-      "console": "integratedTerminal",
-      "env": {
-        "NEXT_PUBLIC_API_URL": "http://localhost:4000",
-        "NEXTAUTH_URL": "http://localhost:3000"
-      }
-    },
-    {
-      "name": "Attach to Backend (9229)",
-      "type": "node",
-      "request": "attach",
-      "port": 9229
-    },
-    {
-      "name": "🧠 Debug Backend (Copilot Agent)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": ["<node_internals>/"],
-      "program": "${workspaceFolder}/backend/src/index.ts",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["--inspect=9229", "--loader", "tsx"],
-      "cwd": "${workspaceFolder}/backend",
-      "envFile": "${workspaceFolder}/backend/.env",
-      "env": {
-        "NODE_ENV": "development"
-      },
-      "console": "integratedTerminal",
-      "preLaunchTask": "Auto-Decrypt Env (if needed)"
-    },
-    {
-      "name": "Backend – Debug Prisma & API",
+      "name": "🔍 Backend: Debug Prisma & Database",
       "type": "node",
       "request": "launch",
       "skipFiles": ["<node_internals>/"],
@@ -73,11 +33,10 @@
         "DEBUG": "prisma:*",
         "PRISMA_LOG_LEVEL": "query"
       },
-      "console": "integratedTerminal",
-      "preLaunchTask": "Auto-Decrypt Env (if needed)"
+      "console": "integratedTerminal"
     },
     {
-      "name": "⚡ Debug Frontend (Next.js)",
+      "name": "⚡ Frontend: Debug Next.js",
       "type": "node",
       "request": "launch",
       "skipFiles": ["<node_internals>/"],
@@ -91,8 +50,14 @@
       "runtimeArgs": ["--inspect=9230"],
       "cwd": "${workspaceFolder}/frontend",
       "console": "integratedTerminal",
-      "preLaunchTask": "Wait for Backend (4000)",
-      "outFiles": ["${workspaceFolder}/frontend/.next//*.js"]
+      "outFiles": ["${workspaceFolder}/frontend/.next/**/*.js"]
+    },
+    {
+      "name": "🔗 Attach to Backend",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "skipFiles": ["<node_internals>/"]
     },
     {
       "name": "🐘 Prisma Studio",
@@ -102,27 +67,24 @@
       "args": ["studio"],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/backend",
-      "env": {
-        "DATABASE_URL": "${env:DATABASE_URL}"
-      }
+      "envFile": "${workspaceFolder}/backend/.env"
     },
     {
-      "name": "🤖 Run RPA Worker",
+      "name": "🤖 RPA Worker",
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/backend/scripts/rpaWorker.ts",
       "runtimeArgs": ["--loader", "tsx"],
       "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/backend/.env"
     }
   ],
   "compounds": [
     {
-      "name": "🚀 Full Stack Debug (Backend + Frontend)",
-      "configurations": [
-        "🧠 Debug Backend (Copilot Agent)",
-        "⚡ Debug Frontend (Next.js)"
-      ]
+      "name": "🚀 Full Stack: Backend + Frontend",
+      "configurations": ["🔧 Backend: Debug", "⚡ Frontend: Debug Next.js"],
+      "stopAll": true
     }
   ]
 }

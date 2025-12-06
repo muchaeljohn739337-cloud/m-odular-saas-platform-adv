@@ -1,16 +1,18 @@
-## Advancia Pay Ledger — AI agent working guide
+## Advancia Pay Ledger — AI Agent Working Guide
 
-Purpose: give AI coding agents the minimum, specific context to be productive in this repo without guesswork.
+Purpose: Give AI coding agents the minimum, specific context to be productive in this repo without guesswork.
 
-### Architecture and boundaries
+### Architecture and Boundaries
+
 - **Backend**: Node.js + Express + TypeScript, Prisma ORM, Socket.IO. Entry: `backend/src/index.ts`.
 - **Frontend**: Next.js 14 (App Router) in `frontend/` consuming `/api/**` from backend.
-- **Database**: PostgreSQL via Prisma with many models (see `backend/prisma/schema.prisma`). Use `backend/src/prismaClient.ts` to import a singleton PrismaClient.
-- **Realtime**: Socket.IO on the same HTTP server. Clients join per-user rooms: `join-room` → room `user-${userId}`. Server emits domain-specific events (transactions, notifications).
-- **Notifications**: web push + email + socket broadcast in `backend/src/services/notificationService.ts`. Socket instance is injected via `setSocketIO(io)` from `index.ts`.
-- **Config/CORS**: `backend/src/config/index.ts` computes `allowedOrigins` and other runtime config. CORS uses this list; add new origins there.
+- **Database**: PostgreSQL via Prisma with many models (see `backend/prisma/schema.prisma`). Always use `backend/src/prismaClient.ts` singleton.
+- **Realtime**: Socket.IO on the same HTTP server. Clients join per-user rooms: `join-room` → room `user-${userId}`. Server emits domain-specific events.
+- **Notifications**: Web push + email + socket broadcast in `backend/src/services/notificationService.ts`. Socket instance injected via `setSocketIO(io)` from `index.ts`.
+- **Config/CORS**: `backend/src/config/index.ts` computes `allowedOrigins`. Add new origins there, not in middleware directly.
 
 ### Mom-Shield-Dad Architecture (Critical)
+
 This platform implements autonomous AI security + incident response via 5 core systems working together:
 
 1. **Mom AI Core** (`backend/src/ai/mom-core/`) - Autonomous incident handling with 4 specialized agents:
@@ -37,6 +39,7 @@ This platform implements autonomous AI security + incident response via 5 core s
    - IP-whitelisted. API: `/api/dad/*` (requires admin role)
 
 ### Key runtime behaviors and cross-cutting concerns
+
 - Rate limiting applies to all `/api/**` (see `rateLimit` middleware in `backend/src/index.ts`).
 - Stripe webhook requires raw body on `/api/payments/webhook` before `express.json()`. Don't move middleware order.
 - AuthN/AuthZ: JWT with `authenticateToken` and role gates via `allowRoles/requireAdmin` (see `backend/src/middleware/auth.ts` and usages in routes like `users.ts`, `support.ts`). Some routes also check an `x-api-key` header in development-friendly way (see `routes/auth.ts`).
@@ -44,12 +47,14 @@ This platform implements autonomous AI security + incident response via 5 core s
 - Background jobs: `node-cron` schedules notification fallback emails in `index.ts`.
 
 ### Route conventions and wiring
+
 - Routers live in `backend/src/routes/*.ts`. Each exports an Express router:
   - Example: `tokens.ts`, `rewards.ts`, `auth.ts`, `system.ts`, `users.ts`, `support.ts`.
 - Register routers in `backend/src/index.ts` under `/api/<name>` in the "Registering routes" section. Keep the Stripe webhook raw-body line before `express.json()`.
 - Input validation and security headers live in `backend/src/middleware/security.ts`; reuse `validateInput`, `securityHeaders` if adding endpoints.
 
 ### Data model hot spots (Prisma)
+
 - Core models: `User`, `Transaction`, `TokenWallet`, `TokenTransaction`, `Reward`, `UserTier`, `AuditLog`, crypto orders/withdrawals, notifications, support, and Ethereum activity.
 - When you add or change schema:
   - Update `backend/prisma/schema.prisma` → run `npx prisma migrate dev` in `backend`.
@@ -57,10 +62,12 @@ This platform implements autonomous AI security + incident response via 5 core s
   - Verify with `npx prisma studio`.
 
 ### Realtime and notifications
+
 - To emit to a specific user: join room `user-${userId}` then `io.to(`user-${userId}`).emit(''event'', payload)`.
 - Notification service sends socket, push (web-push), and email (nodemailer). Environment keys: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `EMAIL_USER`, `EMAIL_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`.
 
 ### External integrations
+
 - **Authentication (Email-Only OTP)**: Twilio SMS removed for cost savings ($18-27/year saved). Authentication now uses:
   - Email OTP via Gmail SMTP (free) - see `routes/auth.ts`
   - Password login with bcrypt hashing
@@ -77,12 +84,14 @@ This platform implements autonomous AI security + incident response via 5 core s
   - Middleware (`backend/src/middleware/cloudflare.ts`): Real IP detection, security headers
 
 ### Production domains and URLs
+
 - **Primary production domain**: `https://www.advanciapayledger.com` (redirects to `https://advanciapayledger.com`)
 - **Frontend production**: `https://advanciapayledger.com` (deployed on Vercel)
 - **API production**: `https://api.advanciapayledger.com` (deployed on Render)
 - **Admin subdomain**: `https://admin.advanciapayledger.com` (if configured)
 
 ### Deployment instructions
+
 - **Full deployment guide**: See `.github/copilot-deployment-instructions.md` for comprehensive auto-deployment instructions
 - **Quick deploy**: Run `.\scripts\ADVANCIA-FULL-DEPLOY.ps1` for full stack deployment
 - **Backend only**: `cd backend && render deploy` or git push to trigger auto-deploy
@@ -93,22 +102,49 @@ This platform implements autonomous AI security + incident response via 5 core s
 - When adding new features or routes, ensure CORS allows these production domains in `backend/src/config/index.ts`.
 - Always test production URLs after deployment: `https://api.advanciapayledger.com/api/health`
 
-### Local dev workflows (Windows PowerShell)
-- Backend: `cd backend && npm install && npm run dev` (uses ts-node-dev on `src/index.ts`, server at http://localhost:4000).
-- Frontend: `cd frontend && npm install && npm run dev` (Next.js at http://localhost:3000, expects API at http://localhost:4000).
-- Database: run Postgres locally or Docker; set `DATABASE_URL` in `backend/.env`. First time: `npx prisma migrate dev`.
-- Prisma Studio: `cd backend && npx prisma studio`.
+### Local Dev Workflows (Linux/WSL/Bash)
+```bash
+# Backend (Port 4000)
+cd backend && npm install && npm run dev  # ts-node-dev watches src/
 
-### Debugging patterns
-- Node inspector examples (PowerShell):
-  - Backend: `node --inspect=9229 -r ts-node/register backend/src/index.ts` or launch via VS Code.
-  - Next.js: `node --inspect=9230 node_modules/next/dist/bin/next dev`.
-- Sample VS Code launch config (place in `.vscode/launch.json`):
-  - Backend attach: `{ "name": "Attach to Backend (9229)", "type": "node", "request": "attach", "port": 9229 }`.
-  - Alternatively run backend with tsx register: runtimeArgs `["--inspect=9229", "-r", "tsx/register", "backend/src/index.ts"]`.
-- Use `debugger` inside route handlers to break, e.g. in `router.post(...)`.
+# Frontend (Port 3000)
+cd frontend && npm install && npm run dev  # Next.js dev server
+
+# Database Setup (First Time)
+cd backend
+npx prisma migrate dev                     # Apply migrations
+npx prisma studio                          # Open GUI browser
+
+# Tests (Jest with --forceExit prevents hanging)
+npm test                                   # All tests
+npm run test:coverage                      # With coverage report
+```
+
+### Critical Workflow Gotchas
+- **Middleware Order**: Stripe webhook raw body handler MUST come before `express.json()` in `backend/src/index.ts` (~line 120). Never reorder.
+- **Socket.IO Injection**: Routes receive socket via setter functions like `setTransactionSocketIO(io)` called in `index.ts`. Check route file exports.
+- **Prisma Singleton**: Always `import prisma from './prismaClient'`. Never `new PrismaClient()` in route files.
+- **Decimal Fields**: Prisma Decimal types crash JSON.stringify. Use `serializeDecimal()` from `backend/src/utils/decimal.ts` before responses.
+- **CORS Config**: Add origins to `backend/src/config/index.ts` `allowedOrigins` array only. Middleware reads from there.
+
+### Debugging Patterns
+```bash
+# Backend debug mode
+node --inspect=9229 -r ts-node/register backend/src/index.ts
+
+# VS Code launch.json
+{
+  "name": "Backend Debug",
+  "type": "node",
+  "request": "attach",
+  "port": 9229,
+  "skipFiles": ["<node_internals>/**"]
+}
+```
+Use `debugger;` statement in route handlers for breakpoints.
 
 ### AI Agent System (47+ agents)
+
 - **Mom AI Core**: 5 agents (AnalysisAgent, SolutionAgent, DecisionAgent, LearningAgent, MomAICore orchestrator)
 - **Multi-Agent Orchestrator** (`backend/src/ai-expansion/orchestrator/MultiAgentOrchestrator.ts`): 6 agents (analyst, coder, writer, researcher, planner, reviewer)
 - **Business Agents** (`backend/src/agents/`): 21+ specialized agents (AIBuilderAgent, BugFixAgent, SecurityFraudAgent, TransactionAuditAgent, etc.)
@@ -116,18 +152,21 @@ This platform implements autonomous AI security + incident response via 5 core s
 - Agent scheduler (`backend/src/agents/AgentScheduler.ts`) manages all agents with cron schedules
 - Agents extend `BaseAgent` class with `execute()` method. API: `GET /api/agents/rpa/status`, `POST /api/agents/rpa/trigger`
 
-### Implementation tips specific to this repo
-- Always import Prisma via `backend/src/prismaClient.ts` to avoid multiple clients.
-- Convert Prisma Decimal to string in responses using `backend/src/utils/decimal.ts` helpers.
-- When adding a new route that emits events, inject `io` via helper (see `setSocketIO` in notification service or `setTokenSocketIO` in `routes/tokens.ts`).
-- Respect CORS policy: add new dev origins in `backend/src/config/index.ts` so the middleware allows them.
-- Keep `/api/payments/webhook` raw-body middleware before any JSON parser.
-- When creating AI incidents, use Mom AI Core workflow: `momAICore.handleIncident()` returns decision with risk level and approval requirements.
-- For secure file uploads, use R2 Storage with user isolation: `uploadToR2({ userId, category, filename, buffer })` - files stored as `category/userId/timestamp-filename`.
-- Wrangler commands available via `npx wrangler` for Cloudflare operations (R2, Workers, AI).
+### Implementation Tips Specific to This Repo
+
+- **Prisma**: Always `import prisma from './prismaClient'` to avoid multiple client instances. Never instantiate directly.
+- **Decimals**: Convert Prisma Decimal to string in responses: `serializeDecimal(value)` or `serializeDecimalFields(object, ['amount', 'balance'])`.
+- **Socket.IO**: Routes get `io` via setter functions (`setTransactionSocketIO(io)` in `index.ts`). Export setter from route file, call in `index.ts`.
+- **CORS**: Add origins to `backend/src/config/index.ts` `allowedOrigins` array. Never hardcode in middleware.
+- **Stripe Webhook**: Raw body middleware must precede `express.json()` in `backend/src/index.ts` line ~120. Critical for signature verification.
+- **Mom AI Incidents**: Use `momAICore.handleIncident({ type, severity, metadata })` → returns `{ decision, riskLevel, requiresApproval }`.
+- **File Uploads**: Use R2 Storage with isolation: `uploadToR2({ userId, category, filename, buffer })` stores as `category/userId/timestamp-filename`.
+- **Cloudflare**: Use `npx wrangler` for R2/Workers/AI operations (bucket list, deploy, logs).
 
 ### Key commands for development
+
 **Backend:**
+
 ```bash
 cd backend && npm install          # Install dependencies
 npm run dev                        # Start dev server (ts-node-dev, port 4000)
@@ -139,6 +178,7 @@ node --inspect=9229 -r ts-node/register src/index.ts  # Debug mode
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend && npm install         # Install dependencies
 npm run dev                        # Start Next.js (port 3000)
@@ -147,6 +187,7 @@ npm run lint                       # ESLint check
 ```
 
 **Deployment:**
+
 ```bash
 ./scripts/ADVANCIA-FULL-DEPLOY.ps1  # Full stack deployment (Windows)
 cd backend && render deploy          # Backend only (Render)
@@ -156,6 +197,7 @@ npx wrangler deploy backend/cloudflare-worker.js  # Deploy Worker
 ```
 
 ### Files to read first for context
+
 - `backend/src/index.ts` (server, middleware order, route wiring, Socket.IO, cron, agent initialization)
 - `backend/src/config/index.ts` (origins, ports, env derivation)
 - `backend/src/ai/mom-core/index.ts` (Mom AI workflow: analyze → solve → decide → learn)
@@ -167,6 +209,7 @@ npx wrangler deploy backend/cloudflare-worker.js  # Deploy Worker
 - `frontend/README.md` and `backend/README.md` (commands and structure)
 
 ### Critical documentation
+
 - `MOM_SHIELD_DAD_COMPLETE.md` - Complete architecture guide (827 lines)
 - `DAD_CONSOLE_GUIDE.md` - Admin oversight system (535 lines)
 - `UNIFIED_AI_GATEWAY_SETUP.md` - Multi-provider AI integration

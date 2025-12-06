@@ -247,9 +247,9 @@ export class EmailService {
       await prisma.audit_logs.create({
         data: {
           action: "EMAIL_SEND_FAILED",
-          user_id: null,
-          resource_type: "EMAIL",
-          resource_id: options.template,
+          userId: null,
+          resourceType: "EMAIL",
+          resourceId: options.template,
           changes: JSON.stringify(options),
           metadata: JSON.stringify({
             error: error.message,

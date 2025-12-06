@@ -3,8 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // NOTE: This configuration is correct for Prisma 6.x (current version: 6.19.0)
+  // Prisma 7 will require moving connection URL to prisma.config.ts
+  // The warning can be safely ignored until we upgrade to Prisma 7
 }
 
 model RPAExecution {
@@ -210,12 +213,14 @@ model app_roles {
 model audit_logs {
   id             String   @id
   userId         String?
+  adminId        String?  // Admin who performed the action (for ledger operations)
   action         String
-  resourceType   String
-  resourceId     String
+  resourceType   String?  // Made optional for ledger operations
+  resourceId     String?  // Made optional for ledger operations
   changes        Json?
   previousValues Json?
   newValues      Json?
+  details        Json?    // Additional details for financial operations
   metadata       Json?
   ipAddress      String?
   userAgent      String?
@@ -223,11 +228,15 @@ model audit_logs {
   timestamp      DateTime @default(now())
   createdAt      DateTime @default(now())
 
+  user  users? @relation("audit_user_rel", fields: [userId], references: [id], onDelete: Cascade)
+  admin users? @relation("audit_admin_rel", fields: [adminId], references: [id], onDelete: Cascade)
+
   @@index([createdAt])
   @@index([timestamp])
   @@index([resourceId])
   @@index([resourceType])
   @@index([userId])
+  @@index([adminId])
 }
 
 model backup_codes {
@@ -1112,6 +1121,27 @@ model users {
   taskComments       TaskComment[]        @relation("TaskComments")
   taskAttachments    TaskAttachment[]     @relation("TaskAttachments")
   timeEntries        TimeEntry[]          @relation("TimeEntries")
+  
+  // Financial Ledger Relations
+  ledger_entries     financial_ledger[]   @relation("ledger_user")
+  ledger_actions     financial_ledger[]   @relation("ledger_actor")
+  
+  // Audit Log Relations
+  audit_logs_user    audit_logs[]         @relation("audit_user_rel")
+  audit_logs_admin   audit_logs[]         @relation("audit_admin_rel")
+  
+  // Account suspension (uses existing blockedAt/blockedBy fields)
+  suspended          Boolean              @default(false)
+  
+  // User Wallet Relations
+  wallets            user_wallets[]       @relation("user_wallet_owner")
+  
+  // Crypto Relations
+  crypto_deposits_made     crypto_deposits[]       @relation("crypto_deposit_user")
+  crypto_deposits_reviewed crypto_deposits[]       @relation("crypto_deposit_reviewer")
+  crypto_ledger_user       crypto_ledger[]         @relation("crypto_ledger_user")
+  crypto_ledger_actor      crypto_ledger[]         @relation("crypto_ledger_actor")
+  crypto_balances          user_crypto_balances[]  @relation("user_crypto_balance")
 }
 
 model vault_audit_logs {
@@ -2138,3 +2168,157 @@ model TaskTag {
   @@index([taskId])
   @@map("task_tags")
 }
+
+// ============================================================================
+// JOB QUEUE & BACKGROUND PROCESSING
+// ============================================================================
+
+model JobLog {
+  id          String    @id
+  type        String
+  status      String    // 'pending' | 'processing' | 'completed' | 'failed' | 'delayed'
+  data        String?   // JSON
+  result      String?   // JSON
+  error       String?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  priority    Int       @default(1)
+  delay       Int       @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  failedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([priority])
+  @@map("job_logs")
+}
+
+// ============================================================
+// FINANCIAL LEDGER SYSTEM
+// ============================================================
+// Purpose: Track all admin financial operations
+// Features: Deductions, Credits, Adjustments with audit trail
+// ============================================================
+
+model financial_ledger {
+  id        String   @id
+  userId    String
+  type      String   // 'DEDUCTION' | 'CREDIT' | 'ADJUSTMENT'
+  amount    Decimal  @db.Decimal(18, 8)
+  currency  String
+  actorId   String   // Admin who performed the action
+  reason    String   @db.Text
+  status    String   // 'PENDING' | 'APPROVED' | 'REJECTED'
+  txHash    String?  // Optional blockchain transaction hash
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  user  users @relation("ledger_user", fields: [userId], references: [id], onDelete: Cascade)
+  actor users @relation("ledger_actor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([actorId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("financial_ledger")
+}
+
+model user_wallets {
+  id        String   @id
+  userId    String
+  currency  String   // 'USD', 'BTC', 'ETH', 'USDT', 'USDC', 'DAI'
+  balance   Decimal  @default(0) @db.Decimal(18, 8)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  user users @relation("user_wallet_owner", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency], name: "userId_currency")
+  @@index([userId])
+  @@index([currency])
+  @@map("user_wallets")
+}
+
+// ============================================================
+// CRYPTO TRANSACTION SYSTEM (Additional Models)
+// ============================================================
+// Note: crypto_withdrawals already exists above (line ~492)
+// Adding new models for comprehensive crypto tracking
+// ============================================================
+
+model crypto_deposits {
+  id             String    @id
+  userId         String
+  currency       String    // 'BTC', 'ETH', 'USDT', 'USDC', 'DAI'
+  amount         Decimal   @db.Decimal(18, 8)
+  walletAddress  String    // Deposit address
+  txHash         String?   // Blockchain transaction hash
+  status         String    // 'PENDING', 'APPROVED', 'REJECTED', 'CONFIRMED'
+  reviewedBy     String?   // Admin ID who approved/rejected
+  reviewedAt     DateTime?
+  rejectionReason String?  @db.Text
+  momIncidentId  String?   // Link to Mom AI incident
+  confirmations  Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+
+  user     users  @relation("crypto_deposit_user", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer users? @relation("crypto_deposit_reviewer", fields: [reviewedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([currency])
+  @@index([createdAt])
+  @@map("crypto_deposits")
+}
+
+model crypto_ledger {
+  id        String   @id
+  userId    String
+  type      String   // 'DEPOSIT', 'WITHDRAWAL', 'ADJUSTMENT'
+  amount    Decimal  @db.Decimal(18, 8)
+  currency  String
+  txHash    String?
+  actorId   String   // Admin or system who performed action
+  status    String   // 'PENDING', 'APPROVED', 'REJECTED'
+  createdAt DateTime @default(now())
+
+  user  users @relation("crypto_ledger_user", fields: [userId], references: [id], onDelete: Cascade)
+  actor users @relation("crypto_ledger_actor", fields: [actorId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([currency])
+  @@index([createdAt])
+  @@map("crypto_ledger")
+}
+
+model user_crypto_balances {
+  id        String   @id
+  userId    String
+  currency  String
+  balance   Decimal  @default(0) @db.Decimal(18, 8)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  user users @relation("user_crypto_balance", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency], name: "userId_currency")
+  @@index([userId])
+  @@index([currency])
+  @@map("user_crypto_balances")
+}
+
+// Note: audit_logs model already exists above with fields:
+// - id, userId, adminId, action, details, timestamp, etc.
+// - Updated to support financial ledger operations
+
+// Add suspended field to users model for account freeze/unfreeze
+// Note: This requires adding to existing users model if not present
+// suspended Boolean @default(false)
+

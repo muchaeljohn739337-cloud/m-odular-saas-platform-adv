@@ -14,7 +14,7 @@ export class MarketIntelligenceAgent extends BaseAgent {
       retryAttempts: 3,
       timeout: 90000,
       priority: "medium",
-      description: "Monitors cryptocurrency markets and detects crises"
+      description: "Monitors cryptocurrency markets and detects crises",
     };
     super(config, context);
   }
@@ -42,37 +42,37 @@ export class MarketIntelligenceAgent extends BaseAgent {
       // Step 4: Store market intelligence data
       await this.context.prisma.market_intelligence.create({
         data: {
+          id: `intel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           source: "CoinGecko+NewsAPI",
-          data_type: "price-sentiment",
-          insights: {
+          category: "price-sentiment",
+          data: {
             prices,
             anomalies,
             sentiment: newsSentiment,
-            timestamp: new Date()
+            timestamp: new Date(),
           },
-          confidence: 0.85,
-          analyzed_at: new Date()
-        }
+          sentiment: newsSentiment.overall || null,
+          importance: 8,
+        },
       });
       itemsProcessed++;
 
       // Step 5: Detect crisis conditions
       const crisisDetected = this.evaluateCrisisConditions(prices, anomalies, newsSentiment);
-      
+
       if (crisisDetected) {
         await this.context.prisma.crisis_events.create({
           data: {
-            eventType: "MARKET_CRISIS",
-            severity: this.calculateSeverity(anomalies),
+            id: `crisis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: "MARKET_CRISIS",
+            severity: Number(this.calculateSeverity(anomalies)),
             description: `Market crisis detected: ${anomalies.length} price anomalies, sentiment: ${newsSentiment.overall}`,
-            detectedAt: new Date(),
-            status: "ACTIVE",
-            metadata: {
+            indicators: {
               anomalies,
               sentiment: newsSentiment,
-              prices
-            }
-          }
+              prices,
+            },
+          },
         });
         itemsProcessed++;
 
@@ -80,16 +80,16 @@ export class MarketIntelligenceAgent extends BaseAgent {
         if (this.context.io) {
           const admins = await this.context.prisma.users.findMany({
             where: { role: "ADMIN" },
-            select: { id: true }
+            select: { id: true },
           });
 
-          admins.forEach(admin => {
+          admins.forEach((admin) => {
             this.context.io?.to(`user-${admin.id}`).emit("market:crisis", {
               type: "warning",
               title: "Market Crisis Detected",
               message: `${anomalies.length} crypto price anomalies detected`,
               severity: this.calculateSeverity(anomalies),
-              timestamp: new Date()
+              timestamp: new Date(),
             });
           });
         }
@@ -99,9 +99,9 @@ export class MarketIntelligenceAgent extends BaseAgent {
       if (this.context.io) {
         this.context.io.emit("market:update", {
           prices,
-          anomalies: anomalies.map(a => ({ symbol: a.symbol, change: a.changePercent })),
+          anomalies: anomalies.map((a) => ({ symbol: a.symbol, change: a.changePercent })),
           sentiment: newsSentiment.overall,
-          timestamp: new Date()
+          timestamp: new Date(),
         });
       }
 
@@ -112,18 +112,17 @@ export class MarketIntelligenceAgent extends BaseAgent {
           prices: prices.length,
           anomalies: anomalies.length,
           sentiment: newsSentiment.overall,
-          crisisDetected
+          crisisDetected,
         },
-        metrics: { itemsProcessed, errors, duration: Date.now() - startTime }
+        metrics: { itemsProcessed, errors, duration: Date.now() - startTime },
       };
-
     } catch (error: any) {
       this.context.logger.error("MarketIntelligenceAgent failed", error);
       return {
         success: false,
         message: error.message || "Market analysis failed",
         data: { error: error.message },
-        metrics: { itemsProcessed, errors: errors + 1, duration: Date.now() - startTime }
+        metrics: { itemsProcessed, errors: errors + 1, duration: Date.now() - startTime },
       };
     }
   }
@@ -135,16 +134,16 @@ export class MarketIntelligenceAgent extends BaseAgent {
           ids: "bitcoin,ethereum,tether,binancecoin,cardano,ripple",
           vs_currencies: "usd",
           include_24hr_change: true,
-          include_market_cap: true
+          include_market_cap: true,
         },
-        timeout: 10000
+        timeout: 10000,
       });
 
       return Object.entries(response.data).map(([id, data]: [string, any]) => ({
         symbol: id.toUpperCase(),
         price: data.usd,
         change24h: data.usd_24h_change || 0,
-        marketCap: data.usd_market_cap || 0
+        marketCap: data.usd_market_cap || 0,
       }));
     } catch (error) {
       this.context.logger.error("Failed to fetch crypto prices", error);
@@ -161,7 +160,7 @@ export class MarketIntelligenceAgent extends BaseAgent {
           symbol: price.symbol,
           changePercent: price.change24h,
           currentPrice: price.price,
-          severity: Math.abs(price.change24h) > 20 ? "HIGH" : "MEDIUM"
+          severity: Math.abs(price.change24h) > 20 ? "HIGH" : "MEDIUM",
         });
       }
     }
@@ -169,7 +168,12 @@ export class MarketIntelligenceAgent extends BaseAgent {
     return anomalies;
   }
 
-  private async fetchNewsSentiment(): Promise<{ overall: string; positive: number; negative: number; neutral: number }> {
+  private async fetchNewsSentiment(): Promise<{
+    overall: string;
+    positive: number;
+    negative: number;
+    neutral: number;
+  }> {
     try {
       if (!process.env.NEWS_API_KEY) {
         return { overall: "unknown", positive: 0, negative: 0, neutral: 0 };
@@ -180,9 +184,9 @@ export class MarketIntelligenceAgent extends BaseAgent {
           q: "cryptocurrency OR bitcoin OR ethereum",
           sortBy: "publishedAt",
           pageSize: 20,
-          apiKey: process.env.NEWS_API_KEY
+          apiKey: process.env.NEWS_API_KEY,
         },
-        timeout: 10000
+        timeout: 10000,
       });
 
       const articles = response.data.articles || [];
@@ -192,7 +196,7 @@ export class MarketIntelligenceAgent extends BaseAgent {
 
       articles.forEach((article: any) => {
         const text = `${article.title} ${article.description}`.toLowerCase();
-        
+
         if (text.match(/crash|drop|fall|bear|panic|crisis/)) {
           negative++;
         } else if (text.match(/bull|rise|surge|gain|rally|high/)) {
@@ -213,15 +217,15 @@ export class MarketIntelligenceAgent extends BaseAgent {
   }
 
   private evaluateCrisisConditions(prices: any[], anomalies: any[], sentiment: any): boolean {
-    const highSeverityAnomalies = anomalies.filter(a => a.severity === "HIGH").length;
+    const highSeverityAnomalies = anomalies.filter((a) => a.severity === "HIGH").length;
     const negativeSentiment = sentiment.overall === "negative";
-    
+
     return (anomalies.length >= 3 && negativeSentiment) || highSeverityAnomalies >= 2;
   }
 
   private calculateSeverity(anomalies: any[]): string {
-    const highSeverity = anomalies.filter(a => a.severity === "HIGH").length;
-    
+    const highSeverity = anomalies.filter((a) => a.severity === "HIGH").length;
+
     if (highSeverity >= 3) return "CRITICAL";
     if (highSeverity >= 1 || anomalies.length >= 4) return "HIGH";
     if (anomalies.length >= 2) return "MEDIUM";
