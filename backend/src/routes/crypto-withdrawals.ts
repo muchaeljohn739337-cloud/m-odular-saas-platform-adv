@@ -30,7 +30,7 @@ router.post("/", authenticateToken, async (req, res) => {
     }
 
     // Check user balance
-    const userBalance = await prisma.userCryptoBalance.findUnique({
+    const userBalance = await prisma.user_crypto_balances.findUnique({
       where: { userId_currency: { userId, currency } },
     });
 
@@ -53,7 +53,7 @@ router.post("/", authenticateToken, async (req, res) => {
     const platformWallet = await getPlatformWallet(currency);
 
     // Create pending withdrawal
-    const withdrawal = await prisma.cryptoWithdrawal.create({
+    const withdrawal = await prisma.crypto_withdrawals.create({
       data: {
         userId,
         amount: new Decimal(amount),
@@ -68,7 +68,7 @@ router.post("/", authenticateToken, async (req, res) => {
     });
 
     // Deduct from available balance (hold)
-    await prisma.userCryptoBalance.update({
+    await prisma.user_crypto_balances.update({
       where: { userId_currency: { userId, currency } },
       data: {
         balance: {
@@ -112,7 +112,7 @@ router.post("/", authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      withdrawal: serializeDecimalFields(withdrawal, ["amount", "networkFee", "totalAmount"]),
+      withdrawal: serializeDecimalFields(withdrawal),
       message: "Withdrawal request submitted successfully",
       requiresApproval: withdrawal.requiresApproval,
     });
@@ -127,14 +127,14 @@ router.get("/history", authenticateToken, async (req, res) => {
   const userId = req.user!.userId;
 
   try {
-    const withdrawals = await prisma.cryptoWithdrawal.findMany({
+    const withdrawals = await prisma.crypto_withdrawals.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: 50,
     });
 
     res.json({
-      withdrawals: withdrawals.map((w) => serializeDecimalFields(w, ["amount", "networkFee", "totalAmount"])),
+      withdrawals: withdrawals.map((w) => serializeDecimalFields(w)),
     });
   } catch (error) {
     console.error("Get withdrawals error:", error);
@@ -202,7 +202,7 @@ function shouldRequireApproval(amount: string, currency: string): boolean {
 
 // Helper: Process withdrawal (execute blockchain tx)
 async function processWithdrawal(withdrawalId: string) {
-  const withdrawal = await prisma.cryptoWithdrawal.findUnique({
+  const withdrawal = await prisma.crypto_withdrawals.findUnique({
     where: { id: withdrawalId },
     include: { user: true },
   });
@@ -219,7 +219,7 @@ async function processWithdrawal(withdrawalId: string) {
     );
 
     // Update withdrawal with tx hash
-    await prisma.cryptoWithdrawal.update({
+    await prisma.crypto_withdrawals.update({
       where: { id: withdrawalId },
       data: {
         txHash,
@@ -253,13 +253,13 @@ async function processWithdrawal(withdrawalId: string) {
     console.error("Process withdrawal error:", error);
 
     // Mark as failed and refund
-    await prisma.cryptoWithdrawal.update({
+    await prisma.crypto_withdrawals.update({
       where: { id: withdrawalId },
       data: { status: "FAILED" },
     });
 
     // Refund to user balance
-    await prisma.userCryptoBalance.update({
+    await prisma.user_crypto_balances.update({
       where: {
         userId_currency: {
           userId: withdrawal.userId,
@@ -285,7 +285,7 @@ async function processWithdrawal(withdrawalId: string) {
 
 // Helper: Analyze withdrawal (async)
 async function analyzeWithdrawalAsync(withdrawalId: string) {
-  const withdrawal = await prisma.cryptoWithdrawal.findUnique({
+  const withdrawal = await prisma.crypto_withdrawals.findUnique({
     where: { id: withdrawalId },
     include: { user: true },
   });
@@ -293,7 +293,7 @@ async function analyzeWithdrawalAsync(withdrawalId: string) {
   if (!withdrawal) return;
 
   // Check velocity (rapid withdrawals)
-  const recentWithdrawals = await prisma.cryptoWithdrawal.count({
+  const recentWithdrawals = await prisma.crypto_withdrawals.count({
     where: {
       userId: withdrawal.userId,
       createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
@@ -313,7 +313,7 @@ async function analyzeWithdrawalAsync(withdrawalId: string) {
     recommendations: riskScore > 70 ? ["REQUIRE_ADMIN_APPROVAL"] : ["AUTO_APPROVE"],
   };
 
-  await prisma.cryptoWithdrawal.update({
+  await prisma.crypto_withdrawals.update({
     where: { id: withdrawalId },
     data: { agentAnalysis: analysis },
   });

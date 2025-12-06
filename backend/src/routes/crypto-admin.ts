@@ -15,12 +15,12 @@ export function setCryptoAdminSocketIO(socketIO: Server) {
 router.get("/pending", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const [deposits, withdrawals] = await Promise.all([
-      prisma.cryptoDeposit.findMany({
+      prisma.crypto_deposits.findMany({
         where: { status: "PENDING" },
         include: { user: { select: { id: true, email: true, name: true, tier: true, kycStatus: true } } },
         orderBy: { createdAt: "desc" },
       }),
-      prisma.cryptoWithdrawal.findMany({
+      prisma.crypto_withdrawals.findMany({
         where: { status: "PENDING", requiresApproval: true },
         include: { user: { select: { id: true, email: true, name: true, tier: true, kycStatus: true } } },
         orderBy: { createdAt: "desc" },
@@ -28,8 +28,8 @@ router.get("/pending", authenticateToken, requireAdmin, async (req, res) => {
     ]);
 
     res.json({
-      deposits: deposits.map((d) => serializeDecimalFields(d, ["amount"])),
-      withdrawals: withdrawals.map((w) => serializeDecimalFields(w, ["amount", "networkFee", "totalAmount"])),
+      deposits: deposits.map((d) => serializeDecimalFields(d)),
+      withdrawals: withdrawals.map((w) => serializeDecimalFields(w)),
     });
   } catch (error) {
     console.error("Get pending transactions error:", error);
@@ -44,7 +44,7 @@ router.post("/deposits/:id/approve", authenticateToken, requireAdmin, async (req
   const { notes } = req.body;
 
   try {
-    const deposit = await prisma.cryptoDeposit.findUnique({
+    const deposit = await prisma.crypto_deposits.findUnique({
       where: { id },
       include: { user: true },
     });
@@ -54,7 +54,7 @@ router.post("/deposits/:id/approve", authenticateToken, requireAdmin, async (req
     }
 
     // Update deposit status
-    await prisma.cryptoDeposit.update({
+    await prisma.crypto_deposits.update({
       where: { id },
       data: {
         status: "APPROVED",
@@ -64,7 +64,7 @@ router.post("/deposits/:id/approve", authenticateToken, requireAdmin, async (req
     });
 
     // Credit user crypto balance
-    await prisma.userCryptoBalance.upsert({
+    await prisma.user_crypto_balances.upsert({
       where: {
         userId_currency: {
           userId: deposit.userId,
@@ -82,7 +82,7 @@ router.post("/deposits/:id/approve", authenticateToken, requireAdmin, async (req
     });
 
     // Create ledger entry
-    await prisma.cryptoLedger.create({
+    await prisma.crypto_ledger.create({
       data: {
         userId: deposit.userId,
         type: "DEPOSIT",
@@ -95,7 +95,7 @@ router.post("/deposits/:id/approve", authenticateToken, requireAdmin, async (req
     });
 
     // Create audit log
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         userId: adminId,
         action: "CRYPTO_DEPOSIT_APPROVED",
@@ -140,7 +140,7 @@ router.post("/deposits/:id/reject", authenticateToken, requireAdmin, async (req,
   }
 
   try {
-    const deposit = await prisma.cryptoDeposit.findUnique({
+    const deposit = await prisma.crypto_deposits.findUnique({
       where: { id },
       include: { user: true },
     });
@@ -150,7 +150,7 @@ router.post("/deposits/:id/reject", authenticateToken, requireAdmin, async (req,
     }
 
     // Update deposit status
-    await prisma.cryptoDeposit.update({
+    await prisma.crypto_deposits.update({
       where: { id },
       data: {
         status: "REJECTED",
@@ -161,7 +161,7 @@ router.post("/deposits/:id/reject", authenticateToken, requireAdmin, async (req,
     });
 
     // Create audit log
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         userId: adminId,
         action: "CRYPTO_DEPOSIT_REJECTED",
@@ -202,7 +202,7 @@ router.post("/withdrawals/:id/approve", authenticateToken, requireAdmin, async (
   const adminId = req.user!.userId;
 
   try {
-    const withdrawal = await prisma.cryptoWithdrawal.findUnique({
+    const withdrawal = await prisma.crypto_withdrawals.findUnique({
       where: { id },
       include: { user: true },
     });
@@ -220,7 +220,7 @@ router.post("/withdrawals/:id/approve", authenticateToken, requireAdmin, async (
     );
 
     // Update withdrawal
-    await prisma.cryptoWithdrawal.update({
+    await prisma.crypto_withdrawals.update({
       where: { id },
       data: {
         status: "APPROVED",
@@ -231,7 +231,7 @@ router.post("/withdrawals/:id/approve", authenticateToken, requireAdmin, async (
     });
 
     // Create ledger entry
-    await prisma.cryptoLedger.create({
+    await prisma.crypto_ledger.create({
       data: {
         userId: withdrawal.userId,
         type: "WITHDRAWAL",
@@ -244,7 +244,7 @@ router.post("/withdrawals/:id/approve", authenticateToken, requireAdmin, async (
     });
 
     // Create audit log
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         userId: adminId,
         action: "CRYPTO_WITHDRAWAL_APPROVED",
@@ -290,7 +290,7 @@ router.post("/withdrawals/:id/reject", authenticateToken, requireAdmin, async (r
   }
 
   try {
-    const withdrawal = await prisma.cryptoWithdrawal.findUnique({
+    const withdrawal = await prisma.crypto_withdrawals.findUnique({
       where: { id },
       include: { user: true },
     });
@@ -300,7 +300,7 @@ router.post("/withdrawals/:id/reject", authenticateToken, requireAdmin, async (r
     }
 
     // Update withdrawal status
-    await prisma.cryptoWithdrawal.update({
+    await prisma.crypto_withdrawals.update({
       where: { id },
       data: {
         status: "REJECTED",
@@ -311,7 +311,7 @@ router.post("/withdrawals/:id/reject", authenticateToken, requireAdmin, async (r
     });
 
     // Refund to user balance
-    await prisma.userCryptoBalance.update({
+    await prisma.user_crypto_balances.update({
       where: {
         userId_currency: {
           userId: withdrawal.userId,
@@ -326,7 +326,7 @@ router.post("/withdrawals/:id/reject", authenticateToken, requireAdmin, async (r
     });
 
     // Create audit log
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         userId: adminId,
         action: "CRYPTO_WITHDRAWAL_REJECTED",
@@ -365,12 +365,12 @@ router.post("/withdrawals/:id/reject", authenticateToken, requireAdmin, async (r
 router.get("/stats", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const [depositStats, withdrawalStats] = await Promise.all([
-      prisma.cryptoDeposit.groupBy({
+      prisma.crypto_deposits.groupBy({
         by: ["status", "currency"],
         _count: true,
         _sum: { amount: true },
       }),
-      prisma.cryptoWithdrawal.groupBy({
+      prisma.crypto_withdrawals.groupBy({
         by: ["status", "currency"],
         _count: true,
         _sum: { amount: true },
@@ -378,8 +378,8 @@ router.get("/stats", authenticateToken, requireAdmin, async (req, res) => {
     ]);
 
     const pendingCount = await prisma.$transaction([
-      prisma.cryptoDeposit.count({ where: { status: "PENDING" } }),
-      prisma.cryptoWithdrawal.count({ where: { status: "PENDING", requiresApproval: true } }),
+      prisma.crypto_deposits.count({ where: { status: "PENDING" } }),
+      prisma.crypto_withdrawals.count({ where: { status: "PENDING", requiresApproval: true } }),
     ]);
 
     res.json({

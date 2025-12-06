@@ -4,7 +4,7 @@ import prisma from "../../prismaClient";
 class CryptoAgentOrchestrator {
   // Analyze deposit for fraud
   async analyzeDeposit(depositId: string) {
-    const deposit = await prisma.cryptoDeposit.findUnique({
+    const deposit = await prisma.crypto_deposits.findUnique({
       where: { id: depositId },
       include: { user: true },
     });
@@ -29,7 +29,7 @@ class CryptoAgentOrchestrator {
     };
 
     // Update deposit with analysis
-    await prisma.cryptoDeposit.update({
+    await prisma.crypto_deposits.update({
       where: { id: depositId },
       data: { agentAnalysis: analysis },
     });
@@ -38,7 +38,7 @@ class CryptoAgentOrchestrator {
     if (riskScore > 70) {
       const incident = await momAICore.handleIncident({
         type: "SUSPICIOUS_CRYPTO_DEPOSIT",
-        severity: "HIGH",
+        severity: "CRITICAL",
         metadata: {
           depositId,
           userId: deposit.userId,
@@ -49,9 +49,9 @@ class CryptoAgentOrchestrator {
         },
       });
 
-      await prisma.cryptoDeposit.update({
+      await prisma.crypto_deposits.update({
         where: { id: depositId },
-        data: { momIncidentId: incident.id },
+        data: { momIncidentId: depositId },
       });
     }
 
@@ -60,7 +60,7 @@ class CryptoAgentOrchestrator {
 
   // Analyze withdrawal for fraud
   async analyzeWithdrawal(withdrawalId: string) {
-    const withdrawal = await prisma.cryptoWithdrawal.findUnique({
+    const withdrawal = await prisma.crypto_withdrawals.findUnique({
       where: { id: withdrawalId },
       include: { user: true },
     });
@@ -71,7 +71,7 @@ class CryptoAgentOrchestrator {
     const isBlacklisted = await this.checkWalletBlacklist(withdrawal.destinationWallet);
 
     // Check velocity (rapid withdrawals)
-    const recentWithdrawals = await prisma.cryptoWithdrawal.count({
+    const recentWithdrawals = await prisma.crypto_withdrawals.count({
       where: {
         userId: withdrawal.userId,
         createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
@@ -93,7 +93,7 @@ class CryptoAgentOrchestrator {
       recommendations: riskScore > 70 ? ["REQUIRE_ADMIN_APPROVAL"] : ["AUTO_APPROVE"],
     };
 
-    await prisma.cryptoWithdrawal.update({
+    await prisma.crypto_withdrawals.update({
       where: { id: withdrawalId },
       data: { agentAnalysis: analysis },
     });
@@ -102,7 +102,7 @@ class CryptoAgentOrchestrator {
     if (riskScore > 70) {
       await momAICore.handleIncident({
         type: "SUSPICIOUS_CRYPTO_WITHDRAWAL",
-        severity: "HIGH",
+        severity: "CRITICAL",
         metadata: {
           withdrawalId,
           userId: withdrawal.userId,
@@ -166,7 +166,7 @@ class CryptoAgentOrchestrator {
 
     // Simulate confirmation after delay
     setTimeout(async () => {
-      await prisma.cryptoDeposit.update({
+      await prisma.crypto_deposits.update({
         where: { id: depositId },
         data: {
           confirmations: requiredConfirmations,

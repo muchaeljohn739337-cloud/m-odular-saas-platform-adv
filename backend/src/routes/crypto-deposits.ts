@@ -32,7 +32,7 @@ router.post("/", authenticateToken, async (req, res) => {
     const platformWallet = await getPlatformWallet(currency);
 
     // Create pending deposit
-    const deposit = await prisma.cryptoDeposit.create({
+    const deposit = await prisma.crypto_deposits.create({
       data: {
         userId,
         amount: new Decimal(amount),
@@ -61,7 +61,7 @@ router.post("/", authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      deposit: serializeDecimalFields(deposit, ["amount"]),
+      deposit: serializeDecimalFields(deposit),
       message: "Deposit request created. Please send funds to the provided address.",
       platformWallet: platformWallet.address,
     });
@@ -76,14 +76,14 @@ router.get("/history", authenticateToken, async (req, res) => {
   const userId = req.user!.userId;
 
   try {
-    const deposits = await prisma.cryptoDeposit.findMany({
+    const deposits = await prisma.crypto_deposits.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: 50,
     });
 
     res.json({
-      deposits: deposits.map((d) => serializeDecimalFields(d, ["amount"])),
+      deposits: deposits.map((d) => serializeDecimalFields(d)),
     });
   } catch (error) {
     console.error("Get deposits error:", error);
@@ -97,7 +97,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
   const userId = req.user!.userId;
 
   try {
-    const deposit = await prisma.cryptoDeposit.findFirst({
+    const deposit = await prisma.crypto_deposits.findFirst({
       where: { id, userId },
     });
 
@@ -106,7 +106,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
     }
 
     res.json({
-      deposit: serializeDecimalFields(deposit, ["amount"]),
+      deposit: serializeDecimalFields(deposit),
       userFriendlyStatus: getUserFriendlyStatus("DEPOSIT", deposit.status),
     });
   } catch (error) {
@@ -117,7 +117,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
 
 // Helper: Get platform wallet
 async function getPlatformWallet(currency: string) {
-  const wallet = await prisma.tokenWallet.findFirst({
+  const wallet = await prisma.token_wallets.findFirst({
     where: {
       userId: "PLATFORM",
     },
@@ -132,7 +132,7 @@ async function getPlatformWallet(currency: string) {
 
 // Helper: Analyze deposit (async)
 async function analyzeDepositAsync(depositId: string) {
-  const deposit = await prisma.cryptoDeposit.findUnique({
+  const deposit = await prisma.crypto_deposits.findUnique({
     where: { id: depositId },
     include: { user: true },
   });
@@ -152,7 +152,7 @@ async function analyzeDepositAsync(depositId: string) {
   };
 
   // Update deposit with analysis
-  await prisma.cryptoDeposit.update({
+  await prisma.crypto_deposits.update({
     where: { id: depositId },
     data: { agentAnalysis: analysis },
   });
@@ -161,7 +161,7 @@ async function analyzeDepositAsync(depositId: string) {
   if (riskScore > 70) {
     const incident = await momAICore.handleIncident({
       type: "SUSPICIOUS_CRYPTO_DEPOSIT",
-      severity: "HIGH",
+      severity: "CRITICAL",
       metadata: {
         depositId,
         userId: deposit.userId,
@@ -172,7 +172,7 @@ async function analyzeDepositAsync(depositId: string) {
       },
     });
 
-    await prisma.cryptoDeposit.update({
+    await prisma.crypto_deposits.update({
       where: { id: depositId },
       data: { momIncidentId: incident.id },
     });

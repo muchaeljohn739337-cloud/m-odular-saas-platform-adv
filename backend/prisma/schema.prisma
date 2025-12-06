@@ -1133,8 +1133,15 @@ model users {
   // Account suspension (uses existing blockedAt/blockedBy fields)
   suspended          Boolean              @default(false)
   
-  // User Wallet Relation
+  // User Wallet Relations
   wallets            user_wallets[]       @relation("user_wallet_owner")
+  
+  // Crypto Relations
+  crypto_deposits_made     crypto_deposits[]       @relation("crypto_deposit_user")
+  crypto_deposits_reviewed crypto_deposits[]       @relation("crypto_deposit_reviewer")
+  crypto_ledger_user       crypto_ledger[]         @relation("crypto_ledger_user")
+  crypto_ledger_actor      crypto_ledger[]         @relation("crypto_ledger_actor")
+  crypto_balances          user_crypto_balances[]  @relation("user_crypto_balance")
 }
 
 model vault_audit_logs {
@@ -2235,6 +2242,76 @@ model user_wallets {
   @@index([userId])
   @@index([currency])
   @@map("user_wallets")
+}
+
+// ============================================================
+// CRYPTO TRANSACTION SYSTEM (Additional Models)
+// ============================================================
+// Note: crypto_withdrawals already exists above (line ~492)
+// Adding new models for comprehensive crypto tracking
+// ============================================================
+
+model crypto_deposits {
+  id             String    @id
+  userId         String
+  currency       String    // 'BTC', 'ETH', 'USDT', 'USDC', 'DAI'
+  amount         Decimal   @db.Decimal(18, 8)
+  walletAddress  String    // Deposit address
+  txHash         String?   // Blockchain transaction hash
+  status         String    // 'PENDING', 'APPROVED', 'REJECTED', 'CONFIRMED'
+  reviewedBy     String?   // Admin ID who approved/rejected
+  reviewedAt     DateTime?
+  rejectionReason String?  @db.Text
+  momIncidentId  String?   // Link to Mom AI incident
+  confirmations  Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+
+  user     users  @relation("crypto_deposit_user", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer users? @relation("crypto_deposit_reviewer", fields: [reviewedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([currency])
+  @@index([createdAt])
+  @@map("crypto_deposits")
+}
+
+model crypto_ledger {
+  id        String   @id
+  userId    String
+  type      String   // 'DEPOSIT', 'WITHDRAWAL', 'ADJUSTMENT'
+  amount    Decimal  @db.Decimal(18, 8)
+  currency  String
+  txHash    String?
+  actorId   String   // Admin or system who performed action
+  status    String   // 'PENDING', 'APPROVED', 'REJECTED'
+  createdAt DateTime @default(now())
+
+  user  users @relation("crypto_ledger_user", fields: [userId], references: [id], onDelete: Cascade)
+  actor users @relation("crypto_ledger_actor", fields: [actorId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([currency])
+  @@index([createdAt])
+  @@map("crypto_ledger")
+}
+
+model user_crypto_balances {
+  id        String   @id
+  userId    String
+  currency  String
+  balance   Decimal  @default(0) @db.Decimal(18, 8)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  user users @relation("user_crypto_balance", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency], name: "userId_currency")
+  @@index([userId])
+  @@index([currency])
+  @@map("user_crypto_balances")
 }
 
 // Note: audit_logs model already exists above with fields:
